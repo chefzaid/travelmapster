@@ -1,0 +1,33 @@
+
+Requirements
+- App name: TravelMapster
+- Simple Bootstrap based app with a simple logo
+- Homepage: Page wide video of traveling | Page wide horizontal icons with thems around traveling | 3 columns, each with a picture and a title inside it
+	Picture 1: Travel Map
+	Picture 2: Travel Suggestions
+	Picture 3: Itinerary Planning
+- Login: Email/password, Google, Facebook
+- Data is saved to DB
+- Frontend: HTML, CSS, JavaScript
+- Backend: Node.js
+- DB: SQLite
+
+- Map
+	Simple, 2D, no regions, no roads, no rivers, no landscape features, just country name and frontier
+	When you zoom in you get cities names
+	A bit cartoonic and approximative for fun
+
+*** V1: Travel Map
+- Simple interactive map to pin visited countries, with the possibity to pin cities
+- Pins are of two types: Visited or Wishlist, with different icons for each
+- Pins could be added and removed
+
+
+*** V2: Travel Suggestions
+- Suggest what places to visit in a country => Enter country in a textbox and get a list
+- Suggest what to see in a city/place => Enter the city, get all is there to see
+- Suggest programs => Enter city, number of days, [morning, afternoon, evening, night] => get the shortest path itinerary
+- Enriched Profile page
+
+*** V3: Itinerary Planning
+- Give the ability to plan a travel itinerary, either from scratch or based on previous suggestions
