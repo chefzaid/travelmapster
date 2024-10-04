@@ -1,0 +1,19 @@
+{
+    "name": "Node.js & SQLite3",
+    "image": "mcr.microsoft.com/vscode/devcontainers/javascript-node:0-16",
+    "features": {
+        "ghcr.io/devcontainers/features/sqlite:1": {}
+    },
+    "forwardPorts": [3000],
+    "postCreateCommand": "npm install",
+    "customizations":{
+        "vscode": {
+            "settings": {
+                "terminal.integrated.shell.linux": "/bin/bash"
+            }
+        }
+    },
+    "mounts": [
+        "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached"
+    ]
+}
