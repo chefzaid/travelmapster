@@ -13,14 +13,17 @@ Requirements
 - DB: SQLite
 
 - Map
-	Simple, 2D, no regions, no roads, no rivers, no landscape features, just country name and frontier
-	When you zoom in you get cities names
+	Simple, 2D, no regions, no roads, no rivers, no landscape features, just countries frontiers
+	When you zoom in you get major cities
 	A bit cartoonic and approximative for fun
 
 *** V1: Travel Map
 - Simple interactive map to pin visited countries, with the possibity to pin cities
 - Pins are of two types: Visited or Wishlist, with different icons for each
 - Pins could be added and removed
+- Two textboxes on the left to enter countries and cities to be pinned
+- Countries are pinned by either clicking on them on the map or by entering the country name on the left textbox
+- Cities can only be pinned by using the left textbox
 
 
 *** V2: Travel Suggestions
