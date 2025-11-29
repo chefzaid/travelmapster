@@ -14,6 +14,7 @@ const visitedLayer = L.layerGroup().addTo(map);
 const wishlistLayer = L.layerGroup().addTo(map);
 let countriesGeoJSON = null;
 let currentUser = null;
+let visitedCountriesSet = new Set(); // To track visited countries names
 
 // Icons
 const visitedIcon = new L.Icon({
@@ -39,10 +40,46 @@ fetch('https://raw.githubusercontent.com/johan/world.geo.json/master/countries.g
     .then(res => res.json())
     .then(data => {
         countriesGeoJSON = L.geoJSON(data, {
-            style: { opacity: 0, fillOpacity: 0 } // Invisible layer for hit detection
+            style: styleCountry, // Use dynamic style function
+            onEachFeature: onEachFeature
         }).addTo(map);
+        populateCountryDatalist(data);
     })
     .catch(err => console.error("Error loading GeoJSON:", err));
+
+// Style function for GeoJSON
+function styleCountry(feature) {
+    if (visitedCountriesSet.has(feature.properties.name)) {
+        return {
+            fillColor: '#3388ff',
+            weight: 1,
+            opacity: 1,
+            color: '#3388ff', // Border color same as fill or distinct
+            fillOpacity: 0.4
+        };
+    }
+    return {
+        fillColor: 'transparent',
+        weight: 1,
+        opacity: 0, // Invisible border for non-visited
+        fillOpacity: 0
+    };
+}
+
+function updateMapStyles() {
+    if (countriesGeoJSON) {
+        countriesGeoJSON.setStyle(styleCountry);
+    }
+}
+
+function onEachFeature(feature, layer) {
+    layer.on('click', (e) => {
+        if (!currentUser) return;
+        const countryName = feature.properties.name;
+        L.DomEvent.stopPropagation(e);
+        saveMarker(e.latlng.lat, e.latlng.lng, countryName, 'Country');
+    });
+}
 
 // --- Auth Logic ---
 
@@ -110,6 +147,8 @@ document.getElementById('logout-btn').addEventListener('click', () => {
         currentUser = null;
         visitedLayer.clearLayers();
         wishlistLayer.clearLayers();
+        visitedCountriesSet.clear();
+        updateMapStyles();
         checkAuth();
     });
 });
@@ -146,10 +185,15 @@ function addMarkerToMap(data) {
         <span class="remove-pin" onclick="deleteMarker(${data.id})">Remove Pin</span>
     `);
     
-    // Store ID on marker for reference if needed (though we handle delete via onclick)
+    // Store ID on marker for reference
     marker.dbId = data.id;
-    
     marker.addTo(layer);
+
+    // Update visited countries set if applicable
+    if (data.type === 'visited' && data.category === 'Country') {
+        visitedCountriesSet.add(data.name);
+        updateMapStyles();
+    }
 }
 
 function saveMarker(lat, lng, name, category) {
@@ -173,8 +217,6 @@ window.deleteMarker = function(id) {
     fetch(`/deleteMarker/${id}`, { method: 'DELETE' })
     .then(res => {
         if (res.ok) {
-            // Reload markers or remove from map. Reload is easiest to sync.
-            // Or find marker layer.
             loadMarkers();
         }
     });
@@ -183,33 +225,94 @@ window.deleteMarker = function(id) {
 function loadMarkers() {
     visitedLayer.clearLayers();
     wishlistLayer.clearLayers();
+    visitedCountriesSet.clear();
     fetch('/getMarkers')
         .then(res => res.json())
         .then(markers => {
             markers.forEach(addMarkerToMap);
+            // Ensure style is updated after all markers are loaded
+            updateMapStyles();
         });
 }
 
-// Map Click -> Pin Country logic is handled by setupGeoJSONClick on the invisible GeoJSON layer
+// --- Autocomplete & Input Logic ---
 
-function setupGeoJSONClick() {
-    if(!countriesGeoJSON) return;
-    countriesGeoJSON.eachLayer(layer => {
-        layer.on('click', (e) => {
-            if (!currentUser) return;
-            const countryName = layer.feature.properties.name;
-            // Stop propagation so map click doesn't fire if we had one
-            L.DomEvent.stopPropagation(e);
+function escapeHtml(text) {
+    if (!text) return text;
+    return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
 
-            // Where to put pin? e.latlng is where the user clicked.
-            saveMarker(e.latlng.lat, e.latlng.lng, countryName, 'Country');
-        });
+function populateCountryDatalist(geojson) {
+    let datalist = document.getElementById('countries-list');
+    if (!datalist) {
+        datalist = document.createElement('datalist');
+        datalist.id = 'countries-list';
+        document.body.appendChild(datalist);
+    }
+
+    // Extract names and sort them
+    const names = geojson.features.map(f => f.properties.name).sort();
+
+    names.forEach(name => {
+        const option = document.createElement('option');
+        option.value = name;
+        datalist.appendChild(option);
     });
+    
+    document.getElementById('country-input').setAttribute('list', 'countries-list');
 }
 
-// Note: I initially set style opacity to 0. It still receives events.
-// I need to ensure the GeoJSON is loaded before binding.
-// I'll modify the fetch above.
+// City Autocomplete
+const cityInput = document.getElementById('city-input');
+let cityDatalist = document.getElementById('cities-list');
+if (!cityDatalist) {
+    cityDatalist = document.createElement('datalist');
+    cityDatalist.id = 'cities-list';
+    document.body.appendChild(cityDatalist);
+    cityInput.setAttribute('list', 'cities-list');
+}
+
+let debounceTimer;
+cityInput.addEventListener('input', (e) => {
+    const query = e.target.value;
+    if (query.length < 3) return;
+
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&limit=5`)
+            .then(res => res.json())
+            .then(data => {
+                cityDatalist.innerHTML = '';
+                data.forEach(item => {
+                    const cityName = item.address.city || item.address.town || item.address.village || item.name;
+                    const countryName = item.address.country;
+                    const displayName = `${cityName}, ${countryName}`;
+                    const option = document.createElement('option');
+                    option.value = displayName;
+                    cityDatalist.appendChild(option);
+                });
+            })
+            .catch(err => console.error("Error fetching city suggestions:", err));
+    }, 300);
+});
+
+// Enter Key Listeners
+document.getElementById('country-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        document.getElementById('pin-country-btn').click();
+    }
+});
+
+document.getElementById('city-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        document.getElementById('pin-city-btn').click();
+    }
+});
 
 // Pin Country by Name
 document.getElementById('pin-country-btn').addEventListener('click', () => {
@@ -221,17 +324,20 @@ document.getElementById('pin-country-btn').addEventListener('click', () => {
         .then(res => res.json())
         .then(data => {
             if (data.length > 0) {
-                // Filter for country if possible, or take first
-                const result = data[0]; // Assuming first is best match
-                if (result.type === 'administrative' || result.type === 'country' || result.class === 'place') {
-                     // Use lat/lng from result
-                     saveMarker(result.lat, result.lon, result.display_name.split(',')[0], 'Country');
-                     map.setView([result.lat, result.lon], 4);
-                } else {
-                    // Fallback
-                    saveMarker(result.lat, result.lon, name, 'Country');
-                     map.setView([result.lat, result.lon], 4);
-                }
+                // Filter for country if possible
+                const result = data[0];
+                let finalName = name; // Default to input name
+
+                // Try to match with GeoJSON names for consistent coloring
+                // This is tricky because Nominatim names might differ from GeoJSON names.
+                // However, we populated the datalist from GeoJSON, so if user picked from list, it matches.
+                // If they typed manually, we might have a mismatch.
+                // We'll trust the user input or the Nominatim display name.
+                // Ideally, we check against our `countriesGeoJSON` layers.
+
+                saveMarker(result.lat, result.lon, finalName, 'Country');
+                map.setView([result.lat, result.lon], 4);
+
                 document.getElementById('country-input').value = '';
             } else {
                 alert('Country not found');
@@ -262,17 +368,5 @@ document.getElementById('pin-city-btn').addEventListener('click', () => {
         });
 });
 
-
 // Initialization
 checkAuth();
-
-// Overwrite the previous fetch to include click handling
-fetch('https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json')
-    .then(res => res.json())
-    .then(data => {
-        countriesGeoJSON = L.geoJSON(data, {
-            style: { opacity: 0, fillOpacity: 0 }
-        }).addTo(map);
-        setupGeoJSONClick();
-    })
-    .catch(err => console.error("Error loading GeoJSON:", err));
