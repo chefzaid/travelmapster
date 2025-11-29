@@ -21,39 +21,34 @@ app.use(passport.session());
 app.use(express.static(path.join(__dirname, '.')));
 
 // Initialize the users and markers table
-db.serialize(() => {
-    db.run(`CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL,
-        oauth_provider TEXT DEFAULT NULL,
-        oauth_id TEXT DEFAULT NULL
-    )`);
-    
-    // Updated Schema for markers
-    db.run(`CREATE TABLE IF NOT EXISTS markers (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER,
-        lat REAL,
-        lng REAL,
-        type TEXT,
-        name TEXT,
-        category TEXT,
-        FOREIGN KEY (user_id) REFERENCES users(id)
-    )`);
+db.exec(`CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL,
+    oauth_provider TEXT DEFAULT NULL,
+    oauth_id TEXT DEFAULT NULL
+)`);
 
-    // Migration: Add name and category columns if they don't exist
-    db.all("PRAGMA table_info(markers)", (err, columns) => {
-        if (err) return console.error(err);
-        const columnNames = columns.map(c => c.name);
-        if (!columnNames.includes('name')) {
-            db.run("ALTER TABLE markers ADD COLUMN name TEXT");
-        }
-        if (!columnNames.includes('category')) {
-            db.run("ALTER TABLE markers ADD COLUMN category TEXT");
-        }
-    });
-});
+db.exec(`CREATE TABLE IF NOT EXISTS markers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    lat REAL,
+    lng REAL,
+    type TEXT,
+    name TEXT,
+    category TEXT,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+)`);
+
+// Migration: Add name and category columns if they don't exist
+const columns = db.prepare("PRAGMA table_info(markers)").all();
+const columnNames = columns.map(c => c.name);
+if (!columnNames.includes('name')) {
+    db.exec("ALTER TABLE markers ADD COLUMN name TEXT");
+}
+if (!columnNames.includes('category')) {
+    db.exec("ALTER TABLE markers ADD COLUMN category TEXT");
+}
 
 // Passport Local Strategy for username/password authentication
 passport.use(new LocalStrategy((username, password, done) => {
@@ -101,10 +96,13 @@ app.post('/register', async (req, res) => {
     const { username, password } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    db.run('INSERT INTO users (username, password) VALUES (?, ?)', [username, hashedPassword], (err) => {
-        if (err) return res.status(500).send('Error registering');
+    try {
+        db.prepare('INSERT INTO users (username, password) VALUES (?, ?)').run(username, hashedPassword);
         res.status(200).send('Registered');
-    });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error registering');
+    }
 });
 
 // Login route
@@ -135,15 +133,13 @@ app.post('/addMarker', isAuthenticated, (req, res) => {
     const userId = req.user.id;
     const { lat, lng, type, name, category } = req.body;
 
-    const stmt = db.prepare("INSERT INTO markers (user_id, lat, lng, type, name, category) VALUES (?, ?, ?, ?, ?, ?)");
-    stmt.run(userId, lat, lng, type, name, category, function(err) {
-        if (err) {
-            console.error(err);
-            return res.status(500).send("Error saving marker");
-        }
-        res.status(200).json({ id: this.lastID });
-    });
-    stmt.finalize();
+    try {
+        const result = db.prepare("INSERT INTO markers (user_id, lat, lng, type, name, category) VALUES (?, ?, ?, ?, ?, ?)").run(userId, lat, lng, type, name, category);
+        res.status(200).json({ id: result.lastInsertRowid });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Error saving marker");
+    }
 });
 
 // Delete a marker
@@ -152,24 +148,26 @@ app.delete('/deleteMarker/:id', isAuthenticated, (req, res) => {
     const userId = req.user.id;
     const markerId = req.params.id;
 
-    const stmt = db.prepare("DELETE FROM markers WHERE id = ? AND user_id = ?");
-    stmt.run(markerId, userId, function(err) {
-        if (err) {
-            return res.status(500).send("Error deleting marker");
-        }
+    try {
+        db.prepare("DELETE FROM markers WHERE id = ? AND user_id = ?").run(markerId, userId);
         res.status(200).send("Marker deleted");
-    });
-    stmt.finalize();
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Error deleting marker");
+    }
 });
 
 // Get markers for the logged in user
 app.get('/getMarkers', isAuthenticated, (req, res) => {
     if (!req.user) return res.json([]); // Return empty if not logged in
     const userId = req.user.id;
-    db.all("SELECT id, lat, lng, type, name, category FROM markers WHERE user_id = ?", [userId], (err, rows) => {
-        if (err) res.status(500).send("Error retrieving markers");
-        else res.json(rows);
-    });
+    try {
+        const rows = db.prepare("SELECT id, lat, lng, type, name, category FROM markers WHERE user_id = ?").all(userId);
+        res.json(rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Error retrieving markers");
+    }
 });
 
 // OAuth routes (Placeholder implementation as keys are missing)
