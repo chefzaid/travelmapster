@@ -3,22 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive World Map</title>
+    <title>TravelMapster</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-geosearch/3.8.0/geosearch.css" />
     <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-    <h1>Track Visited Cities</h1>
-    <div class="search-container">
-        <input type="text" id="citySearch" placeholder="Search for a city...">
-        <div id="suggestions" class="suggestions"></div>
+
+    <div id="sidebar">
+        <h2>Travel Mapster</h2>
+
+        <div id="auth-check" style="display:none;">
+            <p>Welcome, <span id="username-display">User</span>!</p>
+            <button id="logout-btn" class="btn btn-secondary">Logout</button>
+        </div>
+
+        <div id="auth-forms">
+            <div class="auth-form active" id="login-form">
+                <h3>Login</h3>
+                <div class="input-group">
+                    <input type="text" id="login-username" placeholder="Username">
+                </div>
+                <div class="input-group">
+                    <input type="password" id="login-password" placeholder="Password">
+                </div>
+                <button id="login-btn" class="btn">Login</button>
+                <p>Don't have an account? <a href="#" id="show-register">Register</a></p>
+            </div>
+
+            <div class="auth-form" id="register-form">
+                <h3>Register</h3>
+                <div class="input-group">
+                    <input type="text" id="reg-username" placeholder="Username">
+                </div>
+                <div class="input-group">
+                    <input type="password" id="reg-password" placeholder="Password">
+                </div>
+                <button id="register-btn" class="btn">Register</button>
+                <p>Already have an account? <a href="#" id="show-login">Login</a></p>
+            </div>
+        </div>
+
+        <hr>
+
+        <div id="controls" style="opacity: 0.5; pointer-events: none;"> <!-- Disabled until logged in -->
+            <div class="pin-type-selector">
+                <strong>Pin Type:</strong><br>
+                <label>
+                    <input type="radio" name="pinType" value="visited" checked> Visited
+                </label>
+                <label>
+                    <input type="radio" name="pinType" value="wishlist"> Wishlist
+                </label>
+            </div>
+
+            <div class="input-group">
+                <label for="country-input">Pin Country</label>
+                <input type="text" id="country-input" placeholder="Enter country name...">
+                <button id="pin-country-btn" class="btn" style="margin-top: 5px;">Pin Country</button>
+                <small>Or click on the map to pin a country.</small>
+            </div>
+
+            <div class="input-group">
+                <label for="city-input">Pin City</label>
+                <input type="text" id="city-input" placeholder="Enter city name...">
+                <button id="pin-city-btn" class="btn" style="margin-top: 5px;">Pin City</button>
+            </div>
+        </div>
     </div>
-    <div id="map"></div>
+
+    <div id="map-container">
+        <div id="map"></div>
+    </div>
+
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-geosearch/3.8.0/geosearch.umd.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
