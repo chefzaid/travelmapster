@@ -1,284 +1,372 @@
-// Initialize the map centered on a reasonable starting point
-const map = L.map('map').setView([20, 0], 3);
+// Initialize map
+const map = L.map('map').setView([20, 0], 2);
 
-// Add CartoDB Voyager tiles for a clean, cartoonish look
+// Tiles
 L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    attribution: '&copy; OpenStreetMap &copy; CARTO',
     subdomains: 'abcd',
-    maxZoom: 19
+    maxZoom: 19,
+    noWrap: true
 }).addTo(map);
 
-// Store markers in a layer group for easy management
-const markersLayer = L.layerGroup().addTo(map);
+// Layer Groups
+const visitedLayer = L.layerGroup().addTo(map);
+const wishlistLayer = L.layerGroup().addTo(map);
+let countriesGeoJSON = null;
+let currentUser = null;
+let visitedCountriesSet = new Set(); // To track visited countries names
 
-// Initialize the search provider
-const provider = new GeoSearch.OpenStreetMapProvider({
-    params: {
-        'accept-language': 'en',
-        countrycodes: '',
-        'location-type': 'city',
-        limit: 10
-    },
+// Icons
+const visitedIcon = new L.Icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
 });
 
-// Function to format location name as "City, Country"
-function formatLocationName(label) {
-    const parts = label.split(',').map(part => part.trim());
-    if (parts.length >= 2) {
-        const city = parts[0];
-        // Find the country (usually the last significant part)
-        let country = parts[parts.length - 1];
-        // Remove any postal codes or extra information
-        country = country.replace(/\d+/g, '').trim();
-        return `${city}, ${country}`;
+const wishlistIcon = new L.Icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+});
+
+// Fetch World GeoJSON
+fetch('https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json')
+    .then(res => res.json())
+    .then(data => {
+        countriesGeoJSON = L.geoJSON(data, {
+            style: styleCountry, // Use dynamic style function
+            onEachFeature: onEachFeature
+        }).addTo(map);
+        populateCountryDatalist(data);
+    })
+    .catch(err => console.error("Error loading GeoJSON:", err));
+
+// Style function for GeoJSON
+function styleCountry(feature) {
+    if (visitedCountriesSet.has(feature.properties.name)) {
+        return {
+            fillColor: '#3388ff',
+            weight: 1,
+            opacity: 1,
+            color: '#3388ff', // Border color same as fill or distinct
+            fillOpacity: 0.4
+        };
     }
-    return parts[0]; // Fallback to just the first part if we can't parse it properly
+    return {
+        fillColor: 'transparent',
+        weight: 1,
+        opacity: 0, // Invisible border for non-visited
+        fillOpacity: 0
+    };
 }
 
-// Function to calculate distance between points in kilometers
-function getDistanceInKm(latlng1, latlng2) {
-    return latlng1.distanceTo(latlng2) / 1000;
+function updateMapStyles() {
+    if (countriesGeoJSON) {
+        countriesGeoJSON.setStyle(styleCountry);
+    }
 }
 
-// Function to find the nearest city from a clicked point
-async function findNearestCity(latlng) {
-    try {
-        // First, try to find cities very close to the clicked point
-        const closeResults = await provider.search({
-            query: 'city',
-            bounds: [
-                [latlng.lat - 0.5, latlng.lng - 0.5],
-                [latlng.lat + 0.5, latlng.lng + 0.5]
-            ]
-        });
+function onEachFeature(feature, layer) {
+    layer.on('click', (e) => {
+        if (!currentUser) return;
+        const countryName = feature.properties.name;
+        L.DomEvent.stopPropagation(e);
+        saveMarker(e.latlng.lat, e.latlng.lng, countryName, 'Country');
+    });
+}
 
-        // If we find cities within 50km of the click, use the closest one
-        const closeCity = closeResults.find(result => {
-            const distance = getDistanceInKm(latlng, L.latLng(result.y, result.x));
-            return distance <= 50;
-        });
+// --- Auth Logic ---
 
-        if (closeCity) {
-            return {
-                name: formatLocationName(closeCity.label),
-                latlng: L.latLng(closeCity.y, closeCity.x)
-            };
-        }
-
-        // If no close cities found, search in visible map bounds
-        const bounds = map.getBounds();
-        const results = await provider.search({
-            query: `city near ${latlng.lat} ${latlng.lng}`,
-            bounds: [
-                [bounds.getSouth(), bounds.getWest()],
-                [bounds.getNorth(), bounds.getEast()]
-            ]
-        });
-
-        if (results.length > 0) {
-            // Find the nearest result within 100km, otherwise don't place a pin
-            const nearest = results.reduce((prev, curr) => {
-                const prevDist = getDistanceInKm(latlng, L.latLng(prev.y, prev.x));
-                const currDist = getDistanceInKm(latlng, L.latLng(curr.y, curr.x));
-                return prevDist < currDist ? prev : curr;
-            });
-
-            const distance = getDistanceInKm(latlng, L.latLng(nearest.y, nearest.x));
-            if (distance <= 100) {
-                return {
-                    name: formatLocationName(nearest.label),
-                    latlng: L.latLng(nearest.y, nearest.x)
-                };
+function checkAuth() {
+    fetch('/current_user')
+        .then(res => {
+            if (res.ok) return res.json();
+            throw new Error('Not logged in');
+        })
+        .then(user => {
+            if (user.id) {
+                currentUser = user;
+                document.getElementById('auth-forms').style.display = 'none';
+                document.getElementById('auth-check').style.display = 'block';
+                document.getElementById('username-display').textContent = user.username;
+                document.getElementById('controls').style.opacity = '1';
+                document.getElementById('controls').style.pointerEvents = 'auto';
+                loadMarkers();
             }
-        }
-        return null;
-    } catch (error) {
-        console.error('Error finding nearest city:', error);
-        return null;
-    }
+        })
+        .catch(() => {
+            document.getElementById('auth-forms').style.display = 'block';
+            document.getElementById('auth-check').style.display = 'none';
+            document.getElementById('controls').style.opacity = '0.5';
+            document.getElementById('controls').style.pointerEvents = 'none';
+        });
 }
 
-// Function to create a marker
-function createMarker(latlng, cityName) {
-    // Remove any existing markers within 5km of the new marker
-    const existingMarkers = [];
-    markersLayer.eachLayer((layer) => {
-        if (getDistanceInKm(layer.getLatLng(), latlng) < 5) {
-            existingMarkers.push(layer);
-        }
-    });
-    existingMarkers.forEach(marker => markersLayer.removeLayer(marker));
+document.getElementById('login-btn').addEventListener('click', () => {
+    const username = document.getElementById('login-username').value;
+    const password = document.getElementById('login-password').value;
 
-    const marker = L.marker(latlng);
-    
-    const popupContent = document.createElement('div');
-    popupContent.innerHTML = `
-        <strong>${cityName}</strong>
-        <a class="remove-pin">Remove Pin</a>
-    `;
-    
-    const popup = L.popup().setContent(popupContent);
-    marker.bindPopup(popup);
-    
-    markersLayer.addLayer(marker);
-    
-    marker.on('popupopen', () => {
-        const removeBtn = document.querySelector('.remove-pin');
-        if (removeBtn) {
-            removeBtn.addEventListener('click', () => {
-                markersLayer.removeLayer(marker);
-            });
-        }
-    });
-
-    // Animate the marker drop
-    marker.setOpacity(0);
-    let opacity = 0;
-    const fadeIn = setInterval(() => {
-        opacity += 0.1;
-        marker.setOpacity(opacity);
-        if (opacity >= 1) clearInterval(fadeIn);
-    }, 50);
-}
-
-// Handle map clicks
-map.on('click', async function(e) {
-    const nearestCity = await findNearestCity(e.latlng);
-    if (nearestCity) {
-        // Only move to the city if it's reasonably close
-        createMarker(nearestCity.latlng, nearestCity.name);
-    }
+    fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+    }).then(res => {
+        if (res.ok) return res.json();
+        throw new Error('Login failed');
+    }).then(user => {
+        checkAuth();
+    }).catch(alert);
 });
 
-// Search box functionality
-const searchInput = document.getElementById('citySearch');
-const suggestionsDiv = document.getElementById('suggestions');
+document.getElementById('register-btn').addEventListener('click', () => {
+    const username = document.getElementById('reg-username').value;
+    const password = document.getElementById('reg-password').value;
+
+    fetch('/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+    }).then(res => {
+        if (res.ok) {
+            alert('Registered! Please login.');
+            toggleAuthForms();
+        } else {
+            alert('Registration failed');
+        }
+    });
+});
+
+document.getElementById('logout-btn').addEventListener('click', () => {
+    fetch('/logout', { method: 'POST' }).then(() => {
+        currentUser = null;
+        visitedLayer.clearLayers();
+        wishlistLayer.clearLayers();
+        visitedCountriesSet.clear();
+        updateMapStyles();
+        checkAuth();
+    });
+});
+
+document.getElementById('show-register').addEventListener('click', (e) => {
+    e.preventDefault();
+    toggleAuthForms();
+});
+
+document.getElementById('show-login').addEventListener('click', (e) => {
+    e.preventDefault();
+    toggleAuthForms();
+});
+
+function toggleAuthForms() {
+    document.getElementById('login-form').classList.toggle('active');
+    document.getElementById('register-form').classList.toggle('active');
+}
+
+// --- Map Logic ---
+
+function getPinType() {
+    return document.querySelector('input[name="pinType"]:checked').value;
+}
+
+function addMarkerToMap(data) {
+    const icon = data.type === 'visited' ? visitedIcon : wishlistIcon;
+    const layer = data.type === 'visited' ? visitedLayer : wishlistLayer;
+    
+    const marker = L.marker([data.lat, data.lng], { icon: icon });
+    marker.bindPopup(`
+        <strong>${data.name}</strong> (${data.category})<br>
+        Type: ${data.type}<br>
+        <span class="remove-pin" onclick="deleteMarker(${data.id})">Remove Pin</span>
+    `);
+    
+    // Store ID on marker for reference
+    marker.dbId = data.id;
+    marker.addTo(layer);
+
+    // Update visited countries set if applicable
+    if (data.type === 'visited' && data.category === 'Country') {
+        visitedCountriesSet.add(data.name);
+        updateMapStyles();
+    }
+}
+
+function saveMarker(lat, lng, name, category) {
+    const type = getPinType();
+    fetch('/addMarker', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lat, lng, type, name, category })
+    })
+    .then(res => res.json())
+    .then(data => {
+        addMarkerToMap({
+            id: data.id,
+            lat, lng, type, name, category
+        });
+    })
+    .catch(err => console.error(err));
+}
+
+window.deleteMarker = function(id) {
+    fetch(`/deleteMarker/${id}`, { method: 'DELETE' })
+    .then(res => {
+        if (res.ok) {
+            loadMarkers();
+        }
+    });
+};
+
+function loadMarkers() {
+    visitedLayer.clearLayers();
+    wishlistLayer.clearLayers();
+    visitedCountriesSet.clear();
+    fetch('/getMarkers')
+        .then(res => res.json())
+        .then(markers => {
+            markers.forEach(addMarkerToMap);
+            // Ensure style is updated after all markers are loaded
+            updateMapStyles();
+        });
+}
+
+// --- Autocomplete & Input Logic ---
+
+function escapeHtml(text) {
+    if (!text) return text;
+    return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function populateCountryDatalist(geojson) {
+    let datalist = document.getElementById('countries-list');
+    if (!datalist) {
+        datalist = document.createElement('datalist');
+        datalist.id = 'countries-list';
+        document.body.appendChild(datalist);
+    }
+
+    // Extract names and sort them
+    const names = geojson.features.map(f => f.properties.name).sort();
+
+    names.forEach(name => {
+        const option = document.createElement('option');
+        option.value = name;
+        datalist.appendChild(option);
+    });
+    
+    document.getElementById('country-input').setAttribute('list', 'countries-list');
+}
+
+// City Autocomplete
+const cityInput = document.getElementById('city-input');
+let cityDatalist = document.getElementById('cities-list');
+if (!cityDatalist) {
+    cityDatalist = document.createElement('datalist');
+    cityDatalist.id = 'cities-list';
+    document.body.appendChild(cityDatalist);
+    cityInput.setAttribute('list', 'cities-list');
+}
+
 let debounceTimer;
+cityInput.addEventListener('input', (e) => {
+    const query = e.target.value;
+    if (query.length < 3) return;
 
-async function updateSuggestions(searchText) {
-    if (!searchText) {
-        suggestionsDiv.style.display = 'none';
-        return;
-    }
-
-    const bounds = map.getBounds();
-    const results = await provider.search({
-        query: searchText,
-        bounds: [
-            [bounds.getSouth(), bounds.getWest()],
-            [bounds.getNorth(), bounds.getEast()]
-        ]
-    });
-
-    suggestionsDiv.innerHTML = '';
-    
-    if (results.length > 0) {
-        // Create a Map to store unique cities
-        const uniqueCities = new Map();
-        
-        results.forEach(result => {
-            const formattedName = formatLocationName(result.label);
-            if (!uniqueCities.has(formattedName)) {
-                uniqueCities.set(formattedName, result);
-            }
-        });
-
-        Array.from(uniqueCities.entries())
-            .slice(0, 5)
-            .forEach(([formattedName, result]) => {
-                const div = document.createElement('div');
-                div.className = 'suggestion-item';
-                div.textContent = formattedName;
-                div.addEventListener('click', () => {
-                    const latlng = L.latLng(result.y, result.x);
-                    createMarker(latlng, formattedName);
-                    map.setView(latlng, 10);
-                    searchInput.value = '';
-                    suggestionsDiv.style.display = 'none';
-                });
-                suggestionsDiv.appendChild(div);
-            });
-        suggestionsDiv.style.display = 'block';
-    } else {
-        suggestionsDiv.style.display = 'none';
-    }
-}
-
-searchInput.addEventListener('input', (e) => {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
-        updateSuggestions(e.target.value);
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&limit=5`)
+            .then(res => res.json())
+            .then(data => {
+                cityDatalist.innerHTML = '';
+                data.forEach(item => {
+                    const cityName = item.address.city || item.address.town || item.address.village || item.name;
+                    const countryName = item.address.country;
+                    const displayName = `${cityName}, ${countryName}`;
+                    const option = document.createElement('option');
+                    option.value = displayName;
+                    cityDatalist.appendChild(option);
+                });
+            })
+            .catch(err => console.error("Error fetching city suggestions:", err));
     }, 300);
 });
 
-document.addEventListener('click', (e) => {
-    if (!e.target.closest('.controls')) {
-        suggestionsDiv.style.display = 'none';
+// Enter Key Listeners
+document.getElementById('country-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        document.getElementById('pin-country-btn').click();
     }
 });
 
-map.on('moveend', () => {
-    if (searchInput.value) {
-        updateSuggestions(searchInput.value);
+document.getElementById('city-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        document.getElementById('pin-city-btn').click();
     }
 });
 
-// Array to store visited locations
-let visitedLocations = [];
-
-// Add click event to the map
-map.on('click', function(e) {
-    const lat = e.latlng.lat;
-    const lng = e.latlng.lng;
+// Pin Country by Name
+document.getElementById('pin-country-btn').addEventListener('click', () => {
+    const name = document.getElementById('country-input').value;
+    if (!name) return;
     
-    // Create a marker at the clicked location
-    const marker = L.marker([lat, lng]).addTo(map);
-    
-    // Reverse geocoding to get city name using Nominatim
-    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
-        .then(response => response.json())
+    // Geocode
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(name)}&polygon_geojson=1`)
+        .then(res => res.json())
         .then(data => {
-            const cityName = data.address.city || data.address.town || data.address.village || 'Unknown location';
-            
-            // Add popup with city name
-            marker.bindPopup(cityName).openPopup();
-            
-            // Store the location
-            visitedLocations.push({
-                cityName: cityName,
-                latitude: lat,
-                longitude: lng
-            });
-            
-            // Optional: Log the visited locations
-            console.log('Visited locations:', visitedLocations);
-        })
-        .catch(error => {
-            console.error('Error getting location name:', error);
-            marker.bindPopup('Location added').openPopup();
+            if (data.length > 0) {
+                // Filter for country if possible
+                const result = data[0];
+                let finalName = name; // Default to input name
+
+                // Try to match with GeoJSON names for consistent coloring
+                // This is tricky because Nominatim names might differ from GeoJSON names.
+                // However, we populated the datalist from GeoJSON, so if user picked from list, it matches.
+                // If they typed manually, we might have a mismatch.
+                // We'll trust the user input or the Nominatim display name.
+                // Ideally, we check against our `countriesGeoJSON` layers.
+
+                saveMarker(result.lat, result.lon, finalName, 'Country');
+                map.setView([result.lat, result.lon], 4);
+
+                document.getElementById('country-input').value = '';
+            } else {
+                alert('Country not found');
+            }
         });
 });
 
-// Layer groups for visited and wishlist countries
-var visitedLayer = L.layerGroup().addTo(map);
-var wishlistLayer = L.layerGroup().addTo(map);
+// Pin City by Name
+document.getElementById('pin-city-btn').addEventListener('click', () => {
+    const name = document.getElementById('city-input').value;
+    if (!name) return;
 
-// Function to handle clicks and add markers
-function onMapClick(e) {
-    var marker = L.marker(e.latlng).addTo(visitedLayer)
-        .bindPopup("Visited: " + e.latlng.toString());
-}
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(name)}&addressdetails=1`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.length > 0) {
+                const result = data[0];
+                const cityName = result.address.city || result.address.town || result.address.village || result.name;
+                const countryName = result.address.country;
+                const displayName = `${cityName}, ${countryName}`;
 
-// Click event to mark cities as visited
-map.on('click', onMapClick);
-
-// You can later add functions to distinguish between "Visited" and "Wishlist"
-document.getElementById('mode').addEventListener('change', function(e) {
-    var mode = e.target.value;
-    map.off('click');
-    map.on('click', function(e) {
-        var layer = mode === 'visited' ? visitedLayer : wishlistLayer;
-        var marker = L.marker(e.latlng).addTo(layer)
-            .bindPopup(mode.charAt(0).toUpperCase() + mode.slice(1) + ": " + e.latlng.toString());
-    });
+                saveMarker(result.lat, result.lon, displayName, 'City');
+                map.setView([result.lat, result.lon], 10);
+                document.getElementById('city-input').value = '';
+            } else {
+                alert('City not found');
+            }
+        });
 });
+
+// Initialization
+checkAuth();
