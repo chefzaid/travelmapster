@@ -1,6 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const sqlite3 = require('sqlite3').verbose();
+const Database = require('better-sqlite3');
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const bcrypt = require('bcrypt');
@@ -10,7 +10,7 @@ const FacebookStrategy = require('passport-facebook').Strategy;
 const path = require('path');
 
 const app = express();
-const db = new sqlite3.Database('./markers.db');
+const db = new Database('./markers.db');
 
 app.use(bodyParser.json());
 app.use(session({ secret: 'your-secret-key', resave: false, saveUninitialized: false }));
@@ -57,14 +57,17 @@ db.serialize(() => {
 
 // Passport Local Strategy for username/password authentication
 passport.use(new LocalStrategy((username, password, done) => {
-    db.get('SELECT * FROM users WHERE username = ?', [username], (err, user) => {
-        if (err) return done(err);
+    try {
+        const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
         if (!user) return done(null, false, { message: 'Incorrect username.' });
         bcrypt.compare(password, user.password, (err, res) => {
+            if (err) return done(err);
             if (res) return done(null, user);
             return done(null, false, { message: 'Incorrect password.' });
         });
-    });
+    } catch (err) {
+        return done(err);
+    }
 }));
 
 passport.serializeUser((user, done) => {
@@ -72,9 +75,12 @@ passport.serializeUser((user, done) => {
 });
 
 passport.deserializeUser((id, done) => {
-    db.get('SELECT * FROM users WHERE id = ?', [id], (err, user) => {
-        done(err, user);
-    });
+    try {
+        const user = db.prepare('SELECT * FROM users WHERE id = ?').get(id);
+        done(null, user);
+    } catch (err) {
+        done(err);
+    }
 });
 
 // Middleware to check if user is authenticated (Optional but recommended for production)
