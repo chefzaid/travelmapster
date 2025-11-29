@@ -1,80 +1,115 @@
 body {
     margin: 0;
     padding: 0;
+    font-family: Arial, sans-serif;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
 }
 
-h1 {
-    text-align: center;
-    margin: 10px 0;
-    color: #333;
-}
-
-.search-container {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1000;
+#sidebar {
     width: 300px;
-    margin-top: 10px;
+    background-color: #f8f9fa;
+    padding: 20px;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
 }
 
-#citySearch {
-    width: 100%;
-    padding: 10px 15px;
-    border: 1px solid #ccc;
-    border-radius: 20px;
-    font-size: 16px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    transition: all 0.3s ease;
-}
-
-#citySearch:focus {
-    outline: none;
-    border-color: #4a90e2;
-    box-shadow: 0 2px 8px rgba(74,144,226,0.2);
-}
-
-.suggestions {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    margin-top: 5px;
-    max-height: 200px;
-    overflow-y: auto;
-    display: none;
-}
-
-.suggestion-item {
-    padding: 10px 15px;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-}
-
-.suggestion-item:hover {
-    background-color: #f5f5f5;
+#map-container {
+    flex-grow: 1;
+    position: relative;
 }
 
 #map {
-    height: calc(100vh - 60px);
+    height: 100%;
     width: 100%;
-    position: relative;
-    z-index: 1;
 }
 
-.remove-pin {
-    color: #ff4444;
-    cursor: pointer;
-    margin-top: 5px;
+h2 {
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.input-group {
+    margin-bottom: 15px;
+}
+
+.input-group label {
     display: block;
-    text-decoration: none;
-    font-size: 14px;
-    padding: 3px 0;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #555;
 }
 
-.remove-pin:hover {
-    color: #ff0000;
-} 
+.input-group input[type="text"] {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.pin-type-selector {
+    margin-bottom: 20px;
+    padding: 10px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.pin-type-selector label {
+    margin-right: 15px;
+    cursor: pointer;
+}
+
+.auth-section {
+    margin-top: auto;
+    border-top: 1px solid #ddd;
+    padding-top: 20px;
+}
+
+.btn {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    margin-bottom: 10px;
+}
+
+.btn:hover {
+    background-color: #0056b3;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+}
+
+.btn-secondary:hover {
+    background-color: #545b62;
+}
+
+/* Auth Forms */
+.auth-form {
+    display: none;
+}
+
+.auth-form.active {
+    display: block;
+}
+
+/* Remove pin link in popup */
+.remove-pin {
+    color: #dc3545;
+    cursor: pointer;
+    text-decoration: underline;
+    margin-top: 5px;
+    display: inline-block;
+}
