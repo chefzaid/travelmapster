@@ -47,3 +47,32 @@
 
 ### V3: Itinerary Planning
 - Plan travel itineraries from scratch or based on suggestions
+
+---
+
+## How to Run Locally
+
+1.  **Install Dependencies:**
+    ```bash
+    npm install
+    ```
+    *Note: If you encounter issues with `sqlite3`, ensure you have python3 installed.*
+
+2.  **Start the Server:**
+    ```bash
+    npm start
+    ```
+    Or directly:
+    ```bash
+    node server.js
+    ```
+
+3.  **Access the Application:**
+    Open your browser and navigate to:
+    [http://localhost:3000](http://localhost:3000)
+
+4.  **Usage:**
+    -   Register a new account or login with an existing one.
+    -   Use the sidebar to choose between "Visited" and "Wishlist".
+    -   Pin countries by clicking on the map or entering the name.
+    -   Pin cities by entering the name.
