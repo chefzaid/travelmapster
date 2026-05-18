@@ -1,6 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const Database = require('better-sqlite3');
+const { DatabaseSync } = require('node:sqlite');
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const bcrypt = require('bcrypt');
@@ -10,7 +10,7 @@ const FacebookStrategy = require('passport-facebook').Strategy;
 const path = require('path');
 
 const app = express();
-const db = new Database('./markers.db');
+const db = new DatabaseSync(path.join(__dirname, 'markers.db'));
 
 app.use(bodyParser.json());
 app.use(session({ secret: 'your-secret-key', resave: false, saveUninitialized: false }));
@@ -135,7 +135,8 @@ app.post('/addMarker', isAuthenticated, (req, res) => {
 
     try {
         const result = db.prepare("INSERT INTO markers (user_id, lat, lng, type, name, category) VALUES (?, ?, ?, ?, ?, ?)").run(userId, lat, lng, type, name, category);
-        res.status(200).json({ id: result.lastInsertRowid });
+        const markerId = typeof result.lastInsertRowid === 'bigint' ? Number(result.lastInsertRowid) : result.lastInsertRowid;
+        res.status(200).json({ id: markerId });
     } catch (err) {
         console.error(err);
         res.status(500).send("Error saving marker");

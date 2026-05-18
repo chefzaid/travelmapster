@@ -56,7 +56,7 @@
     ```bash
     npm install
     ```
-    *Note: If you encounter issues with `sqlite3`, ensure you have python3 installed.*
+  *Note: This project now uses Node's built-in `node:sqlite` module, so use Node 22.5+.*
 
 2.  **Start the Server:**
     ```bash
