@@ -1,78 +1,76 @@
-## TravelMapster
+# TravelMapster
 
-**Requirements:**
-- Name: **TravelMapster**
-- Frontend: **HTML**, **CSS**, **JavaScript**
-- Backend: **Node.js**
-- Database: **SQLite**
-- UI Framework: **Bootstrap** (with a simple logo)
-- Homepage:
-  - Page-wide video of traveling
-  - Page-wide horizontal icons with travel themes
-  - Three columns (each with an image and title):
-    1. **Travel Map**
-    2. **Travel Suggestions**
-    3. **Itinerary Planning**
-- Login options: Email/Password, Google, Facebook
-- Data persisted in DB
+![HTML](https://img.shields.io/badge/HTML-E34F26?logo=html5&logoColor=white)
+![CSS](https://img.shields.io/badge/CSS-1572B6?logo=css3&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=000)
+![Node.js](https://img.shields.io/badge/Node.js-22.5%2B-339933?logo=node.js&logoColor=white)
+![Express](https://img.shields.io/badge/Express-4.x-000?logo=express&logoColor=white)
+![SQLite](https://img.shields.io/badge/SQLite-node%3Asqlite-003B57?logo=sqlite&logoColor=white)
+![Leaflet](https://img.shields.io/badge/Leaflet-map-199900?logo=leaflet&logoColor=white)
+![Passport](https://img.shields.io/badge/Passport-auth-34E27A?logo=passport&logoColor=000)
 
-**Map Requirements:**
-- Simple 2D map with country frontiers only
-- Zooming in reveals major cities
-- Cartoonish and approximate representation
-- No roads, rivers, or landscape features
+TravelMapster is a simple travel map app for tracking places you have visited and places you want to visit.
 
----
+Log in, add pins to a world map, and save your travel data.
 
-### V1: Travel Map
-- Interactive map to pin visited countries or wishlist destinations
-- Two pin types: **Visited** and **Wishlist** (distinct icons)
-- Add/remove pins
-- Two textboxes on the left: 
-  - One for countries
-  - One for cities
-- Pin countries by:
-  - Clicking on the map  
-  - Entering the country name
-- Pin cities only by entering city names
+## Features
 
-### V2: Travel Suggestions
-- Suggest places to visit in a given country
-- Suggest sights in a specific city/place
-- Suggest itineraries given:
-  - City
-  - Number of days
-  - Times of day (morning, afternoon, evening, night)
-- Enriched profile page
+- [x] Interactive world map
+- [x] User registration and login with username/password
+- [x] Logout support
+- [x] Save user markers in SQLite
+- [x] Load saved markers after login
+- [x] Add visited places
+- [x] Add wishlist places
+- [x] Use different marker colors for visited and wishlist pins
+- [x] Pin countries by clicking on the map
+- [x] Pin countries by entering a country name
+- [x] Pin cities by entering a city name
+- [x] Country autocomplete list
+- [x] City suggestions using Nominatim/OpenStreetMap
+- [x] Remove saved pins
+- [x] Highlight visited countries on the map
+- [ ] Add Google and Facebook login
+- [ ] Add a proper homepage with travel visuals
+- [ ] Add a simple TravelMapster logo
+- [ ] Improve the UI with Bootstrap or a cleaner custom layout
+- [ ] Show major cities when zooming in
+- [ ] Use a simplified map theme
+- [ ] Add a profile page
+- [ ] Add travel suggestions by country
+- [ ] Add city/place sight suggestions
+- [ ] Generate itinerary suggestions by city/country, number of days, and time of day (morning, afternoon, evening)
+- [ ] Let users build and save custom itineraries
+- [ ] Add marker editing instead of delete-and-recreate only
+- [ ] Add tests for auth, marker storage, and map API routes
+- [ ] Add notes to each pin
+- [ ] Add travel dates to visited places
+- [ ] Add filters for visited, wishlist, countries, and cities
+- [ ] Add a search box that jumps to saved pins
+- [ ] Add basic trip statistics, such as countries visited and cities saved
+- [ ] Export saved places as JSON or CSV
+- [ ] Import saved places from JSON or CSV
+- [ ] Add private/public profile settings
+- [ ] Add image uploads or photo links for visited places
 
-### V3: Itinerary Planning
-- Plan travel itineraries from scratch or based on suggestions
+## Map Requirements
 
----
+- Keep the map simple and focused on travel tracking.
+- Show only countries borders, not regions or other subdivisions.
+- Avoid too much detailed terrain and map noise.
+- Show more city-level detail only when zoomed in.
 
-## How to Run Locally
+## Run Locally
 
-1.  **Install Dependencies:**
-    ```bash
-    npm install
-    ```
-  *Note: This project now uses Node's built-in `node:sqlite` module, so use Node 22.5+.*
+Requires Node.js `22.5.0` or newer.
 
-2.  **Start the Server:**
-    ```bash
-    npm start
-    ```
-    Or directly:
-    ```bash
-    node server.js
-    ```
+```bash
+npm install
+npm start
+```
 
-3.  **Access the Application:**
-    Open your browser and navigate to:
-    [http://localhost:3000](http://localhost:3000)
+Then open:
 
-4.  **Usage:**
-    -   Register a new account or login with an existing one.
-    -   Use the sidebar to choose between "Visited" and "Wishlist".
-    -   Pin countries by clicking on the map or entering the name.
-    -   Pin cities by entering the name.
+```text
+http://localhost:3000
+```
