@@ -120,6 +120,43 @@ h2 {
     color: #555;
 }
 
+.stats-panel {
+    border-top: 1px solid #ddd;
+    margin-top: 15px;
+    padding-top: 15px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.stats-grid div {
+    padding: 8px 4px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.stats-grid span,
+.stats-grid small {
+    display: block;
+}
+
+.stats-grid span {
+    color: #007bff;
+    font-size: 1.25rem;
+    font-weight: bold;
+}
+
+.stats-grid small {
+    color: #555;
+    font-size: 0.7rem;
+}
+
 .auth-section {
     margin-top: auto;
     border-top: 1px solid #ddd;
