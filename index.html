@@ -73,6 +73,14 @@
                 <small>Or click on the map to pin a country.</small>
             </div>
 
+            <div class="suggestions-panel">
+                <strong>Travel suggestions</strong>
+                <small>Enter a country above, then browse guide highlights.</small>
+                <button id="country-suggestions-btn" class="btn" style="margin-top: 8px;">Suggest Places</button>
+                <small id="suggestions-status" role="status" aria-live="polite"></small>
+                <ul id="country-suggestions-list"></ul>
+            </div>
+
             <div class="input-group">
                 <label for="city-input">Pin City</label>
                 <input type="text" id="city-input" placeholder="Enter city name...">
@@ -185,5 +193,6 @@
     <script src="profile.js"></script>
     <script src="photo.js"></script>
     <script src="edit.js"></script>
+    <script src="suggestions.js"></script>
 </body>
 </html>

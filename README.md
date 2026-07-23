@@ -37,7 +37,7 @@ Log in, add pins to a world map, and save your travel data.
 - [ ] Show major cities when zooming in
 - [ ] Use a simplified map theme
 - [ ] Add a profile page
-- [ ] Add travel suggestions by country
+- [x] Add travel suggestions by country
 - [ ] Add city/place sight suggestions
 - [ ] Generate itinerary suggestions by city/country, number of days, and time of day (morning, afternoon, evening)
 - [ ] Let users build and save custom itineraries
