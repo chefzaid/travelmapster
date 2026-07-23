@@ -88,6 +88,35 @@ h2 {
     resize: vertical;
 }
 
+.edit-panel {
+    border-top: 1px solid #ddd;
+    margin-top: 15px;
+    padding-top: 15px;
+}
+
+.edit-panel label {
+    display: block;
+    color: #555;
+    font-size: 0.85rem;
+    font-weight: bold;
+    margin: 10px 0 6px;
+}
+
+.edit-panel input,
+.edit-panel select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.edit-panel small {
+    display: block;
+    min-height: 16px;
+    color: #555;
+}
+
 .pin-type-selector {
     margin-bottom: 20px;
     padding: 10px;
@@ -293,6 +322,14 @@ h2 {
 /* Remove pin link in popup */
 .remove-pin {
     color: #dc3545;
+    cursor: pointer;
+    text-decoration: underline;
+    margin-top: 5px;
+    display: inline-block;
+}
+
+.edit-pin {
+    color: #007bff;
     cursor: pointer;
     text-decoration: underline;
     margin-top: 5px;

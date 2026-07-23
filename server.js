@@ -275,6 +275,31 @@ app.post('/addMarker', isAuthenticated, (req, res) => {
     }
 });
 
+app.patch('/updateMarker/:id', isAuthenticated, (req, res) => {
+    const userId = req.user.id;
+    const markerId = Number(req.params.id);
+    const { marker, error } = parseMarkerPayload(req.body);
+
+    if (!Number.isInteger(markerId) || markerId < 1) {
+        return res.status(400).json({ error: 'Invalid marker id.' });
+    }
+    if (error) {
+        return res.status(400).json({ error });
+    }
+
+    try {
+        const result = db.prepare("UPDATE markers SET lat = ?, lng = ?, type = ?, name = ?, category = ?, photo_url = ?, notes = ?, travel_date = ? WHERE id = ? AND user_id = ?")
+            .run(marker.lat, marker.lng, marker.type, marker.name, marker.category, marker.photoUrl, marker.notes, marker.travelDate, markerId, userId);
+        if (result.changes === 0) {
+            return res.status(404).json({ error: 'Marker not found.' });
+        }
+        res.status(204).send();
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Error updating marker' });
+    }
+});
+
 // Delete a marker
 app.delete('/deleteMarker/:id', isAuthenticated, (req, res) => {
     const userId = req.user.id;

@@ -190,6 +190,7 @@ function addMarkerToMap(data) {
         ${buildPhotoLink(data)}
         ${buildMarkerNotes(data)}
         ${buildTravelDate(data)}
+        <span class="edit-pin" onclick="editMarker(${Number(data.id)})">Edit Place</span><br>
         <span class="remove-pin" onclick="deleteMarker(${Number(data.id)})">Remove Pin</span>
     `);
     // Store ID on marker for reference
@@ -214,7 +215,6 @@ function getVisibleMarkers() {
         return matchesType && matchesCategory;
     });
 }
-
 function renderMarkers() {
     visitedLayer.clearLayers();
     wishlistLayer.clearLayers();
@@ -237,7 +237,6 @@ function updateSavedPlaceSuggestions() {
             datalist.appendChild(option);
         });
 }
-
 function searchSavedPlace() {
     const query = document.getElementById('saved-place-search').value.trim().toLowerCase();
     const status = document.getElementById('saved-place-search-status');
@@ -263,14 +262,12 @@ function searchSavedPlace() {
     marker?.openPopup();
     status.textContent = `Showing ${match.name}.`;
 }
-
 document.getElementById('saved-place-search-btn').addEventListener('click', searchSavedPlace);
 document.getElementById('saved-place-search').addEventListener('keydown', event => {
     if (event.key === 'Enter') {
         searchSavedPlace();
     }
 });
-
 function updateTripStats() {
     const visitedCountries = new Set(
         markers
@@ -320,6 +317,9 @@ function downloadSavedPlaces() {
 
 document.getElementById('export-places-btn').addEventListener('click', downloadSavedPlaces);
 function saveMarker(lat, lng, name, category) {
+    if (window.editingMarkerId && typeof updateMarker === 'function') {
+        return updateMarker(lat, lng, name, category);
+    }
     const type = getPinType();
     const photoUrl = getPhotoUrl();
     const notes = getMarkerNotes();
