@@ -147,9 +147,13 @@ document.getElementById('register-btn').addEventListener('click', () => {
 document.getElementById('logout-btn').addEventListener('click', () => {
     fetch('/logout', { method: 'POST' }).then(() => {
         currentUser = null;
+        markers = [];
+        markerInstances.clear();
         visitedLayer.clearLayers();
         wishlistLayer.clearLayers();
         visitedCountriesSet.clear();
+        updateSavedPlaceSuggestions();
+        updateTripStats();
         updateMapStyles();
         checkAuth();
     });
@@ -271,6 +275,23 @@ document.getElementById('saved-place-search').addEventListener('keydown', event 
     }
 });
 
+function updateTripStats() {
+    const visitedCountries = new Set(
+        markers
+            .filter(marker => marker.type === 'visited' && marker.category === 'Country')
+            .map(marker => marker.name)
+    );
+    const savedCities = new Set(
+        markers
+            .filter(marker => marker.category === 'City')
+            .map(marker => marker.name)
+    );
+
+    document.getElementById('visited-countries-stat').textContent = visitedCountries.size;
+    document.getElementById('saved-cities-stat').textContent = savedCities.size;
+    document.getElementById('saved-places-stat').textContent = markers.length;
+}
+
 function saveMarker(lat, lng, name, category) {
     const type = getPinType();
     fetch('/addMarker', {
@@ -284,6 +305,7 @@ function saveMarker(lat, lng, name, category) {
             id: data.id,
             lat, lng, type, name, category
         });
+        updateTripStats();
         renderMarkers();
     })
     .catch(err => console.error(err));
@@ -304,6 +326,7 @@ function loadMarkers() {
         .then(data => {
             markers = data;
             updateSavedPlaceSuggestions();
+            updateTripStats();
             renderMarkers();
         });
 }
