@@ -74,11 +74,13 @@ function validateImportRecord(record) {
     const name = typeof record.name === 'string' ? record.name.trim() : '';
     const category = typeof record.category === 'string' ? record.category.trim() : '';
     const photoUrl = typeof record.photoUrl === 'string' ? record.photoUrl.trim() : '';
+    const notes = typeof record.notes === 'string' ? record.notes.trim() : '';
 
     if (!Number.isFinite(lat) || lat < -90 || lat > 90) return null;
     if (!Number.isFinite(lng) || lng < -180 || lng > 180) return null;
     if (!['visited', 'wishlist'].includes(type)) return null;
     if (!['Country', 'City'].includes(category) || !name) return null;
+    if (notes.length > 2000) return null;
     if (photoUrl) {
         try {
             const parsedPhotoUrl = new URL(photoUrl);
@@ -88,7 +90,7 @@ function validateImportRecord(record) {
         }
     }
 
-    return { lat, lng, type, name, category, photoUrl };
+    return { lat, lng, type, name, category, photoUrl, notes };
 }
 
 async function importSavedPlaces() {

@@ -180,7 +180,6 @@ function toggleAuthForms() {
 function getPinType() {
     return document.querySelector('input[name="pinType"]:checked').value;
 }
-
 function addMarkerToMap(data) {
     const icon = data.type === 'visited' ? visitedIcon : wishlistIcon;
     const layer = data.type === 'visited' ? visitedLayer : wishlistLayer;
@@ -189,6 +188,7 @@ function addMarkerToMap(data) {
         <strong>${escapeHtml(data.name)}</strong> (${escapeHtml(data.category)})<br>
         Type: ${escapeHtml(data.type)}<br>
         ${buildPhotoLink(data)}
+        ${buildMarkerNotes(data)}
         <span class="remove-pin" onclick="deleteMarker(${Number(data.id)})">Remove Pin</span>
     `);
     // Store ID on marker for reference
@@ -196,7 +196,6 @@ function addMarkerToMap(data) {
     marker.addTo(layer);
     markerInstances.set(String(data.id), marker);
 }
-
 function updateVisitedCountries() {
     visitedCountriesSet = new Set(
         markers
@@ -294,7 +293,7 @@ function escapeCsvField(value) {
     return `"${String(value ?? '').replace(/"/g, '""')}"`;
 }
 function buildCsvExport() {
-    const fields = ['id', 'lat', 'lng', 'type', 'name', 'category', 'photoUrl'];
+    const fields = ['id', 'lat', 'lng', 'type', 'name', 'category', 'photoUrl', 'notes'];
     const rows = [fields, ...markers.map(marker => fields.map(field => marker[field]))];
     return rows.map(row => row.map(escapeCsvField).join(',')).join('\r\n');
 }
@@ -325,24 +324,25 @@ document.getElementById('export-places-btn').addEventListener('click', downloadS
 function saveMarker(lat, lng, name, category) {
     const type = getPinType();
     const photoUrl = getPhotoUrl();
+    const notes = getMarkerNotes();
     fetch('/addMarker', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lat, lng, type, name, category, photoUrl })
+        body: JSON.stringify({ lat, lng, type, name, category, photoUrl, notes })
     })
     .then(res => res.json())
     .then(data => {
         markers.push({
             id: data.id,
-            lat, lng, type, name, category, photoUrl
+            lat, lng, type, name, category, photoUrl, notes
         });
         clearPhotoUrl();
+        clearMarkerNotes();
         updateTripStats();
         renderMarkers();
     })
     .catch(err => console.error(err));
 }
-
 window.deleteMarker = function(id) {
     fetch(`/deleteMarker/${id}`, { method: 'DELETE' })
     .then(res => {

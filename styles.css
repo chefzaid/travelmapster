@@ -73,12 +73,18 @@ h2 {
 }
 
 .input-group input[type="text"],
-.input-group input[type="url"] {
+.input-group input[type="url"],
+.input-group textarea {
     width: 100%;
     padding: 8px;
     border: 1px solid #ddd;
     border-radius: 4px;
     box-sizing: border-box;
+}
+
+.input-group textarea {
+    min-height: 70px;
+    resize: vertical;
 }
 
 .pin-type-selector {
