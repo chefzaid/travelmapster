@@ -184,19 +184,17 @@ function getPinType() {
 function addMarkerToMap(data) {
     const icon = data.type === 'visited' ? visitedIcon : wishlistIcon;
     const layer = data.type === 'visited' ? visitedLayer : wishlistLayer;
-    
     const marker = L.marker([data.lat, data.lng], { icon: icon });
     marker.bindPopup(`
         <strong>${escapeHtml(data.name)}</strong> (${escapeHtml(data.category)})<br>
         Type: ${escapeHtml(data.type)}<br>
+        ${buildPhotoLink(data)}
         <span class="remove-pin" onclick="deleteMarker(${Number(data.id)})">Remove Pin</span>
     `);
-    
     // Store ID on marker for reference
     marker.dbId = data.id;
     marker.addTo(layer);
     markerInstances.set(String(data.id), marker);
-
 }
 
 function updateVisitedCountries() {
@@ -296,7 +294,7 @@ function escapeCsvField(value) {
     return `"${String(value ?? '').replace(/"/g, '""')}"`;
 }
 function buildCsvExport() {
-    const fields = ['id', 'lat', 'lng', 'type', 'name', 'category'];
+    const fields = ['id', 'lat', 'lng', 'type', 'name', 'category', 'photoUrl'];
     const rows = [fields, ...markers.map(marker => fields.map(field => marker[field]))];
     return rows.map(row => row.map(escapeCsvField).join(',')).join('\r\n');
 }
@@ -326,17 +324,19 @@ function downloadSavedPlaces() {
 document.getElementById('export-places-btn').addEventListener('click', downloadSavedPlaces);
 function saveMarker(lat, lng, name, category) {
     const type = getPinType();
+    const photoUrl = getPhotoUrl();
     fetch('/addMarker', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lat, lng, type, name, category })
+        body: JSON.stringify({ lat, lng, type, name, category, photoUrl })
     })
     .then(res => res.json())
     .then(data => {
         markers.push({
             id: data.id,
-            lat, lng, type, name, category
+            lat, lng, type, name, category, photoUrl
         });
+        clearPhotoUrl();
         updateTripStats();
         renderMarkers();
     })
