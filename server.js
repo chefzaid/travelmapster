@@ -48,6 +48,7 @@ db.exec(`CREATE TABLE IF NOT EXISTS markers (
     type TEXT,
     name TEXT,
     category TEXT,
+    photo_url TEXT,
     FOREIGN KEY (user_id) REFERENCES users(id)
 )`);
 
@@ -59,6 +60,9 @@ if (!columnNames.includes('name')) {
 }
 if (!columnNames.includes('category')) {
     db.exec("ALTER TABLE markers ADD COLUMN category TEXT");
+}
+if (!columnNames.includes('photo_url')) {
+    db.exec("ALTER TABLE markers ADD COLUMN photo_url TEXT");
 }
 
 const userColumns = db.prepare("PRAGMA table_info(users)").all();
@@ -77,6 +81,7 @@ function parseMarkerPayload(body) {
     const type = normalizeText(body.type);
     const name = normalizeText(body.name);
     const category = normalizeText(body.category);
+    const photoUrl = normalizeText(body.photoUrl);
 
     if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
         return { error: 'Latitude must be a number between -90 and 90.' };
@@ -98,7 +103,18 @@ function parseMarkerPayload(body) {
         return { error: 'Marker name is required.' };
     }
 
-    return { marker: { lat, lng, type, name, category } };
+    if (photoUrl) {
+        try {
+            const parsedPhotoUrl = new URL(photoUrl);
+            if (!['http:', 'https:'].includes(parsedPhotoUrl.protocol)) {
+                return { error: 'Photo link must use HTTP or HTTPS.' };
+            }
+        } catch (err) {
+            return { error: 'Photo link must be a valid URL.' };
+        }
+    }
+
+    return { marker: { lat, lng, type, name, category, photoUrl } };
 }
 
 // Passport Local Strategy for username/password authentication
@@ -224,7 +240,7 @@ app.post('/addMarker', isAuthenticated, (req, res) => {
     }
 
     try {
-        const result = db.prepare("INSERT INTO markers (user_id, lat, lng, type, name, category) VALUES (?, ?, ?, ?, ?, ?)").run(userId, marker.lat, marker.lng, marker.type, marker.name, marker.category);
+        const result = db.prepare("INSERT INTO markers (user_id, lat, lng, type, name, category, photo_url) VALUES (?, ?, ?, ?, ?, ?, ?)").run(userId, marker.lat, marker.lng, marker.type, marker.name, marker.category, marker.photoUrl);
         const markerId = typeof result.lastInsertRowid === 'bigint' ? Number(result.lastInsertRowid) : result.lastInsertRowid;
         res.status(200).json({ id: markerId });
     } catch (err) {
@@ -255,7 +271,7 @@ app.delete('/deleteMarker/:id', isAuthenticated, (req, res) => {
 app.get('/getMarkers', isAuthenticated, (req, res) => {
     const userId = req.user.id;
     try {
-        const rows = db.prepare("SELECT id, lat, lng, type, name, category FROM markers WHERE user_id = ?").all(userId);
+        const rows = db.prepare("SELECT id, lat, lng, type, name, category, photo_url AS photoUrl FROM markers WHERE user_id = ?").all(userId);
         res.json(rows);
     } catch (err) {
         console.error(err);

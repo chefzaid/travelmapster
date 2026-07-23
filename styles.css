@@ -72,7 +72,8 @@ h2 {
     color: #555;
 }
 
-.input-group input[type="text"] {
+.input-group input[type="text"],
+.input-group input[type="url"] {
     width: 100%;
     padding: 8px;
     border: 1px solid #ddd;
