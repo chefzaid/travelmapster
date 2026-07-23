@@ -16,6 +16,7 @@ let countriesGeoJSON = null;
 let currentUser = null;
 let markers = [];
 let visitedCountriesSet = new Set();
+const markerInstances = new Map();
 
 // Icons
 const visitedIcon = new L.Icon({
@@ -189,6 +190,7 @@ function addMarkerToMap(data) {
     // Store ID on marker for reference
     marker.dbId = data.id;
     marker.addTo(layer);
+    markerInstances.set(String(data.id), marker);
 
 }
 
@@ -214,6 +216,7 @@ function getVisibleMarkers() {
 function renderMarkers() {
     visitedLayer.clearLayers();
     wishlistLayer.clearLayers();
+    markerInstances.clear();
     updateVisitedCountries();
     getVisibleMarkers().forEach(addMarkerToMap);
     updateMapStyles();
@@ -221,6 +224,52 @@ function renderMarkers() {
 
 document.getElementById('type-filter').addEventListener('change', renderMarkers);
 document.getElementById('category-filter').addEventListener('change', renderMarkers);
+
+function updateSavedPlaceSuggestions() {
+    const datalist = document.getElementById('saved-places-list');
+    datalist.replaceChildren();
+
+    [...new Set(markers.map(marker => marker.name))]
+        .sort((first, second) => first.localeCompare(second))
+        .forEach(name => {
+            const option = document.createElement('option');
+            option.value = name;
+            datalist.appendChild(option);
+        });
+}
+
+function searchSavedPlace() {
+    const query = document.getElementById('saved-place-search').value.trim().toLowerCase();
+    const status = document.getElementById('saved-place-search-status');
+    const match = markers.find(marker => marker.name.toLowerCase() === query)
+        || markers.find(marker => marker.name.toLowerCase().includes(query));
+
+    if (!query) {
+        status.textContent = 'Enter a saved country or city.';
+        return;
+    }
+
+    if (!match) {
+        status.textContent = 'No saved place matches that search.';
+        return;
+    }
+
+    document.getElementById('type-filter').value = 'all';
+    document.getElementById('category-filter').value = 'all';
+    renderMarkers();
+
+    const marker = markerInstances.get(String(match.id));
+    map.setView([match.lat, match.lng], match.category === 'City' ? 10 : 4);
+    marker?.openPopup();
+    status.textContent = `Showing ${match.name}.`;
+}
+
+document.getElementById('saved-place-search-btn').addEventListener('click', searchSavedPlace);
+document.getElementById('saved-place-search').addEventListener('keydown', event => {
+    if (event.key === 'Enter') {
+        searchSavedPlace();
+    }
+});
 
 function saveMarker(lat, lng, name, category) {
     const type = getPinType();
@@ -254,6 +303,7 @@ function loadMarkers() {
         .then(res => res.json())
         .then(data => {
             markers = data;
+            updateSavedPlaceSuggestions();
             renderMarkers();
         });
 }

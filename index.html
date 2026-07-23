@@ -85,6 +85,14 @@
                     <option value="City">Cities</option>
                 </select>
             </div>
+
+            <div class="search-panel">
+                <label for="saved-place-search">Find a saved place</label>
+                <input type="search" id="saved-place-search" list="saved-places-list" placeholder="Search countries or cities...">
+                <datalist id="saved-places-list"></datalist>
+                <button id="saved-place-search-btn" class="btn" style="margin-top: 5px;">Find Place</button>
+                <small id="saved-place-search-status" role="status" aria-live="polite"></small>
+            </div>
         </div>
     </div>
 
