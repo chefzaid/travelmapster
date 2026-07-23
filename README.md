@@ -50,7 +50,7 @@ Log in, add pins to a world map, and save your travel data.
 - [x] Add basic trip statistics, such as countries visited and cities saved
 - [x] Export saved places as JSON or CSV
 - [x] Import saved places from JSON or CSV
-- [ ] Add private/public profile settings
+- [x] Add private/public profile settings
 - [ ] Add image uploads or photo links for visited places
 
 ## Map Requirements
