@@ -186,6 +186,32 @@ h2 {
     color: #555;
 }
 
+.import-panel {
+    border-top: 1px solid #ddd;
+    margin-top: 15px;
+    padding-top: 15px;
+}
+
+.import-panel label {
+    display: block;
+    color: #555;
+    font-size: 0.85rem;
+    font-weight: bold;
+    margin-bottom: 6px;
+}
+
+.import-panel input[type="file"] {
+    width: 100%;
+    box-sizing: border-box;
+    font-size: 0.8rem;
+}
+
+.import-panel small {
+    display: block;
+    min-height: 16px;
+    color: #555;
+}
+
 .auth-section {
     margin-top: auto;
     border-top: 1px solid #ddd;
