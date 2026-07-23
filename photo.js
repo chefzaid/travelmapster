@@ -14,6 +14,14 @@ function clearMarkerNotes() {
     document.getElementById('notes-input').value = '';
 }
 
+function getTravelDate() {
+    return document.getElementById('travel-date-input').value;
+}
+
+function clearTravelDate() {
+    document.getElementById('travel-date-input').value = '';
+}
+
 function buildPhotoLink(data) {
     if (!data.photoUrl) return '';
     return `<br><a href="${escapeHtml(data.photoUrl)}" target="_blank" rel="noopener noreferrer">View photo</a><br>`;
@@ -22,4 +30,9 @@ function buildPhotoLink(data) {
 function buildMarkerNotes(data) {
     if (!data.notes) return '';
     return `<br><strong>Notes:</strong> ${escapeHtml(data.notes)}<br>`;
+}
+
+function buildTravelDate(data) {
+    if (!data.travelDate) return '';
+    return `<br><strong>Travel date:</strong> ${escapeHtml(data.travelDate)}<br>`;
 }

@@ -189,6 +189,7 @@ function addMarkerToMap(data) {
         Type: ${escapeHtml(data.type)}<br>
         ${buildPhotoLink(data)}
         ${buildMarkerNotes(data)}
+        ${buildTravelDate(data)}
         <span class="remove-pin" onclick="deleteMarker(${Number(data.id)})">Remove Pin</span>
     `);
     // Store ID on marker for reference
@@ -203,7 +204,6 @@ function updateVisitedCountries() {
             .map(marker => marker.name)
     );
 }
-
 function getVisibleMarkers() {
     const typeFilter = document.getElementById('type-filter').value;
     const categoryFilter = document.getElementById('category-filter').value;
@@ -223,10 +223,8 @@ function renderMarkers() {
     getVisibleMarkers().forEach(addMarkerToMap);
     updateMapStyles();
 }
-
 document.getElementById('type-filter').addEventListener('change', renderMarkers);
 document.getElementById('category-filter').addEventListener('change', renderMarkers);
-
 function updateSavedPlaceSuggestions() {
     const datalist = document.getElementById('saved-places-list');
     datalist.replaceChildren();
@@ -293,7 +291,7 @@ function escapeCsvField(value) {
     return `"${String(value ?? '').replace(/"/g, '""')}"`;
 }
 function buildCsvExport() {
-    const fields = ['id', 'lat', 'lng', 'type', 'name', 'category', 'photoUrl', 'notes'];
+    const fields = ['id', 'lat', 'lng', 'type', 'name', 'category', 'photoUrl', 'notes', 'travelDate'];
     const rows = [fields, ...markers.map(marker => fields.map(field => marker[field]))];
     return rows.map(row => row.map(escapeCsvField).join(',')).join('\r\n');
 }
@@ -325,19 +323,21 @@ function saveMarker(lat, lng, name, category) {
     const type = getPinType();
     const photoUrl = getPhotoUrl();
     const notes = getMarkerNotes();
+    const travelDate = getTravelDate();
     fetch('/addMarker', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lat, lng, type, name, category, photoUrl, notes })
+        body: JSON.stringify({ lat, lng, type, name, category, photoUrl, notes, travelDate })
     })
     .then(res => res.json())
     .then(data => {
         markers.push({
             id: data.id,
-            lat, lng, type, name, category, photoUrl, notes
+            lat, lng, type, name, category, photoUrl, notes, travelDate
         });
         clearPhotoUrl();
         clearMarkerNotes();
+        clearTravelDate();
         updateTripStats();
         renderMarkers();
     })

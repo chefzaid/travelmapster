@@ -51,6 +51,7 @@ db.exec(`CREATE TABLE IF NOT EXISTS markers (
     category TEXT,
     photo_url TEXT,
     notes TEXT,
+    travel_date TEXT,
     FOREIGN KEY (user_id) REFERENCES users(id)
 )`);
 
@@ -69,6 +70,9 @@ if (!columnNames.includes('photo_url')) {
 if (!columnNames.includes('notes')) {
     db.exec("ALTER TABLE markers ADD COLUMN notes TEXT");
 }
+if (!columnNames.includes('travel_date')) {
+    db.exec("ALTER TABLE markers ADD COLUMN travel_date TEXT");
+}
 
 const userColumns = db.prepare("PRAGMA table_info(users)").all();
 const userColumnNames = userColumns.map(c => c.name);
@@ -80,6 +84,13 @@ function normalizeText(value) {
     return typeof value === 'string' ? value.trim() : '';
 }
 
+function isValidTravelDate(value) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+    const [year, month, day] = value.split('-').map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day));
+    return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+}
+
 function parseMarkerPayload(body) {
     const lat = Number(body.lat);
     const lng = Number(body.lng);
@@ -88,6 +99,7 @@ function parseMarkerPayload(body) {
     const category = normalizeText(body.category);
     const photoUrl = normalizeText(body.photoUrl);
     const notes = normalizeText(body.notes);
+    const travelDate = normalizeText(body.travelDate);
 
     if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
         return { error: 'Latitude must be a number between -90 and 90.' };
@@ -113,6 +125,10 @@ function parseMarkerPayload(body) {
         return { error: 'Marker notes must be 2000 characters or fewer.' };
     }
 
+    if (travelDate && !isValidTravelDate(travelDate)) {
+        return { error: 'Travel date must be a valid YYYY-MM-DD date.' };
+    }
+
     if (photoUrl) {
         try {
             const parsedPhotoUrl = new URL(photoUrl);
@@ -124,7 +140,7 @@ function parseMarkerPayload(body) {
         }
     }
 
-    return { marker: { lat, lng, type, name, category, photoUrl, notes } };
+    return { marker: { lat, lng, type, name, category, photoUrl, notes, travelDate } };
 }
 
 // Passport Local Strategy for username/password authentication
@@ -250,7 +266,7 @@ app.post('/addMarker', isAuthenticated, (req, res) => {
     }
 
     try {
-        const result = db.prepare("INSERT INTO markers (user_id, lat, lng, type, name, category, photo_url, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)").run(userId, marker.lat, marker.lng, marker.type, marker.name, marker.category, marker.photoUrl, marker.notes);
+        const result = db.prepare("INSERT INTO markers (user_id, lat, lng, type, name, category, photo_url, notes, travel_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)").run(userId, marker.lat, marker.lng, marker.type, marker.name, marker.category, marker.photoUrl, marker.notes, marker.travelDate);
         const markerId = typeof result.lastInsertRowid === 'bigint' ? Number(result.lastInsertRowid) : result.lastInsertRowid;
         res.status(200).json({ id: markerId });
     } catch (err) {
@@ -281,7 +297,7 @@ app.delete('/deleteMarker/:id', isAuthenticated, (req, res) => {
 app.get('/getMarkers', isAuthenticated, (req, res) => {
     const userId = req.user.id;
     try {
-        const rows = db.prepare("SELECT id, lat, lng, type, name, category, photo_url AS photoUrl, notes FROM markers WHERE user_id = ?").all(userId);
+        const rows = db.prepare("SELECT id, lat, lng, type, name, category, photo_url AS photoUrl, notes, travel_date AS travelDate FROM markers WHERE user_id = ?").all(userId);
         res.json(rows);
     } catch (err) {
         console.error(err);
