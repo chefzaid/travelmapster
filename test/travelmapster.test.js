@@ -93,7 +93,8 @@ test('auth and marker API routes protect and persist travel data', async () => {
             name: 'France',
             category: 'Country',
             photoUrl: 'javascript:alert(1)',
-            notes: 'Unsafe link must not be stored.'
+            notes: 'Unsafe link must not be stored.',
+            travelDate: '2026-02-30'
         })
     });
     assert.equal(result.response.status, 400);
@@ -107,7 +108,8 @@ test('auth and marker API routes protect and persist travel data', async () => {
             name: 'France',
             category: 'Country',
             photoUrl: 'https://example.com/france.jpg',
-            notes: 'Visited in spring.'
+            notes: 'Visited in spring.',
+            travelDate: '2026-02-14'
         })
     });
     assert.equal(result.response.status, 200);
@@ -123,7 +125,8 @@ test('auth and marker API routes protect and persist travel data', async () => {
         name: 'France',
         category: 'Country',
         photoUrl: 'https://example.com/france.jpg',
-        notes: 'Visited in spring.'
+        notes: 'Visited in spring.',
+        travelDate: '2026-02-14'
     }]);
 
     result = await request('/profile', {

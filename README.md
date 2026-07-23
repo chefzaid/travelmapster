@@ -44,7 +44,7 @@ Log in, add pins to a world map, and save your travel data.
 - [ ] Add marker editing instead of delete-and-recreate only
 - [x] Add tests for auth, marker storage, and map API routes
 - [x] Add notes to each pin
-- [ ] Add travel dates to visited places
+- [x] Add travel dates to visited places
 - [x] Add filters for visited, wishlist, countries, and cities
 - [x] Add a search box that jumps to saved pins
 - [x] Add basic trip statistics, such as countries visited and cities saved

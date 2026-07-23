@@ -74,6 +74,7 @@ h2 {
 
 .input-group input[type="text"],
 .input-group input[type="url"],
+.input-group input[type="date"],
 .input-group textarea {
     width: 100%;
     padding: 8px;
