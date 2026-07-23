@@ -291,7 +291,38 @@ function updateTripStats() {
     document.getElementById('saved-cities-stat').textContent = savedCities.size;
     document.getElementById('saved-places-stat').textContent = markers.length;
 }
+function escapeCsvField(value) {
+    return `"${String(value ?? '').replace(/"/g, '""')}"`;
+}
+function buildCsvExport() {
+    const fields = ['id', 'lat', 'lng', 'type', 'name', 'category'];
+    const rows = [fields, ...markers.map(marker => fields.map(field => marker[field]))];
+    return rows.map(row => row.map(escapeCsvField).join(',')).join('\r\n');
+}
+function downloadSavedPlaces() {
+    const format = document.getElementById('export-format').value;
+    const status = document.getElementById('export-status');
+    if (markers.length === 0) {
+        status.textContent = 'No saved places to export.';
+        return;
+    }
+    const content = format === 'csv'
+        ? buildCsvExport()
+        : JSON.stringify(markers, null, 2);
+    const mimeType = format === 'csv' ? 'text/csv' : 'application/json';
+    const date = new Date().toISOString().slice(0, 10);
+    const downloadUrl = URL.createObjectURL(new Blob([content], { type: `${mimeType};charset=utf-8` }));
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = `travelmapster-places-${date}.${format}`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(downloadUrl), 0);
+    status.textContent = `Exported ${markers.length} places as ${format.toUpperCase()}.`;
+}
 
+document.getElementById('export-places-btn').addEventListener('click', downloadSavedPlaces);
 function saveMarker(lat, lng, name, category) {
     const type = getPinType();
     fetch('/addMarker', {

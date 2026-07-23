@@ -157,6 +157,35 @@ h2 {
     font-size: 0.7rem;
 }
 
+.export-panel {
+    border-top: 1px solid #ddd;
+    margin-top: 15px;
+    padding-top: 15px;
+}
+
+.export-panel label {
+    display: block;
+    color: #555;
+    font-size: 0.85rem;
+    font-weight: bold;
+    margin-bottom: 6px;
+}
+
+.export-panel select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+    background: #fff;
+}
+
+.export-panel small {
+    display: block;
+    min-height: 16px;
+    color: #555;
+}
+
 .auth-section {
     margin-top: auto;
     border-top: 1px solid #ddd;
