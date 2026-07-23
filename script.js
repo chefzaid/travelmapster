@@ -352,7 +352,7 @@ window.deleteMarker = function(id) {
 };
 
 function loadMarkers() {
-    fetch('/getMarkers')
+    return fetch('/getMarkers')
         .then(res => res.json())
         .then(data => {
             markers = data;

@@ -121,6 +121,13 @@
                 <button id="export-places-btn" class="btn" style="margin-top: 5px;">Export Places</button>
                 <small id="export-status" role="status" aria-live="polite"></small>
             </div>
+
+            <div class="import-panel">
+                <label for="import-file">Import saved places</label>
+                <input type="file" id="import-file" accept=".json,.csv,application/json,text/csv">
+                <button id="import-places-btn" class="btn" style="margin-top: 5px;">Import Places</button>
+                <small id="import-status" role="status" aria-live="polite"></small>
+            </div>
         </div>
     </div>
 
@@ -131,5 +138,6 @@
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
     <script src="script.js"></script>
+    <script src="import.js"></script>
 </body>
 </html>
