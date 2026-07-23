@@ -16,6 +16,15 @@
         <div id="auth-check" style="display:none;">
             <p>Welcome, <span id="username-display">User</span>!</p>
             <button id="logout-btn" class="btn btn-secondary">Logout</button>
+            <div class="profile-settings">
+                <label for="profile-visibility">Profile visibility</label>
+                <select id="profile-visibility">
+                    <option value="private">Private</option>
+                    <option value="public">Public</option>
+                </select>
+                <button id="save-profile-btn" class="btn" style="margin-top: 5px;">Save Profile</button>
+                <small id="profile-status" role="status" aria-live="polite"></small>
+            </div>
         </div>
 
         <div id="auth-forms">
@@ -139,5 +148,6 @@
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
     <script src="script.js"></script>
     <script src="import.js"></script>
+    <script src="profile.js"></script>
 </body>
 </html>

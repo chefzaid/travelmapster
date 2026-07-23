@@ -11,6 +11,7 @@ const PORT = Number(process.env.PORT) || 3000;
 const SESSION_SECRET = process.env.SESSION_SECRET || 'travelmapster-dev-secret';
 const VALID_MARKER_TYPES = new Set(['visited', 'wishlist']);
 const VALID_MARKER_CATEGORIES = new Set(['Country', 'City']);
+const VALID_PROFILE_VISIBILITIES = new Set(['private', 'public']);
 const db = new DatabaseSync(path.join(__dirname, 'markers.db'));
 
 app.use(express.json());
@@ -35,7 +36,8 @@ db.exec(`CREATE TABLE IF NOT EXISTS users (
     username TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL,
     oauth_provider TEXT DEFAULT NULL,
-    oauth_id TEXT DEFAULT NULL
+    oauth_id TEXT DEFAULT NULL,
+    profile_visibility TEXT NOT NULL DEFAULT 'private'
 )`);
 
 db.exec(`CREATE TABLE IF NOT EXISTS markers (
@@ -57,6 +59,12 @@ if (!columnNames.includes('name')) {
 }
 if (!columnNames.includes('category')) {
     db.exec("ALTER TABLE markers ADD COLUMN category TEXT");
+}
+
+const userColumns = db.prepare("PRAGMA table_info(users)").all();
+const userColumnNames = userColumns.map(c => c.name);
+if (!userColumnNames.includes('profile_visibility')) {
+    db.exec("ALTER TABLE users ADD COLUMN profile_visibility TEXT NOT NULL DEFAULT 'private'");
 }
 
 function normalizeText(value) {
@@ -179,9 +187,30 @@ app.post('/logout', (req, res, next) => {
 // Get current user
 app.get('/current_user', (req, res) => {
     if (req.isAuthenticated()) {
-        res.json({ id: req.user.id, username: req.user.username });
+        res.json({
+            id: req.user.id,
+            username: req.user.username,
+            profileVisibility: req.user.profile_visibility || 'private'
+        });
     } else {
         res.status(401).json({});
+    }
+});
+
+app.patch('/profile', isAuthenticated, (req, res) => {
+    const profileVisibility = normalizeText(req.body.profileVisibility);
+    if (!VALID_PROFILE_VISIBILITIES.has(profileVisibility)) {
+        return res.status(400).json({ error: 'Profile visibility must be private or public.' });
+    }
+
+    try {
+        db.prepare('UPDATE users SET profile_visibility = ? WHERE id = ?')
+            .run(profileVisibility, req.user.id);
+        req.user.profile_visibility = profileVisibility;
+        res.json({ profileVisibility });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Error saving profile settings' });
     }
 });
 

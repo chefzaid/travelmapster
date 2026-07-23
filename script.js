@@ -97,6 +97,7 @@ function checkAuth() {
                 document.getElementById('auth-forms').style.display = 'none';
                 document.getElementById('auth-check').style.display = 'block';
                 document.getElementById('username-display').textContent = user.username;
+                document.getElementById('profile-visibility').value = user.profileVisibility || 'private';
                 document.getElementById('controls').style.opacity = '1';
                 document.getElementById('controls').style.pointerEvents = 'auto';
                 loadMarkers();
