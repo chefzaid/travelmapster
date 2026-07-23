@@ -136,6 +136,34 @@ test('auth and marker API routes protect and persist travel data', async () => {
     assert.equal(result.response.status, 200);
     assert.equal(result.body.profileVisibility, 'public');
 
+    result = await request('/updateMarker/' + markerId, {
+        method: 'PATCH',
+        body: JSON.stringify({
+            lat: 51.5,
+            lng: -0.12,
+            type: 'wishlist',
+            name: 'London',
+            category: 'City',
+            photoUrl: '',
+            notes: 'Updated note.',
+            travelDate: '2026-06-01'
+        })
+    });
+    assert.equal(result.response.status, 204);
+
+    result = await request('/getMarkers');
+    assert.deepEqual(result.body, [{
+        id: markerId,
+        lat: 51.5,
+        lng: -0.12,
+        type: 'wishlist',
+        name: 'London',
+        category: 'City',
+        photoUrl: '',
+        notes: 'Updated note.',
+        travelDate: '2026-06-01'
+    }]);
+
     result = await request('/deleteMarker/' + markerId, { method: 'DELETE' });
     assert.equal(result.response.status, 204);
 
