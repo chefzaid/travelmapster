@@ -88,6 +88,41 @@ h2 {
     resize: vertical;
 }
 
+.suggestions-panel {
+    border-top: 1px solid #ddd;
+    margin: 15px 0;
+    padding-top: 15px;
+}
+
+.suggestions-panel strong,
+.suggestions-panel small {
+    display: block;
+}
+
+.suggestions-panel small {
+    color: #555;
+    font-size: 0.8rem;
+    margin-top: 5px;
+}
+
+.suggestions-panel ul {
+    list-style: none;
+    margin: 10px 0 0;
+    max-height: 180px;
+    overflow-y: auto;
+    padding: 0;
+}
+
+.suggestions-panel li {
+    border-top: 1px solid #e5e5e5;
+    padding: 8px 0;
+}
+
+.suggestions-panel li a {
+    color: #007bff;
+    font-weight: bold;
+}
+
 .edit-panel {
     border-top: 1px solid #ddd;
     margin-top: 15px;
