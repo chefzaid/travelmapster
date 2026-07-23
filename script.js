@@ -14,7 +14,8 @@ const visitedLayer = L.layerGroup().addTo(map);
 const wishlistLayer = L.layerGroup().addTo(map);
 let countriesGeoJSON = null;
 let currentUser = null;
-let visitedCountriesSet = new Set(); // To track visited countries names
+let markers = [];
+let visitedCountriesSet = new Set();
 
 // Icons
 const visitedIcon = new L.Icon({
@@ -180,21 +181,46 @@ function addMarkerToMap(data) {
     
     const marker = L.marker([data.lat, data.lng], { icon: icon });
     marker.bindPopup(`
-        <strong>${data.name}</strong> (${data.category})<br>
-        Type: ${data.type}<br>
-        <span class="remove-pin" onclick="deleteMarker(${data.id})">Remove Pin</span>
+        <strong>${escapeHtml(data.name)}</strong> (${escapeHtml(data.category)})<br>
+        Type: ${escapeHtml(data.type)}<br>
+        <span class="remove-pin" onclick="deleteMarker(${Number(data.id)})">Remove Pin</span>
     `);
     
     // Store ID on marker for reference
     marker.dbId = data.id;
     marker.addTo(layer);
 
-    // Update visited countries set if applicable
-    if (data.type === 'visited' && data.category === 'Country') {
-        visitedCountriesSet.add(data.name);
-        updateMapStyles();
-    }
 }
+
+function updateVisitedCountries() {
+    visitedCountriesSet = new Set(
+        markers
+            .filter(marker => marker.type === 'visited' && marker.category === 'Country')
+            .map(marker => marker.name)
+    );
+}
+
+function getVisibleMarkers() {
+    const typeFilter = document.getElementById('type-filter').value;
+    const categoryFilter = document.getElementById('category-filter').value;
+
+    return markers.filter(marker => {
+        const matchesType = typeFilter === 'all' || marker.type === typeFilter;
+        const matchesCategory = categoryFilter === 'all' || marker.category === categoryFilter;
+        return matchesType && matchesCategory;
+    });
+}
+
+function renderMarkers() {
+    visitedLayer.clearLayers();
+    wishlistLayer.clearLayers();
+    updateVisitedCountries();
+    getVisibleMarkers().forEach(addMarkerToMap);
+    updateMapStyles();
+}
+
+document.getElementById('type-filter').addEventListener('change', renderMarkers);
+document.getElementById('category-filter').addEventListener('change', renderMarkers);
 
 function saveMarker(lat, lng, name, category) {
     const type = getPinType();
@@ -205,10 +231,11 @@ function saveMarker(lat, lng, name, category) {
     })
     .then(res => res.json())
     .then(data => {
-        addMarkerToMap({
+        markers.push({
             id: data.id,
             lat, lng, type, name, category
         });
+        renderMarkers();
     })
     .catch(err => console.error(err));
 }
@@ -223,15 +250,11 @@ window.deleteMarker = function(id) {
 };
 
 function loadMarkers() {
-    visitedLayer.clearLayers();
-    wishlistLayer.clearLayers();
-    visitedCountriesSet.clear();
     fetch('/getMarkers')
         .then(res => res.json())
-        .then(markers => {
-            markers.forEach(addMarkerToMap);
-            // Ensure style is updated after all markers are loaded
-            updateMapStyles();
+        .then(data => {
+            markers = data;
+            renderMarkers();
         });
 }
 
