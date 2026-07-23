@@ -64,6 +64,34 @@ h2 {
     cursor: pointer;
 }
 
+.filter-panel {
+    border-top: 1px solid #ddd;
+    margin-top: 5px;
+    padding-top: 15px;
+}
+
+.filter-panel strong,
+.filter-panel label {
+    display: block;
+    margin-bottom: 6px;
+}
+
+.filter-panel label {
+    color: #555;
+    font-size: 0.85rem;
+    font-weight: bold;
+    margin-top: 12px;
+}
+
+.filter-panel select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+    background: #fff;
+}
+
 .auth-section {
     margin-top: auto;
     border-top: 1px solid #ddd;
