@@ -9,10 +9,11 @@ const path = require('path');
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 const SESSION_SECRET = process.env.SESSION_SECRET || 'travelmapster-dev-secret';
+const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'markers.db');
 const VALID_MARKER_TYPES = new Set(['visited', 'wishlist']);
 const VALID_MARKER_CATEGORIES = new Set(['Country', 'City']);
 const VALID_PROFILE_VISIBILITIES = new Set(['private', 'public']);
-const db = new DatabaseSync(path.join(__dirname, 'markers.db'));
+const db = new DatabaseSync(DB_PATH);
 
 app.use(express.json());
 app.use(session({
@@ -279,6 +280,10 @@ app.get('/getMarkers', isAuthenticated, (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-});
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`Server is running on http://localhost:${PORT}`);
+    });
+}
+
+module.exports = { app, db };
