@@ -52,6 +52,7 @@ Log in, add pins to a world map, and save your travel data.
 - [x] Import saved places from JSON or CSV
 - [x] Add private/public profile settings
 - [x] Add image uploads or photo links for visited places
+- [ ] Different color for regions visited (the whole country is flagged with a color and the visited regions are flagged with another)
 
 ## Map Requirements
 
