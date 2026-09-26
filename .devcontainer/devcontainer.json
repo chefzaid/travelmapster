@@ -1,19 +1,18 @@
 {
-    "name": "Node.js & SQLite3",
-    "image": "mcr.microsoft.com/vscode/devcontainers/javascript-node:0-16",
+    "name": "TravelMapster (Node 22 + PostgreSQL)",
+    "image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
     "features": {
-        "ghcr.io/devcontainers/features/sqlite:1": {}
+        "ghcr.io/devcontainers/features/docker-in-docker:2": {}
     },
-    "forwardPorts": [3000],
-    "postCreateCommand": "npm install",
-    "customizations":{
+    "forwardPorts": [3000, 5432],
+    "postCreateCommand": "npm ci",
+    "postStartCommand": "docker compose -f infra/compose/compose.yaml up -d postgres",
+    "containerEnv": {
+        "DATABASE_URL": "postgres://travelmapster:travelmapster@localhost:5432/travelmapster"
+    },
+    "customizations": {
         "vscode": {
-            "settings": {
-                "terminal.integrated.shell.linux": "/bin/bash"
-            }
+            "extensions": ["dbaeumer.vscode-eslint"]
         }
-    },
-    "mounts": [
-        "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached"
-    ]
+    }
 }

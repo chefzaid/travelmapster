@@ -1,0 +1,86 @@
+# Argo CD sync hook: idempotently provisions the `travelmapster` database and
+# its least-privileged `travelmapster_user` in the shared PostgreSQL service.
+# Schema migrations run inside the application under an advisory lock.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: travelmapster-db-setup
+  namespace: apps
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  backoffLimit: 5
+  activeDeadlineSeconds: 600
+  template:
+    metadata:
+      labels:
+        app: travelmapster-db-setup
+    spec:
+      restartPolicy: OnFailure
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: db-setup
+          image: postgres:18.6-bookworm
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              export PGPASSWORD="${POSTGRES_ADMIN_PASSWORD}"
+              PSQL="psql -v ON_ERROR_STOP=1 -h postgres.swirlit.internal -U ${POSTGRES_ADMIN_USER} -d postgres"
+
+              echo "Ensuring travelmapster_user exists with the current password..."
+              $PSQL --set=app_password="$APP_DB_PASSWORD" <<'SQL'
+              SELECT format('CREATE ROLE travelmapster_user WITH LOGIN PASSWORD %L', :'app_password')
+              WHERE NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'travelmapster_user')
+              \gexec
+              SELECT format('ALTER ROLE travelmapster_user WITH LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE PASSWORD %L', :'app_password')
+              \gexec
+              SQL
+
+              echo "Ensuring the travelmapster database exists..."
+              $PSQL -tc "SELECT 1 FROM pg_database WHERE datname='travelmapster'" | grep -q 1 || \
+                $PSQL -c "CREATE DATABASE travelmapster OWNER travelmapster_user;"
+              $PSQL -c "REVOKE CONNECT ON DATABASE travelmapster FROM PUBLIC;"
+              $PSQL -c "GRANT CONNECT ON DATABASE travelmapster TO travelmapster_user;"
+
+              PGPASSWORD="${APP_DB_PASSWORD}" psql -v ON_ERROR_STOP=1 \
+                -h postgres.swirlit.internal -U travelmapster_user -d travelmapster \
+                -c "GRANT ALL ON SCHEMA public TO travelmapster_user;"
+              echo "Database setup complete."
+          env:
+            - name: POSTGRES_ADMIN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: travelmapster-db-admin-credentials
+                  key: POSTGRES_ADMIN_USER
+            - name: POSTGRES_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: travelmapster-db-admin-credentials
+                  key: POSTGRES_ADMIN_PASSWORD
+            - name: APP_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: travelmapster-secret
+                  key: PGPASSWORD
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]

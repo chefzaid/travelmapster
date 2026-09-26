@@ -1,15 +1,13 @@
 # TravelMapster
 
-![HTML](https://img.shields.io/badge/HTML-E34F26?logo=html5&logoColor=white)
-![CSS](https://img.shields.io/badge/CSS-1572B6?logo=css3&logoColor=white)
-![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=000)
-![Node.js](https://img.shields.io/badge/Node.js-22.5%2B-339933?logo=node.js&logoColor=white)
-![Express](https://img.shields.io/badge/Express-4.x-000?logo=express&logoColor=white)
-![SQLite](https://img.shields.io/badge/SQLite-node%3Asqlite-003B57?logo=sqlite&logoColor=white)
-![Leaflet](https://img.shields.io/badge/Leaflet-map-199900?logo=leaflet&logoColor=white)
-![Passport](https://img.shields.io/badge/Passport-auth-34E27A?logo=passport&logoColor=000)
+![Node.js](https://img.shields.io/badge/Node.js-22-339933?logo=node.js&logoColor=white)
+![Express](https://img.shields.io/badge/Express-5-000?logo=express&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18-4169E1?logo=postgresql&logoColor=white)
+![Leaflet](https://img.shields.io/badge/Leaflet-1.9-199900?logo=leaflet&logoColor=white)
+![CI](https://github.com/chefzaid/travelmapster/actions/workflows/ci.yml/badge.svg)
 
-TravelMapster is a playful travel atlas. Color in the countries you have visited, pin the cities you love, keep a wishlist of dream trips, and plan day-by-day itineraries.
+TravelMapster is a playful travel atlas. Color in the countries you have visited, pin the cities you love,
+keep a wishlist of dream trips, and plan day-by-day itineraries.
 
 ## Features
 
@@ -67,7 +65,8 @@ TravelMapster is a playful travel atlas. Color in the countries you have visited
 ## Project structure
 
 ```text
-server.js              Express API (auth, places, trips, public maps)
+src/                   Express API (auth, places, trips, public maps, geocoding)
+  db/migrations/       Versioned PostgreSQL schema
 public/                Everything the browser loads (the only folder served)
   index.html           App shell
   styles.css           Cartoon design system
@@ -81,7 +80,8 @@ public/                Everything the browser loads (the only folder served)
   data/                Country borders and main cities (Natural Earth, public domain)
   vendor/              Leaflet and fonts (Fredoka, Nunito; SIL OFL)
 scripts/build-map-data.js  Rebuilds public/data from Natural Earth
-test/                  API and frontend unit tests (node --test)
+test/                  Unit, integration (PostgreSQL) and Playwright tests
+infra/                 bm-cluster deployment (Argo CD, Kubernetes, compose, CI scripts)
 ```
 
 ### Rebuilding the map data
@@ -93,17 +93,96 @@ Download `ne_50m_admin_0_countries.geojson` and `ne_50m_populated_places_simple.
 node scripts/build-map-data.js path/to/folder
 ```
 
-## Run Locally
+## Architecture
 
-Requires Node.js `22.5.0` or newer.
+| Layer | Details |
+| --- | --- |
+| Frontend | Static ES modules in `public/`; Leaflet, fonts and Natural Earth map data are bundled, so there are no third-party tiles. |
+| API | Express 5 in `src/`, JSON routes under `/api`, Passport username/password login with bcrypt (cost 12). |
+| Data | PostgreSQL with versioned SQL migrations in `src/db/migrations/`, applied at startup under an advisory lock. Sessions are stored in PostgreSQL, so replicas are stateless. |
+| Geocoding | `/api/geocode` proxies Nominatim server-side with caching, throttling and an identifying User-Agent. |
+| Operations | JSON logs (pino) on stdout, Prometheus metrics on a separate port (`/metrics` on 9464), `/healthz` liveness and `/readyz` readiness, graceful shutdown on SIGTERM. |
+
+### Security controls
+
+- Only `public/` is served; source, configuration and databases are never reachable over HTTP.
+- Strict Content Security Policy and security headers (helmet); no inline scripts or styles.
+- CSRF protection with a per-session synchronizer token (`GET /api/csrf-token`, sent as `X-CSRF-Token`).
+- `HttpOnly`, `SameSite=Lax` session cookies, `Secure` in production; session regenerated on login.
+- Rate limits on authentication, the API and geocoding; constant-time login responses for unknown users.
+- Production refuses to start without a 32+ character `SESSION_SECRET`.
+- Non-root, read-only-filesystem container image.
+
+### API
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | `/api/csrf-token` | CSRF token for the current session |
+| POST | `/api/auth/register`, `/api/auth/login`, `/api/auth/logout` | Account and session management |
+| GET | `/api/auth/me` | Current user |
+| GET, POST | `/api/markers` | List or create saved places |
+| POST | `/api/markers/import` | Bulk import up to 1,000 places |
+| PATCH, DELETE | `/api/markers/:id` | Update or remove a place |
+| GET, POST | `/api/trips` | List or create trip itineraries |
+| PUT, DELETE | `/api/trips/:id` | Update or remove a trip |
+| PATCH | `/api/profile` | Set profile visibility (`private` or `public`) |
+| GET | `/api/public/:username` | Public read-only map (notes and photos stay private) |
+| GET | `/api/geocode?q=&kind=city\|country` | Place search |
+
+## Run locally
+
+Requires Node.js 22.12 or newer and PostgreSQL (or Docker).
 
 ```bash
-npm install
-npm start
+docker compose -f infra/compose/compose.yaml up -d postgres
+cp .env.example .env   # adjust if needed
+npm ci
+DATABASE_URL=postgres://travelmapster:travelmapster@localhost:5432/travelmapster npm run dev
 ```
 
-Then open:
+Then open http://localhost:3000. To run the whole stack in containers instead:
+`docker compose -f infra/compose/compose.yaml up --build`.
 
-```text
-http://localhost:3000
+### Configuration
+
+| Variable | Default | Notes |
+| --- | --- | --- |
+| `DATABASE_URL` | – | Or the standard `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`. |
+| `SESSION_SECRET` | dev-only value | Required (32+ characters) when `NODE_ENV=production`. |
+| `PORT` / `METRICS_PORT` | `3000` / `9464` | |
+| `TRUST_PROXY` | `false` | `true`, a hop count, or CIDRs of the reverse proxy. |
+| `LOG_LEVEL` | `info` | |
+| `RATE_LIMIT_AUTH`, `RATE_LIMIT_API`, `RATE_LIMIT_GEOCODE` | `10`/15 min, `300`/min, `30`/min | Per client IP. |
+| `GEOCODER_URL`, `GEOCODER_USER_AGENT` | Nominatim | Set a contact URL in the User-Agent for production. |
+
+## Quality checks
+
+```bash
+npm run lint            # ESLint
+npm test                # unit + integration tests (needs PostgreSQL; set DATABASE_URL or TEST_DATABASE_URL)
+npm run test:coverage   # same, with an 80% line-coverage gate and coverage/lcov.info
+npm run test:e2e        # Playwright browser tests against a real server
 ```
+
+GitHub Actions runs lint, tests with coverage, `npm audit`, the browser tests, and a Trivy scan
+of the container image on every push and pull request.
+
+## Deploy to bm-cluster
+
+The repository follows the [bm-cluster application contract](https://github.com/chefzaid/bm-cluster/blob/main/docs/application-onboarding.md)
+(version 1). Onboard it from a bm-cluster control-plane host with `./add-repos.sh` and select
+`travelmapster` for deployment. Onboarding imports the repository into GitLab, generates the
+database password and session secret in Vault (`apps/travelmapster/runtime`), creates DNS for
+the chosen subdomain, and runs the GitLab release pipeline.
+
+| Path | Purpose |
+| --- | --- |
+| `infra/onboarding.json` | Onboarding contract: inputs, rendered files, Vault secrets, DNS, required jobs |
+| `infra/argocd/application.yaml` | Argo CD Application (namespace `apps`, auto-sync) |
+| `infra/k8s/` | Deployment, Service, Ingress, NetworkPolicy, ExternalSecrets, database setup hook |
+| `infra/overlays/ha/` | Two replicas, PodDisruptionBudget and host spreading for HA clusters |
+| `.gitlab-ci.yml`, `infra/scripts/` | Test, image build (Kaniko), release tagging, Argo CD deploy and smoke checks |
+
+After onboarding, releases are a manual `01-release` job on the default branch; `02-deploy` waits
+for Argo CD to report the exact release revision as Synced and Healthy.
+

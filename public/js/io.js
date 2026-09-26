@@ -50,7 +50,7 @@ export function parseCsv(text) {
         return [];
     }
 
-    const headers = rows.shift().map(header => header.trim().replace(/^﻿/, ''));
+    const headers = rows.shift().map(header => header.trim().replace(/^\uFEFF/, ''));
     const lowerHeaders = headers.map(header => header.toLowerCase());
     const requiredHeaders = ['lat', 'lng', 'type', 'name', 'category'];
     if (requiredHeaders.some(header => !lowerHeaders.includes(header))) {

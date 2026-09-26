@@ -1,0 +1,45 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: travelmapster-ingress
+  namespace: apps
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+    gethomepage.dev/description: Travel map of visited and wishlist places
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Applications
+    gethomepage.dev/href: https://travelmapster.swirlit.dev
+    gethomepage.dev/icon: mdi-map-marker-radius
+    gethomepage.dev/name: TravelMapster
+    gethomepage.dev/weight: "50"
+    gethomepage.dev/pod-selector: app=travelmapster
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.middlewares: apps-travelmapster-limits@kubernetescrd
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - travelmapster.swirlit.dev
+      secretName: swirlit-dev-tls
+  rules:
+    - host: travelmapster.swirlit.dev
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: travelmapster
+                port:
+                  number: 3000
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: travelmapster-limits
+  namespace: apps
+spec:
+  buffering:
+    # Matches the largest accepted JSON body (bulk import).
+    maxRequestBodyBytes: 4194304

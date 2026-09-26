@@ -1,0 +1,235 @@
+workflow:
+  name: "$CI_PROJECT_NAME: $PIPELINE_MODE pipeline"
+  rules:
+    - if: '$SONAR_SCAN_ONLY == "true" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_PIPELINE_SOURCE == "api" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $APP_ONBOARDING == "true"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS'
+      when: never
+    - if: '$CI_COMMIT_BRANCH'
+
+stages:
+  - build
+  - verify
+  - release
+
+default:
+  tags:
+    - bm-cluster
+  interruptible: true
+
+variables:
+  GIT_DEPTH: "0"
+  SONAR_SCAN_ONLY: "false"
+  APP_ONBOARDING: "false"
+  PIPELINE_MODE:
+    value: "standard"
+    options:
+      - "standard"
+      - "full"
+    description: "Use full to run the non-blocking quality/security reports and release/deploy automatically."
+  NODE_IMAGE: "docker.io/library/node:22.22.2-bookworm-slim@sha256:9f6d5975c7dca860947d3915877f85607946403fc55349f39b4bc3688448bb6e"
+  TOOLS_IMAGE: "docker.io/library/alpine:3.22@sha256:3725f4e2499eef5134592b3b4ab79a543ed7f8e533b05b5b637af926630f6650"
+  REGISTRY_PUSH_HOST: "gitlab-registry.swirlit.internal:5050"
+  SONAR_HOST_URL: "http://sonarqube.infra.svc.cluster.local:9000"
+  SONAR_USER_HOME: "$CI_PROJECT_DIR/.cache/sonar"
+  NPM_CONFIG_CACHE: "$CI_PROJECT_DIR/.cache/npm"
+  KANIKO_IMAGE: "gcr.io/kaniko-project/executor@sha256:c3109d5926a997b100c4343944e06c6b30a6804b2f9abe0994d3de6ef92b028e"
+  KANIKO_EXECUTOR: "$CI_PROJECT_DIR/.cache/kaniko/executor"
+
+.npm-cache: &npm-cache
+  key: travelmapster-npm-v1
+  paths:
+    - .cache/npm/
+  policy: pull-push
+
+01-test:
+  stage: build
+  image: $NODE_IMAGE
+  services:
+    - name: docker.io/library/postgres:18.6-bookworm@sha256:b939b3851e2cccb017dc4497af63b15e34efa57fba036548773c53b2f16a8871
+      alias: postgres
+      variables:
+        POSTGRES_DB: travelmapster_test
+        POSTGRES_PASSWORD: postgres
+  variables:
+    DATABASE_URL: postgres://postgres:postgres@postgres:5432/travelmapster_test
+  cache:
+    - *npm-cache
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq --no-install-recommends git ca-certificates >/dev/null
+    - npm ci --no-audit --no-fund
+  script:
+    - npm run lint
+    - mkdir -p coverage
+    - npm run test:coverage
+    - npm audit --omit=dev --audit-level=high
+  coverage: '/all files\s*\|\s*([0-9.]+)/'
+  artifacts:
+    name: "travelmapster-tests-$CI_COMMIT_SHORT_SHA"
+    when: always
+    expire_in: 7 days
+    paths:
+      - coverage/
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH'
+
+02-package:
+  stage: build
+  needs:
+    - job: 01-test
+      artifacts: false
+  image:
+    name: $TOOLS_IMAGE
+    entrypoint: [""]
+  cache:
+    - key: travelmapster-kaniko-executor-v1
+      paths:
+        - .cache/kaniko/
+      policy: pull-push
+  before_script:
+    - apk add --no-cache bash crane git jq
+    - export APP_VERSION="$(infra/scripts/current-version.sh)"
+    - mkdir -p .cache/kaniko /kaniko/ssl/certs
+    - test -s "$KANIKO_EXECUTOR" || crane export "$KANIKO_IMAGE" | tar -xOf - kaniko/executor > "$KANIKO_EXECUTOR"
+    - chmod 0755 "$KANIKO_EXECUTOR"
+    - cp /etc/ssl/certs/ca-certificates.crt /kaniko/ssl/certs/ca-certificates.crt
+  script:
+    - infra/scripts/ci-container-build.sh verify
+  rules:
+    - if: '$SONAR_SCAN_ONLY == "true"'
+      when: never
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH'
+
+01-quality:
+  stage: verify
+  needs:
+    - job: 01-test
+      artifacts: true
+  image: $NODE_IMAGE
+  cache:
+    - key: travelmapster-sonar-v1
+      paths:
+        - .cache/sonar/cache/
+      policy: pull-push
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq --no-install-recommends git ca-certificates >/dev/null
+    - export APP_VERSION="$(infra/scripts/current-version.sh)"
+    - npm install --global @sonar/scan@5.0.0
+  script:
+    - |
+      if [ -z "${SONAR_TOKEN:-}" ]; then
+        echo "SONAR_TOKEN is unavailable; Sonar analysis was not submitted." >&2
+        exit 1
+      fi
+      sonar -Dsonar.host.url="$SONAR_HOST_URL" -Dsonar.projectVersion="$APP_VERSION" -Dsonar.qualitygate.wait=false
+  allow_failure: true
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$PIPELINE_MODE == "full"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: manual
+      allow_failure: true
+
+02-security:
+  stage: verify
+  needs: []
+  image:
+    name: docker.io/aquasec/trivy:0.74.0@sha256:ee940acbf1f58ebadb42d01434ce4609530bf1b52536afbd1eee66cd7123c5c9
+    entrypoint: [""]
+  variables:
+    TRIVY_CACHE_DIR: .cache/trivy
+    TRIVY_DISABLE_TELEMETRY: "true"
+    TRIVY_NO_PROGRESS: "true"
+  cache:
+    - key: travelmapster-trivy-v1
+      paths:
+        - .cache/trivy/
+      policy: pull-push
+  script:
+    - mkdir -p security-reports
+    - trivy fs --scanners vuln,misconfig,secret --skip-dirs '**/.git' --skip-dirs '**/.cache' --skip-dirs '**/node_modules' --format json --output security-reports/trivy.json .
+    - trivy convert --format table --severity HIGH,CRITICAL --exit-code 1 security-reports/trivy.json
+  allow_failure: true
+  artifacts:
+    when: always
+    expire_in: 7 days
+    paths:
+      - security-reports/
+  rules:
+    - if: '$SONAR_SCAN_ONLY == "true"'
+      when: never
+    - if: '$PIPELINE_MODE == "full"'
+    - if: '$CI_COMMIT_BRANCH'
+      when: manual
+      allow_failure: true
+
+01-release:
+  stage: release
+  needs:
+    - job: 02-package
+      artifacts: false
+  image:
+    name: $TOOLS_IMAGE
+    entrypoint: [""]
+  cache:
+    - key: travelmapster-kaniko-executor-v1
+      paths:
+        - .cache/kaniko/
+      policy: pull-push
+  resource_group: travelmapster-production
+  interruptible: false
+  before_script:
+    - apk add --no-cache bash crane curl git jq nodejs npm
+    - export APP_VERSION="$(infra/scripts/current-version.sh)"
+    - mkdir -p .cache/kaniko /kaniko/ssl/certs
+    - test -s "$KANIKO_EXECUTOR" || crane export "$KANIKO_IMAGE" | tar -xOf - kaniko/executor > "$KANIKO_EXECUTOR"
+    - chmod 0755 "$KANIKO_EXECUTOR"
+    - cp /etc/ssl/certs/ca-certificates.crt /kaniko/ssl/certs/ca-certificates.crt
+  script:
+    - infra/scripts/ci-release.sh publish
+  artifacts:
+    name: "travelmapster-release-$CI_COMMIT_SHORT_SHA"
+    when: always
+    expire_in: 7 days
+    reports:
+      dotenv: release.env
+    paths:
+      - release.env
+  manual_confirmation: "Release TravelMapster from $CI_COMMIT_SHORT_SHA?"
+  rules:
+    - if: '$SONAR_SCAN_ONLY == "true"'
+      when: never
+    - if: '$CI_PIPELINE_SOURCE == "api" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $APP_ONBOARDING == "true"'
+    - if: '$CI_PIPELINE_SOURCE == "web" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $PIPELINE_MODE == "full"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: manual
+      allow_failure: false
+
+02-deploy:
+  stage: release
+  needs:
+    - job: 01-release
+      artifacts: true
+  image:
+    name: $TOOLS_IMAGE
+    entrypoint: [""]
+  resource_group: travelmapster-production
+  interruptible: false
+  before_script:
+    - apk add --no-cache bash curl git jq
+    - curl --fail --silent --show-error --location --output /usr/local/bin/kubectl "https://dl.k8s.io/release/v1.35.4/bin/linux/amd64/kubectl"
+    - echo "b529430df69a688fd61b64ad2299edb5fd71cb58be2a4779dba624c7d3510efd  /usr/local/bin/kubectl" | sha256sum -c
+    - chmod 0755 /usr/local/bin/kubectl
+  script:
+    - infra/scripts/ci-release.sh deploy
+  environment:
+    name: production
+    url: https://travelmapster.swirlit.dev
+    deployment_tier: production
+  rules:
+    - if: '$SONAR_SCAN_ONLY == "true"'
+      when: never
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'

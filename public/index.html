@@ -79,12 +79,12 @@
                     <form id="auth-form" class="auth-form" novalidate>
                         <label class="field">
                             <span>Username</span>
-                            <input id="auth-username" name="username" autocomplete="username" required minlength="3" maxlength="60">
+                            <input id="auth-username" name="username" autocomplete="username" required minlength="3" maxlength="32" pattern="[A-Za-z0-9_.-]{3,32}">
                         </label>
                         <label class="field">
                             <span>Password</span>
-                            <input id="auth-password" name="password" type="password" autocomplete="current-password" required minlength="6">
-                            <small id="auth-hint">At least 6 characters.</small>
+                            <input id="auth-password" name="password" type="password" autocomplete="current-password" required minlength="8" maxlength="72">
+                            <small id="auth-hint">At least 8 characters.</small>
                         </label>
                         <p id="auth-error" class="form-error" role="alert" hidden></p>
                         <button id="auth-submit" class="btn btn-primary btn-block" type="submit">Log in</button>

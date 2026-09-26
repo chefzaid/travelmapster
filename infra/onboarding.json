@@ -1,0 +1,97 @@
+{
+  "version": 1,
+  "application": "infra/argocd/application.yaml",
+  "inputs": [
+    {
+      "name": "APP_SUBDOMAIN",
+      "label": "Public subdomain (@ for the zone apex)",
+      "type": "subdomain",
+      "default": "travelmapster"
+    }
+  ],
+  "files": [
+    ".gitlab-ci.yml",
+    "sonar-project.properties",
+    "infra/argocd/application.yaml",
+    "infra/k8s/kustomization.yaml",
+    "infra/k8s/app.yaml",
+    "infra/k8s/ingress.yaml",
+    "infra/k8s/database-setup-job.yaml",
+    "infra/scripts/ci-release.sh"
+  ],
+  "replacements": [
+    {
+      "from": "registry.swirlit.dev/swirlit/travelmapster",
+      "to": "{{REGISTRY_HOST}}/{{GITLAB_PROJECT_PATH}}"
+    },
+    {
+      "from": "http://gitlab.swirlit.internal/swirlit/travelmapster",
+      "to": "{{GITLAB_INTERNAL_URL}}/{{GITLAB_PROJECT_PATH}}"
+    },
+    {
+      "from": "gitlab-registry.swirlit.internal:5050",
+      "to": "{{REGISTRY_PUSH_HOST}}"
+    },
+    {
+      "from": "travelmapster.swirlit.dev",
+      "to": "{{APP_HOST}}"
+    },
+    {
+      "from": ".swirlit.internal",
+      "to": ".{{INTERNAL_DNS_ZONE}}"
+    },
+    {
+      "from": "swirlit-dev-tls",
+      "to": "{{TLS_SECRET_NAME}}"
+    },
+    {
+      "from": "swirlit:travelmapster",
+      "to": "{{SONAR_PROJECT_KEY}}"
+    },
+    {
+      "from": "@swirlit.dev",
+      "to": "@{{PUBLIC_DOMAIN}}"
+    },
+    {
+      "from": "TRUST_PROXY: 10.42.0.0/16",
+      "to": "TRUST_PROXY: {{POD_CIDR}}"
+    }
+  ],
+  "registry": {
+    "path": "apps/travelmapster/registry"
+  },
+  "vault": [
+    {
+      "path": "apps/travelmapster/runtime",
+      "fields": {
+        "database_password": {
+          "generate": 24,
+          "encoding": "hex"
+        },
+        "session_secret": {
+          "generate": 48,
+          "encoding": "hex"
+        }
+      }
+    }
+  ],
+  "dns": {
+    "hosts": [
+      "{{APP_HOST}}"
+    ]
+  },
+  "pipeline": {
+    "variables": {
+      "APP_ONBOARDING": "true"
+    },
+    "jobs": [
+      "01-release",
+      "02-deploy"
+    ]
+  },
+  "readiness": {
+    "deployments": [
+      "travelmapster"
+    ]
+  }
+}
