@@ -4,12 +4,12 @@ metadata:
   name: travelmapster
   namespace: infra
   finalizers:
-    - resources-finalizer.argocd.argoproj.io
+  - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
   source:
     repoURL: http://gitlab.swirlit.internal/swirlit/travelmapster.git
-    targetRevision: HEAD
+    targetRevision: main
     path: infra/k8s
   destination:
     server: https://kubernetes.default.svc
@@ -25,6 +25,7 @@ spec:
         factor: 2
         maxDuration: 3m
     syncOptions:
-      - CreateNamespace=true
-      - ServerSideApply=true
-      - PruneLast=true
+    - CreateNamespace=true
+    - ServerSideApply=true
+    - PruneLast=true
+    - FailOnSharedResource=true

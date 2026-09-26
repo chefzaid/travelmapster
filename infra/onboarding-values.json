@@ -1,0 +1,35 @@
+{
+  "bindings": {
+    ".swirlit.internal": ".swirlit.internal",
+    "@swirlit.dev": "@swirlit.dev",
+    "TRUST_PROXY: 10.42.0.0/16": "TRUST_PROXY: 10.42.0.0/16",
+    "gitlab-registry.swirlit.internal:5050": "gitlab-registry.swirlit.internal:5050",
+    "http://gitlab.swirlit.internal/swirlit/travelmapster": "http://gitlab.swirlit.internal/swirlit/travelmapster",
+    "registry.swirlit.dev/swirlit/travelmapster": "registry.swirlit.dev/swirlit/travelmapster",
+    "swirlit-dev-tls": "swirlit-dev-tls",
+    "swirlit:travelmapster": "swirlit:travelmapster",
+    "travelmapster.swirlit.dev": "travelmapster.swirlit.dev"
+  },
+  "context": {
+    "APP_HOST": "travelmapster.swirlit.dev",
+    "APP_SUBDOMAIN": "travelmapster",
+    "DEFAULT_BRANCH": "main",
+    "GITHUB_OWNER": "chefzaid",
+    "GITHUB_REPOSITORY": "travelmapster",
+    "GITLAB_INTERNAL_URL": "http://gitlab.swirlit.internal",
+    "GITLAB_PROJECT_ID": "6",
+    "GITLAB_PROJECT_PATH": "swirlit/travelmapster",
+    "GITLAB_PUBLIC_URL": "https://gitlab.swirlit.dev",
+    "GITLAB_REPOSITORY_URL": "http://gitlab.swirlit.internal/swirlit/travelmapster.git",
+    "INTERNAL_DNS_ZONE": "swirlit.internal",
+    "KEYCLOAK_REALM": "swirlit",
+    "PLATFORM_SECURITY_PROJECT_PATH": "swirlit/bm-cluster/security",
+    "POD_CIDR": "10.42.0.0/16",
+    "PUBLIC_DOMAIN": "swirlit.dev",
+    "REGISTRY_HOST": "registry.swirlit.dev",
+    "REGISTRY_PUSH_HOST": "gitlab-registry.swirlit.internal:5050",
+    "SONAR_PROJECT_KEY": "swirlit:travelmapster",
+    "TLS_SECRET_NAME": "swirlit-dev-tls"
+  },
+  "version": 1
+}
