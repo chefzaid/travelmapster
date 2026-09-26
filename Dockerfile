@@ -1,20 +1,26 @@
-# Use official node image as the base image
-FROM node:16
+# syntax=docker/dockerfile:1
 
-# Set the working directory
-WORKDIR /usr/src/app
+ARG NODE_IMAGE=docker.io/library/node:22.22.2-bookworm-slim@sha256:9f6d5975c7dca860947d3915877f85607946403fc55349f39b4bc3688448bb6e
 
-# Copy package.json and package-lock.json files
-COPY package*.json ./
+FROM ${NODE_IMAGE} AS deps
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev --ignore-scripts=false --no-audit --no-fund \
+    && npm cache clean --force
 
-# Install dependencies
-RUN npm install
+FROM ${NODE_IMAGE} AS runtime
+ENV NODE_ENV=production \
+    PORT=3000 \
+    METRICS_PORT=9464
+WORKDIR /app
+COPY --from=deps --chown=root:root /app/node_modules ./node_modules
+COPY --chown=root:root package.json VERSION ./
+COPY --chown=root:root src ./src
+COPY --chown=root:root public ./public
 
-# Copy the rest of the application code
-COPY . .
-
-# Expose the port the app runs on
-EXPOSE 3000
-
-# Start the application
-CMD ["node", "server.js"]
+# Files stay root-owned and read-only; the app runs as an unprivileged user.
+USER 10001:10001
+EXPOSE 3000 9464
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD ["node", "-e", "fetch('http://127.0.0.1:'+process.env.PORT+'/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+CMD ["node", "src/server.js"]

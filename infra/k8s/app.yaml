@@ -1,0 +1,125 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: travelmapster-config
+  namespace: apps
+  labels:
+    app: travelmapster
+data:
+  NODE_ENV: production
+  PORT: "3000"
+  METRICS_PORT: "9464"
+  LOG_LEVEL: info
+  PGHOST: postgres.swirlit.internal
+  PGPORT: "5432"
+  PGDATABASE: travelmapster
+  PGUSER: travelmapster_user
+  # Traefik runs in the pod network; trust it for client IPs used by rate limits.
+  TRUST_PROXY: 10.42.0.0/16
+  GEOCODER_USER_AGENT: TravelMapster/1.0 (+https://travelmapster.swirlit.dev)
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: travelmapster
+  namespace: apps
+  labels:
+    app: travelmapster
+    app.kubernetes.io/name: travelmapster
+spec:
+  replicas: 1
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app: travelmapster
+  template:
+    metadata:
+      labels:
+        app: travelmapster
+        app.kubernetes.io/name: travelmapster
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: /metrics
+        prometheus.io/port: "9464"
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      imagePullSecrets:
+        - name: travelmapster-registry-auth
+      containers:
+        - name: travelmapster
+          image: registry.swirlit.dev/swirlit/travelmapster/travelmapster:initial
+          ports:
+            - name: http
+              containerPort: 3000
+            - name: metrics
+              containerPort: 9464
+          envFrom:
+            - configMapRef:
+                name: travelmapster-config
+            - secretRef:
+                name: travelmapster-secret
+          startupProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            periodSeconds: 5
+            failureThreshold: 36
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 384Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: travelmapster
+  namespace: apps
+  labels:
+    app: travelmapster
+spec:
+  type: ClusterIP
+  selector:
+    app: travelmapster
+  ports:
+    - name: http
+      port: 3000
+      targetPort: http

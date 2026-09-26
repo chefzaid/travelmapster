@@ -376,19 +376,16 @@ function renderSearchResults() {
 }
 
 async function searchWorld(query) {
-    // Nominatim covers towns that are not in the built-in main-cities list.
-    const url = `https://nominatim.openstreetmap.org/search?${new URLSearchParams({ format: 'json', q: query, addressdetails: '1', limit: '1', featuretype: 'settlement' })}`;
-    const response = await fetch(url, { headers: { Accept: 'application/json' } });
-    if (!response.ok) throw new Error('Place search is unavailable right now.');
-    const [result] = await response.json();
+    // The server-side geocoder covers towns that are not in the built-in main-cities list.
+    const [result] = await api.geocodeCity(query);
     if (!result) throw new Error(`No place called “${query}” was found.`);
-    const name = result.address?.city || result.address?.town || result.address?.village || result.name || query;
+    const name = result.city || result.name || query;
     const lat = Number(result.lat);
-    const lng = Number(result.lon);
+    const lng = Number(result.lng);
     const country = state.index.findAt(lat, lng);
     return {
         name,
-        country: country?.name || result.address?.country || '',
+        country: country?.name || result.country || '',
         countryId: country?.id || '',
         capital: 0,
         population: 0,
@@ -686,8 +683,8 @@ function setupAuth() {
         const password = $('#auth-password').value;
         const errorBox = $('#auth-error');
         errorBox.hidden = true;
-        if (username.length < 3 || password.length < 6) {
-            errorBox.textContent = 'Usernames need 3+ characters and passwords 6+.';
+        if (!/^[A-Za-z0-9_.-]{3,32}$/.test(username) || password.length < 8) {
+            errorBox.textContent = 'Usernames need 3 to 32 letters, digits, dots, dashes or underscores, and passwords 8+ characters.';
             errorBox.hidden = false;
             return;
         }

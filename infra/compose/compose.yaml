@@ -1,0 +1,37 @@
+# Local stack: `docker compose -f infra/compose/compose.yaml up --build`
+name: travelmapster
+
+services:
+  postgres:
+    image: docker.io/library/postgres:18-bookworm
+    environment:
+      POSTGRES_DB: travelmapster
+      POSTGRES_USER: travelmapster
+      POSTGRES_PASSWORD: travelmapster
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U travelmapster -d travelmapster"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: ../..
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://travelmapster:travelmapster@postgres:5432/travelmapster
+      SESSION_SECRET: local-compose-secret-change-me-0123456789
+      SESSION_SECURE_COOKIE: "false"
+      LOG_LEVEL: info
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres-data:

@@ -93,22 +93,23 @@ async function importFile(file, ctx, status) {
     try {
         const records = parseImportContent(file.name, await file.text());
         const existing = new Set(ctx.state.markers.map(placeKey));
-        let imported = 0;
+        const places = [];
         let skipped = 0;
-        for (const [i, record] of records.entries()) {
-            status.textContent = `Importing ${i + 1} of ${records.length}…`;
+        for (const record of records) {
             const place = validatePlace(record);
             if (!place || existing.has(placeKey(place))) {
                 skipped += 1;
                 continue;
             }
-            try {
-                await ctx.api.addMarker(place);
-                existing.add(placeKey(place));
-                imported += 1;
-            } catch {
-                skipped += 1;
-            }
+            existing.add(placeKey(place));
+            places.push(place);
+        }
+        status.textContent = `Importing ${places.length} ${places.length === 1 ? 'place' : 'places'}…`;
+        let imported = 0;
+        if (places.length) {
+            const result = await ctx.api.importMarkers(places);
+            imported = result.imported;
+            skipped += result.skipped;
         }
         await ctx.reloadMarkers();
         const message = `Imported ${imported} ${imported === 1 ? 'place' : 'places'}${skipped ? `, skipped ${skipped} invalid or duplicate` : ''}.`;
