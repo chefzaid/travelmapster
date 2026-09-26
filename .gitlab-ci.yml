@@ -29,7 +29,7 @@ variables:
       - "full"
     description: "Use full to run the non-blocking quality/security reports and release/deploy automatically."
   NODE_IMAGE: "docker.io/library/node:22.22.2-bookworm-slim@sha256:9f6d5975c7dca860947d3915877f85607946403fc55349f39b4bc3688448bb6e"
-  TOOLS_IMAGE: "docker.io/library/alpine:3.22@sha256:3725f4e2499eef5134592b3b4ab79a543ed7f8e533b05b5b637af926630f6650"
+  TOOLS_IMAGE: "docker.io/library/alpine:3.22@sha256:5291449c3df73caf6ed85e649dec1b9e818b39a5d8c871e97afc13e9cd5e8fa8"
   REGISTRY_PUSH_HOST: "gitlab-registry.swirlit.internal:5050"
   SONAR_HOST_URL: "http://sonarqube.infra.svc.cluster.local:9000"
   SONAR_USER_HOME: "$CI_PROJECT_DIR/.cache/sonar"
