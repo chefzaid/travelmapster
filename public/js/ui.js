@@ -6,6 +6,8 @@ export function h(tag, attributes = {}, ...children) {
         if (value === undefined || value === null || value === false) continue;
         if (key === 'class') element.className = value;
         else if (key === 'dataset') Object.assign(element.dataset, value);
+        // Set styles through the CSSOM so a strict style-src CSP (no style attributes) still allows them.
+        else if (key === 'style') element.style.cssText = value;
         else if (key.startsWith('on') && typeof value === 'function') element.addEventListener(key.slice(2), value);
         else if (value === true) element.setAttribute(key, '');
         else element.setAttribute(key, value);
