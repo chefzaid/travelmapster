@@ -85,6 +85,7 @@
       "APP_ONBOARDING": "true"
     },
     "jobs": [
+      "00-image",
       "01-release",
       "02-deploy"
     ]

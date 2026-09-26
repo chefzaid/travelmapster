@@ -183,6 +183,7 @@ the chosen subdomain, and runs the GitLab release pipeline.
 | `infra/overlays/ha/` | Two replicas, PodDisruptionBudget and host spreading for HA clusters |
 | `.gitlab-ci.yml`, `infra/scripts/` | Test, image build (Kaniko), release tagging, Argo CD deploy and smoke checks |
 
-After onboarding, releases are a manual `01-release` job on the default branch; `02-deploy` waits
-for Argo CD to report the exact release revision as Synced and Healthy.
+After onboarding, releases start with the manual `00-image` job on the default branch, which
+publishes the container image. `01-release` then commits and tags the version, and `02-deploy`
+waits for Argo CD to report the exact release revision as Synced and Healthy.
 
