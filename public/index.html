@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="TravelMapster: color in the countries you've visited, pin the cities you love, and plan your next adventure.">
+    <meta name="theme-color" content="#7cc6e8">
+    <title>TravelMapster</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="preload" href="vendor/fonts/fredoka-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <a class="skip-link" href="#panel">Skip to panel</a>
+
+    <div class="app" id="app" data-state="loading">
+        <div id="map" class="map" role="application" aria-label="World map. Click a country or city to see details."></div>
+
+        <header class="topbar">
+            <a class="brand" href="/" aria-label="TravelMapster home">
+                <img src="logo.svg" alt="" width="40" height="40">
+                <span class="brand-name">Travel<span>Mapster</span></span>
+            </a>
+
+            <div class="search" role="search">
+                <label class="visually-hidden" for="global-search">Search countries and cities</label>
+                <span class="search-icon" aria-hidden="true">🔎</span>
+                <input id="global-search" type="search" autocomplete="off" spellcheck="false"
+                    placeholder="Search a country or city…" role="combobox" aria-expanded="false"
+                    aria-controls="search-results" aria-autocomplete="list">
+                <kbd class="search-hint" aria-hidden="true">/</kbd>
+                <ul id="search-results" class="search-results" role="listbox" hidden></ul>
+            </div>
+
+            <button id="surprise-btn" class="btn btn-sunny" type="button" title="Fly somewhere you haven't been">
+                <span aria-hidden="true">🎲</span><span class="btn-label">Surprise me</span>
+            </button>
+
+            <div class="account" id="account" hidden>
+                <button id="account-btn" class="avatar" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="account-menu">
+                    <span id="avatar-initial" aria-hidden="true">?</span>
+                    <span class="visually-hidden">Account menu</span>
+                </button>
+                <div id="account-menu" class="menu" hidden>
+                    <p class="menu-title">Signed in as <strong id="account-name"></strong></p>
+                    <label class="switch">
+                        <input id="public-toggle" type="checkbox">
+                        <span class="switch-track" aria-hidden="true"></span>
+                        <span>Public travel map</span>
+                    </label>
+                    <button id="copy-share-btn" class="menu-item" type="button" disabled>🔗 Copy share link</button>
+                    <button id="logout-btn" class="menu-item" type="button">👋 Log out</button>
+                </div>
+            </div>
+        </header>
+
+        <aside id="panel" class="panel" aria-label="TravelMapster panel" tabindex="-1">
+            <button class="panel-handle" id="panel-handle" type="button" aria-label="Expand or collapse panel" aria-expanded="true"></button>
+
+            <!-- Signed out -->
+            <section id="welcome-view" class="view" hidden>
+                <div class="hero">
+                    <p class="eyebrow">Your world, colored in</p>
+                    <h1>Where have you <span class="scribble">been?</span></h1>
+                    <p>Paint every country you've visited, pin the cities you love, keep a wishlist of dream trips, and plan day-by-day itineraries.</p>
+                    <ul class="hero-points">
+                        <li><span aria-hidden="true">🎨</span> Color in countries and cities</li>
+                        <li><span aria-hidden="true">🛂</span> Collect stamps and badges</li>
+                        <li><span aria-hidden="true">🗓️</span> Plan trips with guide ideas</li>
+                    </ul>
+                </div>
+
+                <div class="auth-card">
+                    <div class="segmented" role="tablist" aria-label="Account">
+                        <button id="tab-login" role="tab" aria-selected="true" aria-controls="auth-form" type="button">Log in</button>
+                        <button id="tab-register" role="tab" aria-selected="false" aria-controls="auth-form" type="button">Sign up</button>
+                    </div>
+                    <form id="auth-form" class="auth-form" novalidate>
+                        <label class="field">
+                            <span>Username</span>
+                            <input id="auth-username" name="username" autocomplete="username" required minlength="3" maxlength="60">
+                        </label>
+                        <label class="field">
+                            <span>Password</span>
+                            <input id="auth-password" name="password" type="password" autocomplete="current-password" required minlength="6">
+                            <small id="auth-hint">At least 6 characters.</small>
+                        </label>
+                        <p id="auth-error" class="form-error" role="alert" hidden></p>
+                        <button id="auth-submit" class="btn btn-primary btn-block" type="submit">Log in</button>
+                    </form>
+                </div>
+                <p class="muted small">Just looking? Explore the map: hover countries, zoom in for cities, and try 🎲 Surprise me.</p>
+            </section>
+
+            <!-- Public read-only map -->
+            <section id="public-view" class="view" hidden>
+                <p class="eyebrow">Shared travel map</p>
+                <h1 id="public-title"></h1>
+                <div id="public-stats"></div>
+                <a class="btn btn-primary btn-block" href="/">Make your own map</a>
+            </section>
+
+            <!-- Signed in -->
+            <section id="main-view" class="view" hidden>
+                <nav class="tabs" role="tablist" aria-label="Sections">
+                    <button role="tab" id="tab-explore" aria-controls="explore-tab" aria-selected="true" type="button"><span aria-hidden="true">🧭</span>Explore</button>
+                    <button role="tab" id="tab-places" aria-controls="places-tab" aria-selected="false" type="button"><span aria-hidden="true">📍</span>Places</button>
+                    <button role="tab" id="tab-trips" aria-controls="trips-tab" aria-selected="false" type="button"><span aria-hidden="true">🗓️</span>Trips</button>
+                    <button role="tab" id="tab-passport" aria-controls="passport-tab" aria-selected="false" type="button"><span aria-hidden="true">🛂</span>Passport</button>
+                </nav>
+
+                <div id="explore-tab" class="tab-panel" role="tabpanel" aria-labelledby="tab-explore"></div>
+                <div id="places-tab" class="tab-panel" role="tabpanel" aria-labelledby="tab-places" hidden></div>
+                <div id="trips-tab" class="tab-panel" role="tabpanel" aria-labelledby="tab-trips" hidden></div>
+                <div id="passport-tab" class="tab-panel" role="tabpanel" aria-labelledby="tab-passport" hidden></div>
+            </section>
+
+            <div id="loading-view" class="view loading" aria-live="polite">
+                <span class="spinner" aria-hidden="true">🌍</span>
+                <p>Unfolding the map…</p>
+            </div>
+        </aside>
+
+        <div class="legend" id="legend" aria-label="Map legend and filters">
+            <button type="button" class="legend-item" data-filter="visited" aria-pressed="true">
+                <span class="swatch swatch-visited" aria-hidden="true"></span>Been there <strong id="legend-visited">0</strong>
+            </button>
+            <button type="button" class="legend-item" data-filter="wishlist" aria-pressed="true">
+                <span class="swatch swatch-wishlist" aria-hidden="true"></span>Wishlist <strong id="legend-wishlist">0</strong>
+            </button>
+            <span class="legend-item legend-static"><span class="swatch swatch-capital" aria-hidden="true">★</span>Capital</span>
+        </div>
+
+        <div class="compass" aria-hidden="true">
+            <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="29"/><path class="n" d="M32 6 L39 32 L32 28 L25 32 Z"/><path class="s" d="M32 58 L25 32 L32 36 L39 32 Z"/><text x="32" y="20">N</text></svg>
+        </div>
+    </div>
+
+    <div id="toasts" class="toasts" aria-live="polite"></div>
+
+    <script src="vendor/leaflet/leaflet.js"></script>
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>

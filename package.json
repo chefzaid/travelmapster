@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "script.js",
   "scripts": {
-    "test": "node --test test/travelmapster.test.js",
+    "test": "node --test \"test/*.test.js\"",
     "start": "node server.js"
   },
   "engines": {
