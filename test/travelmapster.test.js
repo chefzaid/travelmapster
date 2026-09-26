@@ -176,3 +176,105 @@ test('auth and marker API routes protect and persist travel data', async () => {
     result = await request('/getMarkers');
     assert.equal(result.response.status, 401);
 });
+
+test('static serving only exposes the public frontend', async () => {
+    for (const route of ['/markers.db', '/server.js', '/package.json']) {
+        const result = await request(route);
+        assert.equal(result.response.status, 404, `${route} must not be served`);
+    }
+    const index = await request('/');
+    assert.equal(index.response.status, 200);
+    const countries = await request('/data/countries.geojson');
+    assert.equal(countries.response.status, 200);
+});
+
+test('trip itineraries are validated, owned and editable', async () => {
+    const username = `trip-test-${Date.now()}`;
+    const password = 'trip-test-password';
+    await request('/register', { method: 'POST', body: JSON.stringify({ username, password }) });
+    await request('/login', { method: 'POST', body: JSON.stringify({ username, password }) });
+
+    let result = await request('/trips', { method: 'POST', body: JSON.stringify({ title: 'No plan', destination: 'Lisbon', plan: [] }) });
+    assert.equal(result.response.status, 400);
+
+    result = await request('/trips', {
+        method: 'POST',
+        body: JSON.stringify({ title: 'Lisbon weekend', destination: 'Lisbon', startDate: '2026-02-30', plan: [{}] })
+    });
+    assert.equal(result.response.status, 400);
+
+    result = await request('/trips', {
+        method: 'POST',
+        body: JSON.stringify({
+            title: ' Lisbon weekend ',
+            destination: 'Lisbon',
+            startDate: '2026-10-10',
+            plan: [{ morning: 'Tram 28', afternoon: 'Belém', evening: 'Fado', extra: 'dropped' }, {}]
+        })
+    });
+    assert.equal(result.response.status, 201);
+    const trip = result.body;
+    assert.equal(trip.title, 'Lisbon weekend');
+    assert.deepEqual(trip.plan, [
+        { morning: 'Tram 28', afternoon: 'Belém', evening: 'Fado' },
+        { morning: '', afternoon: '', evening: '' }
+    ]);
+
+    result = await request(`/trips/${trip.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ ...trip, plan: [...trip.plan, { morning: 'Sintra' }] })
+    });
+    assert.equal(result.response.status, 200);
+    assert.equal(result.body.plan.length, 3);
+
+    result = await request('/trips');
+    assert.equal(result.body.length, 1);
+    assert.equal(result.body[0].plan[2].morning, 'Sintra');
+
+    // Another user cannot see or change this trip.
+    await request('/logout', { method: 'POST' });
+    const other = `trip-other-${Date.now()}`;
+    await request('/register', { method: 'POST', body: JSON.stringify({ username: other, password }) });
+    await request('/login', { method: 'POST', body: JSON.stringify({ username: other, password }) });
+    result = await request('/trips');
+    assert.deepEqual(result.body, []);
+    result = await request(`/trips/${trip.id}`, { method: 'PUT', body: JSON.stringify(trip) });
+    assert.equal(result.response.status, 404);
+
+    await request('/logout', { method: 'POST' });
+    await request('/login', { method: 'POST', body: JSON.stringify({ username, password }) });
+    result = await request(`/trips/${trip.id}`, { method: 'DELETE' });
+    assert.equal(result.response.status, 204);
+    result = await request('/trips');
+    assert.deepEqual(result.body, []);
+    await request('/logout', { method: 'POST' });
+});
+
+test('public travel maps are read-only and respect profile visibility', async () => {
+    const username = `public-test-${Date.now()}`;
+    const password = 'public-test-password';
+    await request('/register', { method: 'POST', body: JSON.stringify({ username, password }) });
+    await request('/login', { method: 'POST', body: JSON.stringify({ username, password }) });
+    await request('/addMarker', {
+        method: 'POST',
+        body: JSON.stringify({ lat: 35.68, lng: 139.69, type: 'visited', name: 'Japan', category: 'Country', notes: 'Private note' })
+    });
+    await request('/logout', { method: 'POST' });
+
+    let result = await request(`/public/${username}`);
+    assert.equal(result.response.status, 404, 'private maps are hidden');
+
+    await request('/login', { method: 'POST', body: JSON.stringify({ username, password }) });
+    await request('/profile', { method: 'PATCH', body: JSON.stringify({ profileVisibility: 'public' }) });
+    await request('/logout', { method: 'POST' });
+
+    result = await request(`/public/${username}`);
+    assert.equal(result.response.status, 200);
+    assert.equal(result.body.username, username);
+    assert.equal(result.body.markers.length, 1);
+    assert.equal(result.body.markers[0].name, 'Japan');
+    assert.equal(result.body.markers[0].notes, undefined, 'notes stay private');
+
+    result = await request('/public/nobody-here');
+    assert.equal(result.response.status, 404);
+});

@@ -13,6 +13,8 @@ const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'markers.db');
 const VALID_MARKER_TYPES = new Set(['visited', 'wishlist']);
 const VALID_MARKER_CATEGORIES = new Set(['Country', 'City']);
 const VALID_PROFILE_VISIBILITIES = new Set(['private', 'public']);
+const TRIP_SLOTS = ['morning', 'afternoon', 'evening'];
+const MAX_TRIP_DAYS = 30;
 const db = new DatabaseSync(DB_PATH);
 
 app.use(express.json());
@@ -28,8 +30,8 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Serve static files
-app.use(express.static(path.join(__dirname, '.')));
+// Serve only the public frontend directory
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Initialize the users and markers table
 db.exec(`CREATE TABLE IF NOT EXISTS users (
@@ -73,6 +75,19 @@ if (!columnNames.includes('notes')) {
 if (!columnNames.includes('travel_date')) {
     db.exec("ALTER TABLE markers ADD COLUMN travel_date TEXT");
 }
+
+db.exec(`CREATE TABLE IF NOT EXISTS trips (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    destination TEXT NOT NULL,
+    start_date TEXT,
+    plan TEXT NOT NULL DEFAULT '[]',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+)`);
+db.exec('CREATE INDEX IF NOT EXISTS idx_trips_user ON trips(user_id)');
 
 const userColumns = db.prepare("PRAGMA table_info(users)").all();
 const userColumnNames = userColumns.map(c => c.name);
@@ -141,6 +156,61 @@ function parseMarkerPayload(body) {
     }
 
     return { marker: { lat, lng, type, name, category, photoUrl, notes, travelDate } };
+}
+
+function parseTripPayload(body) {
+    const title = normalizeText(body.title);
+    const destination = normalizeText(body.destination);
+    const startDate = normalizeText(body.startDate);
+
+    if (!title || title.length > 120) {
+        return { error: 'Trip title is required and must be 120 characters or fewer.' };
+    }
+    if (!destination || destination.length > 160) {
+        return { error: 'Trip destination is required and must be 160 characters or fewer.' };
+    }
+    if (startDate && !isValidTravelDate(startDate)) {
+        return { error: 'Start date must be a valid YYYY-MM-DD date.' };
+    }
+    if (!Array.isArray(body.plan) || body.plan.length < 1 || body.plan.length > MAX_TRIP_DAYS) {
+        return { error: `A trip plan must have between 1 and ${MAX_TRIP_DAYS} days.` };
+    }
+
+    const plan = [];
+    for (const day of body.plan) {
+        if (!day || typeof day !== 'object') {
+            return { error: 'Each trip day must be an object.' };
+        }
+        const cleanDay = {};
+        for (const slot of TRIP_SLOTS) {
+            const value = normalizeText(day[slot]);
+            if (value.length > 500) {
+                return { error: 'Each itinerary slot must be 500 characters or fewer.' };
+            }
+            cleanDay[slot] = value;
+        }
+        plan.push(cleanDay);
+    }
+
+    return { trip: { title, destination, startDate, plan } };
+}
+
+function serializeTrip(row) {
+    let plan = [];
+    try {
+        plan = JSON.parse(row.plan);
+    } catch (err) {
+        plan = [];
+    }
+    return {
+        id: row.id,
+        title: row.title,
+        destination: row.destination,
+        startDate: row.start_date || '',
+        plan,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+    };
 }
 
 // Passport Local Strategy for username/password authentication
@@ -327,6 +397,88 @@ app.get('/getMarkers', isAuthenticated, (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Error retrieving markers' });
+    }
+});
+
+// Trip itineraries for the logged in user
+app.get('/trips', isAuthenticated, (req, res) => {
+    try {
+        const rows = db.prepare('SELECT * FROM trips WHERE user_id = ? ORDER BY COALESCE(start_date, created_at) DESC, id DESC').all(req.user.id);
+        res.json(rows.map(serializeTrip));
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Error retrieving trips' });
+    }
+});
+
+app.post('/trips', isAuthenticated, (req, res) => {
+    const { trip, error } = parseTripPayload(req.body);
+    if (error) {
+        return res.status(400).json({ error });
+    }
+
+    try {
+        const result = db.prepare('INSERT INTO trips (user_id, title, destination, start_date, plan) VALUES (?, ?, ?, ?, ?)')
+            .run(req.user.id, trip.title, trip.destination, trip.startDate, JSON.stringify(trip.plan));
+        const row = db.prepare('SELECT * FROM trips WHERE id = ?').get(result.lastInsertRowid);
+        res.status(201).json(serializeTrip(row));
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Error saving trip' });
+    }
+});
+
+app.put('/trips/:id', isAuthenticated, (req, res) => {
+    const tripId = Number(req.params.id);
+    if (!Number.isInteger(tripId) || tripId < 1) {
+        return res.status(400).json({ error: 'Invalid trip id.' });
+    }
+    const { trip, error } = parseTripPayload(req.body);
+    if (error) {
+        return res.status(400).json({ error });
+    }
+
+    try {
+        const result = db.prepare("UPDATE trips SET title = ?, destination = ?, start_date = ?, plan = ?, updated_at = datetime('now') WHERE id = ? AND user_id = ?")
+            .run(trip.title, trip.destination, trip.startDate, JSON.stringify(trip.plan), tripId, req.user.id);
+        if (result.changes === 0) {
+            return res.status(404).json({ error: 'Trip not found.' });
+        }
+        res.json(serializeTrip(db.prepare('SELECT * FROM trips WHERE id = ?').get(tripId)));
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Error updating trip' });
+    }
+});
+
+app.delete('/trips/:id', isAuthenticated, (req, res) => {
+    const tripId = Number(req.params.id);
+    if (!Number.isInteger(tripId) || tripId < 1) {
+        return res.status(400).json({ error: 'Invalid trip id.' });
+    }
+
+    try {
+        db.prepare('DELETE FROM trips WHERE id = ? AND user_id = ?').run(tripId, req.user.id);
+        res.status(204).send();
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Error deleting trip' });
+    }
+});
+
+// Read-only travel map for users who made their profile public
+app.get('/public/:username', (req, res) => {
+    const username = normalizeText(req.params.username);
+    try {
+        const user = db.prepare('SELECT id, username, profile_visibility FROM users WHERE username = ?').get(username);
+        if (!user || user.profile_visibility !== 'public') {
+            return res.status(404).json({ error: 'This travel map is private or does not exist.' });
+        }
+        const markers = db.prepare('SELECT id, lat, lng, type, name, category, travel_date AS travelDate FROM markers WHERE user_id = ?').all(user.id);
+        res.json({ username: user.username, markers });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Error retrieving public map' });
     }
 });
 
