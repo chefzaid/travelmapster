@@ -6,10 +6,15 @@ cd "$repository_root"
 
 phase="${1:-all}"
 
-publish_release() {
+publish_image() {
   : "${APP_VERSION:?APP_VERSION is required}"
   infra/scripts/check-onboarding-revision.sh publish
   infra/scripts/ci-container-build.sh publish
+}
+
+publish_release() {
+  : "${APP_VERSION:?APP_VERSION is required}"
+  infra/scripts/check-onboarding-revision.sh publish
 
   git fetch origin "$CI_DEFAULT_BRANCH"
   test "$CI_COMMIT_SHA" = "$(git rev-parse "origin/$CI_DEFAULT_BRANCH")"
@@ -88,6 +93,9 @@ deploy_release() {
 }
 
 case "$phase" in
+  image)
+    publish_image
+    ;;
   publish)
     publish_release
     ;;
@@ -95,11 +103,12 @@ case "$phase" in
     deploy_release
     ;;
   all)
+    publish_image
     publish_release
     deploy_release
     ;;
   *)
-    printf 'Usage: %s [publish|deploy|all]\n' "$0" >&2
+    printf 'Usage: %s [image|publish|deploy|all]\n' "$0" >&2
     exit 2
     ;;
 esac

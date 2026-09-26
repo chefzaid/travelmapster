@@ -166,7 +166,7 @@ variables:
       when: manual
       allow_failure: true
 
-01-release:
+00-image:
   stage: release
   needs:
     - job: 02-package
@@ -181,13 +181,40 @@ variables:
       policy: pull-push
   resource_group: travelmapster-production
   interruptible: false
+  # Kaniko replaces this container's filesystem during the multi-stage build,
+  # so the image is published here and the Git release work runs in 01-release.
   before_script:
-    - apk add --no-cache bash crane curl git jq nodejs npm
+    - apk add --no-cache bash crane git jq
     - export APP_VERSION="$(infra/scripts/current-version.sh)"
     - mkdir -p .cache/kaniko /kaniko/ssl/certs
     - test -s "$KANIKO_EXECUTOR" || crane export "$KANIKO_IMAGE" | tar -xOf - kaniko/executor > "$KANIKO_EXECUTOR"
     - chmod 0755 "$KANIKO_EXECUTOR"
     - cp /etc/ssl/certs/ca-certificates.crt /kaniko/ssl/certs/ca-certificates.crt
+  script:
+    - infra/scripts/ci-release.sh image
+  manual_confirmation: "Release TravelMapster from $CI_COMMIT_SHORT_SHA?"
+  rules:
+    - if: '$SONAR_SCAN_ONLY == "true"'
+      when: never
+    - if: '$CI_PIPELINE_SOURCE == "api" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $APP_ONBOARDING == "true"'
+    - if: '$CI_PIPELINE_SOURCE == "web" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $PIPELINE_MODE == "full"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: manual
+      allow_failure: false
+
+01-release:
+  stage: release
+  needs:
+    - job: 00-image
+      artifacts: false
+  image:
+    name: $TOOLS_IMAGE
+    entrypoint: [""]
+  resource_group: travelmapster-production
+  interruptible: false
+  before_script:
+    - apk add --no-cache bash curl git jq nodejs npm
+    - export APP_VERSION="$(infra/scripts/current-version.sh)"
   script:
     - infra/scripts/ci-release.sh publish
   artifacts:
@@ -198,15 +225,10 @@ variables:
       dotenv: release.env
     paths:
       - release.env
-  manual_confirmation: "Release TravelMapster from $CI_COMMIT_SHORT_SHA?"
   rules:
     - if: '$SONAR_SCAN_ONLY == "true"'
       when: never
-    - if: '$CI_PIPELINE_SOURCE == "api" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $APP_ONBOARDING == "true"'
-    - if: '$CI_PIPELINE_SOURCE == "web" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $PIPELINE_MODE == "full"'
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
-      when: manual
-      allow_failure: false
 
 02-deploy:
   stage: release
