@@ -124,7 +124,7 @@ variables:
         echo "SONAR_TOKEN is unavailable; Sonar analysis was not submitted." >&2
         exit 1
       fi
-      sonar -Dsonar.host.url="$SONAR_HOST_URL" -Dsonar.projectVersion="$APP_VERSION" -Dsonar.qualitygate.wait=false
+      sonar-scanner-npm -Dsonar.host.url="$SONAR_HOST_URL" -Dsonar.projectVersion="$APP_VERSION" -Dsonar.qualitygate.wait=false
   allow_failure: true
   rules:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
