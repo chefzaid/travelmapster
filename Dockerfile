@@ -5,7 +5,9 @@ ARG NODE_IMAGE=docker.io/library/node:22.22.2-bookworm-slim@sha256:9f6d5975c7dca
 FROM ${NODE_IMAGE} AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev --ignore-scripts=false --no-audit --no-fund \
+# Kaniko runs inside the Alpine CI tools image, whose /etc/alpine-release makes
+# node-gyp-build pick musl prebuilds; this Debian stage needs the glibc ones.
+RUN LIBC=glibc npm ci --omit=dev --ignore-scripts=false --no-audit --no-fund \
     && npm cache clean --force
 
 FROM ${NODE_IMAGE} AS runtime
