@@ -1,0 +1,26 @@
+/* Prototype page for the MapLibre GL map (see js/prototype.js). */
+@font-face {
+    font-family: 'Nunito';
+    src: url('vendor/fonts/nunito-latin-wght-normal.woff2') format('woff2-variations');
+    font-weight: 200 1000;
+}
+
+html, body { height: 100%; margin: 0; background: #8fd3f4; font-family: 'Nunito', system-ui, sans-serif; }
+#map { position: absolute; inset: 0; }
+
+.prototype-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    margin: 0;
+    padding: 8px 14px;
+    font-weight: 800;
+    color: #1f3b57;
+    background: #fffdf7;
+    border: 3px solid #1f3b57;
+    border-radius: 999px;
+    box-shadow: 3px 3px 0 #1f3b57;
+}
+
+.prototype-badge a { color: #b8323a; }
+.maplibregl-popup-content { font-family: 'Nunito', system-ui, sans-serif; font-weight: 800; color: #1f3b57; }
