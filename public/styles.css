@@ -1315,7 +1315,9 @@ button.legend-item[aria-pressed='false'] .swatch { opacity: 0.35; }
 
 /* ------------------------------------------------------------ the map */
 
-.leaflet-container {
+/* MapLibre draws countries and towns on a transparent WebGL canvas (js/map.js), so the
+   dotted ocean is this background. Map colours come from the tokens above. */
+.map {
     font-family: var(--font-body);
     background-color: var(--ocean);
     background-image:
@@ -1324,118 +1326,11 @@ button.legend-item[aria-pressed='false'] .swatch { opacity: 0.35; }
     background-size: 22px 22px, 100% 100%;
 }
 
-.leaflet-countries-pane svg {
-    filter: drop-shadow(3px 4px 0 rgba(31, 59, 87, 0.28));
-}
-
-.country {
-    stroke: var(--border-ink);
-    fill-opacity: 1;
-    cursor: pointer;
-    transition: fill 0.25s, stroke-width 0.15s;
-    /* Outlines keep their width while Leaflet scales the map during zoom animations. */
-    vector-effect: non-scaling-stroke;
-}
-
-/* Labels and places fade in as the map settles instead of popping. */
-@keyframes label-in {
-    from { opacity: 0; }
-}
-
-.country.c1 { fill: var(--land-1); }
-.country.c2 { fill: var(--land-2); }
-.country.c3 { fill: var(--land-3); }
-.country.c4 { fill: var(--land-4); }
-.country.c5 { fill: var(--land-5); }
-.country.c6 { fill: var(--land-6); }
-.country.c7 { fill: var(--land-7); }
-
-.country.is-wishlist {
-    fill: var(--wishlist);
-    stroke: var(--wishlist-ink);
-    stroke-dasharray: 5 4;
-    stroke-width: 2;
-}
-
-.country.is-visited {
-    fill: var(--visited);
-    stroke: var(--visited-ink);
-    stroke-width: 2;
-}
-
-.country.is-city-only:not(.is-wishlist) { fill: var(--visited-soft); }
-
-.country.is-hover {
-    stroke: var(--ink);
-    stroke-width: 2.5;
-    stroke-dasharray: none;
-}
-
-/* Hover lights up whole countries only at world scale; up close a country fills the
-   screen, so recolouring it would flash as the map moves under the pointer. */
-.map:not(.is-deep) .country.is-hover { fill: #fff; }
-.map:not(.is-deep) .country.is-visited.is-hover { fill: #5ad8cc; }
-.map:not(.is-deep) .country.is-wishlist.is-hover { fill: #ffd452; }
-
-.country.is-pulsing { animation: pulse 1.1s ease-out; }
-
-@keyframes pulse {
-    0% { stroke-width: 2; }
-    30% { stroke-width: 7; stroke: var(--primary); }
-    100% { stroke-width: 2; }
-}
-
-.graticule-line {
-    stroke: rgba(255, 255, 255, 0.6);
-    stroke-width: 1.5;
-    stroke-dasharray: 2 8;
-    stroke-linecap: round;
-    fill: none;
-}
-
-.graticule-label {
-    font-family: var(--font-display);
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    color: var(--graticule);
-    text-transform: uppercase;
-    white-space: nowrap;
-    transform: translateY(-16px);
-}
-
-.country-label {
-    font-family: var(--font-display);
-    font-weight: 600;
-    font-size: 12px;
-    transition: font-size 0.2s ease-out, opacity 0.2s ease-out;
-    color: var(--ink-dark);
-    letter-spacing: 0.02em;
-    text-align: center;
-    white-space: nowrap;
-    pointer-events: none;
-}
-
-.country-label span {
-    display: inline-block;
-    transform: translate(-50%, calc(-50% + var(--dy, 0px)));
-    animation: label-in 0.25s ease-out;
-    transition: transform 0.2s ease-out;
-    text-shadow: 0 0 3px rgba(255, 255, 255, 0.9), 0 0 6px rgba(255, 255, 255, 0.8);
-}
-
-.map[data-zoom='4'] .country-label,
-.map[data-zoom='5'] .country-label { font-size: 14px; }
-.map[data-zoom='6'] .country-label { font-size: 16px; opacity: 0.8; }
-
-/* Towns are drawn on one canvas (see js/city-layer.js); clicks and hovers reach the map. */
-.city-canvas { position: absolute; pointer-events: none; }
-.leaflet-container.is-over-city,
-.leaflet-container.is-over-city .leaflet-interactive { cursor: pointer; }
-
 .pin {
+    padding: 0;
     background: none;
     border: 0;
+    cursor: pointer;
 }
 
 .pin-body {
@@ -1468,7 +1363,10 @@ button.legend-item[aria-pressed='false'] .swatch { opacity: 0.35; }
     to { transform: rotate(-45deg); opacity: 1; }
 }
 
-.leaflet-tooltip.country-tooltip {
+.map-tooltip { pointer-events: none; }
+.map-tooltip .maplibregl-popup-tip { display: none; }
+
+.map-tooltip .maplibregl-popup-content {
     padding: 4px 10px;
     font-weight: 800;
     color: var(--text);
@@ -1478,64 +1376,56 @@ button.legend-item[aria-pressed='false'] .swatch { opacity: 0.35; }
     box-shadow: var(--shadow-sm);
 }
 
-.leaflet-tooltip.country-tooltip::before { display: none; }
-
-.leaflet-bar {
+.zoom-control {
+    display: grid;
     overflow: hidden;
-    border: 3px solid var(--ink) !important;
-    border-radius: 16px !important;
-    box-shadow: var(--shadow) !important;
+    margin: 0 16px 30px 0;
+    border: 3px solid var(--ink);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
 }
 
-.leaflet-bar a {
-    width: 40px !important;
-    height: 40px !important;
-    line-height: 38px !important;
+.zoom-control button {
+    width: 40px;
+    height: 40px;
+    padding: 0;
     font-family: var(--font-display);
-    font-size: 22px !important;
-    color: var(--text) !important;
-    background: var(--paper) !important;
-    border-bottom: 2px solid var(--ink) !important;
+    font-size: 22px;
+    color: var(--text);
+    background: var(--paper);
+    border: 0;
+    cursor: pointer;
 }
 
-.leaflet-bar a:last-child { border-bottom: 0 !important; }
-.leaflet-bar a:hover { color: var(--ink-dark) !important; background: var(--sunny) !important; }
+.zoom-control button + button { border-top: 2px solid var(--ink); }
+.zoom-control button:hover { color: var(--ink-dark); background: var(--sunny); }
 
-.leaflet-control-attribution {
+.maplibregl-ctrl-attrib {
     font-size: 10px;
     color: var(--text);
-    background: var(--paper) !important;
+    background: var(--paper);
     border-radius: 8px 0 0 0;
 }
 
-.leaflet-control-attribution a { color: var(--text); text-decoration: underline; }
-
-.leaflet-bottom.leaflet-right .leaflet-control-zoom { margin-bottom: 30px; }
+.maplibregl-ctrl-attrib a { color: var(--text); text-decoration: underline; }
 
 /* Map card popups */
-.card-popup .leaflet-popup-content-wrapper {
+.card-popup .maplibregl-popup-content {
     padding: 0;
     color: var(--text);
     background: var(--paper);
     border: 3px solid var(--ink);
     border-radius: 20px;
     box-shadow: var(--shadow);
-}
-
-.card-popup .leaflet-popup-content {
-    margin: 0;
     font-size: 14px;
     line-height: 1.45;
+    min-width: 260px;
 }
 
-.card-popup .leaflet-popup-tip {
-    background: var(--paper);
-    border: 3px solid var(--ink);
-    box-shadow: none;
-}
+.card-popup .maplibregl-popup-tip { border-top-color: var(--ink); }
 
 /* A comfortable touch target (WCAG 2.2 asks for at least 24px). */
-.card-popup a.leaflet-popup-close-button {
+.card-popup .maplibregl-popup-close-button {
     top: 6px;
     right: 6px;
     width: 32px;
@@ -1546,7 +1436,7 @@ button.legend-item[aria-pressed='false'] .swatch { opacity: 0.35; }
     border-radius: 50%;
 }
 
-.card-popup a.leaflet-popup-close-button:hover { background: var(--paper-2); }
+.card-popup .maplibregl-popup-close-button:hover { background: var(--paper-2); }
 
 .card { padding: 16px; }
 
@@ -1807,8 +1697,8 @@ button.legend-item[aria-pressed='false'] .swatch { opacity: 0.35; }
     .legend-static { display: none; }
     .legend-item { padding: 2px 8px; font-size: 0.72rem; }
 
-    .leaflet-control-zoom { display: none; }
-    .leaflet-bottom.leaflet-right { top: 64px; right: 0; bottom: auto; }
+    .zoom-control { display: none; }
+    .maplibregl-ctrl-bottom-right { top: 64px; right: 0; bottom: auto; }
 
     .hero h1 { font-size: 1.6rem; }
     .continent-bars li { grid-template-columns: 110px 1fr 40px; }

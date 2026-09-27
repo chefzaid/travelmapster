@@ -19,7 +19,7 @@ test('only the public/ directory is served', async () => {
     assert.match(index.text, /<title>[^<]*TravelMapster[^<]*<\/title>/);
     await http.get('/js/app.js').expect(200);
     await http.get('/data/countries.geojson').expect(200);
-    await http.get('/vendor/leaflet/leaflet.js').expect(200);
+    await http.get('/vendor/maplibre/maplibre-gl.mjs').expect(200);
 });
 
 test('security headers are set', async () => {

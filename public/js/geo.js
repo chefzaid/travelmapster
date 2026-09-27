@@ -1,4 +1,4 @@
-// Pure geography and statistics helpers. No DOM or Leaflet access, so they can be unit tested in Node.
+// Pure geography and statistics helpers. No DOM or map access, so they can be unit tested in Node.
 
 export const CONTINENTS = ['Africa', 'Asia', 'Europe', 'North America', 'Oceania', 'South America'];
 

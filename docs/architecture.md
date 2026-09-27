@@ -4,7 +4,7 @@
 
 ```mermaid
 flowchart LR
-    browser[Browser: static ES modules + Leaflet] -->|HTML, JS, CSS, map data| app[travelmapster Node.js service]
+    browser[Browser: static ES modules + MapLibre GL] -->|HTML, JS, CSS, map data| app[travelmapster Node.js service]
     browser -->|JSON /api, session cookie + CSRF header| app
     browser -->|itinerary ideas| wikivoyage[(Wikivoyage API)]
     app --> pg[(PostgreSQL: users, markers, trips, sessions)]
@@ -61,8 +61,7 @@ JSON under `/api`; errors are `{ "error": "…" }` with a matching status. All r
 | Module | Responsibility |
 |---|---|
 | `public/js/app.js` | App shell: auth, map cards, search, tabs, public view |
-| `public/js/map.js` | Leaflet map: countries, labels, town placement and tile loading, pins |
-| `public/js/city-layer.js` | Canvas drawing and hit-testing of towns ([ADR 0007](adr/0007-canvas-towns.md)) |
+| `public/js/map.js` | MapLibre GL map ([ADR 0008](adr/0008-maplibre-gl.md)): cartoon style from the CSS tokens, country states, towns and tile loading, pins, cards and camera |
 | `public/js/geo.js` | Country index, city search, stats, ranks and badges (pure, unit tested) |
 | `public/js/places.js`, `io.js` | Places tab, import and export |
 | `public/js/trips.js`, `ideas.js` | Trip planner and Wikivoyage ideas |
@@ -91,9 +90,10 @@ in PostgreSQL) and a per-process cache ([ADR 0005](adr/0005-bundled-map-data.md)
 ### Drawing towns
 
 The base cities load with the page. As you approach a region's zoom, the browser fetches its
-tile of smaller towns. Once the map settles, `map.js` places names in priority order (capitals,
-then places in the order they appear) and hands them to the canvas layer; during zoom animations
-the last drawing is scaled, so nothing pops or flickers.
+tile of smaller towns and hands MapLibre the towns that can appear near the current zoom. A
+symbol layer shows each town from its `minZoom`, placed by priority (capitals, then places in the
+order they appear) with its name on the right or left; MapLibre resolves collisions and fades
+names in and out continuously while zooming. Country names sit on top and win collisions.
 
 ### Delivery
 
@@ -127,4 +127,6 @@ number (`NNNN-short-title.md`) and the template below. Statuses: **Proposed**, *
 - [ADR 0004: PostgreSQL with in-app SQL migrations](adr/0004-postgres-and-migrations.md)
 - [ADR 0005: Bundle map data and proxy geocoding](adr/0005-bundled-map-data.md)
 - [ADR 0006: Deliver through GitLab CI and Argo CD with explicit release jobs](adr/0006-gitlab-argocd-delivery.md)
-- [ADR 0007: Draw towns on a canvas layer](adr/0007-canvas-towns.md)
+- [ADR 0008: Render the map with MapLibre GL](adr/0008-maplibre-gl.md)
+
+Superseded: [ADR 0007: Draw towns on a canvas layer](adr/0007-canvas-towns.md).

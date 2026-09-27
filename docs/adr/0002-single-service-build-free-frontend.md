@@ -11,7 +11,7 @@ with a side panel, not a large single-page application.
 ## Decision
 
 One Express 5 process serves the JSON API under `/api` and the static frontend from `public/`.
-The frontend is native ES modules with Leaflet and hand-written CSS: no bundler, framework or
+The frontend is native ES modules with MapLibre GL and hand-written CSS: no bundler, framework or
 build step. Only `public/` is served.
 
 ## Consequences

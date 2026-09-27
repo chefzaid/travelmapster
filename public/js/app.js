@@ -631,7 +631,7 @@ const CONTINENT_VIEWS = {
 
 function flyToContinent(name) {
     const [center, zoom] = CONTINENT_VIEWS[name];
-    travelMap.map.flyTo(center, zoom, { duration: 0.8 });
+    travelMap.flyToView(center, zoom);
 }
 
 // ---------------------------------------------------------------- tabs
@@ -957,7 +957,14 @@ async function init() {
         cities: state.cities,
         onCountryClick: (country, latlng) => showCountryCard(country, latlng),
         onCityClick: city => showCityCard(city),
-        onPinClick: marker => showSavedCityCard(marker)
+        onPinClick: marker => showSavedCityCard(marker),
+        // On phones, tuck the bottom sheet away so map cards have room.
+        onPopupOpen: () => {
+            if (window.innerWidth <= 760) {
+                $('#panel').classList.add('is-collapsed');
+                $('#panel-handle').setAttribute('aria-expanded', 'false');
+            }
+        }
     });
     setupSearch();
     setupTabs();
@@ -966,13 +973,6 @@ async function init() {
     setupPanel();
     setupLegend();
     $('#surprise-btn').addEventListener('click', surprise);
-    // On phones, tuck the bottom sheet away so map cards have room.
-    travelMap.map.on('popupopen', () => {
-        if (window.innerWidth <= 760) {
-            $('#panel').classList.add('is-collapsed');
-            $('#panel-handle').setAttribute('aria-expanded', 'false');
-        }
-    });
     await boot();
 }
 

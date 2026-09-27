@@ -13,10 +13,10 @@ Everything below is implemented. Planned work lives in [TODO.md](../TODO.md).
 
 - Cartoon world map drawn from bundled country borders, with pastel countries, thick outlines, a dotted ocean and atlas lines (Equator and tropics).
 - Every town and village of 500+ people (about 225,000 places) appears as you zoom in, more at every half zoom step down to street-level zoom 11, where places without room for a name still show as a dot. Capitals carry a star and show first; names never overlap and keep their place as you zoom further in. See [map data](data-model.md#map-data).
-- Smooth zooming: towns are drawn on one canvas that scales with the zoom animation and sharpens when the map settles; hovering a dot shows its name.
+- Smooth, continuous zooming like a web map app: everything is drawn on the GPU, and names fade in and out as room opens up; hovering a town or country shows its name.
 - Visited countries turn teal, wishlist countries sunny yellow with a dashed border; countries where you only visited a city get a lighter teal.
 - The legend doubles as a visited/wishlist filter.
-- No third-party map services: map data, fonts and Leaflet are served by the app.
+- No third-party map services: map data, fonts and MapLibre GL are served by the app.
 
 ## Places
 

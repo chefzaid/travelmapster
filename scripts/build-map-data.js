@@ -215,7 +215,7 @@ for (const place of places) {
     if (city) place.earliest = Math.max(place.earliest, 9);
 }
 
-// Mercator pixel position at a zoom, matching Leaflet's projection.
+// Web Mercator pixel position with 256 px tiles, the zoom scale the app's data uses.
 function project(lat, lng, zoom) {
     const scale = 256 * 2 ** zoom;
     const sin = Math.sin((Math.max(-85, Math.min(85, lat)) * Math.PI) / 180);

@@ -23,12 +23,12 @@ module.exports = [
         }
     },
     {
-        // Browser ES modules; Leaflet is loaded as a classic script global.
+        // Browser ES modules.
         files: ['public/js/**/*.js'],
         languageOptions: {
             ecmaVersion: 2024,
             sourceType: 'module',
-            globals: { ...globals.browser, L: 'readonly' }
+            globals: globals.browser
         },
         rules: {
             eqeqeq: ['error', 'always'],

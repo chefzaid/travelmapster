@@ -3,7 +3,7 @@
 ![Node.js](https://img.shields.io/badge/Node.js-22-339933?logo=node.js&logoColor=white)
 ![Express](https://img.shields.io/badge/Express-5-000?logo=express&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18-4169E1?logo=postgresql&logoColor=white)
-![Leaflet](https://img.shields.io/badge/Leaflet-1.9-199900?logo=leaflet&logoColor=white)
+![MapLibre GL](https://img.shields.io/badge/MapLibre%20GL-6-396CB2?logo=maplibre&logoColor=white)
 ![CI](https://github.com/chefzaid/travelmapster/actions/workflows/ci.yml/badge.svg)
 
 TravelMapster is a playful travel atlas. Color in the countries you have visited, pin the
