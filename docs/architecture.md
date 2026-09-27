@@ -9,6 +9,7 @@ flowchart LR
     browser -->|itinerary ideas| wikivoyage[(Wikivoyage API)]
     app --> pg[(PostgreSQL: users, markers, trips, sessions)]
     app -->|throttled, cached| nominatim[(Nominatim)]
+    browser -->|region tiles of towns| app
     prometheus[Prometheus] -->|:9464/metrics| app
 ```
 
@@ -28,6 +29,7 @@ PostgreSQL, including sessions, so any replica can serve any request.
 | `src/rate-limit-store.js` | Rate-limit counters in PostgreSQL, shared by every replica |
 | `src/repositories.js` | SQL access, always scoped to the signed-in user |
 | `src/services/geocoder.js` | Nominatim client with throttling, timeout and LRU cache |
+| `src/services/places.js` | In-memory search over every town in the map data |
 | `src/db/` | Connection pool, transactions and [migrations](data-model.md#migrations) |
 | `src/middleware/csrf.js` | Synchronizer-token CSRF protection |
 
@@ -51,6 +53,7 @@ JSON under `/api`; errors are `{ "error": "…" }` with a matching status. All r
 | PUT, DELETE | `/api/trips/:id` | Replace or remove an itinerary |
 | PATCH | `/api/profile` | Set `profileVisibility` to `private` or `public` |
 | GET | `/api/public/:username` | Read-only public map without notes or photo links |
+| GET | `/api/places?q=&limit=` | Search every town in the map data (public, 1–20 results) |
 | GET | `/api/geocode?q=&kind=city\|country&limit=` | World place search (1–10 results) |
 
 ## Frontend
@@ -58,7 +61,8 @@ JSON under `/api`; errors are `{ "error": "…" }` with a matching status. All r
 | Module | Responsibility |
 |---|---|
 | `public/js/app.js` | App shell: auth, map cards, search, tabs, public view |
-| `public/js/map.js` | Leaflet map: countries, labels, cities and pins |
+| `public/js/map.js` | Leaflet map: countries, labels, town placement and tile loading, pins |
+| `public/js/city-layer.js` | Canvas drawing and hit-testing of towns ([ADR 0007](adr/0007-canvas-towns.md)) |
 | `public/js/geo.js` | Country index, city search, stats, ranks and badges (pure, unit tested) |
 | `public/js/places.js`, `io.js` | Places tab, import and export |
 | `public/js/trips.js`, `ideas.js` | Trip planner and Wikivoyage ideas |
@@ -78,10 +82,18 @@ JSON under `/api`; errors are `{ "error": "…" }` with a matching status. All r
 
 ### Place search
 
-Built-in countries and cities are searched in the browser. For other towns the browser calls
-`/api/geocode`, which proxies Nominatim with an identifying User-Agent, at most one request per
-interval across all replicas (a slot booked in PostgreSQL) and a per-process cache
-([ADR 0005](adr/0005-bundled-map-data.md)).
+Countries and the base cities are matched instantly in the browser; a moment later
+`/api/places` answers from an index of every town, loaded in the background at startup. For
+anything smaller the "Search the world" option calls `/api/geocode`, which proxies Nominatim with
+an identifying User-Agent, at most one request per interval across all replicas (a slot booked
+in PostgreSQL) and a per-process cache ([ADR 0005](adr/0005-bundled-map-data.md)).
+
+### Drawing towns
+
+The base cities load with the page. As you approach a region's zoom, the browser fetches its
+tile of smaller towns. Once the map settles, `map.js` places names in priority order (capitals,
+then places in the order they appear) and hands them to the canvas layer; during zoom animations
+the last drawing is scaled, so nothing pops or flickers.
 
 ### Delivery
 
@@ -115,3 +127,4 @@ number (`NNNN-short-title.md`) and the template below. Statuses: **Proposed**, *
 - [ADR 0004: PostgreSQL with in-app SQL migrations](adr/0004-postgres-and-migrations.md)
 - [ADR 0005: Bundle map data and proxy geocoding](adr/0005-bundled-map-data.md)
 - [ADR 0006: Deliver through GitLab CI and Argo CD with explicit release jobs](adr/0006-gitlab-argocd-delivery.md)
+- [ADR 0007: Draw towns on a canvas layer](adr/0007-canvas-towns.md)

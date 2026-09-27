@@ -184,10 +184,16 @@ export function resolveMarkerCountry(index, marker) {
     return index.findByName(suffix);
 }
 
+// "Paris, United States" or "Paris in United" narrows by country. Split before
+// normalizing, which would turn the comma into a space.
+export function splitPlaceQuery(query) {
+    const [cityPart = '', countryPart = ''] = String(query ?? '').split(/\s*,\s*|\s+in\s+/i).map(normalizeName);
+    return [cityPart, countryPart];
+}
+
 export function searchCities(cities, query, limit = 8) {
-    const key = normalizeName(query);
-    if (!key) return [];
-    const [cityPart, countryPart] = key.split(/\s*,\s*|\s+in\s+/);
+    const [cityPart, countryPart] = splitPlaceQuery(query);
+    if (!cityPart) return [];
     return cities
         .map(city => {
             const name = normalizeName(city.name);

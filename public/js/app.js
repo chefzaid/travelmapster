@@ -340,12 +340,30 @@ const search = {
     active: -1
 };
 
-function searchResults(query) {
+function searchResults(query, cities = searchCities(state.cities, query, 6)) {
     const countries = state.index.search(query, 5).map(country => ({ kind: 'country', country }));
-    const cities = searchCities(state.cities, query, 6).map(city => ({ kind: 'city', city }));
-    const results = [...countries, ...cities];
+    const results = [...countries, ...cities.map(city => ({ kind: 'city', city }))];
     if (query.trim().length >= 3) results.push({ kind: 'world', query: query.trim() });
     return results;
+}
+
+// Big cities are matched instantly in the browser; every smaller town comes from the
+// server's index a moment later, replacing the city results if the query is unchanged.
+let placeSearchTimer = 0;
+function searchAllPlaces(query) {
+    clearTimeout(placeSearchTimer);
+    if (query.trim().length < 2) return;
+    placeSearchTimer = setTimeout(async () => {
+        try {
+            const cities = await api.searchPlaces(query.trim());
+            if (search.input.value !== query || !cities.length) return;
+            search.results = searchResults(query, cities);
+            search.active = Math.min(Math.max(search.active, 0), search.results.length - 1);
+            renderSearchResults();
+        } catch {
+            // The instant results stay; the world search remains available.
+        }
+    }, 150);
 }
 
 function renderSearchResults() {
@@ -404,7 +422,9 @@ async function chooseResult(result) {
     if (result.kind === 'country') {
         travelMap.flyToCountry(result.country).then(() => showCountryCard(result.country));
     } else if (result.kind === 'city') {
-        travelMap.flyTo(result.city.lat, result.city.lng, 5.5).then(() => showCityCard(result.city));
+        // Fly close enough for the town to be drawn on the map.
+        const zoom = Math.min(11, Math.max(5.5, (result.city.minZoom ?? 5) + 0.5));
+        travelMap.flyTo(result.city.lat, result.city.lng, zoom).then(() => showCityCard(result.city));
     } else {
         try {
             const city = await searchWorld(result.query);
@@ -422,6 +442,7 @@ function setupSearch() {
         search.results = searchResults(search.input.value);
         search.active = search.results.length ? 0 : -1;
         renderSearchResults();
+        searchAllPlaces(search.input.value);
     });
     search.input.addEventListener('keydown', event => {
         if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {

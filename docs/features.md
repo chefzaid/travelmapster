@@ -12,7 +12,8 @@ Everything below is implemented. Planned work lives in [TODO.md](../TODO.md).
 ## The Map
 
 - Cartoon world map drawn from bundled country borders, with pastel countries, thick outlines, a dotted ocean and atlas lines (Equator and tropics).
-- Country names and about 7,000 cities appear as you zoom in, more at every zoom step. Capitals carry a star and show first; labels never overlap and keep their place as you zoom further in. See [map data](data-model.md#map-data).
+- Every town and village of 500+ people (about 225,000 places) appears as you zoom in, more at every half zoom step down to street-level zoom 11, where places without room for a name still show as a dot. Capitals carry a star and show first; names never overlap and keep their place as you zoom further in. See [map data](data-model.md#map-data).
+- Smooth zooming: towns are drawn on one canvas that scales with the zoom animation and sharpens when the map settles; hovering a dot shows its name.
 - Visited countries turn teal, wishlist countries sunny yellow with a dashed border; countries where you only visited a city get a lighter teal.
 - The legend doubles as a visited/wishlist filter.
 - No third-party map services: map data, fonts and Leaflet are served by the app.
@@ -21,7 +22,7 @@ Everything below is implemented. Planned work lives in [TODO.md](../TODO.md).
 
 - Click a country or city for a card with flag, capital, population and your saved details.
 - One tap marks a place "Been there" or "Wishlist"; tapping again undoes it.
-- Instant search over countries and built-in cities, with a server-side world search for smaller towns ([geocoding](architecture.md#place-search)).
+- Instant search over countries and every town, with a world search for anything smaller ([place search](architecture.md#place-search)).
 - Notes, a travel date and a photo link on every place.
 - Places list grouped by continent, with filters, text search and sorting.
 - Undo after removing a place.

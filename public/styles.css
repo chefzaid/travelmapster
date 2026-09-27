@@ -1333,6 +1333,13 @@ button.legend-item[aria-pressed='false'] .swatch { opacity: 0.35; }
     fill-opacity: 1;
     cursor: pointer;
     transition: fill 0.25s, stroke-width 0.15s;
+    /* Outlines keep their width while Leaflet scales the map during zoom animations. */
+    vector-effect: non-scaling-stroke;
+}
+
+/* Labels and places fade in as the map settles instead of popping. */
+@keyframes label-in {
+    from { opacity: 0; }
 }
 
 .country.c1 { fill: var(--land-1); }
@@ -1359,14 +1366,16 @@ button.legend-item[aria-pressed='false'] .swatch { opacity: 0.35; }
 .country.is-city-only:not(.is-wishlist) { fill: var(--visited-soft); }
 
 .country.is-hover {
-    fill: #fff;
     stroke: var(--ink);
     stroke-width: 2.5;
     stroke-dasharray: none;
 }
 
-.country.is-visited.is-hover { fill: #5ad8cc; }
-.country.is-wishlist.is-hover { fill: #ffd452; }
+/* Hover lights up whole countries only at world scale; up close a country fills the
+   screen, so recolouring it would flash as the map moves under the pointer. */
+.map:not(.is-deep) .country.is-hover { fill: #fff; }
+.map:not(.is-deep) .country.is-visited.is-hover { fill: #5ad8cc; }
+.map:not(.is-deep) .country.is-wishlist.is-hover { fill: #ffd452; }
 
 .country.is-pulsing { animation: pulse 1.1s ease-out; }
 
@@ -1399,6 +1408,7 @@ button.legend-item[aria-pressed='false'] .swatch { opacity: 0.35; }
     font-family: var(--font-display);
     font-weight: 600;
     font-size: 12px;
+    transition: font-size 0.2s ease-out, opacity 0.2s ease-out;
     color: var(--ink-dark);
     letter-spacing: 0.02em;
     text-align: center;
@@ -1409,6 +1419,8 @@ button.legend-item[aria-pressed='false'] .swatch { opacity: 0.35; }
 .country-label span {
     display: inline-block;
     transform: translate(-50%, calc(-50% + var(--dy, 0px)));
+    animation: label-in 0.25s ease-out;
+    transition: transform 0.2s ease-out;
     text-shadow: 0 0 3px rgba(255, 255, 255, 0.9), 0 0 6px rgba(255, 255, 255, 0.8);
 }
 
@@ -1416,52 +1428,10 @@ button.legend-item[aria-pressed='false'] .swatch { opacity: 0.35; }
 .map[data-zoom='5'] .country-label { font-size: 14px; }
 .map[data-zoom='6'] .country-label { font-size: 16px; opacity: 0.8; }
 
-/* Leaflet positions the marker absolutely, which also anchors the name beside the dot. */
-.city-marker {
-    white-space: nowrap;
-    cursor: pointer;
-}
-
-.city-dot {
-    display: grid;
-    place-items: center;
-    width: 12px;
-    height: 12px;
-    flex-shrink: 0;
-    font-size: 9px;
-    line-height: 1;
-    color: var(--ink-dark);
-    background: #fff;
-    border: 2.5px solid var(--ink);
-    border-radius: 50%;
-    transition: transform 0.12s;
-}
-
-.city-marker.is-capital .city-dot {
-    width: 16px;
-    height: 16px;
-    margin: -2px;
-    color: #fff;
-    background: var(--primary-strong);
-}
-
-/* Names sit beside the dot, on the left when the right side is taken. */
-.city-name {
-    position: absolute;
-    top: 50%;
-    left: calc(100% + 4px);
-    transform: translateY(-50%);
-    font-size: 11.5px;
-    font-weight: 800;
-    color: var(--ink-dark);
-    text-shadow: 0 0 2px #fff, 0 0 4px #fff, 0 0 6px #fff;
-}
-
-.city-marker.is-capital .city-name { font-size: 12.5px; }
-.city-marker.label-left .city-name { left: auto; right: calc(100% + 4px); }
-.city-marker:hover .city-dot { transform: scale(1.35); }
-.city-marker.no-label .city-name { display: none; }
-.city-marker.no-label:hover .city-name { display: inline; }
+/* Towns are drawn on one canvas (see js/city-layer.js); clicks and hovers reach the map. */
+.city-canvas { position: absolute; pointer-events: none; }
+.leaflet-container.is-over-city,
+.leaflet-container.is-over-city .leaflet-interactive { cursor: pointer; }
 
 .pin {
     background: none;

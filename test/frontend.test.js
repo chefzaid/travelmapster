@@ -9,15 +9,30 @@ const load = file => import(path.join(publicDir, 'js', file));
 const countries = JSON.parse(fs.readFileSync(path.join(publicDir, 'data', 'countries.geojson'), 'utf8'));
 const cities = JSON.parse(fs.readFileSync(path.join(publicDir, 'data', 'cities.json'), 'utf8'));
 
-test('map data holds countries and cities graded by the zoom that reveals them', () => {
+test('map data holds every town, graded by the zoom that reveals it', () => {
     assert.ok(countries.features.length > 200);
     assert.ok(countries.features.every(feature => ['Polygon', 'MultiPolygon'].includes(feature.geometry.type)));
-    assert.ok(cities.length > 5000 && cities.length < 9000);
+    // The base list loads with the page: capitals and cities shown up to zoom 6.
+    assert.ok(cities.length > 3000 && cities.length < 8000);
     assert.ok(cities.filter(city => city.capital).length > 150);
-    // Every city appears by the map's deepest zoom (8), and each zoom step adds more.
-    assert.ok(cities.every(city => Number.isFinite(city.minZoom) && city.minZoom <= 8));
-    const revealedBy = zoom => cities.filter(city => city.minZoom <= zoom).length;
-    for (const zoom of [4, 5, 6, 7]) assert.ok(revealedBy(zoom) < revealedBy(zoom + 1), `zoom ${zoom + 1} adds cities`);
+    assert.ok(cities.every(city => Number.isFinite(city.minZoom) && city.minZoom <= 6));
+
+    // Everything smaller lives in region tiles as [name, countryId, capital, population, minZoom, lat, lng].
+    const tileDir = path.join(publicDir, 'data', 'cities');
+    const index = JSON.parse(fs.readFileSync(path.join(tileDir, 'index.json'), 'utf8'));
+    const minZooms = cities.map(city => city.minZoom);
+    for (const tile of index) {
+        const rows = JSON.parse(fs.readFileSync(path.join(tileDir, `${tile.id}.json`), 'utf8'));
+        const [south, west, north, east] = tile.bounds;
+        for (const [name, countryId, , , minZoom, lat, lng] of rows) {
+            assert.ok(name && countryId && minZoom > 6, `${name} belongs in a tile`);
+            assert.ok(lat >= south && lat <= north && lng >= west && lng <= east, `${name} lies inside its tile`);
+            minZooms.push(minZoom);
+        }
+    }
+    assert.ok(minZooms.length > 200_000, 'every GeoNames town of 500+ people is included');
+    const revealedBy = zoom => minZooms.filter(minZoom => minZoom <= zoom).length;
+    for (let zoom = 3; zoom < 11; zoom += 1) assert.ok(revealedBy(zoom) < revealedBy(zoom + 1), `zoom ${zoom + 1} adds towns`);
 });
 
 test('country index finds countries by name, alias and location', async () => {
@@ -71,6 +86,11 @@ test('city search prefers exact and bigger matches', async () => {
     assert.equal(searchCities(cities, 'paris')[0].country, 'France');
     assert.equal(searchCities(cities, 'san')[0].name.startsWith('San'), true);
     assert.deepEqual(searchCities(cities, ''), []);
+    // A comma or "in" narrows by country.
+    for (const query of ['paris, united states', 'paris in united']) {
+        const found = searchCities(cities, query);
+        assert.ok(found.length > 0 && found.every(city => city.country === 'United States of America'), query);
+    }
 });
 
 test('import and export round-trip saved places', async () => {

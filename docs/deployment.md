@@ -24,7 +24,7 @@ ingress, DNS and monitoring. Everything application-specific lives in this repos
 | `ExternalSecret`s | `travelmapster-secret` (`PGPASSWORD`, `SESSION_SECRET` from Vault `apps/travelmapster/runtime`), registry pull credentials (`apps/travelmapster/registry`) and the database admin login used by the setup hook |
 | `travelmapster-db-setup` Job | Argo CD sync hook: creates or updates the `travelmapster_user` role and `travelmapster` database in the shared PostgreSQL |
 | ConfigMap `travelmapster-config` | Non-secret settings: database host, `TRUST_PROXY` (pod network), geocoder User-Agent |
-| Deployment and Service | One replica; non-root, read-only filesystem, all capabilities dropped; startup and readiness on `/readyz`, liveness on `/healthz`; metrics on port 9464 |
+| Deployment and Service | One replica with 192Mi/384Mi memory (the town index takes about 90 MB); non-root, read-only filesystem, all capabilities dropped; startup and readiness on `/readyz`, liveness on `/healthz`; metrics on port 9464 |
 | Ingress and Middleware | TLS host through Traefik, 4 MiB body limit (bulk import), intranet homepage annotations |
 | NetworkPolicy | Ingress only from Traefik (3000), Prometheus (9464) and CI smoke-test pods (3000) |
 
