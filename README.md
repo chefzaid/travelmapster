@@ -15,7 +15,7 @@ keep a wishlist of dream trips, and plan day-by-day itineraries.
 - [x] Cartoon world map drawn from country borders only: no tiles, terrain, roads or regional detail
 - [x] Pastel countries with thick friendly outlines, a dotted ocean and atlas lines (Equator and tropics)
 - [x] Country names and cities appear as you zoom in, more at every zoom step, with labels that never overlap
-- [x] Capitals marked with a star; only capitals and large cities are shown
+- [x] Capitals marked with a star; smaller towns appear as you zoom in
 - [x] Visited countries turn teal, wishlist countries turn sunny yellow with a dashed border
 - [x] Countries you only visited a city in get a lighter teal
 - [x] Map legend doubles as a filter for visited and wishlist places
@@ -53,6 +53,8 @@ keep a wishlist of dream trips, and plan day-by-day itineraries.
 
 ### Next
 - [ ] Google and Facebook login
+- [ ] Travel albums: give each pinned place a description and a photo album instead of a single photo link
+- [ ] Multiple visits per place: record each visit with its own dates, description and photos, and show how many times you have been
 
 ## Map Requirements
 
