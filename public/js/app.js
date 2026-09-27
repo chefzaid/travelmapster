@@ -28,8 +28,9 @@ let travelMap;
 
 async function loadMapData() {
     const [countries, cities] = await Promise.all([
-        fetch('data/countries.geojson').then(res => res.json()),
-        fetch('data/cities.json').then(res => res.json())
+        // Relative to this module, so data comes from the same release as the code.
+        fetch(new URL('../data/countries.geojson', import.meta.url)).then(res => res.json()),
+        fetch(new URL('../data/cities.json', import.meta.url)).then(res => res.json())
     ]);
     state.index = createCountryIndex(countries);
     state.cities = cities;

@@ -7,10 +7,10 @@
     <meta name="theme-color" content="#7cc6e8">
     <title>TravelMapster</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
-    <link rel="preload" href="vendor/fonts/fredoka-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
-    <!-- ?v=2 retires a copy the CDN cached before assets were served with no-cache. -->
-    <link rel="stylesheet" href="styles.css?v=2">
+    <!-- The server rewrites /__assets__/ to this release's cacheable /a/<fingerprint>/ path. -->
+    <link rel="preload" href="/__assets__/vendor/fonts/fredoka-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/__assets__/vendor/leaflet/leaflet.css">
+    <link rel="stylesheet" href="/__assets__/styles.css">
 </head>
 <body>
     <a class="skip-link" href="#panel">Skip to panel</a>
@@ -20,7 +20,7 @@
 
         <header class="topbar">
             <a class="brand" href="/" aria-label="TravelMapster home">
-                <img src="logo.svg" alt="" width="40" height="40">
+                <img src="/__assets__/logo.svg" alt="" width="40" height="40">
                 <span class="brand-name">Travel<span>Mapster</span></span>
             </a>
 
@@ -142,7 +142,7 @@
 
     <div id="toasts" class="toasts" aria-live="polite"></div>
 
-    <script src="vendor/leaflet/leaflet.js"></script>
-    <script type="module" src="js/app.js"></script>
+    <script src="/__assets__/vendor/leaflet/leaflet.js"></script>
+    <script type="module" src="/__assets__/js/app.js"></script>
 </body>
 </html>

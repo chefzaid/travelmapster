@@ -9,6 +9,7 @@ const pinoHttp = require('pino-http');
 const { rateLimit } = require('express-rate-limit');
 
 const { csrfProtection, csrfTokenRoute } = require('./middleware/csrf');
+const { createAssets } = require('./assets');
 const { PgRateLimitStore } = require('./rate-limit-store');
 const { createUserRepository, createMarkerRepository, createTripRepository } = require('./repositories');
 const { createAuthRouter, createPassport, requireAuth } = require('./routes/auth');
@@ -42,6 +43,7 @@ function createApp({ config, pool, logger, metrics, geocoder, places, state = { 
     const markers = createMarkerRepository(pool);
     const trips = createTripRepository(pool);
     const passport = createPassport(users);
+    const assets = createAssets(PUBLIC_DIR);
 
     app.disable('x-powered-by');
     app.set('trust proxy', config.trustProxy);
@@ -64,7 +66,7 @@ function createApp({ config, pool, logger, metrics, geocoder, places, state = { 
             req: req => ({ id: req.id, method: req.method, url: req.url, remoteAddress: req.remoteAddress }),
             res: res => ({ statusCode: res.statusCode })
         },
-        autoLogging: { ignore: req => req.url.startsWith('/vendor/') || req.url.startsWith('/data/') },
+        autoLogging: { ignore: req => /^\/(a|vendor|data)\//.test(req.url) },
         customLogLevel: (req, res, err) => {
             if (err || res.statusCode >= 500) return 'error';
             if (res.statusCode >= 400) return 'warn';
@@ -94,12 +96,20 @@ function createApp({ config, pool, logger, metrics, geocoder, places, state = { 
         crossOriginEmbedderPolicy: false
     }));
 
-    // Always revalidate (ETag, so unchanged files are a cheap 304): a release must never mix
-    // new and old scripts, styles or map data from a browser or CDN cache.
-    app.use(express.static(PUBLIC_DIR, {
-        index: 'index.html',
-        setHeaders: res => res.set('Cache-Control', 'no-cache')
+    // The page is never cached and links every asset under /a/<fingerprint>/, which is
+    // cached for a year: a release changes the fingerprint, so browsers and the CDN never
+    // mix old and new scripts, styles or map data.
+    app.get(['/', '/index.html'], (req, res) => {
+        res.set('Cache-Control', 'no-cache').type('html').send(assets.indexHtml);
+    });
+    app.use('/a/:version', express.static(PUBLIC_DIR, {
+        index: false,
+        setHeaders: res => res.set('Cache-Control', 'public, max-age=31536000, immutable')
     }));
+    // Unversioned paths (the favicon, older links) always revalidate.
+    for (const mount of [assets.placeholder, '/']) {
+        app.use(mount, express.static(PUBLIC_DIR, { index: false, setHeaders: res => res.set('Cache-Control', 'no-cache') }));
+    }
 
     app.use('/api/markers/import', express.json({ limit: '3mb' }));
     app.use(express.json({ limit: '100kb' }));

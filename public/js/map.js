@@ -118,7 +118,9 @@ export function createTravelMap(element, { index, cities, onCountryClick, onCity
     const baseEntries = cities.map(toEntry);
     const tiles = new Map();
 
-    fetch('data/cities/index.json')
+    // Relative to this module, so tiles come from the same release as the code.
+    const tileUrl = file => new URL(`../data/cities/${file}`, import.meta.url);
+    fetch(tileUrl('index.json'))
         .then(response => (response.ok ? response.json() : []))
         .then(list => {
             for (const { id, bounds, minZoom } of list) {
@@ -133,7 +135,7 @@ export function createTravelMap(element, { index, cities, onCountryClick, onCity
             // Fetch half a zoom early so places are ready when they are due.
             if (tile.entries || tile.loading || zoom < tile.minZoom - 0.5 || !tile.bounds.intersects(view)) continue;
             tile.loading = true;
-            fetch(`data/cities/${id}.json`)
+            fetch(tileUrl(`${id}.json`))
                 .then(response => {
                     if (!response.ok) throw new Error(`City tile ${id}: HTTP ${response.status}`);
                     return response.json();
