@@ -129,3 +129,12 @@ test('place search finds every town, not just the big cities', async () => {
 
     assert.equal((await client.get('/api/places?q=x')).status, 400);
 });
+
+test('static files always revalidate so a release never mixes old and new assets', async () => {
+    const first = await request(ctx.server).get('/js/map.js');
+    assert.equal(first.status, 200);
+    assert.equal(first.headers['cache-control'], 'no-cache');
+    assert.ok(first.headers.etag);
+    const again = await request(ctx.server).get('/js/map.js').set('If-None-Match', first.headers.etag);
+    assert.equal(again.status, 304, 'unchanged files cost a 304, not a download');
+});
