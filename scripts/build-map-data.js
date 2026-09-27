@@ -5,7 +5,7 @@
 //   node scripts/build-map-data.js <natural-earth-geojson-dir>
 //
 // The directory must contain ne_50m_admin_0_countries.geojson and
-// ne_50m_populated_places_simple.geojson, downloaded from
+// ne_10m_populated_places_simple.geojson, downloaded from
 // https://github.com/nvkelso/natural-earth-vector/tree/master/geojson (public domain).
 
 const fs = require('node:fs');
@@ -20,7 +20,10 @@ if (!sourceDir) {
 const outputDir = path.join(__dirname, '..', 'public', 'data');
 const PRECISION = 2; // ~1 km, plenty for a cartoon world map
 const TOLERANCE = 0.04; // degrees; smooths coastlines into a friendlier, cartoon shape
-const CITY_MIN_POPULATION = 750000;
+// Keep every place Natural Earth labels by the map's deepest zoom; its min_zoom
+// grades them so more cities appear at each zoom step.
+const MAX_MAP_ZOOM = 8;
+const EXCLUDED_PLACE_CLASSES = new Set(['Scientific station', 'Meteorological Station', 'Historic place']);
 
 function readGeoJson(fileName) {
     return JSON.parse(fs.readFileSync(path.join(sourceDir, fileName), 'utf8'));
@@ -131,11 +134,10 @@ const countries = {
         .sort((first, second) => first.properties.name.localeCompare(second.properties.name))
 };
 
-const placesSource = readGeoJson('ne_50m_populated_places_simple.geojson');
+const placesSource = readGeoJson('ne_10m_populated_places_simple.geojson');
 const cities = placesSource.features
     .map(feature => feature.properties)
-    .filter(p => p.featurecla !== 'Scientific station' && p.featurecla !== 'Historic place')
-    .filter(p => p.featurecla.startsWith('Admin-0 capital') || p.pop_max >= CITY_MIN_POPULATION || p.worldcity === 1)
+    .filter(p => !EXCLUDED_PLACE_CLASSES.has(p.featurecla) && p.min_zoom <= MAX_MAP_ZOOM)
     .map(p => ({
         name: p.name,
         country: p.adm0name,
@@ -143,6 +145,7 @@ const cities = placesSource.features
         capital: p.featurecla.startsWith('Admin-0 capital') ? 1 : 0,
         population: p.pop_max,
         rank: p.scalerank,
+        minZoom: p.min_zoom,
         lat: round(p.latitude),
         lng: round(p.longitude)
     }))
