@@ -1,0 +1,53 @@
+# Features
+
+Everything below is implemented. Planned work lives in [TODO.md](../TODO.md).
+
+## Product Principles
+
+- Keep the map simple and focused on travel tracking.
+- Show country borders only: no regions, subdivisions, terrain, roads or tiles.
+- Reveal city detail progressively as the user zooms in.
+- Be fun and cartoonish, but usable, accessible (WCAG 2.2 AA contrast) and polished.
+
+## The Map
+
+- Cartoon world map drawn from bundled country borders, with pastel countries, thick outlines, a dotted ocean and atlas lines (Equator and tropics).
+- Country names and about 7,000 cities appear as you zoom in, more at every zoom step. Capitals carry a star and show first; labels never overlap and keep their place as you zoom further in. See [map data](data-model.md#map-data).
+- Visited countries turn teal, wishlist countries sunny yellow with a dashed border; countries where you only visited a city get a lighter teal.
+- The legend doubles as a visited/wishlist filter.
+- No third-party map services: map data, fonts and Leaflet are served by the app.
+
+## Places
+
+- Click a country or city for a card with flag, capital, population and your saved details.
+- One tap marks a place "Been there" or "Wishlist"; tapping again undoes it.
+- Instant search over countries and built-in cities, with a server-side world search for smaller towns ([geocoding](architecture.md#place-search)).
+- Notes, a travel date and a photo link on every place.
+- Places list grouped by continent, with filters, text search and sorting.
+- Undo after removing a place.
+- Import and export as JSON or CSV; import skips invalid rows and duplicates.
+- "Surprise me" flies to a country you have not visited yet.
+
+## Trips
+
+- Itineraries of up to 30 days with morning, afternoon and evening slots.
+- New itineraries are pre-filled with sights, activities and food ideas from Wikivoyage, fetched by the browser.
+- A travel-ideas panel for any country or city, and copying an itinerary as text.
+
+## Passport
+
+- Six traveler ranks, from "Armchair traveler" to "Legend of the map", with progress to the next.
+- Countries visited, share of the world, continents, cities and trips; per-continent progress bars.
+- A stamp for every visited country, 12 badges with a confetti celebration, and a trips-by-year chart.
+
+## Accounts And Sharing
+
+- Username and password accounts ([security](security.md#authentication-and-sessions)).
+- Private by default; a public map is shared read-only at `/?u=<username>`, without notes or photo links.
+- Responsive layout with a bottom sheet on phones, `/` to search, screen-reader labels, and light and dark themes that follow the system.
+
+## Current Boundaries
+
+- No password change, account deletion or social login yet ([roadmap](../TODO.md)).
+- One note, date and photo link per place; albums and multiple visits are planned.
+- Photos are links to images hosted elsewhere; the app stores no files.
