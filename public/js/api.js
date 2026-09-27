@@ -54,6 +54,8 @@ export const api = {
     register: async (username, password) => (await request('POST', '/auth/register', { username, password })).user,
     logout: () => request('POST', '/auth/logout', {}),
     saveProfile: profileVisibility => request('PATCH', '/profile', { profileVisibility }),
+    changePassword: (currentPassword, newPassword) => request('POST', '/auth/password', { currentPassword, newPassword }),
+    deleteAccount: password => request('DELETE', '/auth/account', { password }),
 
     getMarkers: async () => (await request('GET', '/markers')).map(toClientMarker),
     addMarker: async marker => toClientMarker(await request('POST', '/markers', marker)),

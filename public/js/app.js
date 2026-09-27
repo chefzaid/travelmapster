@@ -757,6 +757,50 @@ function setupAccountMenu() {
         }
     });
 
+    $('#password-btn').addEventListener('click', async () => {
+        closeAccountMenu();
+        const values = await formDialog({
+            title: 'Change password',
+            message: 'Other devices will be signed out.',
+            submitLabel: 'Change password',
+            fields: [
+                { name: 'currentPassword', label: 'Current password', type: 'password', required: true, autocomplete: 'current-password' },
+                { name: 'newPassword', label: 'New password', type: 'password', required: true, minlength: 8, autocomplete: 'new-password', hint: 'At least 8 characters.' },
+                { name: 'confirmPassword', label: 'Repeat new password', type: 'password', required: true, minlength: 8, autocomplete: 'new-password' }
+            ]
+        });
+        if (!values) return;
+        if (values.newPassword !== values.confirmPassword) {
+            toast('The new passwords do not match.', { tone: 'error' });
+            return;
+        }
+        try {
+            await api.changePassword(values.currentPassword, values.newPassword);
+            toast('Password changed.', { tone: 'success' });
+        } catch (error) {
+            handleError(error);
+        }
+    });
+
+    $('#delete-account-btn').addEventListener('click', async () => {
+        closeAccountMenu();
+        const values = await formDialog({
+            title: 'Delete your account?',
+            message: 'Your places, trips and passport are deleted for good. Export your places first if you want to keep them.',
+            submitLabel: 'Delete account',
+            danger: true,
+            fields: [{ name: 'password', label: 'Password', type: 'password', required: true, autocomplete: 'current-password' }]
+        });
+        if (!values) return;
+        try {
+            await api.deleteAccount(values.password);
+            showSignedOut();
+            toast('Your account and travel data were deleted.');
+        } catch (error) {
+            handleError(error);
+        }
+    });
+
     $('#copy-share-btn').addEventListener('click', async () => {
         try {
             await navigator.clipboard.writeText(shareUrl());

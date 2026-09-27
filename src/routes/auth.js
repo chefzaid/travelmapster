@@ -4,7 +4,7 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const { Passport } = require('passport');
 const { Strategy: LocalStrategy } = require('passport-local');
-const { parseCredentials } = require('../validation');
+const { parseCredentials, parsePasswordChange, readPassword } = require('../validation');
 const { getOrCreateToken } = require('../middleware/csrf');
 
 const BCRYPT_ROUNDS = 12;
@@ -44,6 +44,13 @@ function createPassport(users) {
         }
     });
     return passport;
+}
+
+function logout(req) {
+    // passport 0.7 regenerates the session on logout as well.
+    return new Promise((resolve, reject) => {
+        req.logout(err => (err ? reject(err) : resolve()));
+    });
 }
 
 function login(req, user) {
@@ -95,6 +102,45 @@ function createAuthRouter({ passport, users, authLimiter, metrics, logger }) {
             if (err) return next(err);
             return res.json({ csrfToken: getOrCreateToken(req) });
         });
+    });
+
+    // Sensitive account changes re-check the password and share the login rate limit.
+    async function passwordMatches(req, password) {
+        const hash = await users.findPasswordHash(req.user.id);
+        return Boolean(hash) && bcrypt.compare(password, hash);
+    }
+
+    router.post('/password', requireAuth, authLimiter, async (req, res) => {
+        const { change, error } = parsePasswordChange(req.body);
+        if (error) return res.status(400).json({ error });
+        if (!(await passwordMatches(req, change.currentPassword))) {
+            metrics.authEvents.inc({ event: 'password_change', outcome: 'failure' });
+            return res.status(400).json({ error: 'Current password is incorrect.' });
+        }
+
+        await users.setPasswordHash(req.user.id, await bcrypt.hash(change.newPassword, BCRYPT_ROUNDS));
+        // A fresh session here, and every other device signed out.
+        await login(req, req.user);
+        await users.endSessions(req.user.id, req.sessionID);
+        metrics.authEvents.inc({ event: 'password_change', outcome: 'success' });
+        logger.info({ userId: req.user.id }, 'Password changed');
+        return res.json({ csrfToken: getOrCreateToken(req) });
+    });
+
+    router.delete('/account', requireAuth, authLimiter, async (req, res) => {
+        const password = readPassword(req.body?.password);
+        if (!password || !(await passwordMatches(req, password))) {
+            metrics.authEvents.inc({ event: 'account_delete', outcome: 'failure' });
+            return res.status(400).json({ error: 'Password is incorrect.' });
+        }
+
+        const userId = req.user.id;
+        await users.remove(userId);
+        await users.endSessions(userId);
+        await logout(req);
+        metrics.authEvents.inc({ event: 'account_delete', outcome: 'success' });
+        logger.info({ userId }, 'Account deleted');
+        return res.json({ csrfToken: getOrCreateToken(req) });
     });
 
     router.get('/me', (req, res) => {

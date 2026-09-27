@@ -42,12 +42,13 @@ Everything below is implemented. Planned work lives in [TODO.md](../TODO.md).
 
 ## Accounts And Sharing
 
-- Username and password accounts ([security](security.md#authentication-and-sessions)).
+- Username and password accounts ([security](security.md#authentication-and-sessions)); change
+  the password (signing out other devices) or delete the account and all its data from the
+  account menu.
 - Private by default; a public map is shared read-only at `/?u=<username>`, without notes or photo links.
 - Responsive layout with a bottom sheet on phones, `/` to search, screen-reader labels, and light and dark themes that follow the system.
 
 ## Current Boundaries
 
-- No password change, account deletion or social login yet ([roadmap](../TODO.md)).
-- One note, date and photo link per place; albums and multiple visits are planned.
+- No social login yet; one note, date and photo link per place ([roadmap](../TODO.md)).
 - Photos are links to images hosted elsewhere; the app stores no files.

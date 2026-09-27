@@ -98,8 +98,8 @@ platform's [application DNS ownership](https://github.com/chefzaid/bm-cluster/bl
 ## High Availability
 
 `infra/overlays/ha/` runs two replicas spread across nodes, with a PodDisruptionBudget and
-zero-downtime rolling updates. Sessions and data live in PostgreSQL and migrations serialize on
-an advisory lock, so replicas are interchangeable. Rate limits and the geocoder throttle are
-per process, however, so each replica applies its own ([roadmap](../TODO.md)). To enable it,
+zero-downtime rolling updates. Sessions, data, rate-limit counters and the geocoder throttle
+live in PostgreSQL and migrations serialize on an advisory lock, so replicas are interchangeable.
+To enable it,
 point the Application's `path` at `infra/overlays/ha` on a multi-node cluster
 ([platform HA](https://github.com/chefzaid/bm-cluster/blob/main/docs/high-availability.md)).

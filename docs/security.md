@@ -18,6 +18,9 @@
 - Sessions live in PostgreSQL. The cookie is `HttpOnly`, `SameSite=Lax` and `Secure` in
   production, and rolls over a 7-day lifetime. Login regenerates the session to prevent
   fixation; deleted users are logged out on their next request.
+- Changing the password or deleting the account requires the current password and shares the
+  sign-in rate limit. A password change starts a new session and ends all others; deletion ends
+  every session.
 - Production refuses to start without a `SESSION_SECRET` of at least 32 characters.
 
 ## Authorization
@@ -33,8 +36,8 @@ their owner chose `public`; private and missing profiles return the same 404.
 - **Validation**: every body is checked in `src/validation.js` (lengths, types, calendar dates,
   HTTP(S)-only photo links, trip size); bodies are limited to 100 KB, or 3 MB for imports.
 - **Rate limits** per client IP on sign-in and sign-up, the API and place search
-  ([defaults](development.md#configuration)), with standard `RateLimit` headers; counters are
-  in memory per process.
+  ([defaults](development.md#configuration)), with standard `RateLimit` headers; counters live
+  in PostgreSQL, so the limit holds across replicas.
 - **Headers** (helmet): CSP allowing only same-origin scripts and styles (no inline), no framing,
   HSTS in production, no `X-Powered-By`. API responses are `Cache-Control: no-store`.
 - Only `public/` is served statically; source, configuration and dependencies are never reachable.
@@ -45,8 +48,8 @@ their owner chose `public`; private and missing profiles return the same 404.
 - The browser loads photo links from their hosts and sends destination names to Wikivoyage for
   ideas; both are visible to those third parties.
 - Logs carry user IDs, never passwords, cookies or tokens.
-- Account deletion is not available yet ([roadmap](../TODO.md)); deleting a user row cascades to
-  all their data ([data model](data-model.md#privacy)).
+- Travelers can delete their account, which removes all their data at once
+  ([data model](data-model.md#privacy)).
 
 ## Runtime And Supply Chain
 

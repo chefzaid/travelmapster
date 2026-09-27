@@ -27,10 +27,13 @@ module.exports = defineConfig({
             METRICS_PORT: String(port + 1),
             NODE_ENV: 'test',
             LOG_LEVEL: 'warn',
+            // Never fall back to DATABASE_URL: the suite creates accounts in this database.
             DATABASE_URL: process.env.E2E_DATABASE_URL
-                || process.env.DATABASE_URL
+                || process.env.TEST_DATABASE_URL
                 || 'postgres://postgres@127.0.0.1:55432/travelmapster_test',
-            SESSION_SECRET: 'e2e-secret-that-is-long-enough-for-tests'
+            SESSION_SECRET: 'e2e-secret-that-is-long-enough-for-tests',
+            // Limits are shared in the database and outlive runs; journeys sign up often.
+            RATE_LIMIT_AUTH: '1000'
         }
     }
 });

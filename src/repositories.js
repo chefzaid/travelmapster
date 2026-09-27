@@ -37,6 +37,28 @@ function createUserRepository(db) {
                 'UPDATE users SET profile_visibility = $1, updated_at = now() WHERE id = $2',
                 [visibility, id]
             );
+        },
+
+        async findPasswordHash(id) {
+            const { rows } = await db.query('SELECT password_hash FROM users WHERE id = $1', [id]);
+            return rows[0]?.password_hash || null;
+        },
+
+        async setPasswordHash(id, passwordHash) {
+            await db.query('UPDATE users SET password_hash = $1, updated_at = now() WHERE id = $2', [passwordHash, id]);
+        },
+
+        /** Deletes the account; markers and trips cascade. */
+        async remove(id) {
+            await db.query('DELETE FROM users WHERE id = $1', [id]);
+        },
+
+        /** Signs the user out everywhere except the given session. */
+        async endSessions(id, exceptSessionId = '') {
+            await db.query(
+                "DELETE FROM sessions WHERE sess -> 'passport' ->> 'user' = $1 AND sid <> $2",
+                [String(id), exceptSessionId]
+            );
         }
     };
 }

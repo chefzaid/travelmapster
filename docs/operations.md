@@ -37,7 +37,7 @@ Logs are JSON lines (pino) on stdout, one per request with method, URL, status a
 | Metric | Meaning |
 |---|---|
 | `http_server_request_duration_seconds{method,route,status}` | Request latency and counts by route pattern |
-| `travelmapster_auth_events_total{event,outcome}` | Registrations and logins by outcome (`success`, `failure`, `conflict`) |
+| `travelmapster_auth_events_total{event,outcome}` | `register`, `login`, `password_change` and `account_delete` by outcome (`success`, `failure`, `conflict`) |
 | Node.js defaults | Event loop lag, heap, GC, CPU and handles |
 
 A rising `login` / `failure` rate points to credential stuffing; the auth rate limit answers
@@ -51,7 +51,8 @@ with 429.
 | `/readyz` returns `database-unavailable` | Shared PostgreSQL is down, or the role password does not match the secret. Check the platform database, then the setup hook below. |
 | `travelmapster-db-setup` fails | The admin credential ExternalSecret is not ready or PostgreSQL is unreachable. The hook reruns on every Argo CD sync. |
 | Every user gets 429 | Client IPs are wrong, so all traffic shares one limit: `TRUST_PROXY` must match the pod network that Traefik runs in. |
-| Place search returns 502 | Nominatim is unreachable or throttling. Built-in country and city search keeps working; check pod egress to the internet. |
+| Place search returns 502 | Nominatim is unreachable, throttling, or the shared queue is longer than the timeout. Built-in country and city search keeps working; check pod egress to the internet. |
+| A traveler is locked out by 429 | Wait for the window, or clear their counters: `DELETE FROM rate_limits WHERE key LIKE '%<client-ip>'` in the `travelmapster` database. |
 | Import returns 413 | The file exceeds the JSON limit (3 MB) or the Traefik limit (4 MiB). |
 | Everyone was logged out | `SESSION_SECRET` changed or the `sessions` table was cleared. |
 | A manual `kubectl` change reverts | Argo CD self-heal; change the manifests in Git instead. |
@@ -66,9 +67,26 @@ The default profile runs one replica with 50m/128Mi requests and 500m/384Mi limi
 
 ## Backup And Recovery
 
-The app keeps no volumes: all state is in the `travelmapster` database on the shared PostgreSQL,
-which the platform backs up ([backups](https://github.com/chefzaid/bm-cluster/blob/main/docs/operations.md#backups-and-recovery)).
-Map data and assets are in the image. A restore drill is on the [roadmap](../TODO.md).
+The app keeps no volumes: all state is in the `travelmapster` database on the shared PostgreSQL.
+The platform's daily host backup includes a `pg_dumpall` at `application-data/postgresql.sql.gz`
+inside `/var/backups/bm-cluster/k3s/k3s-<timestamp>.tar.gz`
+([platform backups](https://github.com/chefzaid/bm-cluster/blob/main/docs/operations.md#backups-and-recovery)).
+Map data and assets are in the image.
+
+To restore or drill, stream only this database's section into a scratch database, without
+writing the all-databases dump to disk, then compare row counts with the source:
+
+```bash
+archive=/var/backups/bm-cluster/k3s/k3s-<timestamp>.tar.gz
+sudo tar -xzOf "$archive" ./application-data/postgresql.sql.gz | gunzip \
+  | awk '/^\\connect /{inside = ($0 ~ /dbname=.?travelmapster[" ]|^\\connect travelmapster$/)} inside && !/^\\connect /' \
+  | psql -d restore_drill -v ON_ERROR_STOP=1
+```
+
+The scratch database needs a `travelmapster_user` role. Only the final database-level `GRANT`
+fails when the target has another name. Drilled on 2026-09-27 against that day's archive: the
+schema restored and matched production (no accounts existed yet). For a real recovery, restore
+into `travelmapster` with the app scaled to zero, then scale it back up.
 
 ## Secret Rotation
 

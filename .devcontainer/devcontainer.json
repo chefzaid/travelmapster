@@ -8,7 +8,8 @@
     "postCreateCommand": "npm ci",
     "postStartCommand": "docker compose -f infra/compose/compose.yaml up -d postgres",
     "containerEnv": {
-        "DATABASE_URL": "postgres://travelmapster:travelmapster@localhost:5432/travelmapster"
+        "DATABASE_URL": "postgres://travelmapster:travelmapster@localhost:5432/travelmapster",
+        "TEST_DATABASE_URL": "postgres://travelmapster:travelmapster@localhost:5432/travelmapster_test"
     },
     "customizations": {
         "vscode": {

@@ -9,6 +9,7 @@ const pinoHttp = require('pino-http');
 const { rateLimit } = require('express-rate-limit');
 
 const { csrfProtection, csrfTokenRoute } = require('./middleware/csrf');
+const { PgRateLimitStore } = require('./rate-limit-store');
 const { createUserRepository, createMarkerRepository, createTripRepository } = require('./repositories');
 const { createAuthRouter, createPassport, requireAuth } = require('./routes/auth');
 const { createMarkerRouter } = require('./routes/markers');
@@ -18,13 +19,15 @@ const { createTripRouter } = require('./routes/trips');
 
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 
-function jsonLimiter(limit, windowMs, message) {
+function jsonLimiter(pool, name, limit, windowMs, message) {
     return rateLimit({
         windowMs,
         limit,
         standardHeaders: 'draft-8',
         legacyHeaders: false,
-        message: { error: message }
+        message: { error: message },
+        // Counters live in PostgreSQL so every replica enforces one shared limit.
+        store: new PgRateLimitStore(pool, name)
     });
 }
 
@@ -118,16 +121,16 @@ function createApp({ config, pool, logger, metrics, geocoder, state = { shutting
         res.set('Cache-Control', 'no-store');
         next();
     });
-    api.use(jsonLimiter(config.rateLimit.apiPerMinute, 60_000, 'Too many requests, please slow down.'));
+    api.use(jsonLimiter(pool, 'api', config.rateLimit.apiPerMinute, 60_000, 'Too many requests, please slow down.'));
     api.get('/csrf-token', csrfTokenRoute);
     api.use(csrfProtection);
 
-    const authLimiter = jsonLimiter(config.rateLimit.authPerWindow, 15 * 60_000,
+    const authLimiter = jsonLimiter(pool, 'auth', config.rateLimit.authPerWindow, 15 * 60_000,
         'Too many attempts, please try again later.');
     api.use('/auth', createAuthRouter({ passport, users, authLimiter, metrics, logger }));
     api.use('/public', createPublicProfileRouter({ users, markers }));
     api.use('/geocode', requireAuth,
-        jsonLimiter(config.rateLimit.geocodePerMinute, 60_000, 'Too many place searches, please slow down.'),
+        jsonLimiter(pool, 'geocode', config.rateLimit.geocodePerMinute, 60_000, 'Too many place searches, please slow down.'),
         createGeocodeRouter({ geocoder, logger }));
     api.use('/profile', requireAuth, createProfileRouter({ users }));
     api.use('/markers', requireAuth, createMarkerRouter({ pool, markers }));

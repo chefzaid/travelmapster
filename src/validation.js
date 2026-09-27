@@ -26,21 +26,40 @@ function isValidTravelDate(value) {
     return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
 }
 
+// Passwords are not trimmed: leading or trailing spaces are part of the secret.
+function readPassword(value) {
+    return typeof value === 'string' ? value : '';
+}
+
+function passwordError(password) {
+    if (password.length < PASSWORD_MIN_LENGTH) {
+        return `Password must be at least ${PASSWORD_MIN_LENGTH} characters.`;
+    }
+    if (Buffer.byteLength(password, 'utf8') > PASSWORD_MAX_BYTES) {
+        return `Password must be at most ${PASSWORD_MAX_BYTES} bytes.`;
+    }
+    return null;
+}
+
 function parseCredentials(body) {
     const username = normalizeText(body?.username);
-    // Passwords are not trimmed: leading or trailing spaces are part of the secret.
-    const password = typeof body?.password === 'string' ? body.password : '';
+    const password = readPassword(body?.password);
 
     if (!USERNAME_PATTERN.test(username)) {
         return { error: 'Username must be 3 to 32 letters, digits, dots, dashes or underscores.' };
     }
-    if (password.length < PASSWORD_MIN_LENGTH) {
-        return { error: `Password must be at least ${PASSWORD_MIN_LENGTH} characters.` };
-    }
-    if (Buffer.byteLength(password, 'utf8') > PASSWORD_MAX_BYTES) {
-        return { error: `Password must be at most ${PASSWORD_MAX_BYTES} bytes.` };
-    }
+    const error = passwordError(password);
+    if (error) return { error };
     return { credentials: { username, password } };
+}
+
+function parsePasswordChange(body) {
+    const currentPassword = readPassword(body?.currentPassword);
+    const newPassword = readPassword(body?.newPassword);
+    if (!currentPassword) return { error: 'Current password is required.' };
+    const error = passwordError(newPassword);
+    if (error) return { error: error.replace('Password', 'New password') };
+    return { change: { currentPassword, newPassword } };
 }
 
 function parseMarkerPayload(body) {
@@ -170,6 +189,8 @@ module.exports = {
     isValidTravelDate,
     normalizeText,
     parseCredentials,
+    parsePasswordChange,
+    readPassword,
     parseMarkerId,
     parseMarkerPayload,
     parseProfileVisibility,

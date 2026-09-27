@@ -322,8 +322,15 @@ export function createTravelMap(element, { index, cities, onCountryClick, onCity
         setTimeout(() => path.classList.remove('is-pulsing'), 1200);
     }
 
+    // Keep cards clear of the floating top bar and side panel, and of the legend below.
+    function popupPadding() {
+        const topbar = document.querySelector('.topbar');
+        const top = topbar ? topbar.getBoundingClientRect().bottom + 16 : 90;
+        return { autoPanPaddingTopLeft: [panelPadding()[0], top], autoPanPaddingBottomRight: [40, 80] };
+    }
+
     function openPopup(latlng, content, options = {}) {
-        return L.popup({ className: 'card-popup', maxWidth: 320, minWidth: 260, autoPanPadding: [40, 40], ...options })
+        return L.popup({ className: 'card-popup', maxWidth: 320, minWidth: 260, ...popupPadding(), ...options })
             .setLatLng(latlng)
             .setContent(content)
             .openOn(map);
