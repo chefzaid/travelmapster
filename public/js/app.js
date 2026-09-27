@@ -376,7 +376,7 @@ function renderSearchResults() {
 }
 
 async function searchWorld(query) {
-    // The server-side geocoder covers towns that are not in the built-in main-cities list.
+    // The server-side geocoder covers towns that are not in the built-in city list.
     const [result] = await api.geocodeCity(query);
     if (!result) throw new Error(`No place called “${query}” was found.`);
     const name = result.city || result.name || query;

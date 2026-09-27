@@ -14,7 +14,7 @@ keep a wishlist of dream trips, and plan day-by-day itineraries.
 ### The map
 - [x] Cartoon world map drawn from country borders only: no tiles, terrain, roads or regional detail
 - [x] Pastel countries with thick friendly outlines, a dotted ocean and atlas lines (Equator and tropics)
-- [x] Country names and main cities appear as you zoom in, with labels that never overlap
+- [x] Country names and cities appear as you zoom in, more at every zoom step, with labels that never overlap
 - [x] Capitals marked with a star; only capitals and large cities are shown
 - [x] Visited countries turn teal, wishlist countries turn sunny yellow with a dashed border
 - [x] Countries you only visited a city in get a lighter teal
@@ -24,7 +24,7 @@ keep a wishlist of dream trips, and plan day-by-day itineraries.
 ### Places
 - [x] Click any country or city for a card with flag, capital, population and your saved details
 - [x] One tap to mark a place as "Been there" or "Wishlist" (tap again to undo)
-- [x] Search countries and main cities instantly, with a world search fallback for smaller towns
+- [x] Search countries and about 7,000 cities instantly, with a world search fallback for smaller towns
 - [x] Notes, travel dates and photo links on every place
 - [x] Places list grouped by continent, with filters, search and sorting
 - [x] Undo after removing a place
@@ -77,7 +77,7 @@ public/                Everything the browser loads (the only folder served)
   js/trips.js          Trip planner
   js/passport.js       Passport tab
   js/ideas.js          Wikivoyage ideas and itinerary builder
-  data/                Country borders and main cities (Natural Earth, public domain)
+  data/                Country borders and cities (Natural Earth, public domain)
   vendor/              Leaflet and fonts (Fredoka, Nunito; SIL OFL)
 scripts/build-map-data.js  Rebuilds public/data from Natural Earth
 test/                  Unit, integration (PostgreSQL) and Playwright tests
@@ -86,7 +86,7 @@ infra/                 bm-cluster deployment (Argo CD, Kubernetes, compose, CI s
 
 ### Rebuilding the map data
 
-Download `ne_50m_admin_0_countries.geojson` and `ne_50m_populated_places_simple.geojson` from
+Download `ne_50m_admin_0_countries.geojson` and `ne_10m_populated_places_simple.geojson` from
 [Natural Earth](https://github.com/nvkelso/natural-earth-vector/tree/master/geojson) into a folder, then run:
 
 ```bash
