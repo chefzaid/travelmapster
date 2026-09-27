@@ -90,7 +90,8 @@ spec:
           resources:
             requests:
               cpu: 50m
-              memory: 128Mi
+              # Includes the in-memory index of every town used by place search.
+              memory: 192Mi
             limits:
               cpu: 500m
               memory: 384Mi

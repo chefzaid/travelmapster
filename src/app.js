@@ -16,6 +16,7 @@ const { createMarkerRouter } = require('./routes/markers');
 const { createProfileRouter, createPublicProfileRouter } = require('./routes/profile');
 const { createGeocodeRouter } = require('./routes/geocode');
 const { createTripRouter } = require('./routes/trips');
+const { createPlacesRouter } = require('./routes/places');
 
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 
@@ -35,7 +36,7 @@ function jsonLimiter(pool, name, limit, windowMs, message) {
  * Builds the Express application. Dependencies are injected so tests and the
  * production entry point share exactly the same wiring.
  */
-function createApp({ config, pool, logger, metrics, geocoder, state = { shuttingDown: false } }) {
+function createApp({ config, pool, logger, metrics, geocoder, places, state = { shuttingDown: false } }) {
     const app = express();
     const users = createUserRepository(pool);
     const markers = createMarkerRepository(pool);
@@ -129,6 +130,7 @@ function createApp({ config, pool, logger, metrics, geocoder, state = { shutting
         'Too many attempts, please try again later.');
     api.use('/auth', createAuthRouter({ passport, users, authLimiter, metrics, logger }));
     api.use('/public', createPublicProfileRouter({ users, markers }));
+    api.use('/places', createPlacesRouter({ places }));
     api.use('/geocode', requireAuth,
         jsonLimiter(pool, 'geocode', config.rateLimit.geocodePerMinute, 60_000, 'Too many place searches, please slow down.'),
         createGeocodeRouter({ geocoder, logger }));

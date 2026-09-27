@@ -7,6 +7,7 @@ const { createPool } = require('./db/pool');
 const { migrate } = require('./db/migrate');
 const { createMetrics } = require('./metrics');
 const { createGeocoder, createPgSlots } = require('./services/geocoder');
+const { createPlaceIndex } = require('./services/places');
 const { createApp } = require('./app');
 
 const MIGRATION_ATTEMPTS = 10;
@@ -39,7 +40,10 @@ async function main() {
     const metrics = createMetrics();
     const geocoder = createGeocoder(config.geocoder, fetch, createPgSlots(pool, config.geocoder.minIntervalMs));
     const state = { shuttingDown: false };
-    const app = createApp({ config, pool, logger, metrics, geocoder, state });
+    // Load the town index in the background so the first search does not wait for it.
+    const places = createPlaceIndex();
+    places.warm().catch(err => logger.error({ err }, 'Place index failed to load'));
+    const app = createApp({ config, pool, logger, metrics, geocoder, places, state });
 
     const server = http.createServer(app);
     server.keepAliveTimeout = 65_000;

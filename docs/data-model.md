@@ -61,13 +61,20 @@ changes compatible with the previous release while both may run during a rollout
 
 ## Map Data
 
-`public/data/` holds read-only reference data built from [Natural Earth](https://www.naturalearthdata.com)
-(public domain) by `scripts/build-map-data.js`:
+`public/data/` holds read-only reference data built by `scripts/build-map-data.js` from
+[Natural Earth](https://www.naturalearthdata.com) (public domain) and
+[GeoNames](https://www.geonames.org) `cities500` (CC BY 4.0, credited on the map):
 
 | File | Contents |
 |---|---|
-| `countries.geojson` | Simplified 1:50m country borders with name, aliases, continent, population and label placement |
-| `cities.json` | About 7,000 places from the 1:10m populated places: name, country, capital flag, population, coordinates and `minZoom`, Natural Earth's grading of the zoom at which a place earns a label |
+| `countries.geojson` | 1:50m country borders simplified to 0.02°, with name, aliases, continent, population and label placement |
+| `cities.json` | The base list loaded with the page: about 4,900 places shown by zoom 6, as objects with name, country, capital flag, population, `minZoom` and coordinates |
+| `cities/index.json`, `cities/<tile>.json` | About 220,000 smaller places in region tiles of up to 4,000, as rows `[name, countryId, capital, population, minZoom, lat, lng]` |
+
+Every GeoNames place of 500+ people is included, except city districts, historical and
+abandoned places. `minZoom` is the first half zoom step at which the place's dot and name fit
+beside the places shown before it, ranked by capitals, Natural Earth's curated label zooms and
+population; places that never fit get `11.5` and show as dots at the deepest zoom.
 
 To rebuild, see [development](development.md#rebuilding-map-data).
 

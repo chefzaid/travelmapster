@@ -62,7 +62,7 @@ with 429.
 ## Rollback And Scaling
 
 Roll back by pinning a previous image ([deployment](deployment.md#verification-and-rollback)).
-The default profile runs one replica with 50m/128Mi requests and 500m/384Mi limits; use the
+The default profile runs one replica with 50m/192Mi requests and 500m/384Mi limits; use the
 [HA profile](deployment.md#high-availability) for more.
 
 ## Backup And Recovery

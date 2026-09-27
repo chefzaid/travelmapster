@@ -141,3 +141,24 @@ test('a traveler changes their password, then deletes their account', async ({ p
     await expect(page.locator('#auth-error')).toHaveText('Invalid username or password.');
     expect(errors).toEqual([]);
 });
+
+test('towns drawn on the map open their card when clicked', async ({ page }) => {
+    // Reach the Leaflet map to aim at a town on the canvas.
+    await page.addInitScript(() => {
+        let leaflet;
+        Object.defineProperty(globalThis, 'L', { configurable: true, get: () => leaflet, set: value => {
+            leaflet = value;
+            value.Map.addInitHook(function () { globalThis.__travelMap = this; });
+        } });
+    });
+    await page.goto('/');
+    await expect(page.locator('#welcome-view')).toBeVisible();
+    const point = await page.evaluate(() => new Promise(resolve => {
+        const map = globalThis.__travelMap;
+        map.once('moveend', () => setTimeout(() => resolve(map.latLngToContainerPoint([50.833, 4.367])), 1500));
+        map.setView([50.833, 4.367], 11, { animate: false });
+    }));
+    const box = await page.locator('#map').boundingBox();
+    await page.mouse.click(box.x + point.x, box.y + point.y);
+    await expect(page.locator('.leaflet-popup .card-header h3')).toHaveText('Ixelles');
+});

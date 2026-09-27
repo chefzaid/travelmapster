@@ -73,5 +73,6 @@ export const api = {
         return { ...data, markers: data.markers.map(toClientMarker) };
     },
 
+    searchPlaces: query => request('GET', `/places?${new URLSearchParams({ q: query, limit: '6' })}`),
     geocodeCity: query => request('GET', `/geocode?${new URLSearchParams({ q: query, kind: 'city', limit: '1' })}`)
 };

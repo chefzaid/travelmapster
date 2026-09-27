@@ -75,13 +75,15 @@ Invalid integers stop startup with a clear error. Production values come from
 ## Rebuilding Map Data
 
 Download `ne_50m_admin_0_countries.geojson` and `ne_10m_populated_places_simple.geojson` from
-[Natural Earth](https://github.com/nvkelso/natural-earth-vector/tree/master/geojson), then:
+[Natural Earth](https://github.com/nvkelso/natural-earth-vector/tree/master/geojson) and unzip
+[GeoNames `cities500.zip`](https://download.geonames.org/export/dump/) into one folder, then:
 
 ```bash
 node scripts/build-map-data.js path/to/folder
 ```
 
-Review the size and the [data format](data-model.md#map-data) before committing.
+It takes about ten seconds. Review the size and the [data format](data-model.md#map-data)
+before committing.
 
 ## Troubleshooting
 

@@ -114,3 +114,18 @@ test('the shared geocoder throttle spaces requests from every replica', async ()
     assert.ok(waits[1] > 120 && waits[1] <= 200, `the next waits one interval (${waits[1]} ms)`);
     assert.ok(waits[2] > 320 && waits[2] <= 400, `the third waits two intervals (${waits[2]} ms)`);
 });
+
+test('place search finds every town, not just the big cities', async () => {
+    const client = createClient(ctx.server);
+    const small = await client.get('/api/places?q=melun');
+    assert.equal(small.status, 200);
+    assert.equal(small.body[0].name, 'Melun');
+    assert.equal(small.body[0].country, 'France');
+    assert.ok(small.body[0].minZoom > 6, 'a town the browser does not load up front');
+
+    const filtered = await client.get(`/api/places?q=${encodeURIComponent('paris, united')}`);
+    assert.ok(filtered.body.length > 0);
+    assert.ok(filtered.body.every(place => place.country === 'United States of America'));
+
+    assert.equal((await client.get('/api/places?q=x')).status, 400);
+});

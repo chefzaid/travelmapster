@@ -8,6 +8,10 @@ const { createPool } = require('../src/db/pool');
 const { migrate } = require('../src/db/migrate');
 const { createMetrics } = require('../src/metrics');
 const { createApp } = require('../src/app');
+const { createPlaceIndex } = require('../src/services/places');
+
+// One shared index: loading every town once keeps the suite fast.
+const places = createPlaceIndex();
 
 const DATABASE_URL = process.env.TEST_DATABASE_URL
     || process.env.DATABASE_URL
@@ -53,7 +57,7 @@ async function createTestContext(envOverrides = {}) {
     await migrate(pool, logger);
     const geocoder = fakeGeocoder();
     const state = { shuttingDown: false };
-    const app = createApp({ config, pool, logger, metrics: createMetrics(), geocoder, state });
+    const app = createApp({ config, pool, logger, metrics: createMetrics(), geocoder, places, state });
     // One long-lived server keeps agent cookies on a stable address.
     const server = http.createServer(app);
     await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -65,7 +69,7 @@ async function createTestContext(envOverrides = {}) {
         state,
         /** A second app on the same database, like another replica behind the load balancer. */
         async createReplica() {
-            const replica = http.createServer(createApp({ config, pool, logger, metrics: createMetrics(), geocoder, state }));
+            const replica = http.createServer(createApp({ config, pool, logger, metrics: createMetrics(), geocoder, places, state }));
             await new Promise(resolve => replica.listen(0, '127.0.0.1', resolve));
             return replica;
         },

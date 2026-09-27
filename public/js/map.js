@@ -1,16 +1,15 @@
-// Cartoon world map: country shapes and cities, no tiles or regional detail.
+// Cartoon world map: country shapes and every town, no map tiles or regional detail.
 /* global L */
+import { createCityLayer } from './city-layer.js';
 
 const WORLD_BOUNDS = [[-62, -200], [85, 200]];
 const DEFAULT_VIEW = { center: [25, 10], zoom: 2.5 };
 const COUNTRY_LABELS_MAX_ZOOM = 7;
 
-// Natural Earth grades each place with the zoom at which it earns a label, so more
-// cities appear at every zoom step; capitals keep their early appearance.
+// The build grades every place with the zoom at which its name fits beside the places
+// shown before it (see scripts/build-map-data.js), so each zoom step adds more.
 function cityMinZoom(city) {
-    const graded = Number.isFinite(city.minZoom) ? city.minZoom : 6;
-    if (city.capital) return Math.min(graded, city.population >= 5e6 ? 3 : 4);
-    return Math.max(3, graded);
+    return Number.isFinite(city.minZoom) ? city.minZoom : 6;
 }
 
 function escapeText(value) {
@@ -22,7 +21,7 @@ function escapeText(value) {
 export function createTravelMap(element, { index, cities, onCountryClick, onCityClick, onPinClick }) {
     const map = L.map(element, {
         minZoom: 2,
-        maxZoom: 8,
+        maxZoom: 11,
         zoomSnap: 0.5,
         zoomDelta: 0.5,
         wheelPxPerZoomLevel: 90,
@@ -35,7 +34,8 @@ export function createTravelMap(element, { index, cities, onCountryClick, onCity
     }).setView(DEFAULT_VIEW.center, DEFAULT_VIEW.zoom);
 
     map.attributionControl.setPrefix('<a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a>');
-    map.attributionControl.addAttribution('Borders &amp; cities: <a href="https://www.naturalearthdata.com" target="_blank" rel="noopener">Natural Earth</a>');
+    map.attributionControl.addAttribution('Borders: <a href="https://www.naturalearthdata.com" target="_blank" rel="noopener">Natural Earth</a>'
+        + ' · Places: <a href="https://www.geonames.org" target="_blank" rel="noopener">GeoNames</a> (CC BY 4.0)');
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
     map.createPane('graticule').style.zIndex = 250;
@@ -62,6 +62,7 @@ export function createTravelMap(element, { index, cities, onCountryClick, onCity
     const renderer = L.svg({ pane: 'countries', padding: 0.5 });
     const countryLayers = new Map();
     const hoverTooltip = L.tooltip({ className: 'country-tooltip', direction: 'top', offset: [0, -8], sticky: true });
+    let hoveredCountry = null;
 
     const countriesLayer = L.geoJSON(index.countries.map(country => country.feature), {
         renderer,
@@ -76,20 +77,22 @@ export function createTravelMap(element, { index, cities, onCountryClick, onCity
             const country = index.byId.get(feature.properties.id);
             countryLayers.set(country.id, layer);
             layer.on({
-                mouseover: event => {
+                mouseover: () => {
                     layer.getElement()?.classList.add('is-hover');
-                    hoverTooltip.setContent(`${country.flag} ${escapeText(country.name)}`).setLatLng(event.latlng);
-                    map.openTooltip(hoverTooltip);
+                    hoveredCountry = country;
                 },
-                mousemove: event => hoverTooltip.setLatLng(event.latlng),
                 mouseout: () => {
                     layer.getElement()?.classList.remove('is-hover');
-                    map.closeTooltip(hoverTooltip);
+                    hoveredCountry = null;
+                    updateHover(null);
                 },
                 click: event => {
                     L.DomEvent.stopPropagation(event);
                     map.closeTooltip(hoverTooltip);
-                    onCountryClick?.(country, event.latlng);
+                    // A town drawn on top of the country wins the click.
+                    const city = cityLayer.cityAt(event.containerPoint);
+                    if (city) onCityClick?.(city);
+                    else onCountryClick?.(country, event.latlng);
                 }
             });
         }
@@ -107,55 +110,90 @@ export function createTravelMap(element, { index, cities, onCountryClick, onCity
         })
     }));
 
-    // Capitals first, then smaller cities as you zoom in. Markers are created on first
-    // use because most of the thousands of places are never on screen.
-    const citiesLayer = L.layerGroup().addTo(map);
-    const cityMarker = entry => entry.marker ??= L.marker([entry.city.lat, entry.city.lng], {
-        pane: 'cities',
-        title: `${entry.city.name}, ${entry.city.country}`,
-        keyboard: false,
-        icon: L.divIcon({
-            className: `city-marker${entry.city.capital ? ' is-capital' : ''}`,
-            html: `<span class="city-dot">${entry.city.capital ? '★' : ''}</span><span class="city-name">${escapeText(entry.city.name)}</span>`,
-            iconSize: null,
-            iconAnchor: [7, 7]
+    // Capitals first, then ever smaller places as you zoom in. The base list arrives with
+    // the page; smaller places load in region tiles just before their zoom is reached.
+    const VIEW_PADDING = 0.1;
+    const cityLayer = createCityLayer(map, { pane: 'cities', padding: VIEW_PADDING });
+    const toEntry = city => ({ city, minZoom: cityMinZoom(city) });
+    const baseEntries = cities.map(toEntry);
+    const tiles = new Map();
+
+    fetch('data/cities/index.json')
+        .then(response => (response.ok ? response.json() : []))
+        .then(list => {
+            for (const { id, bounds, minZoom } of list) {
+                tiles.set(id, { bounds: L.latLngBounds([bounds[0], bounds[1]], [bounds[2], bounds[3]]), minZoom, entries: null, loading: false });
+            }
+            scheduleRefresh();
         })
-    }).on('click', event => {
-        L.DomEvent.stopPropagation(event);
-        onCityClick?.(entry.city);
-    });
-    const cityMarkers = cities.map((city, index) => ({ city, index, minZoom: cityMinZoom(city), marker: null }));
-    // Natural Earth puts many places on the same zoom; spread each group over the half
-    // zoom before it, biggest first, so cities keep appearing gradually.
-    const zoomGroups = Map.groupBy(cityMarkers.filter(entry => !entry.city.capital), entry => entry.minZoom);
-    for (const [zoom, group] of zoomGroups) {
-        group.sort((a, b) => b.city.population - a.city.population);
-        group.forEach((entry, rank) => { entry.minZoom = Math.max(3, zoom - 0.5 * (1 - rank / group.length)); });
+        .catch(() => {});
+
+    function loadTiles(view, zoom) {
+        for (const [id, tile] of tiles) {
+            // Fetch half a zoom early so places are ready when they are due.
+            if (tile.entries || tile.loading || zoom < tile.minZoom - 0.5 || !tile.bounds.intersects(view)) continue;
+            tile.loading = true;
+            fetch(`data/cities/${id}.json`)
+                .then(response => {
+                    if (!response.ok) throw new Error(`City tile ${id}: HTTP ${response.status}`);
+                    return response.json();
+                })
+                .then(rows => {
+                    tile.entries = rows.map(([name, countryId, capital, population, minZoom, lat, lng]) => toEntry({
+                        name, country: index.byId.get(countryId)?.name || '', countryId, capital, population, minZoom, lat, lng
+                    }));
+                    scheduleRefresh();
+                })
+                .catch(() => { tile.loading = false; });
+        }
     }
 
     // Show a label only where it does not collide with one already placed, biggest places first.
     const countryLabelOrder = [...labelMarkers].sort((a, b) =>
         (a.country.labelZoom || 5) - (b.country.labelZoom || 5) || b.country.population - a.country.population);
-    // Capitals first; other cities in the order they appear, so a name shown at one zoom
-    // keeps its place as you zoom further in and new cities only fill the space around it.
-    const cityOrder = [...cityMarkers].sort((a, b) => b.city.capital - a.city.capital
-        || (a.city.capital ? 0 : a.minZoom - b.minZoom) || b.city.population - a.city.population);
+    // Capitals first; other places in the order they appear, so a name shown at one zoom
+    // keeps its place as you zoom further in and new places only fill the space around it.
+    const cityOrder = (a, b) => b.city.capital - a.city.capital
+        || (a.city.capital ? 0 : a.minZoom - b.minZoom) || b.city.population - a.city.population;
+
+    // Collision boxes in a spatial grid, so placing thousands of labels stays fast.
+    function createPlacement(cell = 128) {
+        const cells = new Map();
+        const each = (x1, y1, x2, y2, visit) => {
+            for (let cx = Math.floor(x1 / cell); cx <= Math.floor(x2 / cell); cx++) {
+                for (let cy = Math.floor(y1 / cell); cy <= Math.floor(y2 / cell); cy++) visit(`${cx},${cy}`);
+            }
+        };
+        return {
+            add(x1, y1, x2, y2) {
+                each(x1, y1, x2, y2, key => (cells.get(key) || cells.set(key, []).get(key)).push([x1, y1, x2, y2]));
+            },
+            claim(x1, y1, x2, y2) {
+                let free = true;
+                each(x1, y1, x2, y2, key => {
+                    if (free) free = !(cells.get(key) || []).some(([a1, b1, a2, b2]) => x1 < a2 && x2 > a1 && y1 < b2 && y2 > b1);
+                });
+                if (free) this.add(x1, y1, x2, y2);
+                return free;
+            }
+        };
+    }
 
     function refreshZoomLayers() {
         const zoom = map.getZoom();
         element.dataset.zoom = String(Math.floor(zoom));
+        element.classList.toggle('is-deep', zoom >= COUNTRY_LABELS_MAX_ZOOM);
         const fontSize = zoom >= 6 ? 16 : zoom >= 4 ? 14 : 12;
-        const placed = [];
-        const claim = (x1, y1, x2, y2) => {
-            if (placed.some(([a1, b1, a2, b2]) => x1 < a2 && x2 > a1 && y1 < b2 && y2 > b1)) return false;
-            placed.push([x1, y1, x2, y2]);
-            return true;
-        };
+        const placement = createPlacement();
+        const claim = (x1, y1, x2, y2) => placement.claim(x1, y1, x2, y2);
 
         // Only places in (or just around) the view are rendered.
-        const view = map.getBounds().pad(0.25);
-        const inView = cityOrder.filter(entry => zoom >= entry.minZoom && view.contains([entry.city.lat, entry.city.lng]))
-            .map(entry => ({ ...entry, point: map.project([entry.city.lat, entry.city.lng], zoom) }));
+        const view = map.getBounds().pad(VIEW_PADDING);
+        loadTiles(view, zoom);
+        const inView = [baseEntries, ...[...tiles.values()].filter(tile => tile.entries && tile.bounds.intersects(view)).map(tile => tile.entries)]
+            .flatMap(entries => entries.filter(entry => zoom >= entry.minZoom && view.contains([entry.city.lat, entry.city.lng])))
+            .sort(cityOrder)
+            .map(entry => ({ entry, city: entry.city, point: map.project([entry.city.lat, entry.city.lng], zoom) }));
         // A name goes right of its dot, or left when the right side is taken.
         const nameWidth = city => city.name.length * 7 + 6;
         const placeName = ({ city, point }, withDot) => {
@@ -164,19 +202,17 @@ export function createTravelMap(element, { index, cities, onCountryClick, onCity
             if (claim(point.x - 10 - nameWidth(city), top, point.x + dot, bottom)) return 'left';
             return null;
         };
-        const shown = new Set();
+        const labelled = new Map();
 
         // Capital dots always show, so they claim their spot first.
         const capitals = inView.filter(({ city }) => city.capital);
-        for (const { point } of capitals) placed.push([point.x - 8, point.y - 8, point.x + 8, point.y + 8]);
+        for (const { point } of capitals) placement.add(point.x - 8, point.y - 8, point.x + 8, point.y + 8);
 
         // Capitals name themselves where there is room. City-states such as Monaco or
         // Singapore already carry the country label while country labels are shown.
-        const labelled = new Map();
-        for (const entry of capitals) {
-            const namedByCountry = entry.city.name === entry.city.country && zoom < COUNTRY_LABELS_MAX_ZOOM;
-            labelled.set(entry, namedByCountry ? null : placeName(entry, false));
-            shown.add(entry);
+        for (const item of capitals) {
+            const namedByCountry = item.city.name === item.city.country && zoom < COUNTRY_LABELS_MAX_ZOOM;
+            labelled.set(item.entry, namedByCountry ? null : placeName(item, false));
         }
 
         // Country names nudge up or down to dodge capitals, and hide if there is no room.
@@ -197,33 +233,55 @@ export function createTravelMap(element, { index, cities, onCountryClick, onCity
             if (visible) marker.getElement()?.style.setProperty('--dy', `${offset}px`);
         }
 
-        // Other cities appear only with their name, in the order they first appear, so
-        // zooming in makes room for more of them.
-        for (const entry of inView) {
-            if (entry.city.capital) continue;
-            const side = placeName(entry, true);
-            if (side) {
-                labelled.set(entry, side);
-                shown.add(entry);
-            }
+        // Other places appear with their name, in the order they first appear. At the
+        // deepest zoom every place shows, as a dot when its name has no room.
+        const deepest = zoom >= map.getMaxZoom();
+        for (const item of inView) {
+            if (item.city.capital) continue;
+            const side = placeName(item, true);
+            if (side || deepest) labelled.set(item.entry, side);
         }
 
-        const shownMarkers = new Set();
-        for (const entry of shown) {
-            const marker = cityMarker(cityMarkers[entry.index]);
-            shownMarkers.add(marker);
-            if (!citiesLayer.hasLayer(marker)) citiesLayer.addLayer(marker);
-            const element = marker.getElement();
-            element?.classList.toggle('no-label', !labelled.get(entry));
-            element?.classList.toggle('label-left', labelled.get(entry) === 'left');
-        }
-        for (const marker of citiesLayer.getLayers()) {
-            if (!shownMarkers.has(marker)) citiesLayer.removeLayer(marker);
-        }
+        // Towns first, capitals last so they are drawn on top.
+        cityLayer.draw([...labelled]
+            .sort(([a], [b]) => a.city.capital - b.city.capital)
+            .map(([entry, side]) => ({ city: entry.city, latlng: [entry.city.lat, entry.city.lng], side })));
     }
 
-    // Panning brings new places into view, so refresh after every move, not just zooms.
-    map.on('moveend', refreshZoomLayers);
+    // One hover handler for the whole map: a town under the pointer shows its name,
+    // otherwise the hovered country does.
+    function updateHover(event) {
+        const city = event ? cityLayer.cityAt(event.containerPoint) : null;
+        map.getContainer().classList.toggle('is-over-city', Boolean(city));
+        const content = city ? escapeText(city.name) : hoveredCountry ? `${hoveredCountry.flag} ${escapeText(hoveredCountry.name)}` : null;
+        if (!content || !event) {
+            map.closeTooltip(hoverTooltip);
+            return;
+        }
+        hoverTooltip.setContent(content).setLatLng(event.latlng);
+        if (!map.hasLayer(hoverTooltip)) map.openTooltip(hoverTooltip);
+    }
+    map.on('mousemove', updateHover);
+    map.on('mouseout', () => updateHover(null));
+    map.on('click', event => {
+        const city = cityLayer.cityAt(event.containerPoint);
+        if (city) onCityClick?.(city);
+    });
+    window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener?.('change', () => {
+        cityLayer.refreshColors();
+        refreshZoomLayers();
+    });
+    document.fonts?.ready.then(() => refreshZoomLayers());
+
+    // Relabel once the map settles: running between wheel steps or during a drag would
+    // stall the next animation frame. Arriving city tiles trigger the same refresh.
+    let refreshTimer = 0;
+    function scheduleRefresh() {
+        clearTimeout(refreshTimer);
+        refreshTimer = setTimeout(() => requestAnimationFrame(refreshZoomLayers), 90);
+    }
+    map.on('moveend', scheduleRefresh);
+    map.on('movestart zoomstart', () => clearTimeout(refreshTimer));
     refreshZoomLayers();
 
     // The user's own city pins.
