@@ -1,338 +1,458 @@
-// Cartoon world map: country shapes and every town, no map tiles or regional detail.
-/* global L */
-import { createCityLayer } from './city-layer.js';
+// Cartoon world map drawn on the GPU with MapLibre GL: country shapes and every town,
+// with smooth, continuous zooming. See docs/adr/0008-maplibre-gl.md.
+import { Map as MapLibreMap, Marker, Popup } from '../vendor/maplibre/maplibre-gl.mjs';
 
-const WORLD_BOUNDS = [[-62, -200], [85, 200]];
-const DEFAULT_VIEW = { center: [25, 10], zoom: 2.5 };
+// The app and its data use Leaflet-scale zooms; MapLibre's are one lower for the same scale.
+const ZOOM_OFFSET = 1;
+const MAX_ZOOM = 11;
 const COUNTRY_LABELS_MAX_ZOOM = 7;
+// Whole countries light up on hover only at world scale; up close they fill the screen.
+const HOVER_FILL_MAX_ZOOM = 7;
+const DEFAULT_VIEW = { center: [10, 25], zoom: 2.5 };
 
-// The build grades every place with the zoom at which its name fits beside the places
-// shown before it (see scripts/build-map-data.js), so each zoom step adds more.
-function cityMinZoom(city) {
-    return Number.isFinite(city.minZoom) ? city.minZoom : 6;
+const toMapZoom = zoom => zoom - ZOOM_OFFSET;
+const lngLat = point => (Array.isArray(point) ? [point[1], point[0]] : [point.lng, point.lat]);
+const dataUrl = file => new URL(`../data/${file}`, import.meta.url);
+const fontUrl = file => new URL(`../vendor/fonts/${file}`, import.meta.url).href;
+
+// Colours come from the CSS design tokens, so the map follows the light and dark themes.
+function readTheme() {
+    const style = getComputedStyle(document.documentElement);
+    const token = name => style.getPropertyValue(name).trim();
+    return {
+        land: [1, 2, 3, 4, 5, 6, 7].map(n => token(`--land-${n}`)),
+        border: token('--border-ink'),
+        ink: token('--ink'),
+        inkDark: token('--ink-dark'),
+        visited: token('--visited'),
+        visitedInk: token('--visited-ink'),
+        visitedSoft: token('--visited-soft'),
+        wishlist: token('--wishlist'),
+        wishlistInk: token('--wishlist-ink'),
+        capital: token('--primary-strong'),
+        graticule: token('--graticule'),
+        shadow: token('--shadow-color')
+    };
 }
 
-function escapeText(value) {
-    const div = document.createElement('div');
-    div.textContent = value;
-    return div.innerHTML;
+// Round town markers, drawn once and uploaded to the GPU as images.
+function dotImage(theme, capital) {
+    const ratio = 2;
+    const css = capital ? 18 : 14;
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = css * ratio;
+    const context = canvas.getContext('2d');
+    context.scale(ratio, ratio);
+    const center = css / 2;
+    context.beginPath();
+    context.arc(center, center, center - 2, 0, Math.PI * 2);
+    context.fillStyle = capital ? theme.capital : '#fff';
+    context.fill();
+    context.lineWidth = 2.5;
+    context.strokeStyle = theme.ink;
+    context.stroke();
+    if (capital) {
+        context.fillStyle = '#fff';
+        context.font = '10px system-ui, sans-serif';
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+        context.fillText('★', center, center + 0.5);
+    }
+    return context.getImageData(0, 0, canvas.width, canvas.height);
 }
 
-export function createTravelMap(element, { index, cities, onCountryClick, onCityClick, onPinClick }) {
-    const map = L.map(element, {
-        minZoom: 2,
-        maxZoom: 11,
-        zoomSnap: 0.5,
-        zoomDelta: 0.5,
-        wheelPxPerZoomLevel: 90,
-        maxBounds: WORLD_BOUNDS,
-        maxBoundsViscosity: 0.8,
-        worldCopyJump: false,
-        zoomControl: false,
-        attributionControl: true,
-        preferCanvas: false
-    }).setView(DEFAULT_VIEW.center, DEFAULT_VIEW.zoom);
+const state = name => ['boolean', ['feature-state', name], false];
 
-    map.attributionControl.setPrefix('<a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a>');
-    map.attributionControl.addAttribution('Borders: <a href="https://www.naturalearthdata.com" target="_blank" rel="noopener">Natural Earth</a>'
-        + ' · Places: <a href="https://www.geonames.org" target="_blank" rel="noopener">GeoNames</a> (CC BY 4.0)');
-    L.control.zoom({ position: 'bottomright' }).addTo(map);
+function countryFill(theme) {
+    const land = ['match', ['get', 'color'], ...theme.land.flatMap((colour, i) => [i + 1, colour]), theme.land[0]];
+    const status = ['case',
+        ['all', state('visited'), state('cityOnly'), ['!', state('wishlist')]], theme.visitedSoft,
+        state('visited'), theme.visited,
+        state('wishlist'), theme.wishlist,
+        land];
+    const hovered = ['case',
+        ['!', state('hover')], status,
+        state('visited'), '#5ad8cc',
+        state('wishlist'), '#ffd452',
+        '#fff'];
+    return ['step', ['zoom'], hovered, toMapZoom(HOVER_FILL_MAX_ZOOM), status];
+}
 
-    map.createPane('graticule').style.zIndex = 250;
-    map.createPane('countries').style.zIndex = 300;
-    map.createPane('countryLabels').style.zIndex = 420;
-    map.createPane('cities').style.zIndex = 450;
-    map.getPane('countryLabels').style.pointerEvents = 'none';
-
-    // A few fun reference lines, drawn like a school atlas.
-    const graticule = L.layerGroup().addTo(map);
-    [
+function buildStyle(theme, countries, labels) {
+    const atlasLines = [
         { lat: 0, name: 'Equator' },
         { lat: 23.44, name: 'Tropic of Cancer' },
         { lat: -23.44, name: 'Tropic of Capricorn' }
-    ].forEach(({ lat, name }) => {
-        L.polyline([[lat, -180], [lat, 180]], { pane: 'graticule', className: 'graticule-line', interactive: false }).addTo(graticule);
-        L.marker([lat, -168], {
-            pane: 'graticule',
-            interactive: false,
-            icon: L.divIcon({ className: 'graticule-label', html: escapeText(name), iconSize: null })
-        }).addTo(graticule);
+    ];
+    return {
+        version: 8,
+        // Text is drawn in the browser from the app's own fonts; no glyph server is needed.
+        // The weight comes from the name ("Extra Bold" is 800).
+        'font-faces': {
+            'Fredoka SemiBold': fontUrl('fredoka-latin-wght-normal.woff2'),
+            'Nunito Extra Bold': fontUrl('nunito-latin-wght-normal.woff2')
+        },
+        sources: {
+            countries: { type: 'geojson', data: countries, promoteId: 'id' },
+            labels: { type: 'geojson', data: labels },
+            atlas: {
+                type: 'geojson',
+                data: {
+                    type: 'FeatureCollection',
+                    features: atlasLines.flatMap(({ lat, name }) => [
+                        { type: 'Feature', geometry: { type: 'LineString', coordinates: [[-180, lat], [180, lat]] }, properties: {} },
+                        { type: 'Feature', geometry: { type: 'Point', coordinates: [-168, lat] }, properties: { name } }
+                    ])
+                }
+            },
+            cities: { type: 'geojson', data: { type: 'FeatureCollection', features: [] } }
+        },
+        layers: [
+            // No background layer: the dotted ocean is the container's CSS background.
+            {
+                id: 'atlas-lines', type: 'line', source: 'atlas', filter: ['==', ['geometry-type'], 'LineString'],
+                layout: { 'line-cap': 'round' },
+                paint: { 'line-color': 'rgba(255,255,255,0.6)', 'line-width': 1.5, 'line-dasharray': [0.5, 5] }
+            },
+            {
+                id: 'land-shadow', type: 'fill', source: 'countries',
+                paint: { 'fill-color': theme.shadow, 'fill-opacity': 0.28, 'fill-translate': [3, 4] }
+            },
+            { id: 'land', type: 'fill', source: 'countries', paint: { 'fill-color': countryFill(theme) } },
+            {
+                id: 'borders', type: 'line', source: 'countries', layout: { 'line-join': 'round' },
+                paint: { 'line-color': theme.border, 'line-width': ['interpolate', ['linear'], ['zoom'], 1, 1.2, 6, 1.8, 10, 2.4] }
+            },
+            {
+                id: 'borders-visited', type: 'line', source: 'countries', layout: { 'line-join': 'round' },
+                paint: { 'line-color': theme.visitedInk, 'line-width': 2, 'line-opacity': ['case', ['all', state('visited'), ['!', state('wishlist')]], 1, 0] }
+            },
+            {
+                id: 'borders-wishlist', type: 'line', source: 'countries', layout: { 'line-join': 'round' },
+                paint: { 'line-color': theme.wishlistInk, 'line-width': 2, 'line-dasharray': [2.5, 2], 'line-opacity': ['case', state('wishlist'), 1, 0] }
+            },
+            {
+                id: 'borders-hover', type: 'line', source: 'countries', layout: { 'line-join': 'round' },
+                paint: { 'line-color': theme.ink, 'line-width': 2.5, 'line-opacity': ['case', state('hover'), 1, 0] }
+            },
+            {
+                id: 'borders-pulse', type: 'line', source: 'countries', layout: { 'line-join': 'round' },
+                paint: {
+                    'line-color': theme.capital,
+                    'line-width': ['*', 7, ['number', ['feature-state', 'pulse'], 0]],
+                    'line-opacity': ['number', ['feature-state', 'pulse'], 0]
+                }
+            },
+            {
+                id: 'atlas-labels', type: 'symbol', source: 'atlas', filter: ['==', ['geometry-type'], 'Point'],
+                layout: {
+                    'text-field': ['get', 'name'], 'text-font': ['Fredoka SemiBold'], 'text-size': 11,
+                    'text-transform': 'uppercase', 'text-letter-spacing': 0.08, 'text-anchor': 'bottom-left', 'text-offset': [0, -0.4]
+                },
+                paint: { 'text-color': theme.graticule }
+            },
+            {
+                // Every town, revealed at the zoom where its name fits (see data-model.md).
+                id: 'cities', type: 'symbol', source: 'cities',
+                filter: ['>=', ['zoom'], ['get', 'minZoom']],
+                layout: {
+                    'icon-image': ['case', ['==', ['get', 'capital'], 1], 'dot-capital', 'dot'],
+                    'text-field': ['get', 'name'],
+                    'text-font': ['Nunito Extra Bold'],
+                    'text-size': ['case', ['==', ['get', 'capital'], 1], 12.5, 11.5],
+                    // Name on the right, or on the left when the right side is taken.
+                    'text-variable-anchor': ['left', 'right'],
+                    'text-radial-offset': 0.8,
+                    'text-justify': 'auto',
+                    // Capitals first, then places in the order they appear.
+                    'symbol-sort-key': ['-', ['get', 'minZoom'], ['*', 100, ['get', 'capital']]],
+                    'text-padding': 2
+                },
+                paint: { 'text-color': theme.inkDark, 'text-halo-color': '#fff', 'text-halo-width': 1.6 }
+            },
+            {
+                // At the deepest zoom, places whose name never finds room still show as a dot.
+                id: 'city-dots', type: 'symbol', source: 'cities', minzoom: toMapZoom(MAX_ZOOM) - 0.01,
+                filter: ['>', ['get', 'minZoom'], toMapZoom(MAX_ZOOM)],
+                layout: { 'icon-image': 'dot', 'icon-allow-overlap': true }
+            },
+            {
+                // Last in the stack, so country names win label collisions against towns.
+                id: 'country-labels', type: 'symbol', source: 'labels', maxzoom: toMapZoom(COUNTRY_LABELS_MAX_ZOOM),
+                layout: {
+                    'text-field': ['get', 'name'],
+                    'text-font': ['Fredoka SemiBold'],
+                    'text-size': ['interpolate', ['linear'], ['zoom'], 2, 12, 3, 14, 5, 16],
+                    'text-max-width': 8,
+                    'text-padding': 4,
+                    'text-letter-spacing': 0.02,
+                    'symbol-sort-key': ['get', 'labelZoom']
+                },
+                paint: { 'text-color': theme.inkDark, 'text-halo-color': 'rgba(255,255,255,0.9)', 'text-halo-width': 2 }
+            }
+        ]
+    };
+}
+
+export function createTravelMap(element, { index, cities, onCountryClick, onCityClick, onPinClick, onPopupOpen }) {
+    const countries = {
+        type: 'FeatureCollection',
+        features: index.countries.map(country => country.feature)
+    };
+    const labels = {
+        type: 'FeatureCollection',
+        features: index.countries.map(country => ({
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: lngLat(country.label) },
+            properties: { name: country.name, labelZoom: country.labelZoom || 5 }
+        }))
+    };
+    let theme = readTheme();
+
+    const map = new MapLibreMap({
+        container: element,
+        style: buildStyle(theme, countries, labels),
+        center: DEFAULT_VIEW.center,
+        zoom: toMapZoom(DEFAULT_VIEW.zoom),
+        minZoom: toMapZoom(2),
+        maxZoom: toMapZoom(MAX_ZOOM),
+        renderWorldCopies: false,
+        dragRotate: false,
+        pitchWithRotate: false,
+        touchPitch: false,
+        attributionControl: {
+            compact: false,
+            customAttribution: '<a href="https://maplibre.org" target="_blank" rel="noopener">MapLibre</a>'
+                + ' · Borders: <a href="https://www.naturalearthdata.com" target="_blank" rel="noopener">Natural Earth</a>'
+                + ' · Places: <a href="https://www.geonames.org" target="_blank" rel="noopener">GeoNames</a> (CC BY 4.0)'
+        }
+    });
+    map.touchZoomRotate.disableRotation();
+    // Browser tests reach the map through its container.
+    element.travelMap = map;
+
+    const ready = new Promise(resolve => map.once('load', resolve));
+    ready.then(() => {
+        map.addImage('dot', dotImage(theme, false), { pixelRatio: 2 });
+        map.addImage('dot-capital', dotImage(theme, true), { pixelRatio: 2 });
     });
 
-    const renderer = L.svg({ pane: 'countries', padding: 0.5 });
-    const countryLayers = new Map();
-    const hoverTooltip = L.tooltip({ className: 'country-tooltip', direction: 'top', offset: [0, -8], sticky: true });
-    let hoveredCountry = null;
-
-    const countriesLayer = L.geoJSON(index.countries.map(country => country.feature), {
-        renderer,
-        pane: 'countries',
-        style: feature => ({
-            className: `country c${feature.properties.color || 1}`,
-            weight: 1.4,
-            lineJoin: 'round',
-            lineCap: 'round'
-        }),
-        onEachFeature: (feature, layer) => {
-            const country = index.byId.get(feature.properties.id);
-            countryLayers.set(country.id, layer);
-            layer.on({
-                mouseover: () => {
-                    layer.getElement()?.classList.add('is-hover');
-                    hoveredCountry = country;
-                },
-                mouseout: () => {
-                    layer.getElement()?.classList.remove('is-hover');
-                    hoveredCountry = null;
-                    updateHover(null);
-                },
-                click: event => {
-                    L.DomEvent.stopPropagation(event);
-                    map.closeTooltip(hoverTooltip);
-                    // A town drawn on top of the country wins the click.
-                    const city = cityLayer.cityAt(event.containerPoint);
-                    if (city) onCityClick?.(city);
-                    else onCountryClick?.(country, event.latlng);
-                }
-            });
-        }
-    }).addTo(map);
-
-    // Country name labels appear as you zoom in, biggest countries first.
-    const labelsLayer = L.layerGroup().addTo(map);
-    const labelMarkers = index.countries.map(country => ({
-        country,
-        marker: L.marker(country.label, {
-            pane: 'countryLabels',
-            interactive: false,
-            keyboard: false,
-            icon: L.divIcon({ className: 'country-label', html: `<span>${escapeText(country.name)}</span>`, iconSize: null })
-        })
-    }));
-
-    // Capitals first, then ever smaller places as you zoom in. The base list arrives with
-    // the page; smaller places load in region tiles just before their zoom is reached.
-    const VIEW_PADDING = 0.1;
-    const cityLayer = createCityLayer(map, { pane: 'cities', padding: VIEW_PADDING });
-    const toEntry = city => ({ city, minZoom: cityMinZoom(city) });
-    const baseEntries = cities.map(toEntry);
-    const tiles = new Map();
-
-    // Relative to this module, so tiles come from the same release as the code.
-    const tileUrl = file => new URL(`../data/cities/${file}`, import.meta.url);
-    fetch(tileUrl('index.json'))
-        .then(response => (response.ok ? response.json() : []))
-        .then(list => {
-            for (const { id, bounds, minZoom } of list) {
-                tiles.set(id, { bounds: L.latLngBounds([bounds[0], bounds[1]], [bounds[2], bounds[3]]), minZoom, entries: null, loading: false });
+    // Zoom buttons styled like the rest of the app.
+    map.addControl({
+        onAdd() {
+            const group = document.createElement('div');
+            group.className = 'maplibregl-ctrl zoom-control';
+            for (const [label, text, action] of [['Zoom in', '+', () => map.zoomIn()], ['Zoom out', '−', () => map.zoomOut()]]) {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.setAttribute('aria-label', label);
+                button.textContent = text;
+                button.addEventListener('click', action);
+                group.append(button);
             }
-            scheduleRefresh();
-        })
+            return group;
+        },
+        onRemove() {}
+    }, 'bottom-right');
+
+    // ---- towns: the base list now, region tiles as you approach their zoom
+
+    const countryNames = new Map(index.countries.map(country => [country.id, country.name]));
+    const toFeature = ({ name, country, countryId, capital, population, minZoom, lat, lng }) => ({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [lng, lat] },
+        properties: { name, country, countryId, capital, population, minZoom: toMapZoom(minZoom), lat, lng }
+    });
+    const cityFeatures = cities.map(toFeature);
+    const tiles = [];
+    const loadedTiles = new Set();
+    fetch(dataUrl('cities/index.json'))
+        .then(response => (response.ok ? response.json() : []))
+        .then(list => { tiles.push(...list); loadTiles(); })
         .catch(() => {});
 
-    function loadTiles(view, zoom) {
-        for (const [id, tile] of tiles) {
-            // Fetch half a zoom early so places are ready when they are due.
-            if (tile.entries || tile.loading || zoom < tile.minZoom - 0.5 || !tile.bounds.intersects(view)) continue;
-            tile.loading = true;
-            fetch(tileUrl(`${id}.json`))
+    function loadTiles() {
+        const bounds = map.getBounds();
+        const zoom = map.getZoom() + ZOOM_OFFSET;
+        for (const { id, bounds: [south, west, north, east], minZoom } of tiles) {
+            // Fetch a zoom early so places are ready when they are due.
+            if (loadedTiles.has(id) || zoom < minZoom - 1 || south > bounds.getNorth() || north < bounds.getSouth()
+                || west > bounds.getEast() || east < bounds.getWest()) continue;
+            loadedTiles.add(id);
+            fetch(dataUrl(`cities/${id}.json`))
                 .then(response => {
                     if (!response.ok) throw new Error(`City tile ${id}: HTTP ${response.status}`);
                     return response.json();
                 })
                 .then(rows => {
-                    tile.entries = rows.map(([name, countryId, capital, population, minZoom, lat, lng]) => toEntry({
-                        name, country: index.byId.get(countryId)?.name || '', countryId, capital, population, minZoom, lat, lng
-                    }));
-                    scheduleRefresh();
+                    for (const [name, countryId, capital, population, minZoom, lat, lng] of rows) {
+                        cityFeatures.push(toFeature({ name, country: countryNames.get(countryId) || '', countryId, capital, population, minZoom, lat, lng }));
+                    }
+                    scheduleCityUpdate();
                 })
-                .catch(() => { tile.loading = false; });
+                .catch(() => loadedTiles.delete(id));
         }
     }
 
-    // Show a label only where it does not collide with one already placed, biggest places first.
-    const countryLabelOrder = [...labelMarkers].sort((a, b) =>
-        (a.country.labelZoom || 5) - (b.country.labelZoom || 5) || b.country.population - a.country.population);
-    // Capitals first; other places in the order they appear, so a name shown at one zoom
-    // keeps its place as you zoom further in and new places only fill the space around it.
-    const cityOrder = (a, b) => b.city.capital - a.city.capital
-        || (a.city.capital ? 0 : a.minZoom - b.minZoom) || b.city.population - a.city.population;
-
-    // Collision boxes in a spatial grid, so placing thousands of labels stays fast.
-    function createPlacement(cell = 128) {
-        const cells = new Map();
-        const each = (x1, y1, x2, y2, visit) => {
-            for (let cx = Math.floor(x1 / cell); cx <= Math.floor(x2 / cell); cx++) {
-                for (let cy = Math.floor(y1 / cell); cy <= Math.floor(y2 / cell); cy++) visit(`${cx},${cy}`);
-            }
-        };
-        return {
-            add(x1, y1, x2, y2) {
-                each(x1, y1, x2, y2, key => (cells.get(key) || cells.set(key, []).get(key)).push([x1, y1, x2, y2]));
-            },
-            claim(x1, y1, x2, y2) {
-                let free = true;
-                each(x1, y1, x2, y2, key => {
-                    if (free) free = !(cells.get(key) || []).some(([a1, b1, a2, b2]) => x1 < a2 && x2 > a1 && y1 < b2 && y2 > b1);
-                });
-                if (free) this.add(x1, y1, x2, y2);
-                return free;
-            }
-        };
+    // Hand MapLibre only the towns that can appear near the current zoom, in batches, so it
+    // never re-indexes every loaded town on each change.
+    let shownLimit = null;
+    let cityTimer = 0;
+    function updateCities() {
+        shownLimit = Math.floor(map.getZoom()) + 2;
+        map.getSource('cities')?.setData({ type: 'FeatureCollection', features: cityFeatures.filter(f => f.properties.minZoom <= shownLimit) });
     }
-
-    function refreshZoomLayers() {
-        const zoom = map.getZoom();
-        element.dataset.zoom = String(Math.floor(zoom));
-        element.classList.toggle('is-deep', zoom >= COUNTRY_LABELS_MAX_ZOOM);
-        const fontSize = zoom >= 6 ? 16 : zoom >= 4 ? 14 : 12;
-        const placement = createPlacement();
-        const claim = (x1, y1, x2, y2) => placement.claim(x1, y1, x2, y2);
-
-        // Only places in (or just around) the view are rendered.
-        const view = map.getBounds().pad(VIEW_PADDING);
-        loadTiles(view, zoom);
-        const inView = [baseEntries, ...[...tiles.values()].filter(tile => tile.entries && tile.bounds.intersects(view)).map(tile => tile.entries)]
-            .flatMap(entries => entries.filter(entry => zoom >= entry.minZoom && view.contains([entry.city.lat, entry.city.lng])))
-            .sort(cityOrder)
-            .map(entry => ({ entry, city: entry.city, point: map.project([entry.city.lat, entry.city.lng], zoom) }));
-        // A name goes right of its dot, or left when the right side is taken.
-        const nameWidth = city => city.name.length * 7 + 6;
-        const placeName = ({ city, point }, withDot) => {
-            const [top, bottom, dot] = [point.y - 9, point.y + 9, withDot ? 8 : -9];
-            if (claim(point.x - dot, top, point.x + 10 + nameWidth(city), bottom)) return 'right';
-            if (claim(point.x - 10 - nameWidth(city), top, point.x + dot, bottom)) return 'left';
-            return null;
-        };
-        const labelled = new Map();
-
-        // Capital dots always show, so they claim their spot first.
-        const capitals = inView.filter(({ city }) => city.capital);
-        for (const { point } of capitals) placement.add(point.x - 8, point.y - 8, point.x + 8, point.y + 8);
-
-        // Capitals name themselves where there is room. City-states such as Monaco or
-        // Singapore already carry the country label while country labels are shown.
-        for (const item of capitals) {
-            const namedByCountry = item.city.name === item.city.country && zoom < COUNTRY_LABELS_MAX_ZOOM;
-            labelled.set(item.entry, namedByCountry ? null : placeName(item, false));
-        }
-
-        // Country names nudge up or down to dodge capitals, and hide if there is no room.
-        for (const { country, marker } of countryLabelOrder) {
-            const eligible = zoom >= Math.max(2.5, (country.labelZoom || 5) - 0.5) && zoom < COUNTRY_LABELS_MAX_ZOOM;
-            let offset = null;
-            if (eligible) {
-                const point = map.project(country.label, zoom);
-                const halfWidth = (country.name.length * fontSize * 0.56) / 2 + 4;
-                const halfHeight = fontSize * 0.7;
-                offset = [0, fontSize + 4, -(fontSize + 4)].find(dy =>
-                    claim(point.x - halfWidth, point.y + dy - halfHeight, point.x + halfWidth, point.y + dy + halfHeight)
-                ) ?? null;
-            }
-            const visible = offset !== null;
-            if (visible && !labelsLayer.hasLayer(marker)) labelsLayer.addLayer(marker);
-            if (!visible && labelsLayer.hasLayer(marker)) labelsLayer.removeLayer(marker);
-            if (visible) marker.getElement()?.style.setProperty('--dy', `${offset}px`);
-        }
-
-        // Other places appear with their name, in the order they first appear. At the
-        // deepest zoom every place shows, as a dot when its name has no room.
-        const deepest = zoom >= map.getMaxZoom();
-        for (const item of inView) {
-            if (item.city.capital) continue;
-            const side = placeName(item, true);
-            if (side || deepest) labelled.set(item.entry, side);
-        }
-
-        // Towns first, capitals last so they are drawn on top.
-        cityLayer.draw([...labelled]
-            .sort(([a], [b]) => a.city.capital - b.city.capital)
-            .map(([entry, side]) => ({ city: entry.city, latlng: [entry.city.lat, entry.city.lng], side })));
+    function scheduleCityUpdate() {
+        clearTimeout(cityTimer);
+        cityTimer = setTimeout(() => ready.then(updateCities), 120);
     }
-
-    // One hover handler for the whole map: a town under the pointer shows its name,
-    // otherwise the hovered country does.
-    function updateHover(event) {
-        const city = event ? cityLayer.cityAt(event.containerPoint) : null;
-        map.getContainer().classList.toggle('is-over-city', Boolean(city));
-        const content = city ? escapeText(city.name) : hoveredCountry ? `${hoveredCountry.flag} ${escapeText(hoveredCountry.name)}` : null;
-        if (!content || !event) {
-            map.closeTooltip(hoverTooltip);
-            return;
-        }
-        hoverTooltip.setContent(content).setLatLng(event.latlng);
-        if (!map.hasLayer(hoverTooltip)) map.openTooltip(hoverTooltip);
-    }
-    map.on('mousemove', updateHover);
-    map.on('mouseout', () => updateHover(null));
-    map.on('click', event => {
-        const city = cityLayer.cityAt(event.containerPoint);
-        if (city) onCityClick?.(city);
+    map.on('moveend', () => {
+        loadTiles();
+        if (Math.floor(map.getZoom()) + 2 !== shownLimit) scheduleCityUpdate();
     });
-    window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener?.('change', () => {
-        cityLayer.refreshColors();
-        refreshZoomLayers();
-    });
-    document.fonts?.ready.then(() => refreshZoomLayers());
+    ready.then(updateCities);
 
-    // Relabel once the map settles: running between wheel steps or during a drag would
-    // stall the next animation frame. Arriving city tiles trigger the same refresh.
-    let refreshTimer = 0;
-    function scheduleRefresh() {
-        clearTimeout(refreshTimer);
-        refreshTimer = setTimeout(() => requestAnimationFrame(refreshZoomLayers), 90);
+    // ---- country status, hover and pulse
+
+    let status = { visitedIds: new Set(), wishlistIds: new Set(), cityOnlyIds: new Set(), filter: 'all' };
+    function applyStatus() {
+        const { visitedIds, wishlistIds, cityOnlyIds, filter } = status;
+        for (const country of index.countries) {
+            const visited = visitedIds.has(country.id) && filter !== 'wishlist' && filter !== 'none';
+            map.setFeatureState({ source: 'countries', id: country.id }, {
+                visited,
+                wishlist: wishlistIds.has(country.id) && filter !== 'visited' && filter !== 'none',
+                cityOnly: visited && cityOnlyIds.has(country.id)
+            });
+        }
     }
-    map.on('moveend', scheduleRefresh);
-    map.on('movestart zoomstart', () => clearTimeout(refreshTimer));
-    refreshZoomLayers();
+    function setCountryStatus({ visitedIds, wishlistIds, cityOnlyIds }, filter = 'all') {
+        status = { visitedIds, wishlistIds, cityOnlyIds, filter };
+        ready.then(applyStatus);
+    }
 
-    // The user's own city pins.
-    const pinsLayer = L.layerGroup().addTo(map);
-    const pinMarkers = new Map();
-
-    function pinIcon(marker) {
-        const symbol = marker.type === 'visited' ? '✓' : '♥';
-        return L.divIcon({
-            className: `pin pin-${marker.type}`,
-            html: `<span class="pin-body"><span class="pin-symbol">${symbol}</span></span>`,
-            iconSize: [30, 38],
-            iconAnchor: [15, 36],
-            popupAnchor: [0, -32]
+    function pulseCountry(countryId) {
+        ready.then(() => {
+            const started = performance.now();
+            const frame = now => {
+                const t = Math.min((now - started) / 1100, 1);
+                // Swell quickly, then settle, like the old CSS pulse.
+                const value = t < 0.3 ? t / 0.3 : 1 - (t - 0.3) / 0.7;
+                map.setFeatureState({ source: 'countries', id: countryId }, { pulse: Math.max(value, 0) });
+                if (t < 1) requestAnimationFrame(frame);
+            };
+            requestAnimationFrame(frame);
         });
     }
 
+    const hoverTip = new Popup({ closeButton: false, closeOnClick: false, className: 'map-tooltip', offset: 14, anchor: 'bottom' });
+    let hoveredId = null;
+    function setHovered(id) {
+        if (id === hoveredId) return;
+        if (hoveredId) map.setFeatureState({ source: 'countries', id: hoveredId }, { hover: false });
+        hoveredId = id;
+        if (id) map.setFeatureState({ source: 'countries', id }, { hover: true });
+    }
+    const featureAt = point => map.queryRenderedFeatures(point, { layers: ['cities', 'city-dots', 'land'] })[0];
+    map.on('mousemove', event => {
+        const feature = featureAt(event.point);
+        const town = feature && feature.layer.id !== 'land' ? feature : null;
+        const country = feature?.layer.id === 'land' ? index.byId.get(feature.properties.id) : null;
+        setHovered(country?.id || null);
+        map.getCanvas().style.cursor = feature ? 'pointer' : '';
+        const text = town ? town.properties.name : country ? `${country.flag} ${country.name}` : null;
+        if (!text) {
+            hoverTip.remove();
+            return;
+        }
+        hoverTip.setLngLat(event.lngLat).setText(text);
+        if (!hoverTip.isOpen()) hoverTip.addTo(map);
+    });
+    map.getCanvas().addEventListener('mouseleave', () => {
+        setHovered(null);
+        hoverTip.remove();
+    });
+    map.on('click', event => {
+        hoverTip.remove();
+        const feature = featureAt(event.point);
+        if (!feature) return;
+        if (feature.layer.id === 'land') {
+            const country = index.byId.get(feature.properties.id);
+            if (country) onCountryClick?.(country, event.lngLat);
+            return;
+        }
+        // A town drawn on top of the country wins the click.
+        onCityClick?.({ ...feature.properties, minZoom: feature.properties.minZoom + ZOOM_OFFSET });
+    });
+
+    // ---- the traveler's own pins
+
+    let pins = [];
     function setPins(markers) {
-        pinsLayer.clearLayers();
-        pinMarkers.clear();
-        for (const marker of markers) {
-            if (marker.category !== 'City') continue;
-            const pin = L.marker([marker.lat, marker.lng], {
-                icon: pinIcon(marker),
-                title: marker.name,
-                riseOnHover: true,
-                zIndexOffset: marker.type === 'visited' ? 200 : 100
-            }).on('click', event => {
-                L.DomEvent.stopPropagation(event);
+        for (const pin of pins) pin.remove();
+        pins = markers.filter(marker => marker.category === 'City').map(marker => {
+            const pinElement = document.createElement('button');
+            pinElement.type = 'button';
+            pinElement.className = `pin pin-${marker.type}`;
+            pinElement.title = marker.name;
+            pinElement.setAttribute('aria-label', marker.name);
+            const body = document.createElement('span');
+            body.className = 'pin-body';
+            const symbol = document.createElement('span');
+            symbol.className = 'pin-symbol';
+            symbol.textContent = marker.type === 'visited' ? '✓' : '♥';
+            body.append(symbol);
+            pinElement.append(body);
+            pinElement.addEventListener('click', event => {
+                event.stopPropagation();
                 onPinClick?.(marker);
             });
-            pinsLayer.addLayer(pin);
-            pinMarkers.set(String(marker.id), pin);
-        }
+            return new Marker({ element: pinElement, anchor: 'bottom' }).setLngLat([marker.lng, marker.lat]).addTo(map);
+        });
     }
 
-    function setCountryStatus({ visitedIds, wishlistIds, cityOnlyIds }, filter = 'all') {
-        for (const [id, layer] of countryLayers) {
-            const path = layer.getElement();
-            if (!path) continue;
-            const visited = visitedIds.has(id) && filter !== 'wishlist';
-            const wishlist = wishlistIds.has(id) && filter !== 'visited';
-            path.classList.toggle('is-visited', visited);
-            path.classList.toggle('is-wishlist', wishlist);
-            path.classList.toggle('is-city-only', visited && cityOnlyIds.has(id));
-        }
+    // ---- cards and camera
+
+    // Keep cards and fly targets clear of the floating top bar, side panel and legend.
+    function safeArea() {
+        const topbar = document.querySelector('.topbar');
+        const panel = document.getElementById('panel');
+        const narrow = window.innerWidth <= 760;
+        return {
+            top: (topbar ? topbar.getBoundingClientRect().bottom : 74) + 16,
+            left: !panel || panel.hidden || narrow ? 40 : panel.getBoundingClientRect().right + 40,
+            right: 40,
+            bottom: 80
+        };
     }
 
-    // Resolves when the current map animation finishes (or shortly after, if nothing moved).
+    let cardPopup = null;
+    function openPopup(latlng, content, { offset = [0, -8] } = {}) {
+        cardPopup?.remove();
+        cardPopup = new Popup({ className: 'card-popup', maxWidth: '320px', anchor: 'bottom', offset: [offset[0], offset[1]], focusAfterOpen: false })
+            .setLngLat(lngLat(latlng))
+            .setDOMContent(content)
+            .addTo(map);
+        onPopupOpen?.();
+        // Pan the card into view, clear of the panel and bars.
+        requestAnimationFrame(() => {
+            const card = cardPopup?.getElement()?.getBoundingClientRect();
+            if (!card) return;
+            const area = safeArea();
+            const bounds = element.getBoundingClientRect();
+            const dx = card.left < area.left ? card.left - area.left : card.right > bounds.right - area.right ? card.right - (bounds.right - area.right) : 0;
+            const dy = card.top < area.top ? card.top - area.top : card.bottom > bounds.bottom - area.bottom ? card.bottom - (bounds.bottom - area.bottom) : 0;
+            if (dx || dy) map.panBy([dx, dy], { duration: 300 });
+        });
+        return cardPopup;
+    }
+
+    function closePopup() {
+        cardPopup?.remove();
+        cardPopup = null;
+    }
+
+    // Resolves when the camera settles (or shortly after, if nothing moved).
     function afterMove() {
         return new Promise(resolve => {
             const done = () => {
@@ -340,80 +460,45 @@ export function createTravelMap(element, { index, cities, onCountryClick, onCity
                 map.off('moveend', done);
                 resolve();
             };
-            const timer = setTimeout(done, 1400);
+            const timer = setTimeout(done, 1600);
             map.once('moveend', done);
         });
     }
 
-    function countryBounds(country) {
-        const [minLng, minLat, maxLng, maxLat] = country.mainBounds;
-        return L.latLngBounds([minLat, minLng], [maxLat, maxLng]);
+    function flyTo(lat, lng, zoom = 6) {
+        const moved = afterMove();
+        map.flyTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), toMapZoom(zoom)), padding: safeArea(), duration: 900 });
+        return moved;
+    }
+
+    function flyToView([lat, lng], zoom) {
+        const moved = afterMove();
+        map.flyTo({ center: [lng, lat], zoom: toMapZoom(zoom), padding: safeArea(), duration: 900 });
+        return moved;
     }
 
     function flyToCountry(country) {
         const moved = afterMove();
-        map.flyToBounds(countryBounds(country), { maxZoom: 5.5, paddingTopLeft: panelPadding(), paddingBottomRight: [60, 60], duration: 0.8 });
+        const [minLng, minLat, maxLng, maxLat] = country.mainBounds;
+        map.fitBounds([[minLng, minLat], [maxLng, maxLat]], { maxZoom: toMapZoom(5.5), padding: safeArea(), duration: 900 });
         return moved;
     }
 
-    function flyTo(lat, lng, zoom = 6) {
-        const moved = afterMove();
-        const target = Math.max(map.getZoom(), zoom);
-        // Offset the center so the place is not hidden behind the side panel.
-        const [padX] = panelPadding();
-        const point = map.project([lat, lng], target).subtract([padX / 2 - 30, 0]);
-        map.flyTo(map.unproject(point, target), target, { duration: 0.8 });
-        return moved;
-    }
+    // Follow the colour scheme.
+    window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener?.('change', () => {
+        theme = readTheme();
+        ready.then(() => {
+            map.setStyle(buildStyle(theme, countries, labels), { diff: true });
+            map.once('styledata', () => {
+                for (const [name, capital] of [['dot', false], ['dot-capital', true]]) {
+                    if (map.hasImage(name)) map.updateImage(name, dotImage(theme, capital));
+                    else map.addImage(name, dotImage(theme, capital), { pixelRatio: 2 });
+                }
+                applyStatus();
+                updateCities();
+            });
+        });
+    });
 
-    function panelPadding() {
-        const panel = document.getElementById('panel');
-        if (!panel || panel.hidden || window.innerWidth <= 760) return [40, 90];
-        return [panel.getBoundingClientRect().right + 40, 90];
-    }
-
-    function pulseCountry(countryId) {
-        const path = countryLayers.get(countryId)?.getElement();
-        if (!path) return;
-        path.classList.remove('is-pulsing');
-        // Restart the CSS animation.
-        void path.getBoundingClientRect();
-        path.classList.add('is-pulsing');
-        setTimeout(() => path.classList.remove('is-pulsing'), 1200);
-    }
-
-    // Keep cards clear of the floating top bar and side panel, and of the legend below.
-    function popupPadding() {
-        const topbar = document.querySelector('.topbar');
-        const top = topbar ? topbar.getBoundingClientRect().bottom + 16 : 90;
-        return { autoPanPaddingTopLeft: [panelPadding()[0], top], autoPanPaddingBottomRight: [40, 80] };
-    }
-
-    function openPopup(latlng, content, options = {}) {
-        return L.popup({ className: 'card-popup', maxWidth: 320, minWidth: 260, ...popupPadding(), ...options })
-            .setLatLng(latlng)
-            .setContent(content)
-            .openOn(map);
-    }
-
-    function resetView() {
-        map.flyTo(DEFAULT_VIEW.center, DEFAULT_VIEW.zoom, { duration: 0.8 });
-    }
-
-    // Keep Leaflet's size in sync with the responsive layout.
-    new ResizeObserver(() => map.invalidateSize()).observe(element);
-
-    return {
-        map,
-        countriesLayer,
-        setPins,
-        setCountryStatus,
-        flyToCountry,
-        flyTo,
-        pulseCountry,
-        openPopup,
-        closePopup: () => map.closePopup(),
-        resetView,
-        pinFor: id => pinMarkers.get(String(id))
-    };
+    return { map, setPins, setCountryStatus, flyToCountry, flyTo, flyToView, pulseCountry, openPopup, closePopup };
 }

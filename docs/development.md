@@ -8,7 +8,7 @@ src/                     Express API; see architecture.md for each module
 public/                  Everything the browser loads (the only folder served)
   js/                    Native ES modules, no build step
   data/                  Country borders and cities (Natural Earth)
-  vendor/                Leaflet and fonts (Fredoka, Nunito; SIL OFL)
+  vendor/                MapLibre GL (BSD-3-Clause) and fonts (Fredoka, Nunito; SIL OFL)
 scripts/build-map-data.js  Rebuilds public/data
 test/                    Unit, integration and Playwright tests
 infra/                   Compose stack, Kubernetes, Argo CD and CI scripts

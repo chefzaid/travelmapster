@@ -1,6 +1,6 @@
 # ADR 0007: Draw Towns On A Canvas Layer
 
-- Status: Accepted
+- Status: Superseded by [ADR 0008](0008-maplibre-gl.md)
 - Date: 2026-09-27
 
 ## Context

@@ -33,11 +33,10 @@ for (const colorScheme of ['light', 'dark']) {
         await page.fill('#global-search', 'Lisbon');
         await page.locator('#search-results [role="option"]').filter({ hasText: 'Lisbon' }).first().click();
         await page.locator('.card-actions button', { hasText: 'Been there' }).last().click();
-        // Saving re-renders the card and Leaflet cross-fades popups; audit the settled card only.
-        await expect(page.locator('.leaflet-popup .card-status .chip-visited')).toBeVisible();
+        // Saving re-renders the card; audit the settled card only.
+        await expect(page.locator('.maplibregl-popup.card-popup .card-status .chip-visited')).toBeVisible();
         await page.waitForTimeout(500);
-        await expect(page.locator('.leaflet-popup')).toHaveCount(1);
-        await expect(page.locator('.leaflet-popup')).toHaveCSS('opacity', '1');
+        await expect(page.locator('.maplibregl-popup.card-popup')).toHaveCount(1);
         await expectAccessible(page, 'place card');
         await page.keyboard.press('Escape');
 

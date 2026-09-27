@@ -143,22 +143,21 @@ test('a traveler changes their password, then deletes their account', async ({ p
 });
 
 test('towns drawn on the map open their card when clicked', async ({ page }) => {
-    // Reach the Leaflet map to aim at a town on the canvas.
-    await page.addInitScript(() => {
-        let leaflet;
-        Object.defineProperty(globalThis, 'L', { configurable: true, get: () => leaflet, set: value => {
-            leaflet = value;
-            value.Map.addInitHook(function () { globalThis.__travelMap = this; });
-        } });
-    });
     await page.goto('/');
     await expect(page.locator('#welcome-view')).toBeVisible();
-    const point = await page.evaluate(() => new Promise(resolve => {
-        const map = globalThis.__travelMap;
-        map.once('moveend', () => setTimeout(() => resolve(map.latLngToContainerPoint([50.833, 4.367])), 1500));
-        map.setView([50.833, 4.367], 11, { animate: false });
-    }));
+    // Zoom to street level around Brussels, then pick a town MapLibre actually drew.
+    await page.evaluate(() => globalThis.document.getElementById('map').travelMap.jumpTo({ center: [4.5, 50.8], zoom: 9 }));
+    const handle = await page.waitForFunction(() => {
+        const map = globalThis.document.getElementById('map').travelMap;
+        const { width, height } = map.getCanvas().getBoundingClientRect();
+        const town = map.queryRenderedFeatures({ layers: ['cities'] }).find(feature => {
+            const point = map.project(feature.geometry.coordinates);
+            return point.x > width * 0.45 && point.x < width * 0.9 && point.y > height * 0.2 && point.y < height * 0.8;
+        });
+        return town && { name: town.properties.name, ...map.project(town.geometry.coordinates) };
+    }, null, { timeout: 20_000 });
+    const town = await handle.jsonValue();
     const box = await page.locator('#map').boundingBox();
-    await page.mouse.click(box.x + point.x, box.y + point.y);
-    await expect(page.locator('.leaflet-popup .card-header h3')).toHaveText('Ixelles');
+    await page.mouse.click(box.x + town.x, box.y + town.y);
+    await expect(page.locator('.maplibregl-popup.card-popup .card-header h3')).toHaveText(town.name);
 });
