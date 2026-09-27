@@ -32,7 +32,7 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     env:
-      DATABASE_URL: postgres://postgres:postgres@localhost:5432/travelmapster_test
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/travelmapster_test
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7

@@ -45,6 +45,8 @@ erDiagram
 | `markers` | A saved place ("marker" in the API). `name` 1–200 characters, `notes` up to 2,000, `photo_url` an HTTP(S) URL up to 2,048, `travel_date` a real calendar date. Coordinates are range-checked. |
 | `trips` | `title` 1–120 and `destination` 1–160 characters, optional `start_date`. `plan` is a JSON array of 1–30 days, each with `morning`, `afternoon` and `evening` text of up to 500 characters. |
 | `sessions` | Server-side sessions for `connect-pg-simple`; expired rows are pruned every 15 minutes. |
+| `rate_limits` | Unlogged rate-limit counters per limiter and client IP, shared by replicas; expired rows are swept every 10 minutes. |
+| `geocoder_throttle` | One row with the earliest start time of the next Nominatim request. |
 | `schema_migrations` | Applied migration versions. |
 
 All timestamps are `created_at`/`updated_at` (`timestamptz`). Deleting a user cascades to their
@@ -80,5 +82,5 @@ invalid rows it skipped.
 
 Data is private to its owner. A public profile exposes username, coordinates, type, name,
 category and travel date of each place, never notes or photo links
-([security](security.md#privacy)). There is no account deletion endpoint yet
-([roadmap](../TODO.md)).
+([security](security.md#privacy)). Deleting an account removes the user, their places, trips and
+sessions at once.

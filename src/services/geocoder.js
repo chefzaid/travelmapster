@@ -1,14 +1,40 @@
 'use strict';
 
+/** In-process throttle: returns how long to wait before the next request may start. */
+function createLocalSlots(minIntervalMs) {
+    let nextAt = 0;
+    return async () => {
+        const start = Math.max(nextAt, Date.now());
+        nextAt = start + minIntervalMs;
+        return start - Date.now();
+    };
+}
+
+/**
+ * Throttle shared by every replica: one atomic update books the next free start
+ * time in PostgreSQL and returns how long this request must wait for it.
+ */
+function createPgSlots(pool, minIntervalMs) {
+    return async () => {
+        const { rows } = await pool.query(
+            `UPDATE geocoder_throttle
+             SET next_at = GREATEST(next_at, now()) + $1 * interval '1 millisecond'
+             WHERE id = 1
+             RETURNING GREATEST(0, EXTRACT(EPOCH FROM (next_at - now())) * 1000 - $1) AS wait_ms`,
+            [minIntervalMs]
+        );
+        return Number(rows[0].wait_ms);
+    };
+}
+
 /**
  * Server-side Nominatim client. Browsers never call Nominatim directly, so the
  * app can honour its usage policy: an identifying User-Agent, at most one
- * request per interval per process, and caching of repeated lookups.
+ * request per interval, and caching of repeated lookups.
  */
-function createGeocoder({ baseUrl, userAgent, minIntervalMs, timeoutMs, cacheSize }, fetchImpl = fetch) {
+function createGeocoder({ baseUrl, userAgent, minIntervalMs, timeoutMs, cacheSize }, fetchImpl = fetch,
+    reserveSlot = createLocalSlots(minIntervalMs)) {
     const cache = new Map();
-    let queue = Promise.resolve();
-    let lastRequestAt = 0;
 
     function remember(key, value) {
         cache.delete(key);
@@ -18,16 +44,16 @@ function createGeocoder({ baseUrl, userAgent, minIntervalMs, timeoutMs, cacheSiz
         }
     }
 
-    function throttled(task) {
-        const run = queue.then(async () => {
-            const wait = lastRequestAt + minIntervalMs - Date.now();
-            if (wait > 0) await new Promise(resolve => setTimeout(resolve, wait));
-            lastRequestAt = Date.now();
-            return task();
-        });
-        // Keep the queue alive even when a request fails.
-        queue = run.catch(() => {});
-        return run;
+    async function throttled(task) {
+        const wait = await reserveSlot();
+        // A long queue means Nominatim is saturated; fail fast rather than hold the request.
+        if (wait > timeoutMs) {
+            const error = new Error('Geocoder is busy');
+            error.status = 503;
+            throw error;
+        }
+        if (wait > 0) await new Promise(resolve => setTimeout(resolve, wait));
+        return task();
     }
 
     function toPlace(item, kind) {
@@ -87,4 +113,4 @@ function createGeocoder({ baseUrl, userAgent, minIntervalMs, timeoutMs, cacheSiz
     return { search };
 }
 
-module.exports = { createGeocoder };
+module.exports = { createGeocoder, createLocalSlots, createPgSlots };

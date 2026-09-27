@@ -6,7 +6,7 @@ const { createLogger } = require('./logger');
 const { createPool } = require('./db/pool');
 const { migrate } = require('./db/migrate');
 const { createMetrics } = require('./metrics');
-const { createGeocoder } = require('./services/geocoder');
+const { createGeocoder, createPgSlots } = require('./services/geocoder');
 const { createApp } = require('./app');
 
 const MIGRATION_ATTEMPTS = 10;
@@ -37,7 +37,7 @@ async function main() {
     logger.info({ applied }, 'Database migrations complete');
 
     const metrics = createMetrics();
-    const geocoder = createGeocoder(config.geocoder);
+    const geocoder = createGeocoder(config.geocoder, fetch, createPgSlots(pool, config.geocoder.minIntervalMs));
     const state = { shuttingDown: false };
     const app = createApp({ config, pool, logger, metrics, geocoder, state });
 

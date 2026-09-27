@@ -369,6 +369,7 @@ kbd {
 
 .menu-item:hover:not(:disabled) { background: var(--paper-2); }
 .menu-item:disabled { opacity: 0.45; cursor: not-allowed; }
+.menu-item-danger { color: var(--danger-text); }
 
 .switch {
     display: flex;
@@ -1563,13 +1564,14 @@ button.legend-item[aria-pressed='false'] .swatch { opacity: 0.35; }
     box-shadow: none;
 }
 
+/* A comfortable touch target (WCAG 2.2 asks for at least 24px). */
 .card-popup a.leaflet-popup-close-button {
-    top: 8px;
-    right: 8px;
-    width: 26px;
-    height: 26px;
-    font-size: 20px;
-    line-height: 24px;
+    top: 6px;
+    right: 6px;
+    width: 32px;
+    height: 32px;
+    font-size: 22px;
+    line-height: 32px;
     color: var(--text);
     border-radius: 50%;
 }
@@ -1583,7 +1585,7 @@ button.legend-item[aria-pressed='false'] .swatch { opacity: 0.35; }
     align-items: center;
     gap: 12px;
     margin-bottom: 10px;
-    padding-right: 20px;
+    padding-right: 32px;
 }
 
 .card-header h3 { margin: 0; font-size: 1.3rem; }

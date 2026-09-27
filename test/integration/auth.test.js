@@ -79,16 +79,72 @@ test('state-changing requests without a CSRF token are rejected', async () => {
     assert.equal(forged.status, 403);
 });
 
-test('login is rate limited', async () => {
+test('changing the password needs the current one and signs out other devices', async () => {
+    const client = createClient(ctx.server);
+    await client.register('mover', 'original password');
+    const otherDevice = createClient(ctx.server);
+    assert.equal((await otherDevice.post('/api/auth/login', { username: 'mover', password: 'original password' })).status, 200);
+
+    const wrong = await client.post('/api/auth/password', { currentPassword: 'not my password', newPassword: 'brand new password' });
+    assert.equal(wrong.status, 400);
+    const weak = await client.post('/api/auth/password', { currentPassword: 'original password', newPassword: 'short' });
+    assert.equal(weak.status, 400);
+
+    const changed = await client.post('/api/auth/password', { currentPassword: 'original password', newPassword: 'brand new password' });
+    assert.equal(changed.status, 200);
+    assert.ok(changed.body.csrfToken);
+    assert.equal((await client.get('/api/auth/me')).status, 200, 'this device stays signed in');
+    assert.equal((await otherDevice.get('/api/auth/me')).status, 401, 'other devices are signed out');
+
+    const fresh = createClient(ctx.server);
+    assert.equal((await fresh.post('/api/auth/login', { username: 'mover', password: 'original password' })).status, 401);
+    assert.equal((await fresh.post('/api/auth/login', { username: 'mover', password: 'brand new password' })).status, 200);
+});
+
+test('deleting the account removes all travel data and every session', async () => {
+    const client = createClient(ctx.server);
+    const { body } = await client.register('leaver', 'leaving for good');
+    await client.post('/api/markers', { lat: 1, lng: 2, type: 'visited', name: 'Somewhere', category: 'City' });
+    await client.post('/api/trips', { title: 'Last trip', destination: 'Somewhere', plan: [{ morning: 'Pack' }] });
+    const otherDevice = createClient(ctx.server);
+    await otherDevice.post('/api/auth/login', { username: 'leaver', password: 'leaving for good' });
+
+    assert.equal((await client.delete('/api/auth/account', { password: 'wrong password' })).status, 400);
+    assert.equal((await client.get('/api/auth/me')).status, 200, 'a wrong password deletes nothing');
+
+    const deleted = await client.delete('/api/auth/account', { password: 'leaving for good' });
+    assert.equal(deleted.status, 200);
+    assert.equal((await client.get('/api/auth/me')).status, 401);
+    assert.equal((await otherDevice.get('/api/auth/me')).status, 401);
+    for (const table of ['users', 'markers', 'trips']) {
+        const column = table === 'users' ? 'id' : 'user_id';
+        const { rows } = await ctx.pool.query(`SELECT count(*)::int AS n FROM ${table} WHERE ${column} = $1`, [body.user.id]);
+        assert.equal(rows[0].n, 0, `${table} rows are gone`);
+    }
+    assert.equal((await createClient(ctx.server).register('leaver', 'a new beginning')).status, 201, 'the username is free again');
+});
+
+test('account changes require a session', async () => {
+    const anonymous = createClient(ctx.server);
+    assert.equal((await anonymous.post('/api/auth/password', { currentPassword: 'x', newPassword: 'long enough pw' })).status, 401);
+    assert.equal((await anonymous.delete('/api/auth/account', { password: 'x' })).status, 401);
+});
+
+test('login is rate limited across replicas', async () => {
     const limited = await createTestContext({ RATE_LIMIT_AUTH: '3' });
+    const replica = await limited.createReplica();
     try {
-        const client = createClient(limited.server);
-        for (let attempt = 0; attempt < 3; attempt += 1) {
-            assert.equal((await client.post('/api/auth/login', { username: 'x', password: 'wrong password' })).status, 401);
-        }
-        const blocked = await client.post('/api/auth/login', { username: 'x', password: 'wrong password' });
-        assert.equal(blocked.status, 429);
+        const first = createClient(limited.server);
+        const second = createClient(replica);
+        const attempt = client => client.post('/api/auth/login', { username: 'x', password: 'wrong password' });
+        assert.equal((await attempt(first)).status, 401);
+        assert.equal((await attempt(second)).status, 401);
+        assert.equal((await attempt(first)).status, 401);
+        // The fourth attempt is blocked even though each replica has seen fewer than three.
+        assert.equal((await attempt(second)).status, 429);
     } finally {
+        replica.closeAllConnections();
+        await new Promise(resolve => replica.close(resolve));
         await limited.close();
     }
 });

@@ -35,12 +35,13 @@ Fast edit loop, restarting on file changes:
 docker compose -f infra/compose/compose.yaml up -d postgres
 npm ci
 cp .env.example .env
-node --env-file=.env --watch src/server.js
+npm run dev
 ```
 
-The server reads only process environment variables; it does not load `.env` by itself,
-hence `--env-file`. `npm run dev` works too when the variables are exported. Frontend changes
-need only a browser reload. Migrations run at startup.
+`npm run dev` and `npm run migrate` load `.env` when it exists; `npm start` (production) reads
+only the process environment. Frontend changes need only a browser reload. Migrations run at
+startup. The compose database also creates `travelmapster_test` for the
+[tests](testing.md#test-database) on first start.
 
 ## Configuration
 
@@ -55,7 +56,7 @@ need only a browser reload. Migrations run at startup.
 | `PORT`, `METRICS_PORT` | `3000`, `9464` | |
 | `NODE_ENV`, `LOG_LEVEL` | `development`, `info` | `test` silences logs |
 | `TRUST_PROXY` | `false` | `true`, a hop count or reverse-proxy CIDRs; needed for correct client IPs |
-| `RATE_LIMIT_AUTH`, `RATE_LIMIT_API`, `RATE_LIMIT_GEOCODE` | `10`/15 min, `300`/min, `30`/min | Per client IP and process |
+| `RATE_LIMIT_AUTH`, `RATE_LIMIT_API`, `RATE_LIMIT_GEOCODE` | `10`/15 min, `300`/min, `30`/min | Per client IP, shared by all replicas; auth covers sign-in, sign-up and account changes |
 | `GEOCODER_URL`, `GEOCODER_USER_AGENT` | Nominatim | Put a contact URL in the User-Agent |
 | `GEOCODER_MIN_INTERVAL_MS`, `GEOCODER_TIMEOUT_MS`, `GEOCODER_CACHE_SIZE` | `1100`, `8000`, `1000` | Nominatim usage policy |
 
@@ -89,5 +90,5 @@ Review the size and the [data format](data-model.md#map-data) before committing.
 | `Database not ready, retrying migrations` | PostgreSQL is running and `DATABASE_URL` is right; startup gives up after ten attempts. |
 | `SESSION_SECRET must be set…` | Set a 32+ character secret, or use a non-production `NODE_ENV` locally. |
 | Writes fail with `Invalid or missing CSRF token` | The client must send the token from `/api/csrf-token`; it changes after login and logout. |
-| Sign-ups return 429 | The auth limit is 10 per 15 minutes per IP; restart the server or raise `RATE_LIMIT_AUTH` locally. |
+| Sign-ups return 429 | The auth limit is 10 per 15 minutes per IP and survives restarts; raise `RATE_LIMIT_AUTH` locally or run `DELETE FROM rate_limits`. |
 | Port 3000, 3100 or 5432 in use | Stop the other process or change `PORT`, `E2E_PORT` or the compose port. |

@@ -2,7 +2,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { createGeocoder } = require('../../src/services/geocoder');
+const { createGeocoder, createPgSlots } = require('../../src/services/geocoder');
 
 const options = { baseUrl: 'https://geo.test', userAgent: 'TravelMapster/test', minIntervalMs: 0, timeoutMs: 1000, cacheSize: 2 };
 
@@ -66,4 +66,27 @@ test('upstream errors propagate and do not poison the queue', async () => {
     await assert.rejects(geocoder.search('down', 'city', 1), /HTTP 503/);
     fail = false;
     assert.deepEqual(await geocoder.search('up', 'city', 1), []);
+});
+
+test('the shared throttle books slots in PostgreSQL and waits for them', async () => {
+    const queries = [];
+    const pool = { query: async (sql, params) => { queries.push({ sql, params }); return { rows: [{ wait_ms: '40' }] }; } };
+    const reserveSlot = createPgSlots(pool, 1100);
+    assert.equal(await reserveSlot(), 40);
+    assert.match(queries[0].sql, /UPDATE geocoder_throttle/);
+    assert.deepEqual(queries[0].params, [1100]);
+
+    const { impl, calls } = fakeFetch([]);
+    const geocoder = createGeocoder(options, impl, async () => 30);
+    const started = Date.now();
+    await geocoder.search('slot', 'city', 1);
+    assert.equal(calls.length, 1);
+    assert.ok(Date.now() - started >= 25, 'the request waits for its booked slot');
+});
+
+test('a saturated shared throttle fails fast instead of queueing past the timeout', async () => {
+    const { impl, calls } = fakeFetch([]);
+    const geocoder = createGeocoder(options, impl, async () => options.timeoutMs + 1);
+    await assert.rejects(geocoder.search('busy', 'city', 1), /busy/);
+    assert.equal(calls.length, 0);
 });

@@ -13,6 +13,13 @@ const DATABASE_URL = process.env.TEST_DATABASE_URL
     || process.env.DATABASE_URL
     || 'postgres://postgres@127.0.0.1:55432/travelmapster_test';
 
+// Tests drop the whole schema, so refuse any database that is not clearly a test one.
+const databaseName = decodeURIComponent(new URL(DATABASE_URL).pathname.slice(1));
+if (!/test/i.test(databaseName)) {
+    throw new Error(`Refusing to run tests against database "${databaseName}": they drop its schema. `
+        + 'Set TEST_DATABASE_URL to a disposable database whose name contains "test".');
+}
+
 function fakeGeocoder() {
     const calls = [];
     return {
@@ -56,6 +63,12 @@ async function createTestContext(envOverrides = {}) {
         pool,
         geocoder,
         state,
+        /** A second app on the same database, like another replica behind the load balancer. */
+        async createReplica() {
+            const replica = http.createServer(createApp({ config, pool, logger, metrics: createMetrics(), geocoder, state }));
+            await new Promise(resolve => replica.listen(0, '127.0.0.1', resolve));
+            return replica;
+        },
         async close() {
             server.closeAllConnections();
             await new Promise(resolve => server.close(resolve));
@@ -95,7 +108,7 @@ function createClient(target) {
         post: (path, body) => send('post', path, body ?? {}),
         patch: (path, body) => send('patch', path, body),
         put: (path, body) => send('put', path, body),
-        delete: path => send('delete', path),
+        delete: (path, body) => send('delete', path, body),
         async register(username = 'traveler', password = 'correct horse battery') {
             return this.post('/api/auth/register', { username, password });
         }

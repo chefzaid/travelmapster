@@ -104,3 +104,13 @@ test('migrations are recorded and idempotent', async () => {
     const { rows } = await ctx.pool.query('SELECT version FROM schema_migrations ORDER BY version');
     assert.deepEqual(rows.map(row => row.version), listMigrations().map(migration => migration.version));
 });
+
+test('the shared geocoder throttle spaces requests from every replica', async () => {
+    const { createPgSlots } = require('../../src/services/geocoder');
+    const firstReplica = createPgSlots(ctx.pool, 200);
+    const secondReplica = createPgSlots(ctx.pool, 200);
+    const waits = [await firstReplica(), await secondReplica(), await firstReplica()];
+    assert.ok(waits[0] < 50, `the first request starts at once (${waits[0]} ms)`);
+    assert.ok(waits[1] > 120 && waits[1] <= 200, `the next waits one interval (${waits[1]} ms)`);
+    assert.ok(waits[2] > 320 && waits[2] <= 400, `the third waits two intervals (${waits[2]} ms)`);
+});

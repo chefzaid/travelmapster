@@ -106,3 +106,38 @@ test('a traveler plans a trip that is saved to their account', async ({ page }) 
     await expect(page.locator('#trips-tab')).toContainText('Pastel de nata tour');
     expect(errors).toEqual([]);
 });
+
+test('a traveler changes their password, then deletes their account', async ({ page }) => {
+    const errors = trackErrors(page);
+    const username = `e2e_account_${Date.now()}`;
+    await signUp(page, username);
+
+    await page.click('#account-btn');
+    await page.click('#password-btn');
+    await page.fill('#dialog-currentPassword', 'end to end password');
+    await page.fill('#dialog-newPassword', 'a brand new password');
+    await page.fill('#dialog-confirmPassword', 'a brand new password');
+    await page.getByRole('button', { name: 'Change password' }).click();
+    await expect(page.locator('.toast-success', { hasText: 'Password changed.' })).toBeVisible();
+
+    await page.click('#account-btn');
+    await page.click('#logout-btn');
+    await page.click('#tab-login');
+    await page.fill('#auth-username', username);
+    await page.fill('#auth-password', 'a brand new password');
+    await page.click('#auth-submit');
+    await expect(page.locator('#main-view')).toBeVisible();
+
+    await page.click('#account-btn');
+    await page.click('#delete-account-btn');
+    await page.fill('#dialog-password', 'a brand new password');
+    await page.getByRole('button', { name: 'Delete account' }).click();
+    await expect(page.locator('#welcome-view')).toBeVisible();
+
+    await page.click('#tab-login');
+    await page.fill('#auth-username', username);
+    await page.fill('#auth-password', 'a brand new password');
+    await page.click('#auth-submit');
+    await expect(page.locator('#auth-error')).toHaveText('Invalid username or password.');
+    expect(errors).toEqual([]);
+});

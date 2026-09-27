@@ -25,6 +25,7 @@ PostgreSQL, including sessions, so any replica can serve any request.
 | `src/config.js` | Validated configuration from environment variables ([reference](development.md#configuration)) |
 | `src/routes/` | `auth`, `markers`, `trips`, `profile` (incl. public maps) and `geocode` routers |
 | `src/validation.js` | Every request-body rule and limit |
+| `src/rate-limit-store.js` | Rate-limit counters in PostgreSQL, shared by every replica |
 | `src/repositories.js` | SQL access, always scoped to the signed-in user |
 | `src/services/geocoder.js` | Nominatim client with throttling, timeout and LRU cache |
 | `src/db/` | Connection pool, transactions and [migrations](data-model.md#migrations) |
@@ -41,6 +42,8 @@ JSON under `/api`; errors are `{ "error": "…" }` with a matching status. All r
 | GET | `/api/csrf-token` | CSRF token for the current session |
 | POST | `/api/auth/register`, `/api/auth/login`, `/api/auth/logout` | Account and session; responses include a fresh CSRF token |
 | GET | `/api/auth/me` | Current user, or 401 |
+| POST | `/api/auth/password` | Change password (`currentPassword`, `newPassword`); signs out other sessions |
+| DELETE | `/api/auth/account` | Delete the account and all its data (`password`); signs out everywhere |
 | GET, POST | `/api/markers` | List or create saved places |
 | POST | `/api/markers/import` | Import up to 1,000 places |
 | PATCH, DELETE | `/api/markers/:id` | Update or remove a place |
@@ -76,8 +79,9 @@ JSON under `/api`; errors are `{ "error": "…" }` with a matching status. All r
 ### Place search
 
 Built-in countries and cities are searched in the browser. For other towns the browser calls
-`/api/geocode`, which proxies Nominatim with an identifying User-Agent, one request per
-interval per process and an in-memory cache ([ADR 0005](adr/0005-bundled-map-data.md)).
+`/api/geocode`, which proxies Nominatim with an identifying User-Agent, at most one request per
+interval across all replicas (a slot booked in PostgreSQL) and a per-process cache
+([ADR 0005](adr/0005-bundled-map-data.md)).
 
 ### Delivery
 

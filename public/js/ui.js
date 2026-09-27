@@ -79,9 +79,9 @@ export function confirmDialog({ title, message, confirmLabel = 'Confirm', danger
 }
 
 // Opens a modal containing a form; resolves with FormData values or null when cancelled.
-export function formDialog({ title, fields, submitLabel = 'Save' }) {
+export function formDialog({ title, message, fields, submitLabel = 'Save', danger = false }) {
     return new Promise(resolve => {
-        const form = h('form', { method: 'dialog', class: 'dialog-body' }, h('h3', {}, title));
+        const form = h('form', { method: 'dialog', class: 'dialog-body' }, h('h3', {}, title), message ? h('p', {}, message) : null);
         for (const field of fields) {
             const id = `dialog-${field.name}`;
             let control;
@@ -101,14 +101,16 @@ export function formDialog({ title, fields, submitLabel = 'Save' }) {
                     max: field.max,
                     step: field.step,
                     placeholder: field.placeholder,
-                    maxlength: field.maxlength
+                    minlength: field.minlength,
+                    maxlength: field.maxlength,
+                    autocomplete: field.autocomplete
                 });
             }
             form.append(h('label', { class: 'field', for: id }, h('span', {}, field.label), control, field.hint ? h('small', {}, field.hint) : null));
         }
         form.append(h('div', { class: 'dialog-actions' },
             h('button', { class: 'btn btn-ghost', value: 'cancel', formnovalidate: true }, 'Cancel'),
-            h('button', { class: 'btn btn-primary', value: 'save' }, submitLabel)
+            h('button', { class: `btn ${danger ? 'btn-danger' : 'btn-primary'}`, value: 'save' }, submitLabel)
         ));
         const dialog = h('dialog', { class: 'dialog' }, form);
         dialog.addEventListener('close', () => {
