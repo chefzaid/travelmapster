@@ -94,7 +94,12 @@ function createApp({ config, pool, logger, metrics, geocoder, places, state = { 
         crossOriginEmbedderPolicy: false
     }));
 
-    app.use(express.static(PUBLIC_DIR, { index: 'index.html', maxAge: '1h' }));
+    // Always revalidate (ETag, so unchanged files are a cheap 304): a release must never mix
+    // new and old scripts, styles or map data from a browser or CDN cache.
+    app.use(express.static(PUBLIC_DIR, {
+        index: 'index.html',
+        setHeaders: res => res.set('Cache-Control', 'no-cache')
+    }));
 
     app.use('/api/markers/import', express.json({ limit: '3mb' }));
     app.use(express.json({ limit: '100kb' }));
