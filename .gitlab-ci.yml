@@ -126,12 +126,14 @@ variables:
       fi
       sonar-scanner-npm -Dsonar.host.url="$SONAR_HOST_URL" -Dsonar.projectVersion="$APP_VERSION" -Dsonar.qualitygate.wait=false
   allow_failure: true
-  # Sonar discovery runs the periodic analysis through SONAR_SCAN_ONLY pipelines;
-  # ordinary pushes and merge requests only offer the scan as a manual job.
   rules:
-    - if: '$SONAR_SCAN_ONLY == "true"'
-    - if: '$PIPELINE_MODE == "full"'
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$PIPELINE_MODE == "full" && $CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$PIPELINE_MODE == "full" && $CI_COMMIT_BRANCH'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: manual
+      allow_failure: true
+    - if: '$CI_COMMIT_BRANCH'
       when: manual
       allow_failure: true
 

@@ -167,9 +167,9 @@ npm run test:e2e        # Playwright browser tests against a real server
 GitHub Actions runs lint, tests with coverage, `npm audit`, the browser tests, and a Trivy scan
 of the container image on every push and pull request.
 
-On GitLab, the SonarQube analysis (`01-quality`) is a manual job on ordinary pipelines. bm-cluster's
-Sonar discovery runs it periodically through a `SONAR_SCAN_ONLY=true` pipeline, and a
-`PIPELINE_MODE=full` pipeline runs it automatically.
+On GitLab, the SonarQube analysis (`01-quality`) runs on the default branch and in `PIPELINE_MODE=full`
+pipelines, and is a manual job on other branches and merge requests. bm-cluster's Sonar discovery
+also runs it periodically through a `SONAR_SCAN_ONLY=true` pipeline.
 
 ## Deploy to bm-cluster
 
