@@ -25,7 +25,7 @@ ingress, DNS and monitoring. Everything application-specific lives in this repos
 | `travelmapster-db-setup` Job | Argo CD sync hook: creates or updates the `travelmapster_user` role and `travelmapster` database in the shared PostgreSQL |
 | ConfigMap `travelmapster-config` | Non-secret settings: database host, `TRUST_PROXY` (pod network), geocoder User-Agent |
 | Deployment and Service | One replica with 192Mi/384Mi memory (the town index takes about 90 MB); non-root, read-only filesystem, all capabilities dropped; startup and readiness on `/readyz`, liveness on `/healthz`; metrics on port 9464 |
-| Ingress and Middleware | TLS host through Traefik, 4 MiB body limit (bulk import), intranet homepage annotations |
+| Ingress and Middleware | TLS host through Traefik, 4 MiB body limit (bulk import), Swirl Cloud portal annotations |
 | NetworkPolicy | Ingress only from Traefik (3000), Prometheus (9464) and CI smoke-test pods (3000) |
 
 Argo CD tracks `HEAD` of `main` with automated sync, prune and self-heal: a manifest change
