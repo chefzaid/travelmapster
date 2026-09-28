@@ -20,8 +20,8 @@ on the protected `main` branch; elsewhere it reports the missing token and fails
 | Other branches and merge requests | Manual |
 | Platform discovery | A `SONAR_SCAN_ONLY=true` pipeline when no analysis exists or the last one is over 24 hours old |
 
-bm-cluster's discovery job provisions the Sonar project and token and requests the periodic
-scans; see its [source-analysis guide](https://github.com/chefzaid/bm-cluster/blob/main/docs/observability.md#source-analysis).
+swirl-cloud's discovery job provisions the Sonar project and token and requests the periodic
+scans; see its [source-analysis guide](https://github.com/chefzaid/swirl-cloud/blob/main/docs/operations.md#source-analysis).
 [.sonar-auto.json](../.sonar-auto.json) declares the contract it relies on: the quality job name
 and the scan-only variable.
 

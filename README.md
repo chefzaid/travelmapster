@@ -9,7 +9,7 @@
 TravelMapster is a playful travel atlas. Color in the countries you have visited, pin the
 cities you love, keep a wishlist of dream trips and plan day-by-day itineraries. One Node.js
 service serves the cartoon map and its JSON API from PostgreSQL, and runs on the platform
-supplied by [`bm-cluster`](https://github.com/chefzaid/bm-cluster).
+supplied by [`swirl-cloud`](https://github.com/chefzaid/swirl-cloud).
 
 ## Quick Start
 
@@ -25,7 +25,7 @@ the [development guide](docs/development.md#local-start) and the
 
 ## Delivery
 
-The repository follows bm-cluster's [onboarding contract](docs/deployment.md#onboarding).
+The repository follows swirl-cloud's [onboarding contract](docs/deployment.md#onboarding).
 GitHub and GitLab stay in sync; GitLab CI tests every branch, and a release on `main` starts
 with the manual `00-image` job, then tags the version and deploys through Argo CD. See the
 [delivery flow](docs/deployment.md#delivery-flow).

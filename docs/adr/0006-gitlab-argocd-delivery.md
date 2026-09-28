@@ -5,7 +5,7 @@
 
 ## Context
 
-bm-cluster provides GitLab, its registry, Argo CD and Vault, and onboards applications through a
+swirl-cloud provides GitLab, its registry, Argo CD and Vault, and onboards applications through a
 declarative contract. Releases should be deliberate, reproducible and verified in the cluster.
 
 ## Decision
