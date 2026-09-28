@@ -23,7 +23,7 @@
     "GITLAB_REPOSITORY_URL": "http://gitlab.swirlit.internal/swirlit/travelmapster.git",
     "INTERNAL_DNS_ZONE": "swirlit.internal",
     "KEYCLOAK_REALM": "swirlit",
-    "PLATFORM_SECURITY_PROJECT_PATH": "swirlit/bm-cluster/security",
+    "PLATFORM_SECURITY_PROJECT_PATH": "swirlit/swirl-cloud/security",
     "POD_CIDR": "10.42.0.0/16",
     "PUBLIC_DOMAIN": "swirlit.dev",
     "REGISTRY_HOST": "registry.swirlit.dev",

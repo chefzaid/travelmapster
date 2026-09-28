@@ -1,6 +1,6 @@
 # Deployment Guide
 
-TravelMapster runs in the `apps` namespace of the bm-cluster platform, which supplies GitLab and
+TravelMapster runs in the `apps` namespace of the swirl-cloud platform, which supplies GitLab and
 its registry, Argo CD, Vault with External Secrets, the shared PostgreSQL service, Traefik
 ingress, DNS and monitoring. Everything application-specific lives in this repository.
 
@@ -33,8 +33,8 @@ merged to `main` is applied without a release. Only the image tag waits for a re
 
 ## Onboarding
 
-bm-cluster's `add-repos.sh` onboards the repository through contract version 1
-([platform guide](https://github.com/chefzaid/bm-cluster/blob/main/docs/repository-onboarding.md)).
+swirl-cloud's `add-repos.sh` onboards the repository through contract version 1
+([platform guide](https://github.com/chefzaid/swirl-cloud/blob/main/docs/guides/repository-onboarding.md)).
 It imports the GitHub repository into GitLab and sets up two-way synchronization, generates the
 database password and session secret in Vault, renders the platform values into the files listed
 in `infra/onboarding.json`, creates DNS for `APP_SUBDOMAIN` (default `travelmapster`), and runs a
@@ -93,7 +93,7 @@ forward-only, so a rollback must stay compatible with the migrated schema
 
 Onboarding owns the proxied Cloudflare record for the hostname; the wildcard certificate in
 `swirlit-dev-tls` covers it. Changing `APP_SUBDOMAIN` does not remove the old record. See the
-platform's [application DNS ownership](https://github.com/chefzaid/bm-cluster/blob/main/docs/networking.md#application-dns-ownership).
+platform's [application DNS ownership](https://github.com/chefzaid/swirl-cloud/blob/main/docs/dns.md#application-dns-ownership).
 
 ## High Availability
 
@@ -102,4 +102,4 @@ zero-downtime rolling updates. Sessions, data, rate-limit counters and the geoco
 live in PostgreSQL and migrations serialize on an advisory lock, so replicas are interchangeable.
 To enable it,
 point the Application's `path` at `infra/overlays/ha` on a multi-node cluster
-([platform HA](https://github.com/chefzaid/bm-cluster/blob/main/docs/high-availability.md)).
+([platform HA](https://github.com/chefzaid/swirl-cloud/blob/main/docs/guides/high-availability.md)).
