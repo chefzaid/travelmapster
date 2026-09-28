@@ -6,7 +6,7 @@
 ## Context
 
 The README mixed the feature list, architecture, API, configuration, security, tests and
-delivery. Sibling projects (DevApp, Thoughty, Indezy) use a reader-oriented `docs/` structure.
+delivery. Sibling projects (Swirl Demo App, Thoughty, Indezy) use a reader-oriented `docs/` structure.
 
 ## Decision
 
