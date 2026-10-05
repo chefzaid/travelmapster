@@ -7,6 +7,10 @@ const { default: AxeBuilder } = require('@axe-core/playwright');
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 
 async function expectAccessible(page, state) {
+    // Audit settled colours: a fade-in such as the dialog's pop-in fails contrast mid-animation.
+    await page.evaluate(() => Promise.all(globalThis.document.getAnimations()
+        .filter(animation => animation.effect?.getComputedTiming().iterations !== Infinity)
+        .map(animation => animation.finished.catch(() => {}))));
     const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze();
     const summary = results.violations.map(violation =>
         `${violation.id}: ${violation.help} (${violation.nodes.map(node => node.target.join(' ')).slice(0, 5).join(', ')})`);
