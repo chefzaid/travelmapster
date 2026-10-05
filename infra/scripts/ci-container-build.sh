@@ -36,6 +36,7 @@ options=(
   --insecure-registry "$REGISTRY_PUSH_HOST"
   --label "org.opencontainers.image.version=$APP_VERSION"
   --label "org.opencontainers.image.revision=${CI_COMMIT_SHA:-unknown}"
+  --build-arg "SECURITY_UPDATES_REFRESH=${CI_PIPELINE_ID:-$(date -u +%s)}"
 )
 if [[ "$mode" == publish ]]; then
   options+=(--cache=true --cache-repo "$repository/cache" --cache-ttl=720h)

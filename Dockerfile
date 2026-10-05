@@ -11,6 +11,9 @@ RUN LIBC=glibc npm ci --omit=dev --ignore-scripts=false --no-audit --no-fund \
     && npm cache clean --force
 
 FROM ${NODE_IMAGE} AS runtime
+# CI passes a new value on every build. A changed argument invalidates the cached
+# layer below, so layer caches (BuildKit and Kaniko) cannot keep stale packages.
+ARG SECURITY_UPDATES_REFRESH=
 # Pick up Debian security fixes newer than the pinned base image, and drop
 # npm, corepack and yarn: the app runs with plain node, so they are only attack surface.
 RUN apt-get update \
