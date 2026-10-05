@@ -71,6 +71,7 @@ jobs:
           context: .
           load: true
           tags: travelmapster:ci
+          build-args: SECURITY_UPDATES_REFRESH=${{ github.run_id }}-${{ github.run_attempt }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - name: Scan image for HIGH and CRITICAL vulnerabilities
