@@ -23,7 +23,10 @@ test('create, list, update and delete a marker', async () => {
     const created = await client.post('/api/markers', sampleMarker);
     assert.equal(created.status, 201);
     assert.equal(typeof created.body.id, 'number');
-    assert.deepEqual({ ...created.body, id: undefined }, { ...sampleMarker, id: undefined });
+    const { visits, ...place } = created.body;
+    assert.deepEqual({ ...place, id: undefined }, { ...sampleMarker, id: undefined });
+    assert.equal(visits.length, 1, 'the travel date becomes the first visit');
+    assert.equal(visits[0].startDate, sampleMarker.travelDate);
 
     const list = await client.get('/api/markers');
     assert.deepEqual(list.body, [created.body]);
@@ -35,7 +38,7 @@ test('create, list, update and delete a marker', async () => {
     assert.equal(updated.body.type, 'wishlist');
     assert.equal(updated.body.notes, null);
     assert.equal(updated.body.photoUrl, null);
-    assert.equal(updated.body.travelDate, null);
+    assert.equal(updated.body.travelDate, sampleMarker.travelDate, 'clearing the legacy date keeps the visits');
 
     assert.equal((await client.delete(`/api/markers/${created.body.id}`)).status, 204);
     assert.equal((await client.delete(`/api/markers/${created.body.id}`)).status, 404);

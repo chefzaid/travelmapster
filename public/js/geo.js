@@ -267,12 +267,17 @@ export function computeStats(markers, index, { trips = 0 } = {}) {
         return { name, emoji: CONTINENT_EMOJI[name], total, visited: count, percent: total ? Math.round((count / total) * 100) : 0 };
     });
 
+    // Every visit counts in the year it started; data without visits falls back to the travel date.
     const years = new Map();
     for (const marker of markers) {
-        if (marker.type !== 'visited' || !marker.travelDate) continue;
-        const year = marker.travelDate.slice(0, 4);
-        years.set(year, (years.get(year) || 0) + 1);
+        if (marker.type !== 'visited') continue;
+        const dates = marker.visits ? marker.visits.map(visit => visit.startDate) : [marker.travelDate].filter(Boolean);
+        for (const date of dates) {
+            const year = date.slice(0, 4);
+            years.set(year, (years.get(year) || 0) + 1);
+        }
     }
+    const hasVisitWith = (marker, field) => (marker.visits || []).some(visit => visit[field]);
 
     const stats = {
         visitedCountries: visited.size,
@@ -280,8 +285,8 @@ export function computeStats(markers, index, { trips = 0 } = {}) {
         visitedCities: new Set(markers.filter(m => m.type === 'visited' && m.category === 'City').map(m => m.name)).size,
         wishlistPlaces: markers.filter(m => m.type === 'wishlist').length,
         totalPlaces: markers.length,
-        placesWithNotes: markers.filter(m => m.notes).length,
-        placesWithPhotos: markers.filter(m => m.photoUrl).length,
+        placesWithNotes: markers.filter(m => m.notes || hasVisitWith(m, 'notes')).length,
+        placesWithPhotos: markers.filter(m => m.photoUrl || hasVisitWith(m, 'photoUrl')).length,
         visitedContinents: continents.filter(c => c.visited > 0).length,
         worldPercent: index.countries.length ? Math.round((visited.size / index.countries.length) * 1000) / 10 : 0,
         totalCountries: index.countries.length,

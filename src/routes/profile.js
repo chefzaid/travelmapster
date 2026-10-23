@@ -31,10 +31,12 @@ function createPublicProfileRouter({ users, markers }) {
         res.set('Cache-Control', 'no-store');
         return res.json({
             username: user.username,
-            markers: places.map(({ id, lat, lng, type, name, category, travelDate }) => (
-                // Personal notes and photo links stay private even on public profiles.
-                { id, lat, lng, type, name, category, travelDate }
-            ))
+            markers: places.map(({ id, lat, lng, type, name, category, travelDate, visits }) => ({
+                // Personal notes and photo links, of places and visits, stay private even on
+                // public profiles: only the visit dates are shared.
+                id, lat, lng, type, name, category, travelDate,
+                visits: visits.map(({ startDate, endDate }) => ({ startDate, endDate }))
+            }))
         });
     });
 

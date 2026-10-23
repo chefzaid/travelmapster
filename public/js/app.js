@@ -1,7 +1,8 @@
 import { api } from './api.js';
 import { createCountryIndex, computeStats, searchCities, formatPopulation, CONTINENTS, CONTINENT_EMOJI, flagEmoji } from './geo.js';
 import { createTravelMap } from './map.js';
-import { h, $, $all, fill, toast, confirmDialog, formDialog } from './ui.js';
+import { h, $, $all, fill, toast, confirmDialog, formDialog, formatDate } from './ui.js';
+import { checkVisit, formatVisitDates, sortVisits, lastVisitDate, visitCountLabel, visitDays } from './visits.js';
 import { fetchIdeas } from './ideas.js';
 import { renderPlaces } from './places.js';
 import { renderTrips, openNewTrip } from './trips.js';
@@ -88,8 +89,7 @@ async function reloadMarkers() {
 // ---------------------------------------------------------------- saving places
 
 async function savePlace(place, { quiet = false } = {}) {
-    const created = await api.addMarker(place);
-    const marker = { photoUrl: '', notes: '', travelDate: '', ...place, id: created.id };
+    const marker = await api.addMarker(place);
     state.markers.push(marker);
     refresh();
     if (!quiet) {
@@ -147,9 +147,8 @@ async function editPlace(marker) {
                 { value: 'visited', label: '✓ Been there' },
                 { value: 'wishlist', label: '♥ Wishlist' }
             ] },
-            { name: 'travelDate', label: 'Travel date', type: 'date', value: marker.travelDate || '' },
-            { name: 'notes', label: 'Notes', type: 'textarea', value: marker.notes || '', maxlength: 2000, placeholder: 'Favorite memory, tips, who you went with…' },
-            { name: 'photoUrl', label: 'Photo link', type: 'url', value: marker.photoUrl || '', placeholder: 'https://…', hint: 'Link to a photo hosted anywhere (HTTP or HTTPS).' }
+            { name: 'notes', label: 'Notes about this place', type: 'textarea', value: marker.notes || '', maxlength: 2000, placeholder: 'Why you love it, tips, what to try…' },
+            { name: 'photoUrl', label: 'Photo link', type: 'url', value: marker.photoUrl || '', placeholder: 'https://…', hint: 'Link to a photo hosted anywhere (HTTP or HTTPS). Dates go on each visit.' }
         ]
     });
     if (!values) return;
@@ -157,12 +156,86 @@ async function editPlace(marker) {
         await updatePlace(marker, {
             name: values.name.trim(),
             type: values.type,
-            travelDate: values.travelDate,
             notes: values.notes.trim(),
             photoUrl: values.photoUrl.trim()
         });
         toast(`Saved ${marker.name}.`, { tone: 'success' });
         travelMap.closePopup();
+    } catch (error) {
+        handleError(error);
+    }
+}
+
+// ---------------------------------------------------------------- visits
+
+function setVisits(marker, visits) {
+    marker.visits = sortVisits(visits);
+    marker.travelDate = lastVisitDate(marker);
+    refresh();
+    reopenCard();
+}
+
+// Asks for a visit's dates and details; a mistake reopens the form with what was typed.
+async function visitDialog(marker, visit) {
+    let draft = visit;
+    for (;;) {
+        const values = await formDialog({
+            title: visit ? `Edit visit to ${marker.name}` : `Add a visit to ${marker.name}`,
+            submitLabel: visit ? 'Save visit' : 'Add visit',
+            fields: [
+                { name: 'startDate', label: 'First day', type: 'date', value: draft?.startDate || '', required: true },
+                { name: 'endDate', label: 'Last day', type: 'date', value: draft?.endDate || '', hint: 'Optional. Leave empty for a day trip or if you do not remember.' },
+                { name: 'notes', label: 'What happened', type: 'textarea', value: draft?.notes || '', maxlength: 2000, placeholder: 'Favorite memory, who you went with…' },
+                { name: 'photoUrl', label: 'Photo link', type: 'url', value: draft?.photoUrl || '', placeholder: 'https://…', hint: 'Link to a photo or album hosted anywhere (HTTP or HTTPS).' }
+            ]
+        });
+        if (!values) return null;
+        const { visit: checked, error } = checkVisit(values);
+        if (!error) return checked;
+        toast(error, { tone: 'error' });
+        draft = values;
+    }
+}
+
+async function addVisit(marker) {
+    const values = await visitDialog(marker);
+    if (!values) return;
+    try {
+        const visit = await api.addVisit(marker.id, values);
+        setVisits(marker, [...marker.visits, visit]);
+        toast(`${visitCountLabel(marker.visits.length)}: ${marker.name}!`, { tone: 'success' });
+    } catch (error) {
+        handleError(error);
+    }
+}
+
+async function editVisit(marker, visit) {
+    const values = await visitDialog(marker, visit);
+    if (!values) return;
+    try {
+        const updated = await api.updateVisit(visit.id, values);
+        setVisits(marker, marker.visits.map(item => (item.id === visit.id ? updated : item)));
+        toast('Visit saved.', { tone: 'success' });
+    } catch (error) {
+        handleError(error);
+    }
+}
+
+async function removeVisit(marker, visit) {
+    try {
+        await api.deleteVisit(visit.id);
+        setVisits(marker, marker.visits.filter(item => item.id !== visit.id));
+        toast(`Removed the visit of ${formatDate(visit.startDate)}.`, {
+            action: {
+                label: 'Undo',
+                run: () => {
+                    const { id, ...restored } = visit;
+                    api.addVisit(marker.id, restored)
+                        .then(added => setVisits(marker, [...marker.visits, added]))
+                        .catch(handleError);
+                }
+            }
+        });
     } catch (error) {
         handleError(error);
     }
@@ -204,10 +277,40 @@ function statusButtons(existing, place) {
     );
 }
 
+function visitItem(marker, visit) {
+    const days = visitDays(visit);
+    const dates = formatVisitDates(visit, formatDate);
+    return h('li', { class: 'visit' },
+        h('div', { class: 'visit-text' },
+            h('strong', {}, h('span', { 'aria-hidden': 'true' }, '📅 '), dates),
+            days ? h('small', { class: 'visit-days' }, days === 1 ? '1 day' : `${days} days`) : null,
+            visit.notes ? h('p', { class: 'visit-notes' }, visit.notes) : null,
+            visit.photoUrl ? h('a', { href: visit.photoUrl, target: '_blank', rel: 'noopener noreferrer', class: 'visit-photo', 'aria-label': `Photo of the visit of ${dates} (opens in a new tab)` }, '📷 Photo') : null
+        ),
+        state.user ? h('div', { class: 'visit-actions' },
+            h('button', { type: 'button', class: 'icon-btn', 'aria-label': `Edit the visit of ${dates}`, title: 'Edit visit', onclick: () => editVisit(marker, visit) }, '✏️'),
+            h('button', { type: 'button', class: 'icon-btn', 'aria-label': `Remove the visit of ${dates}`, title: 'Remove visit', onclick: () => removeVisit(marker, visit) }, '🗑️')
+        ) : null
+    );
+}
+
+// Visits newest first, with how many times you have been; wishlist places show them
+// only once they have one.
+function visitsSection(marker) {
+    const visits = sortVisits(marker.visits);
+    if (marker.type !== 'visited' && !visits.length) return null;
+    const headingId = `visits-heading-${marker.id}`;
+    return h('section', { class: 'card-visits', 'aria-labelledby': headingId },
+        h('h4', { id: headingId, class: 'visits-title' }, visitCountLabel(visits.length)),
+        visits.length ? h('ol', { class: 'visit-list' }, visits.map(visit => visitItem(marker, visit))) : null,
+        state.user ? h('button', { type: 'button', class: 'btn btn-sm btn-ghost visit-add', onclick: () => addVisit(marker) }, '＋ Add a visit') : null
+    );
+}
+
 function savedDetails(marker) {
     if (!marker) return null;
     return h('div', { class: 'card-saved' },
-        marker.travelDate ? h('p', {}, '📅 ', new Date(`${marker.travelDate}T00:00:00Z`).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })) : null,
+        visitsSection(marker),
         marker.notes ? h('p', { class: 'card-notes' }, marker.notes) : null,
         marker.photoUrl ? h('a', { href: marker.photoUrl, target: '_blank', rel: 'noopener noreferrer', class: 'card-photo' },
             h('img', { src: marker.photoUrl, alt: `Photo of ${marker.name}`, loading: 'lazy', referrerpolicy: 'no-referrer', onerror: event => event.target.replaceWith('📷 View photo') })

@@ -875,6 +875,8 @@ button.chip { cursor: pointer; }
 
 .sort select { padding: 4px 10px; }
 
+.sort-row { gap: 8px 16px; }
+
 .place-group + .place-group { margin-top: 14px; }
 
 .place-list {
@@ -1508,6 +1510,61 @@ button.legend-item[aria-pressed='false'] .swatch { opacity: 0.35; }
     border: 2px solid var(--ink);
     border-radius: 12px;
 }
+
+/* Visits of a place, newest first; long histories scroll inside the card. */
+.card-visits { margin-bottom: 10px; }
+
+.visits-title {
+    margin: 0 0 6px;
+    font-size: 0.95rem;
+}
+
+.visit-list {
+    display: grid;
+    gap: 6px;
+    max-height: 190px;
+    margin: 0 0 8px;
+    padding: 0;
+    overflow-y: auto;
+    list-style: none;
+}
+
+.visit {
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 6px 4px 6px 10px;
+    background: var(--paper-2);
+    border: 2px solid var(--ink);
+    border-left: 6px solid var(--visited);
+    border-radius: var(--radius-sm);
+}
+
+.visit-text {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.85rem;
+}
+
+.visit-text small { display: block; color: var(--muted); font-weight: 700; }
+
+.visit-notes {
+    margin: 2px 0 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.visit-photo {
+    display: inline-block;
+    min-height: 24px;
+    margin-top: 2px;
+    font-weight: 800;
+    color: var(--text);
+    text-decoration-color: var(--sunny);
+    text-decoration-thickness: 2px;
+}
+
+.visit-actions { display: flex; }
 
 .card-links {
     display: flex;

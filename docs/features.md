@@ -23,10 +23,15 @@ Everything below is implemented. Planned work lives in [TODO.md](../TODO.md).
 - Click a country or city for a card with flag, capital, population and your saved details.
 - One tap marks a place "Been there" or "Wishlist"; tapping again undoes it.
 - Instant search over countries and every town, with a world search for anything smaller ([place search](architecture.md#place-search)).
-- Notes, a travel date and a photo link on every place.
-- Places list grouped by continent, with filters, text search and sorting.
-- Undo after removing a place.
-- Import and export as JSON or CSV; import skips invalid rows and duplicates.
+- Notes and a photo link on every place.
+- Every visit to a place recorded on its own, with first and last day, notes and a photo link;
+  the card lists visits newest first, says how many times you have been ("Visited 3 times") and
+  lets you add, edit or remove a visit, with undo. Dates are plain calendar days.
+- Places list grouped by continent, with filters (including the year of the last visit), text
+  search over places and visit notes, and sorting by continent, name or last visit.
+- Undo after removing a place, which brings its visits back too.
+- Import and export as JSON (visits nested in each place) or CSV (one row per visit); import
+  also reads files from before visits existed, and skips invalid rows and duplicates.
 - "Surprise me" flies to a country you have not visited yet.
 
 ## Trips
@@ -39,17 +44,18 @@ Everything below is implemented. Planned work lives in [TODO.md](../TODO.md).
 
 - Six traveler ranks, from "Armchair traveler" to "Legend of the map", with progress to the next.
 - Countries visited, share of the world, continents, cities and trips; per-continent progress bars.
-- A stamp for every visited country, 12 badges with a confetti celebration, and a trips-by-year chart.
+- A stamp for every visited country, 12 badges with a confetti celebration, and a visits-by-year chart counting every visit.
 
 ## Accounts And Sharing
 
 - Username and password accounts ([security](security.md#authentication-and-sessions)); change
   the password (signing out other devices) or delete the account and all its data from the
   account menu.
-- Private by default; a public map is shared read-only at `/?u=<username>`, without notes or photo links.
+- Private by default; a public map is shared read-only at `/?u=<username>` with visit dates,
+  without notes or photo links.
 - Responsive layout with a bottom sheet on phones, `/` to search, screen-reader labels, and light and dark themes that follow the system.
 
 ## Current Boundaries
 
-- No social login yet; one note, date and photo link per place ([roadmap](../TODO.md)).
+- No social login yet; a place or visit holds one photo link, not an album ([roadmap](../TODO.md)).
 - Photos are links to images hosted elsewhere; the app stores no files.
