@@ -11,6 +11,8 @@ const NAME_MAX_LENGTH = 200;
 const NOTES_MAX_LENGTH = 2000;
 const PHOTO_URL_MAX_LENGTH = 2048;
 const IMPORT_MAX_MARKERS = 1000;
+// Enough for every country on the map in one bulk change, and its undo.
+const BULK_MAX_CHANGES = 300;
 const VISITS_MAX_PER_PLACE = 500;
 const RATING_MIN = 1;
 const RATING_MAX = 5;
@@ -286,6 +288,49 @@ function parseMarkerPayload(body, { withVisits = false } = {}) {
     return { marker };
 }
 
+/**
+ * A bulk change of places, applied all or nothing: places to create, status changes
+ * (`{ id, type }`) and ids to remove. Marking several countries at once and undoing it are
+ * each one bulk change.
+ */
+function parseBulkChanges(body) {
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+        return { error: 'Bulk changes must be a JSON object.' };
+    }
+    const { create = [], update = [], remove = [] } = body;
+    if (![create, update, remove].every(Array.isArray)) {
+        return { error: 'create, update and remove must be arrays.' };
+    }
+    const total = create.length + update.length + remove.length;
+    if (total < 1 || total > BULK_MAX_CHANGES) {
+        return { error: `Send between 1 and ${BULK_MAX_CHANGES} changes at a time.` };
+    }
+    const changes = { create: [], update: [], remove: [] };
+    for (const [index, item] of create.entries()) {
+        const { marker, error } = parseMarkerPayload(item, { withVisits: true });
+        if (error) return { error: `Place ${index + 1}: ${error}` };
+        changes.create.push(marker);
+    }
+    const ids = new Set();
+    for (const item of update) {
+        const id = parseMarkerId(item?.id);
+        if (!id) return { error: 'Each status change needs a place id.' };
+        if (!MARKER_TYPES.has(item.type)) return { error: 'Marker type must be visited or wishlist.' };
+        ids.add(id);
+        changes.update.push({ id, type: item.type });
+    }
+    for (const value of remove) {
+        const id = parseMarkerId(value);
+        if (!id) return { error: 'Places to remove must be ids.' };
+        ids.add(id);
+        changes.remove.push(id);
+    }
+    if (ids.size !== changes.update.length + changes.remove.length) {
+        return { error: 'Change or remove each place at most once.' };
+    }
+    return { changes };
+}
+
 // ---------------------------------------------------------------- day ledger (ADR 0010)
 
 const DAY_RULES = new Set(['presence', 'midnight']);
@@ -454,6 +499,7 @@ function parseProfileVisibility(body) {
 }
 
 module.exports = {
+    BULK_MAX_CHANGES,
     IMPORT_MAX_MARKERS,
     USERNAME_PATTERN,
     VISITS_MAX_PER_PLACE,
@@ -461,6 +507,7 @@ module.exports = {
     isValidTravelDate,
     normalizeTag,
     normalizeText,
+    parseBulkChanges,
     parseCredentials,
     parseLedgerSettings,
     parsePasswordChange,

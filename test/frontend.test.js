@@ -376,3 +376,35 @@ test('wishlist places sort by the next month that suits them', async () => {
     }
     assert.match(buildCsv(wish), /"3;4;11"/);
 });
+
+test('bulk marking plans one change for many countries and its undo', async () => {
+    const bulk = await load('bulk.js');
+    const country = (id, name) => ({ id, name, label: [10, 20] });
+    const countries = [country('FRA', 'France'), country('ESP', 'Spain'), country('ITA', 'Italy'), country('PRT', 'Portugal'), country('DEU', 'Germany')];
+    const saved = { ESP: { id: 7, type: 'wishlist' }, ITA: { id: 8, type: 'visited' } };
+    const countryMarkerOf = item => saved[item.id];
+
+    const visited = bulk.planBulkMark({ countries, type: 'visited', countryMarkerOf, visitedIds: new Set(['ITA', 'PRT']) });
+    assert.deepEqual(visited.create.map(place => place.name), ['France', 'Portugal', 'Germany'],
+        'a country visited only through a city gets its own place');
+    assert.deepEqual(visited.create[0], { lat: 10, lng: 20, name: 'France', category: 'Country', type: 'visited' });
+    assert.deepEqual(visited.update, [{ id: 7, type: 'visited', previous: 'wishlist' }]);
+    assert.equal(visited.unchanged, 1);
+    assert.deepEqual(bulk.bulkRequest(visited).update, [{ id: 7, type: 'visited' }]);
+    assert.equal(bulk.bulkSummary(visited, 'visited'), 'Marked 4 countries as been there (1 already colored in).');
+
+    const wishlist = bulk.planBulkMark({ countries, type: 'wishlist', countryMarkerOf, visitedIds: new Set(['ITA', 'PRT']) });
+    assert.deepEqual(wishlist.create.map(place => place.name), ['France', 'Germany'], 'a wishlist never replaces a visit');
+    assert.deepEqual(wishlist.update, []);
+    assert.equal(wishlist.unchanged, 3);
+    assert.equal(bulk.bulkSummary({ create: [{}], update: [], unchanged: 0 }, 'wishlist'), 'Marked 1 country as wishlist.');
+
+    const result = { created: [{ id: 20, name: 'France' }, { id: 21, name: 'Portugal' }, { id: 22, name: 'Germany' }], updated: [{ id: 7, type: 'visited' }], removed: [] };
+    assert.deepEqual(bulk.undoRequest(visited, result), { remove: [20, 21, 22], update: [{ id: 7, type: 'wishlist' }] });
+    const markers = [{ id: 7, type: 'wishlist' }, { id: 8, type: 'visited' }];
+    const after = bulk.applyBulkResult(markers, result);
+    assert.deepEqual(after.map(marker => [marker.id, marker.type]), [[7, 'visited'], [8, 'visited'], [20, undefined], [21, undefined], [22, undefined]]);
+    const undone = bulk.applyBulkResult(after, { created: [], updated: [{ id: 7, type: 'wishlist' }], removed: [20, 21, 22] });
+    assert.deepEqual(undone, markers);
+    assert.deepEqual(bulk.applyBulkResult(markers, {}), markers);
+});

@@ -188,6 +188,16 @@
             </button>
         </div>
 
+        <section class="select-bar" id="select-bar" aria-labelledby="select-title" hidden>
+            <h2 class="visually-hidden" id="select-title">Mark several countries</h2>
+            <p class="select-count" id="select-count" aria-live="polite"></p>
+            <div class="select-actions">
+                <button type="button" class="btn btn-sm btn-visited" data-bulk="visited">✓ Been there</button>
+                <button type="button" class="btn btn-sm btn-wishlist" data-bulk="wishlist">♥ Wishlist</button>
+                <button type="button" class="btn btn-sm btn-ghost" id="select-cancel">Cancel</button>
+            </div>
+        </section>
+
         <div class="compass" aria-hidden="true">
             <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="29"/><path class="n" d="M32 6 L39 32 L32 28 L25 32 Z"/><path class="s" d="M32 58 L25 32 L32 36 L39 32 Z"/><text x="32" y="20">N</text></svg>
         </div>

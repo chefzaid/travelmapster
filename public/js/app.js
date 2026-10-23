@@ -14,6 +14,7 @@ import { renderPassport, renderPublicStats } from './passport.js';
 import { renderLedger } from './ledger.js';
 import { SCHENGEN_RULE, ledgerOverview, localToday } from './days.js';
 import { demoMarkers } from './demo.js';
+import { applyBulkResult, bulkRequest, bulkSummary, planBulkMark, undoRequest } from './bulk.js';
 import { celebrate } from './confetti.js';
 
 const state = {
@@ -29,6 +30,8 @@ const state = {
     // The legend's status toggles, and the tag and rating filter shared by the map and the Places tab.
     filters: { visited: true, wishlist: true, tag: 'all', rating: 'all' },
     activeTab: 'explore',
+    // Countries picked on the map to mark at once, or null when not picking.
+    selection: null,
     ideas: null,
     unlocked: null,
     // Day ledger: settings from the API, the history of visit dates (loaded when needed)
@@ -309,6 +312,94 @@ async function editPlace(marker) {
         }
         return;
     }
+}
+
+// ---------------------------------------------------------------- marking several countries
+
+// Marks every country at once in one transactional request, with an undo that is one
+// request too.
+async function bulkMark(countries, type) {
+    const plan = planBulkMark({ countries, type, countryMarkerOf: countryMarker, visitedIds: state.stats.visitedIds });
+    if (!plan.create.length && !plan.update.length) {
+        toast(type === 'visited' ? 'Those countries are already colored in.' : 'Those countries are already on your wishlist or visited.');
+        return false;
+    }
+    try {
+        const result = await api.bulkMarkers(bulkRequest(plan));
+        state.markers = applyBulkResult(state.markers, result);
+        refresh();
+        toast(bulkSummary(plan, type), { tone: 'success', action: { label: 'Undo', run: () => undoBulkMark(plan, result) } });
+        return true;
+    } catch (error) {
+        handleError(error);
+        return false;
+    }
+}
+
+async function undoBulkMark(plan, result) {
+    try {
+        state.markers = applyBulkResult(state.markers, await api.bulkMarkers(undoRequest(plan, result)));
+        refresh({ celebrateNew: false });
+        toast('Undone: those countries are back as they were.');
+    } catch (error) {
+        handleError(error);
+    }
+}
+
+function markContinent(continent, type) {
+    return bulkMark(state.index.countries.filter(country => country.continent === continent), type);
+}
+
+function updateSelection() {
+    const count = state.selection.size;
+    $('#select-count').textContent = count
+        ? `${count} ${count === 1 ? 'country' : 'countries'} selected`
+        : 'Click countries on the map, or search for them, to select them.';
+    for (const button of $all('#select-bar [data-bulk]')) button.disabled = !count;
+    travelMap.setSelection(state.selection);
+}
+
+function startSelecting() {
+    state.selection = new Set();
+    travelMap.closePopup();
+    $('#select-bar').hidden = false;
+    // On phones, tuck the bottom sheet away so the map is free to click.
+    if (window.innerWidth <= 760) {
+        $('#panel').classList.add('is-collapsed');
+        $('#panel-handle').setAttribute('aria-expanded', 'false');
+    }
+    updateSelection();
+    $('#select-cancel').focus();
+}
+
+function stopSelecting() {
+    if (!state.selection) return;
+    const hadFocus = $('#select-bar').contains(document.activeElement);
+    state.selection = null;
+    $('#select-bar').hidden = true;
+    travelMap.setSelection([]);
+    // Keyboard users go back to where they started picking.
+    if (hadFocus) ($('#bulk-pick') || $('#panel')).focus();
+}
+
+function toggleSelected(country) {
+    if (!country) return;
+    if (state.selection.has(country.id)) state.selection.delete(country.id);
+    else state.selection.add(country.id);
+    updateSelection();
+}
+
+function setupSelectBar() {
+    for (const button of $all('#select-bar [data-bulk]')) {
+        button.addEventListener('click', async () => {
+            const countries = [...state.selection].map(id => state.index.byId.get(id));
+            if (await bulkMark(countries, button.dataset.bulk)) stopSelecting();
+        });
+    }
+    $('#select-cancel').addEventListener('click', stopSelecting);
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && state.selection && !document.querySelector('dialog[open]')) stopSelecting();
+    });
 }
 
 // ---------------------------------------------------------------- visits
@@ -691,6 +782,13 @@ async function chooseResult(result) {
     renderSearchResults();
     search.input.blur();
 
+    // While picking countries, a search result picks its country.
+    if (state.selection && result.kind !== 'world') {
+        const country = result.kind === 'country' ? result.country : state.index.byId.get(result.city.countryId);
+        toggleSelected(country);
+        if (country) travelMap.flyToCountry(country);
+        return;
+    }
     if (result.kind === 'country') {
         travelMap.flyToCountry(result.country).then(() => showCountryCard(result.country));
     } else if (result.kind === 'city') {
@@ -1160,6 +1258,7 @@ function showSignedOut() {
     state.ideas = null;
     state.ledger = { settings: { dayRule: 'presence', rules: [], planned: [] }, changes: null, overview: null, alerted: false };
     $('#account').hidden = true;
+    stopSelecting();
     travelMap.closePopup();
     refresh({ celebrateNew: false });
     setView('welcome');
@@ -1251,6 +1350,8 @@ const context = {
     removePlace,
     editPlace,
     setDetailFilter,
+    markContinent,
+    startSelecting,
     showMarker,
     showIdeas,
     handleError,
@@ -1284,9 +1385,10 @@ async function init() {
     travelMap = createTravelMap($('#map'), {
         index: state.index,
         cities: state.cities,
-        onCountryClick: (country, latlng) => showCountryCard(country, latlng),
-        onCityClick: city => showCityCard(city),
-        onPinClick: marker => showSavedCityCard(marker),
+        // While picking countries, clicks pick the country instead of opening its card.
+        onCountryClick: (country, latlng) => (state.selection ? toggleSelected(country) : showCountryCard(country, latlng)),
+        onCityClick: city => (state.selection ? toggleSelected(state.index.byId.get(city.countryId)) : showCityCard(city)),
+        onPinClick: marker => (state.selection ? toggleSelected(state.stats.markerCountry.get(marker.id)) : showSavedCityCard(marker)),
         // On phones, tuck the bottom sheet away so map cards have room.
         onPopupOpen: () => {
             if (window.innerWidth <= 760) {
@@ -1301,6 +1403,7 @@ async function init() {
     setupAccountMenu();
     setupPanel();
     setupLegend();
+    setupSelectBar();
     setupLanding();
     $('#surprise-btn').addEventListener('click', surprise);
     await boot();

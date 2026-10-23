@@ -268,3 +268,59 @@ test('wishlist places keep a priority and the best months to go', async () => {
     assert.equal(shared.priority, undefined);
     assert.equal(shared.bestMonths, undefined);
 });
+
+test('bulk changes mark several places in one transaction and undo them', async () => {
+    const client = createClient(ctx.server);
+    await client.register('bulk_marker', 'bulk marker password');
+    const country = (name, lat, lng, type = 'visited') => ({ lat, lng, type, name, category: 'Country' });
+    const { body: spain } = await client.post('/api/markers', country('Spain', 40, -4, 'wishlist'));
+
+    const marked = await client.post('/api/markers/bulk', {
+        create: [country('France', 46, 2), country('Italy', 42, 12)],
+        update: [{ id: spain.id, type: 'visited' }]
+    });
+    assert.equal(marked.status, 200);
+    assert.deepEqual(marked.body.created.map(marker => marker.name), ['France', 'Italy']);
+    assert.deepEqual(marked.body.updated.map(marker => [marker.id, marker.type]), [[spain.id, 'visited']]);
+    assert.deepEqual(marked.body.removed, []);
+    assert.equal((await client.get('/api/markers')).body.length, 3);
+
+    // Undo is one bulk change too: remove what was created and restore the status.
+    const undone = await client.post('/api/markers/bulk', {
+        remove: marked.body.created.map(marker => marker.id),
+        update: [{ id: spain.id, type: 'wishlist' }]
+    });
+    assert.equal(undone.status, 200);
+    assert.deepEqual((await client.get('/api/markers')).body.map(marker => [marker.name, marker.type]), [['Spain', 'wishlist']]);
+
+    // All or nothing: one bad place rejects the whole change.
+    const invalid = await client.post('/api/markers/bulk', { create: [country('Peru', -10, -75), country('Nowhere', 95, 0)] });
+    assert.equal(invalid.status, 400);
+    assert.match(invalid.body.error, /^Place 2: /);
+    const missing = await client.post('/api/markers/bulk', { create: [country('Peru', -10, -75)], remove: [999999] });
+    assert.equal(missing.status, 404);
+    assert.equal((await client.get('/api/markers')).body.length, 1, 'nothing was kept from the failed change');
+
+    for (const body of [[], {}, { create: 'x' }, { update: [{ id: spain.id, type: 'maybe' }] }, { update: [{ type: 'visited' }] },
+        { remove: ['abc'] }, { remove: [spain.id], update: [{ id: spain.id, type: 'visited' }] }, { remove: Array(301).fill(1) }]) {
+        assert.equal((await client.post('/api/markers/bulk', body)).status, 400, JSON.stringify(body).slice(0, 60));
+    }
+});
+
+test('bulk changes are scoped to the owner and protected like every write', async () => {
+    const owner = createClient(ctx.server);
+    await owner.register('bulk_owner', 'bulk owner password');
+    const { body: place } = await owner.post('/api/markers', { ...sampleMarker });
+    const intruder = createClient(ctx.server);
+    await intruder.register('bulk_intruder', 'bulk intruder password');
+    assert.equal((await intruder.post('/api/markers/bulk', { update: [{ id: place.id, type: 'wishlist' }] })).status, 404);
+    assert.equal((await intruder.post('/api/markers/bulk', { remove: [place.id], create: [sampleMarker] })).status, 404);
+    assert.equal((await intruder.get('/api/markers')).body.length, 0, 'the intruder\'s own create was rolled back');
+    const [kept] = (await owner.get('/api/markers')).body;
+    assert.equal(kept.type, 'visited');
+
+    assert.equal((await createClient(ctx.server).post('/api/markers/bulk', { remove: [place.id] })).status, 401);
+    const forged = await owner.agent.post('/api/markers/bulk').set('X-CSRF-Token', 'forged').send({ remove: [place.id] });
+    assert.equal(forged.status, 403);
+    assert.equal((await owner.get('/api/markers')).body.length, 1);
+});

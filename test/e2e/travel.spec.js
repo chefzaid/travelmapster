@@ -132,6 +132,42 @@ test('a traveler records several visits to the same city', async ({ page }) => {
     expect(errors).toEqual([]);
 });
 
+test('a traveler marks several countries and a whole continent at once, with undo', async ({ page }) => {
+    const errors = trackErrors(page);
+    await signUp(page, `e2e_bulk_${Date.now()}`);
+    let requests = 0;
+    page.on('request', request => { if (request.url().includes('/api/markers/bulk')) requests += 1; });
+
+    await page.click('#tab-places');
+    await page.click('#bulk-pick');
+    for (const name of ['France', 'Spain', 'Italy']) {
+        await page.fill('#global-search', name);
+        await page.locator('#search-results [role="option"]').filter({ hasText: name }).first().click();
+    }
+    await expect(page.locator('#select-count')).toHaveText('3 countries selected');
+    await page.locator('#select-bar').getByRole('button', { name: 'Been there' }).click();
+    await expect(page.locator('#legend-visited')).toHaveText('3');
+    await expect(page.locator('#select-bar')).toBeHidden();
+    expect(requests).toBe(1);
+
+    await page.locator('.toast', { hasText: 'Marked 3 countries' }).getByRole('button', { name: 'Undo' }).click();
+    await expect(page.locator('#legend-visited')).toHaveText('0');
+    expect(requests).toBe(2);
+
+    // A whole continent in one step; a wishlist leaves visited countries alone.
+    await markCity(page, 'Lima');
+    await page.click('#tab-places');
+    await page.locator('#bulk-continent').selectOption('South America');
+    await page.locator('.bulk-section').getByRole('button', { name: 'Wishlist' }).click();
+    await expect(page.locator('#legend-visited')).toHaveText('1');
+    await expect(page.locator('#legend-wishlist')).toHaveText('12');
+    expect(requests).toBe(3);
+    await page.reload();
+    await expect(page.locator('#main-view')).toBeVisible();
+    await expect(page.locator('#legend-wishlist')).toHaveText('12');
+    expect(errors).toEqual([]);
+});
+
 // Dates relative to the browser's own today, as the ledger counts them.
 function browserDay(page, offset) {
     return page.evaluate(days => {

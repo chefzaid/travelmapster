@@ -22,6 +22,9 @@ Everything below is implemented. Planned work lives in [TODO.md](../TODO.md).
 
 - Click a country or city for a card with flag, capital, population and your saved details.
 - One tap marks a place "Been there" or "Wishlist"; tapping again undoes it.
+- Mark many countries at once: pick them on the map (or through search), or choose a whole
+  continent in the Places tab, then mark them "Been there" or "Wishlist" in one step, with undo.
+  Countries you have been to never become wishlist ones.
 - Instant search over countries and every town, with a world search for anything smaller ([place search](architecture.md#place-search)).
 - Notes and a photo link on every place.
 - A rating from one to five stars, tags (suggested ones such as food, hiking, family and work,

@@ -81,6 +81,15 @@ for (const colorScheme of ['light', 'dark']) {
         await page.click('#legend-detail-filter');
         await expect(page.locator('#legend-detail-filter')).toBeHidden();
 
+        // Picking countries on the map to mark them at once.
+        await page.click('#bulk-pick');
+        await page.fill('#global-search', 'Peru');
+        await page.locator('#search-results [role="option"]').filter({ hasText: 'Peru' }).first().click();
+        await expect(page.locator('#select-count')).toHaveText('1 country selected');
+        await expectAccessible(page, 'country picking bar');
+        await page.click('#select-cancel');
+        await expect(page.locator('#select-bar')).toBeHidden();
+
         // Day ledger: a rule dialog and the printable evidence report.
         await page.click('#tab-ledger');
         await page.getByRole('button', { name: '＋ Add a threshold' }).click();
