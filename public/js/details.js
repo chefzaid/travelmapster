@@ -1,4 +1,5 @@
-// Ratings, tags and a custom emoji per place, and the filters built on them (ADR 0012).
+// Ratings, tags, a custom emoji and wishlist plans per place, and the filters and wishlist
+// order built on them (ADR 0012).
 // The rules match src/validation.js. Pure functions, unit tested in Node.
 
 export const SUGGESTED_TAGS = ['food', 'hiking', 'family', 'work', 'beach', 'culture'];
@@ -47,6 +48,30 @@ export function parseRating(value) {
     return Number.isInteger(rating) && rating >= 1 && rating <= 5 ? rating : undefined;
 }
 
+export const PRIORITIES = [
+    { value: 'high', label: '🔥 Must go' },
+    { value: 'medium', label: '⭐ Would love to' },
+    { value: 'low', label: '💭 Someday' }
+];
+const PRIORITY_ORDER = { high: 0, medium: 1, low: 2 };
+
+export const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September',
+    'October', 'November', 'December'];
+
+export function priorityLabel(priority) {
+    return PRIORITIES.find(item => item.value === priority)?.label || '';
+}
+
+/** Month numbers from a list, or from text such as "4;5;6" in a CSV cell. */
+export function checkMonths(value) {
+    const items = Array.isArray(value) ? value : String(value ?? '').split(/[;,\s]+/).filter(Boolean);
+    const months = items.map(Number);
+    if (!months.every(month => Number.isInteger(month) && month >= 1 && month <= 12)) {
+        return { error: 'Best months are month numbers from 1 to 12.' };
+    }
+    return { months: [...new Set(months)].sort((a, b) => a - b) };
+}
+
 /** Validates the details of a form or an imported record the way the API does. */
 export function checkDetails(record) {
     const rating = parseRating(record?.rating);
@@ -55,7 +80,62 @@ export function checkDetails(record) {
     if (error) return { error };
     const emoji = typeof record?.emoji === 'string' ? record.emoji.trim() : '';
     if (emoji && !isSingleEmoji(emoji)) return { error: 'Choose a single emoji for the pin.' };
-    return { details: { rating, tags, emoji } };
+    const priority = typeof record?.priority === 'string' ? record.priority.trim() : '';
+    if (priority && !(priority in PRIORITY_ORDER)) return { error: 'Priority is high, medium or low.' };
+    const { months, error: monthError } = checkMonths(record?.bestMonths);
+    if (monthError) return { error: monthError };
+    return { details: { rating, tags, emoji, priority: priority || null, bestMonths: months } };
+}
+
+/** "Apr–Jun", "Nov–Feb" across the new year, "Mar, Sep" or "All year". */
+export function monthsLabel(months = []) {
+    if (!months.length) return '';
+    if (months.length === 12) return 'All year';
+    const set = new Set(months);
+    const short = month => MONTH_NAMES[month - 1].slice(0, 3);
+    // Start each run at a month whose previous month is not chosen, so runs wrap past December.
+    const starts = months.filter(month => !set.has(month === 1 ? 12 : month - 1));
+    return starts.map(start => {
+        let end = start;
+        while (set.has(end === 12 ? 1 : end + 1)) end = end === 12 ? 1 : end + 1;
+        return end === start ? short(start) : `${short(start)}–${short(end)}`;
+    }).join(', ');
+}
+
+/** How many months from `month` until the next chosen month (0 = this month), or null. */
+export function monthsUntil(bestMonths, month) {
+    if (!bestMonths?.length) return null;
+    return Math.min(...bestMonths.map(best => (best - month + 12) % 12));
+}
+
+/**
+ * Wishlist places by the next month that suits them, starting with this month; within a
+ * month, higher priority first, then by name. Places without months come last.
+ * Returns [title, places] groups for the places list.
+ */
+export function groupByNextMonth(markers, month) {
+    const groups = new Map();
+    for (const marker of markers) {
+        const wait = monthsUntil(marker.bestMonths, month);
+        if (!groups.has(wait)) groups.set(wait, []);
+        groups.get(wait).push(marker);
+    }
+    const rank = marker => PRIORITY_ORDER[marker.priority] ?? 3;
+    const title = wait => {
+        if (wait === null) return 'No month chosen';
+        const name = MONTH_NAMES[(month - 1 + wait) % 12];
+        if (wait === 0) return `${name} (this month)`;
+        return wait === 1 ? `${name} (next month)` : name;
+    };
+    return [...groups.entries()]
+        .sort(([a], [b]) => (a ?? 12) - (b ?? 12))
+        .map(([wait, items]) => [title(wait), items.sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name))]);
+}
+
+/** The wishlist place to suggest next: in season soonest, then by priority; null without months. */
+export function nextInSeason(markers, month) {
+    const [first] = groupByNextMonth(markers.filter(marker => marker.type === 'wishlist' && marker.bestMonths?.length), month);
+    return first ? first[1][0] : null;
 }
 
 export function stars(rating) {

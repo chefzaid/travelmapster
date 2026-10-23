@@ -57,9 +57,9 @@ JSON under `/api`; errors are `{ "error": "…" }` with a matching status. All r
 | GET | `/api/auth/me` | Current user, or 401 |
 | POST | `/api/auth/password` | Change password (`currentPassword`, `newPassword`); signs out other sessions |
 | DELETE | `/api/auth/account` | Delete the account and all its data (`password`); signs out everywhere |
-| GET, POST | `/api/markers` | List saved places, each with its visits newest first, or create one (optionally with `visits`, `rating`, `tags` and `emoji`) |
+| GET, POST | `/api/markers` | List saved places, each with its visits newest first, or create one (optionally with `visits`, `rating`, `tags`, `emoji`, `hideFromPublic`, `priority` and `bestMonths`) |
 | POST | `/api/markers/import` | Import up to 1,000 places with their visits |
-| PATCH, DELETE | `/api/markers/:id` | Update or remove a place; an update leaves visits alone unless an old client sends `travelDate` ([ADR 0009](adr/0009-places-and-visits.md)), and keeps `rating`, `tags`, `emoji` and `hideFromPublic` unless it sends them ([ADR 0012](adr/0012-place-details.md)) |
+| PATCH, DELETE | `/api/markers/:id` | Update or remove a place; an update leaves visits alone unless an old client sends `travelDate` ([ADR 0009](adr/0009-places-and-visits.md)), and keeps `rating`, `tags`, `emoji`, `hideFromPublic`, `priority` and `bestMonths` unless it sends them ([ADR 0012](adr/0012-place-details.md)) |
 | GET, POST | `/api/markers/:id/visits` | List or add visits of a place (`startDate`, `endDate`, `ongoing`, `notes`, `photoUrl`) |
 | PATCH, DELETE | `/api/visits/:id` | Replace or remove a visit |
 | GET, PUT | `/api/ledger` | Day-ledger settings: `dayRule`, `rules` (stay rules and thresholds) and `planned` stays, replaced as a whole ([ADR 0010](adr/0010-day-ledger.md)) |
@@ -67,7 +67,7 @@ JSON under `/api`; errors are `{ "error": "…" }` with a matching status. All r
 | GET, POST | `/api/trips` | List or create itineraries |
 | PUT, DELETE | `/api/trips/:id` | Replace or remove an itinerary |
 | PATCH | `/api/profile` | Set `profileVisibility` to `private` or `public` |
-| GET | `/api/public/:username` | Read-only public map with visit dates, without notes, photo links, ratings, tags or emoji, and without places hidden from it ([ADR 0013](adr/0013-hidden-places.md)) |
+| GET | `/api/public/:username` | Read-only public map with visit dates, without notes, photo links, ratings, tags, emoji or wishlist plans, and without places hidden from it ([ADR 0013](adr/0013-hidden-places.md)) |
 | GET | `/api/places?q=&limit=` | Search every town in the map data (public, 1–20 results) |
 | GET | `/api/geocode?q=&kind=city\|country&limit=` | World place search (1–10 results) |
 
@@ -81,7 +81,7 @@ JSON under `/api`; errors are `{ "error": "…" }` with a matching status. All r
 | `public/js/map.js` | MapLibre GL map ([ADR 0008](adr/0008-maplibre-gl.md)): cartoon style from the CSS tokens, country states, towns and tile loading, pins, cards and camera |
 | `public/js/geo.js` | Country index, city search, stats, ranks and badges (pure, unit tested) |
 | `public/js/places.js`, `io.js` | Places tab, import and export (pure `io.js` is unit tested) |
-| `public/js/details.js` | Ratings, tags and emoji of a place, and the tag and rating filter shared by the list and the map (pure, unit tested) |
+| `public/js/details.js` | Ratings, tags, emoji and wishlist plans of a place, the tag and rating filter shared by the list and the map, and the wishlist by next good month (pure, unit tested) |
 | `public/js/visits.js` | Visit dates, counts, last-visit filter and validation (pure, unit tested) |
 | `public/js/days.js` | Day ledger: day rules, days per country, Schengen 90/180 and stay rules, thresholds, planned stays, alerts and evidence reports (pure, unit and property tested) |
 | `public/js/ledger.js` | Ledger tab and the printable evidence report |

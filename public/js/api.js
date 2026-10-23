@@ -58,6 +58,8 @@ function toClientMarker(marker) {
         tags: marker.tags || [],
         emoji: marker.emoji || '',
         hideFromPublic: Boolean(marker.hideFromPublic),
+        priority: marker.priority || '',
+        bestMonths: marker.bestMonths || [],
         visits: (marker.visits || []).map(toClientVisit)
     };
 }
@@ -65,10 +67,11 @@ function toClientMarker(marker) {
 // Place edits leave the visits alone: they have their own routes, and a travel date sent
 // along would be read the legacy way (migration 004).
 function placeFields(marker) {
-    const { lat, lng, type, name, category, photoUrl, notes, rating, tags, emoji, hideFromPublic } = marker;
+    const { lat, lng, type, name, category, photoUrl, notes, rating, tags, emoji, hideFromPublic, priority, bestMonths } = marker;
     return {
         lat, lng, type, name, category, photoUrl, notes,
-        rating: rating || null, tags: tags || [], emoji: emoji || '', hideFromPublic: Boolean(hideFromPublic)
+        rating: rating || null, tags: tags || [], emoji: emoji || '', hideFromPublic: Boolean(hideFromPublic),
+        priority: priority || null, bestMonths: bestMonths || []
     };
 }
 

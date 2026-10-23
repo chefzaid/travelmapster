@@ -32,6 +32,8 @@ erDiagram
         text_array tags "up to 8"
         text emoji "one emoji, optional"
         boolean hide_from_public "left off the public map"
+        text priority "high | medium | low, optional"
+        smallint_array best_months "1-12"
         date travel_date "mirror of the latest visit until the contract step"
     }
     visits {
@@ -74,7 +76,7 @@ erDiagram
 | Table | Contents and rules |
 |---|---|
 | `users` | `username` is 3–32 of `A-Z a-z 0-9 _ . -`, unique regardless of case. Passwords are 8–72 bytes and stored only as bcrypt hashes (cost 12). `profile_visibility` defaults to `private`. |
-| `markers` | A saved place ("marker" in the API). `name` 1–200 characters, `notes` up to 2,000, `photo_url` an HTTP(S) URL up to 2,048. Coordinates are range-checked. `rating` is 1–5 or empty; `tags` holds up to 8 lowercase tags of 1–24 letters or digits (with inner spaces, dashes, apostrophes or ampersands); `emoji` is a single emoji of at most 16 code points ([ADR 0012](adr/0012-place-details.md)). `hide_from_public` keeps the place and its visits off the owner's public map ([ADR 0013](adr/0013-hidden-places.md)). `travel_date` only mirrors the start of the latest visit for the previous release ([below](#places-and-visits)). |
+| `markers` | A saved place ("marker" in the API). `name` 1–200 characters, `notes` up to 2,000, `photo_url` an HTTP(S) URL up to 2,048. Coordinates are range-checked. `rating` is 1–5 or empty; `tags` holds up to 8 lowercase tags of 1–24 letters or digits (with inner spaces, dashes, apostrophes or ampersands); `emoji` is a single emoji of at most 16 code points ([ADR 0012](adr/0012-place-details.md)). `hide_from_public` keeps the place and its visits off the owner's public map ([ADR 0013](adr/0013-hidden-places.md)). For wishlist plans, `priority` is `high`, `medium`, `low` or empty and `best_months` holds month numbers 1–12. `travel_date` only mirrors the start of the latest visit for the previous release ([below](#places-and-visits)). |
 | `visits` | One stay at a place: `start_date` required, `end_date` optional and never before the start, `ongoing` true for a stay still going on (the API refuses it with an end date), `notes` up to 2,000, `photo_url` an HTTP(S) URL up to 2,048. At most 500 per place when created with it or imported. |
 | `ledger_settings` | One row per traveler once they save: `day_rule`, and JSON arrays `rules` (at most 20 stay rules and thresholds, each with an id, name, 1–80 three-letter country codes, day counts and a warning margin) and `planned` (at most 30 stays with a country and first and last day). Validated in `validation.js`. |
 | `visit_changes` | Append-only history of visit dates written by triggers: old and new `start_date`, `end_date` and `ongoing` of each added, changed or removed visit, with the place name and time. Kept after the visit or place is removed. |
@@ -107,7 +109,8 @@ release never writes them, and the API changes them only when a request sends th
 updates keep them ([ADR 0012](adr/0012-place-details.md)). Migration 007 added
 `hide_from_public` the same way, defaulting to shared; the previous release does not filter
 on it, so its replicas list hidden places on public maps while they run
-([ADR 0013](adr/0013-hidden-places.md)).
+([ADR 0013](adr/0013-hidden-places.md)). Migration 008 added `priority` and `best_months` the
+same way as 006.
 
 ## Day Ledger
 
@@ -158,9 +161,9 @@ To rebuild, see [development](development.md#rebuilding-map-data).
 ## Import And Export
 
 Export and import use the marker fields `id, lat, lng, type, name, category, photoUrl, notes,
-travelDate, rating, tags, emoji, hideFromPublic`, where `travelDate` is the start of the latest
-visit, `tags` is a list in JSON and one cell separated by semicolons in CSV, and
-`hideFromPublic` is `true` in JSON and `yes` in CSV:
+travelDate, rating, tags, emoji, hideFromPublic, priority, bestMonths`, where `travelDate` is
+the start of the latest visit, `tags` and `bestMonths` are lists in JSON and one cell separated
+by semicolons in CSV, and `hideFromPublic` is `true` in JSON and `yes` in CSV:
 
 - **JSON** nests each place's `visits` (`startDate, endDate, notes, photoUrl, ongoing`), newest
   first.
@@ -179,6 +182,6 @@ one transaction and reports the invalid rows it skipped.
 
 Data is private to its owner. A public profile exposes username, coordinates, type, name,
 category, latest travel date and visit dates of each place, never the notes or photo links of
-places or visits, ratings, tags or emoji, nor anything of the places hidden from it, whether a stay is still going on, ledger settings or date history
+places or visits, ratings, tags, emoji or wishlist plans, nor anything of the places hidden from it, whether a stay is still going on, ledger settings or date history
 ([security](security.md#privacy)). Deleting an account removes the user, their
 places, visits, ledger settings, date history, trips and sessions at once.

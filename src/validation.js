@@ -23,6 +23,7 @@ const EMOJI_MAX_CODE_POINTS = 16;
 // Emoji components include the zero-width joiner, variation selector 16 and the keycap.
 const EMOJI_PATTERN = /^[\p{Extended_Pictographic}\p{Emoji_Component}]+$/u;
 const graphemes = new Intl.Segmenter('en', { granularity: 'grapheme' });
+const PRIORITIES = new Set(['high', 'medium', 'low']);
 const TRIP_SLOTS = ['morning', 'afternoon', 'evening'];
 const TRIP_MAX_DAYS = 30;
 const TRIP_SLOT_MAX_LENGTH = 500;
@@ -201,6 +202,19 @@ function parsePlaceDetails(body) {
             return { error: 'hideFromPublic must be true or false.' };
         }
         details.hideFromPublic = body.hideFromPublic === true;
+    }
+    if (body.priority !== undefined) {
+        if (body.priority !== null && body.priority !== '' && !PRIORITIES.has(body.priority)) {
+            return { error: 'Priority must be high, medium or low.' };
+        }
+        details.priority = body.priority || null;
+    }
+    if (body.bestMonths !== undefined) {
+        const months = body.bestMonths ?? [];
+        if (!Array.isArray(months) || !months.every(month => wholeNumber(month, 1, 12))) {
+            return { error: 'Best months must be a list of month numbers from 1 to 12.' };
+        }
+        details.bestMonths = [...new Set(months)].sort((a, b) => a - b);
     }
     return { details };
 }

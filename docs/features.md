@@ -32,12 +32,17 @@ Everything below is implemented. Planned work lives in [TODO.md](../TODO.md).
   ("Visited 3 times") and lets you add, edit or remove a visit, with undo. Dates are plain
   calendar days.
 - Places list grouped by continent, with filters (including the year of the last visit), text
-  search over places, tags and visit notes, and sorting by continent, name or last visit.
+  search over places, tags and visit notes, and sorting by continent, name, last visit or when
+  to go.
+- Wishlist plans: a priority (must go, would love to, someday) and the best months to go; the
+  places list can show the wishlist by the next month that suits each place, highest priority
+  first, and the Explore tab suggests the place in season soonest.
 - Tag and rating filters that narrow the places list and the map together; the legend shows
   the active filter and clears it in one tap.
 - Undo after removing a place, which brings its visits back too.
 - Import and export as JSON (visits nested in each place) or CSV (one row per visit), with
-  ratings, tags and emoji; import also reads files from before visits or tags existed, and
+  ratings, tags, emoji and wishlist plans; import also reads files from before visits or tags
+  existed, and
   skips invalid rows and duplicates.
 - "Surprise me" flies to a country you have not visited yet.
 
@@ -105,7 +110,7 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   the password (signing out other devices) or delete the account and all its data from the
   account menu.
 - Private by default; a public map is shared read-only at `/?u=<username>` with visit dates,
-  without notes, photo links, ratings, tags or emoji.
+  without notes, photo links, ratings, tags, emoji or wishlist plans.
 - Any place can be hidden from the public map, with its visits, so a public profile keeps
   sensitive trips to itself; the owner's map, passport and ledger still count it
   ([ADR 0013](adr/0013-hidden-places.md)).

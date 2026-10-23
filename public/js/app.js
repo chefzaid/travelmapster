@@ -4,8 +4,8 @@ import { createTravelMap } from './map.js';
 import { h, $, $all, fill, toast, confirmDialog, formDialog, formatDate } from './ui.js';
 import { checkVisit, formatVisitDates, sortVisits, lastVisitDate, visitCountLabel, visitDays } from './visits.js';
 import {
-    EMOJI_CHOICES, checkDetails, describeDetailFilter, detailFilterActive, knownTags, matchesDetails, parseRating,
-    ratingLabel, splitTags, stars
+    EMOJI_CHOICES, MONTH_NAMES, PRIORITIES, checkDetails, describeDetailFilter, detailFilterActive, knownTags, matchesDetails,
+    monthsLabel, nextInSeason, parseRating, priorityLabel, ratingLabel, splitTags, stars
 } from './details.js';
 import { fetchIdeas } from './ideas.js';
 import { renderPlaces } from './places.js';
@@ -258,6 +258,11 @@ function placeFormFields(draft) {
             { value: 'visited', label: '✓ Been there' },
             { value: 'wishlist', label: '♥ Wishlist' }
         ] },
+        { name: 'priority', label: 'Wishlist priority', type: 'select', value: draft.priority || '',
+            options: [{ value: '', label: 'No priority' }, ...PRIORITIES] },
+        { name: 'bestMonths', label: 'Best months to go', type: 'choices', value: (draft.bestMonths || []).map(String),
+            options: MONTH_NAMES.map((name, i) => ({ value: String(i + 1), label: name.slice(0, 3) })),
+            hint: 'The wishlist sorts places by the next of these months.' },
         { name: 'rating', label: 'Rating', type: 'select', value: draft.rating ? String(draft.rating) : '', options: RATING_OPTIONS },
         { name: 'emoji', label: 'Pin emoji', type: 'picker', value: draft.emoji || '', maxlength: 32, placeholder: 'Type or paste one emoji',
             choices: EMOJI_CHOICES, choicesLabel: 'Quick emoji', hint: 'Shown on the city pin and in your list.' },
@@ -277,10 +282,15 @@ async function editPlace(marker) {
     for (;;) {
         const values = await formDialog({ title: `Edit ${marker.name}`, submitLabel: 'Save changes', fields: placeFormFields(draft) });
         if (!values) return;
-        const { details, error } = checkDetails({ rating: values.rating, tags: [...values.tags, ...splitTags(values.otherTags)], emoji: values.emoji });
+        const { details, error } = checkDetails({
+            ...values, tags: [...values.tags, ...splitTags(values.otherTags)]
+        });
         if (error) {
             toast(error, { tone: 'error' });
-            draft = { ...draft, ...values, rating: parseRating(values.rating) ?? null, hideFromPublic: values.hideFromPublic === 'on' };
+            draft = {
+                ...draft, ...values, rating: parseRating(values.rating) ?? null, hideFromPublic: values.hideFromPublic === 'on',
+                bestMonths: values.bestMonths.map(Number)
+            };
             continue;
         }
         try {
@@ -446,11 +456,15 @@ function visitsSection(marker) {
     );
 }
 
-// Rating, emoji and tags of a saved place, shown when it has any.
+// Rating, emoji, tags and wishlist plans of a saved place, shown when it has any.
 function detailsRow(marker) {
     const tags = marker.tags || [];
-    if (!marker.rating && !marker.emoji && !tags.length) return null;
+    const months = marker.type === 'wishlist' ? monthsLabel(marker.bestMonths) : '';
+    const priority = marker.type === 'wishlist' ? priorityLabel(marker.priority) : '';
+    if (!marker.rating && !marker.emoji && !tags.length && !months && !priority) return null;
     return h('div', { class: 'card-details' },
+        priority ? h('span', { class: 'chip chip-wishlist' }, priority) : null,
+        months ? h('span', { class: 'card-months' }, h('span', { 'aria-hidden': 'true' }, '📅 '), `Best ${months}`) : null,
         marker.emoji ? h('span', { class: 'card-emoji', title: 'Pin emoji' }, marker.emoji) : null,
         marker.rating ? h('span', { class: 'stars' },
             h('span', { 'aria-hidden': 'true' }, stars(marker.rating)),
@@ -824,7 +838,9 @@ function renderExplore(container) {
     const stats = state.stats;
     const recent = [...state.markers].sort((a, b) => b.id - a.id).slice(0, 4);
     const wishlist = state.markers.filter(marker => marker.type === 'wishlist');
-    const nextDream = wishlist[Math.floor(Date.now() / 86400000) % Math.max(wishlist.length, 1)];
+    // The wishlist place in season soonest, or a different dream every day.
+    const month = new Date().getMonth() + 1;
+    const nextDream = nextInSeason(wishlist, month) || wishlist[Math.floor(Date.now() / 86400000) % Math.max(wishlist.length, 1)];
 
     fill(container,
         state.ideas ? ideasSection() : null,
@@ -845,7 +861,9 @@ function renderExplore(container) {
         ) : null,
         nextDream ? h('section', { class: 'dream-card' },
             h('p', { class: 'eyebrow' }, 'Your next adventure?'),
-            h('h3', {}, nextDream.name),
+            h('h3', {}, nextDream.emoji ? `${nextDream.emoji} ` : '', nextDream.name),
+            nextDream.bestMonths?.length ? h('p', { class: 'small' }, `Best ${monthsLabel(nextDream.bestMonths)}`,
+                nextDream.priority ? ` · ${priorityLabel(nextDream.priority)}` : '') : null,
             h('div', { class: 'row' },
                 h('button', { type: 'button', class: 'btn btn-sm btn-ghost', onclick: () => showMarker(nextDream) }, 'Show on map'),
                 h('button', { type: 'button', class: 'btn btn-sm btn-primary', onclick: () => openNewTrip(context, nextDream.name.split(',')[0]) }, 'Plan it')
