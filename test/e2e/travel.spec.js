@@ -36,7 +36,7 @@ async function markCity(page, name) {
     await page.locator('.card-actions button', { hasText: 'Been there' }).last().click();
 }
 
-test('a traveler signs up, colors in a city, shares a public map and logs out', async ({ page, browser }) => {
+test('a traveler signs up, colors in a city, shares a public map without a hidden place and logs out', async ({ page, browser }) => {
     const errors = trackErrors(page);
     const username = `e2e_${Date.now()}`;
     await signUp(page, username);
@@ -64,8 +64,21 @@ test('a traveler signs up, colors in a city, shares a public map and logs out', 
     await visitor.goto(`/?u=${username}`);
     await expect(visitor.locator('#public-view')).toBeVisible();
     await expect(visitor.locator('#public-title')).toContainText(username);
+    await expect(visitor.locator('#legend-visited')).toHaveText('1');
+
+    // A place hidden from the public map disappears for visitors, not for its owner.
+    await page.keyboard.press('Escape');
+    await page.locator('#places-tab').getByRole('button', { name: /Edit Lisbon/ }).click();
+    await page.check('#dialog-hideFromPublic');
+    await page.getByRole('button', { name: 'Save changes' }).click();
+    await expect(page.locator('#places-tab .place')).toContainText('Not on public map');
+    await visitor.reload();
+    await expect(visitor.locator('#public-view')).toBeVisible();
+    await expect(visitor.locator('#legend-visited')).toHaveText('0');
+    await expect(page.locator('#legend-visited')).toHaveText('1');
     await visitor.close();
 
+    await page.click('#account-btn');
     await page.click('#logout-btn');
     await expect(page.locator('#welcome-view')).toBeVisible();
     expect(errors).toEqual([]);

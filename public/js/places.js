@@ -51,7 +51,8 @@ function placeItem(marker, country, ctx) {
                 h('small', {},
                     marker.type === 'visited' ? '✓ Been there' : '♥ Wishlist',
                     visitSummary(marker),
-                    marker.photoUrl || marker.visits?.some(visit => visit.photoUrl) ? ' · 📷' : ''
+                    marker.photoUrl || marker.visits?.some(visit => visit.photoUrl) ? ' · 📷' : '',
+                    marker.hideFromPublic ? ' · 🔒 Not on public map' : ''
                 ),
                 marker.rating ? h('small', { class: 'stars' },
                     h('span', { 'aria-hidden': 'true' }, stars(marker.rating)),

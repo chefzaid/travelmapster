@@ -174,7 +174,7 @@ function isSingleEmoji(value) {
 }
 
 /**
- * Optional details of a place (ADR 0012). A field left out stays undefined, so an update
+ * Optional details of a place (ADR 0012, 0013). A field left out stays undefined, so an update
  * from an older client keeps what is stored; null or an empty value clears it.
  */
 function parsePlaceDetails(body) {
@@ -195,6 +195,12 @@ function parsePlaceDetails(body) {
         const trimmed = emoji.trim();
         if (trimmed && !isSingleEmoji(trimmed)) return { error: 'Emoji must be a single emoji.' };
         details.emoji = trimmed || null;
+    }
+    if (body.hideFromPublic !== undefined) {
+        if (body.hideFromPublic !== null && typeof body.hideFromPublic !== 'boolean') {
+            return { error: 'hideFromPublic must be true or false.' };
+        }
+        details.hideFromPublic = body.hideFromPublic === true;
     }
     return { details };
 }

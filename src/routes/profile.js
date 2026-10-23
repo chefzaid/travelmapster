@@ -27,13 +27,14 @@ function createPublicProfileRouter({ users, markers }) {
         if (!user || user.profile_visibility !== 'public') {
             return res.status(404).json({ error: 'Profile not found.' });
         }
-        const places = await markers.listForUser(user.id);
+        const places = await markers.listPublic(user.id);
         res.set('Cache-Control', 'no-store');
         return res.json({
             username: user.username,
             markers: places.map(({ id, lat, lng, type, name, category, travelDate, visits }) => ({
-                // Personal notes and photo links, of places and visits, stay private even on
-                // public profiles: only the visit dates are shared.
+                // Personal notes and photo links, of places and visits, and ratings, tags and
+                // emoji stay private even on public profiles: only the visit dates are shared.
+                // Places the traveler hid are not listed at all (ADR 0013).
                 id, lat, lng, type, name, category, travelDate,
                 visits: visits.map(({ startDate, endDate }) => ({ startDate, endDate }))
             }))

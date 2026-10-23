@@ -5,9 +5,9 @@ import { checkDetails } from './details.js';
 export { isHttpUrl, isValidDate };
 
 // `travelDate` is the start of the latest visit, kept so older files and releases still read it.
-// Files without the later fields (rating, tags, emoji) still import with them empty.
+// Files without the later fields (rating, tags, emoji, hideFromPublic) still import with them empty.
 export const EXPORT_FIELDS = ['id', 'lat', 'lng', 'type', 'name', 'category', 'photoUrl', 'notes', 'travelDate',
-    'rating', 'tags', 'emoji'];
+    'rating', 'tags', 'emoji', 'hideFromPublic'];
 // CSV has one row per visit; JSON nests the visits in each place.
 export const VISIT_FIELDS = ['visitStartDate', 'visitEndDate', 'visitNotes', 'visitPhotoUrl', 'visitOngoing'];
 const CSV_FIELDS = [...EXPORT_FIELDS, ...VISIT_FIELDS];
@@ -25,6 +25,7 @@ export function buildJson(markers) {
         ...Object.fromEntries(EXPORT_FIELDS.map(field => [field, marker[field] ?? ''])),
         travelDate: lastVisitDate(marker),
         tags: marker.tags || [],
+        hideFromPublic: Boolean(marker.hideFromPublic),
         visits: sortVisits(marker.visits).map(exportVisit)
     }));
     return JSON.stringify(records, null, 2);
@@ -34,6 +35,7 @@ export function buildJson(markers) {
 function csvValue(marker, field) {
     if (field === 'travelDate') return lastVisitDate(marker);
     if (field === 'tags') return (marker.tags || []).join('; ');
+    if (field === 'hideFromPublic') return marker.hideFromPublic ? 'yes' : '';
     return marker[field];
 }
 
@@ -155,6 +157,8 @@ export function validatePlace(record) {
     const { details } = checkDetails(record);
     if (!details) return null;
     Object.assign(place, details);
+    // JSON says true; CSV says "yes".
+    place.hideFromPublic = record?.hideFromPublic === true || /^(true|yes|1)$/i.test(text(record?.hideFromPublic));
 
     if (!Number.isFinite(lat) || lat < -90 || lat > 90) return null;
     if (!Number.isFinite(lng) || lng < -180 || lng > 180) return null;

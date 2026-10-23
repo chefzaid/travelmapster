@@ -24,7 +24,9 @@ test('create, list, update and delete a marker', async () => {
     assert.equal(created.status, 201);
     assert.equal(typeof created.body.id, 'number');
     const { visits, ...place } = created.body;
-    assert.deepEqual({ ...place, id: undefined }, { ...sampleMarker, id: undefined, rating: null, tags: [], emoji: null });
+    assert.deepEqual({ ...place, id: undefined }, {
+        ...sampleMarker, id: undefined, rating: null, tags: [], emoji: null, hideFromPublic: false
+    });
     assert.equal(visits.length, 1, 'the travel date becomes the first visit');
     assert.equal(visits[0].startDate, sampleMarker.travelDate);
 
@@ -193,4 +195,46 @@ test('public maps never share ratings, tags or emoji', async () => {
     assert.equal(shared.name, sampleMarker.name);
     for (const field of ['rating', 'tags', 'emoji', 'notes', 'photoUrl']) assert.equal(shared[field], undefined, field);
     assert.doesNotMatch(JSON.stringify(profile.body), /secret tag|🏥/);
+});
+
+test('places hidden from the public map never appear on it', async () => {
+    const owner = createClient(ctx.server);
+    await owner.register('hider', 'hider password');
+    const { body: shown } = await owner.post('/api/markers', { ...sampleMarker, name: 'Shown, France' });
+    const { body: hidden } = await owner.post('/api/markers', {
+        ...sampleMarker, name: 'Clinic, Switzerland', hideFromPublic: true,
+        visits: [{ startDate: '2025-03-03', endDate: '2025-03-09' }]
+    });
+    assert.equal(hidden.hideFromPublic, true);
+    assert.equal(shown.hideFromPublic, false, 'places are shared unless hidden');
+    await owner.patch('/api/profile', { profileVisibility: 'public' });
+
+    const visitor = createClient(ctx.server);
+    const publicNames = async () => (await visitor.get('/api/public/hider')).body.markers.map(marker => marker.name);
+    assert.deepEqual(await publicNames(), ['Shown, France']);
+    const body = JSON.stringify((await visitor.get('/api/public/hider')).body);
+    assert.doesNotMatch(body, /Clinic|2025-03-0|hideFromPublic/, 'neither the place nor its visits leak');
+    assert.equal((await owner.get('/api/markers')).body.length, 2, 'the owner still sees every place');
+
+    // An older client's update keeps the place hidden; the owner can share it again.
+    await owner.patch(`/api/markers/${hidden.id}`, { ...sampleMarker, name: 'Clinic, Switzerland' });
+    assert.deepEqual(await publicNames(), ['Shown, France']);
+    await ctx.pool.query("UPDATE markers SET notes = 'previous release' WHERE id = $1", [hidden.id]);
+    assert.deepEqual(await publicNames(), ['Shown, France']);
+    await owner.patch(`/api/markers/${hidden.id}`, { ...sampleMarker, name: 'Clinic, Switzerland', hideFromPublic: false });
+    assert.deepEqual(await publicNames(), ['Shown, France', 'Clinic, Switzerland']);
+    await owner.patch(`/api/markers/${shown.id}`, { ...sampleMarker, name: 'Shown, France', hideFromPublic: true });
+    assert.deepEqual(await publicNames(), ['Clinic, Switzerland']);
+
+    // Only the owner can change it, and only to true or false.
+    const intruder = createClient(ctx.server);
+    await intruder.register('hide_intruder', 'hide intruder password');
+    assert.equal((await intruder.patch(`/api/markers/${hidden.id}`, { ...sampleMarker, hideFromPublic: true })).status, 404);
+    assert.deepEqual(await publicNames(), ['Clinic, Switzerland']);
+    for (const hideFromPublic of ['yes', 1, 'true']) {
+        assert.equal((await owner.patch(`/api/markers/${hidden.id}`, { ...sampleMarker, hideFromPublic })).status, 400);
+    }
+    const forged = await owner.agent.patch(`/api/markers/${hidden.id}`).set('X-CSRF-Token', 'forged').send({ ...sampleMarker, hideFromPublic: true });
+    assert.equal(forged.status, 403);
+    assert.equal((await createClient(ctx.server).patch(`/api/markers/${hidden.id}`, sampleMarker)).status, 401);
 });
