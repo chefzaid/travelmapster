@@ -51,3 +51,43 @@ Differentiators:
 - [ ] Plans and entitlements enforced server-side: free atlas; Pro (day ledger, imports, evidence reports, albums, poster exports); Teams per traveller. Payments with EU VAT handling for digital services.
 - [ ] Photo storage for albums: the app stores no files today, so albums and travel books need S3-compatible object storage with per-plan quotas, server-side resizing, and location metadata stripped from anything shown publicly.
 - [ ] Privacy statement for the ledger: precise coordinates are never stored beyond city level unless the user chooses, and evidence reports are generated only on request.
+
+## Market and growth (added 2026-10-23)
+
+The field splits into scratch-map atlases (Been, Visited, Skratch), travel journals (Polarsteps, Journi), trip planners (Wanderlog, TripIt) and day-tracking tools for tax residency (Monaeo and similar). Atlases are free and crowded, journals depend on phone tracking, and day trackers are dry, costly and built for advisers. TravelMapster's opening is the overlap: the atlas wins the user for free, the ledger earns the subscription, and keepsakes pay one-off. Growth should come from things people share or search for, not from ads or third-party trackers.
+
+- [ ] Competitive review in `docs/`: features, pricing and privacy stance of the main atlas, journal, planner and day-tracking apps, refreshed every six months, with the gaps TravelMapster targets.
+- [ ] Landing page for signed-out visitors: a live demo map, the atlas, ledger and keepsakes story, and plan pricing, instead of opening straight onto sign-up.
+- [ ] Free Schengen 90/180 calculator page usable without an account (dates in the browser, nothing stored), linking to the ledger; the main search-driven acquisition channel.
+- [ ] Public maps worth sharing: opt-in indexing, an Open Graph preview image of the user's map, and a "make your own map" call to action.
+- [ ] Choice of country list for counting (UN members, all 250 territories, travel-club lists such as TCC), with a documented rule for disputed and partially recognized territories.
+- [ ] Referrals: an invite link that gives both sides a free Pro month or a poster discount.
+- [ ] Localization: extract UI strings and ship French, Spanish, German and Arabic (right-to-left layout), with country names from Natural Earth's localized fields.
+- [ ] Privacy-respecting product metrics: server-side aggregate counters for the funnel (sign-up, first place, ten places, first ledger use, paid) and retention, with no third-party analytics.
+- [ ] Partnerships for Teams: tax advisers, relocation and employer-of-record firms that can resell or recommend the tier; print partners for keepsakes in the EU and North America.
+- [ ] Pricing validation before launch: a waitlist and survey for Pro and Teams, annual billing first, and an early-supporter price for the first users.
+
+## Accounts and trust (added 2026-10-23)
+
+- [ ] Email address with verification and password reset; today a forgotten password locks the user out for good. Needs a transactional email provider ([ADR](docs/architecture.md#adr-process): new external dependency).
+- [ ] Passkeys (WebAuthn) and optional TOTP two-factor sign-in, required for Teams administrators.
+- [ ] Full account export as one archive (places, visits, trips, albums, ledger) plus GeoJSON and KML export of places; the "record you can keep" promise depends on it.
+- [ ] Terms of service, privacy policy and a GDPR access request flow, published before the first paid plan.
+- [ ] Sign-up abuse protection without third-party captchas (honeypot field and per-IP limits on registration).
+
+## Technical foundation (added 2026-10-23)
+
+- [ ] Places and visits data model: split `markers` into places and dated visits with an expand-and-contract migration that backfills `travel_date`, compatible with the previous release during rollout.
+- [ ] Ledger correctness: store visit days as local calendar dates with the destination's time zone, and test day counting against official Schengen calculator cases and property-based edge cases (leap years, overnight border crossings, open-ended stays).
+- [ ] Background jobs in PostgreSQL (`FOR UPDATE SKIP LOCKED` queue) for imports, PDF reports, poster rendering, emails and threshold alerts, keeping the single service ([ADR 0002](docs/adr/0002-single-service-build-free-frontend.md)).
+- [ ] OpenAPI description of the JSON API and a versioning rule, needed before mobile apps or Teams integrations.
+- [ ] Type checking of server and browser modules with JSDoc and `tsc --noEmit` in CI, without adding a build step.
+- [ ] Performance budget in CI: page weight, map data payload and Web Vitals on a mid-range phone profile; precompressed (Brotli) map data.
+- [ ] Recovery for paying users: stated RPO and RTO, a scheduled restore drill from the platform backup, and a logical dump before risky migrations.
+- [ ] Service level objectives and alerts for availability and API latency, plus business metrics (places saved, imports, exports, reports generated).
+- [ ] Mobile apps (Capacitor wrapper of the PWA) only once the ledger ships, for store discovery and optional background location that records the current country on the device, never raw coordinates on the server.
+
+## Atlas improvements (added 2026-10-23)
+
+- [ ] Plan a trip from a wishlist place, and let planned trip dates feed the ledger simulation.
+- [ ] Richer passport stats: days abroad per year, longest trip, approximate distance travelled and a countries-per-year timeline.
