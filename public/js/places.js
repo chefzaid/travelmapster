@@ -2,16 +2,19 @@ import { h, fill, toast, downloadFile, formatDate } from './ui.js';
 import { CONTINENTS } from './geo.js';
 import { buildCsv, buildJson, parseImportContent, validatePlace, placeKey, mergePlaces } from './io.js';
 import { lastVisitDate, lastVisitYears, matchesLastVisit, visitCount } from './visits.js';
+import { matchesDetails, ratingLabel, stars, usedTags } from './details.js';
 
 const view = { query: '', type: 'all', category: 'all', lastVisit: 'all', sort: 'continent' };
 
-function matches(marker, country) {
+function matches(marker, country, filters) {
     if (view.type !== 'all' && marker.type !== view.type) return false;
     if (view.category !== 'all' && marker.category !== view.category) return false;
     if (!matchesLastVisit(marker, view.lastVisit)) return false;
+    if (!matchesDetails(marker, filters)) return false;
     if (!view.query) return true;
     const visitNotes = (marker.visits || []).map(visit => visit.notes).join(' ');
-    const haystack = `${marker.name} ${country?.name || ''} ${marker.notes || ''} ${visitNotes}`.toLowerCase();
+    const tags = (marker.tags || []).map(tag => `#${tag}`).join(' ');
+    const haystack = `${marker.name} ${country?.name || ''} ${marker.notes || ''} ${visitNotes} ${tags}`.toLowerCase();
     return haystack.includes(view.query.toLowerCase());
 }
 
@@ -38,9 +41,11 @@ function chipGroup(label, key, options, onChange) {
 }
 
 function placeItem(marker, country, ctx) {
+    const tags = marker.tags || [];
     return h('li', { class: `place place-${marker.type}` },
         h('button', { type: 'button', class: 'place-main', onclick: () => ctx.showMarker(marker), title: 'Show on map' },
-            h('span', { class: 'place-flag', 'aria-hidden': 'true' }, marker.category === 'City' ? '📍' : country?.flag || '🏳️'),
+            // The traveler's emoji stands in for the flag or city pin.
+            h('span', { class: 'place-flag', 'aria-hidden': 'true' }, marker.emoji || (marker.category === 'City' ? '📍' : country?.flag || '🏳️')),
             h('span', { class: 'place-text' },
                 h('strong', {}, marker.name),
                 h('small', {},
@@ -48,6 +53,10 @@ function placeItem(marker, country, ctx) {
                     visitSummary(marker),
                     marker.photoUrl || marker.visits?.some(visit => visit.photoUrl) ? ' · 📷' : ''
                 ),
+                marker.rating ? h('small', { class: 'stars' },
+                    h('span', { 'aria-hidden': 'true' }, stars(marker.rating)),
+                    h('span', { class: 'visually-hidden' }, ratingLabel(marker.rating))) : null,
+                tags.length ? h('span', { class: 'place-tags' }, tags.map(tag => `#${tag}`).join(' ')) : null,
                 marker.notes ? h('span', { class: 'place-notes' }, marker.notes) : null
             )
         ),
@@ -81,7 +90,7 @@ function sortMarkers(markers, ctx) {
 
 function renderList(list, summary, ctx) {
     const { state } = ctx;
-    const filtered = state.markers.filter(marker => matches(marker, state.stats.markerCountry.get(marker.id)));
+    const filtered = state.markers.filter(marker => matches(marker, state.stats.markerCountry.get(marker.id), state.filters));
     summary.textContent = `${filtered.length} of ${state.markers.length} places`;
     if (!state.markers.length) {
         list.replaceChildren(h('div', { class: 'empty' },
@@ -168,6 +177,28 @@ function lastVisitOptions(markers) {
     return [['all', 'Any time'], ...years.map(year => [year, `In ${year}`]), ['none', 'No date yet']];
 }
 
+function tagOptions(markers, chosen) {
+    const tags = usedTags(markers);
+    // Keep a chosen tag selectable even after its last place is gone.
+    if (chosen !== 'all' && !tags.includes(chosen)) tags.push(chosen);
+    return [['all', 'Any tag'], ...tags.map(tag => [tag, `#${tag}`])];
+}
+
+const RATING_FILTERS = [['all', 'Any rating'], ['5', '★★★★★ only'], ['4', '★★★★ and up'], ['3', '★★★ and up'],
+    ['2', '★★ and up'], ['1', 'Rated'], ['none', 'Not rated']];
+
+// Tag and rating filters are shared with the map, so they live in the app state.
+function detailFilters(ctx) {
+    const { filters } = ctx.state;
+    const select = (id, key, options) => h('select', { id, onchange: event => ctx.setDetailFilter({ [key]: event.target.value }) },
+        options.map(([value, label]) => h('option', { value, selected: filters[key] === value }, label)));
+    return h('div', { class: 'row sort-row' },
+        h('label', { class: 'sort' }, 'Tag ', select('tag-filter', 'tag', tagOptions(ctx.state.markers, filters.tag))),
+        h('label', { class: 'sort' }, 'Rating ', select('rating-filter', 'rating', RATING_FILTERS)),
+        h('small', { class: 'muted filter-note' }, 'Tag and rating filters apply to the map too.')
+    );
+}
+
 export function renderPlaces(container, ctx) {
     const list = h('div', { class: 'places' });
     const summary = h('p', { class: 'muted small', 'aria-live': 'polite' });
@@ -202,7 +233,8 @@ export function renderPlaces(container, ctx) {
                         lastVisitOptions(ctx.state.markers).map(([value, label]) =>
                             h('option', { value, selected: view.lastVisit === value }, label)))
                 )
-            )
+            ),
+            detailFilters(ctx)
         ),
         list,
         dataSection(ctx)

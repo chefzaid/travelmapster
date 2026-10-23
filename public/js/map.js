@@ -393,14 +393,15 @@ export function createTravelMap(element, { index, cities, onCountryClick, onCity
         pins = markers.filter(marker => marker.category === 'City').map(marker => {
             const pinElement = document.createElement('button');
             pinElement.type = 'button';
-            pinElement.className = `pin pin-${marker.type}`;
+            // The traveler's emoji replaces the status symbol; the pin's colour still tells the status.
+            pinElement.className = `pin pin-${marker.type}${marker.emoji ? ' pin-emoji' : ''}`;
             pinElement.title = marker.name;
-            pinElement.setAttribute('aria-label', marker.name);
+            pinElement.setAttribute('aria-label', `${marker.name}, ${marker.type === 'visited' ? 'been there' : 'wishlist'}`);
             const body = document.createElement('span');
             body.className = 'pin-body';
             const symbol = document.createElement('span');
             symbol.className = 'pin-symbol';
-            symbol.textContent = marker.type === 'visited' ? '✓' : '♥';
+            symbol.textContent = marker.emoji || (marker.type === 'visited' ? '✓' : '♥');
             body.append(symbol);
             pinElement.append(body);
             pinElement.addEventListener('click', event => {

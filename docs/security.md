@@ -35,7 +35,7 @@ their owner chose `public`; private and missing profiles return the same 404.
 - **CSRF**: unsafe methods need `X-CSRF-Token`, a per-session random token compared in constant
   time.
 - **Validation**: every body is checked in `src/validation.js` (lengths, types, calendar dates,
-  visit end dates on or after the start, HTTP(S)-only photo links, trip size, visits per place,
+  visit end dates on or after the start, HTTP(S)-only photo links, ratings, tags and single emoji, trip size, visits per place,
   ledger rule and planned-stay limits); bodies are limited to 100 KB, or 3 MB for imports.
 - **Rate limits** per client IP on sign-in and sign-up, the API and place search
   ([defaults](development.md#configuration)), with standard `RateLimit` headers; counters live
@@ -49,8 +49,8 @@ their owner chose `public`; private and missing profiles return the same 404.
 
 ## Privacy
 
-- Notes and photo links, of places and of visits, are never included in public maps; only
-  visit dates are. Shared maps are sent with `X-Robots-Tag: noindex` and left out of the
+- Notes and photo links, of places and of visits, and ratings, tags and emoji of places are
+  never included in public maps; only visit dates are ([ADR 0012](adr/0012-place-details.md)). Shared maps are sent with `X-Robots-Tag: noindex` and left out of the
   sitemap, so search engines do not list them. Whether a stay is still going on is never shared either, as it would tell
   where the traveler is now, and neither are ledger settings or the date history.
 - Day counts, alerts and evidence reports are computed in the browser and only when the

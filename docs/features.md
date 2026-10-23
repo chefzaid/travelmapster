@@ -24,15 +24,21 @@ Everything below is implemented. Planned work lives in [TODO.md](../TODO.md).
 - One tap marks a place "Been there" or "Wishlist"; tapping again undoes it.
 - Instant search over countries and every town, with a world search for anything smaller ([place search](architecture.md#place-search)).
 - Notes and a photo link on every place.
+- A rating from one to five stars, tags (suggested ones such as food, hiking, family and work,
+  or your own) and an emoji per place; the emoji shows on the city's pin and in the places
+  list ([ADR 0012](adr/0012-place-details.md)).
 - Every visit to a place recorded on its own, with first and last day (or "still there"), notes
   and a photo link; the card lists visits newest first, says how many times you have been
   ("Visited 3 times") and lets you add, edit or remove a visit, with undo. Dates are plain
   calendar days.
 - Places list grouped by continent, with filters (including the year of the last visit), text
-  search over places and visit notes, and sorting by continent, name or last visit.
+  search over places, tags and visit notes, and sorting by continent, name or last visit.
+- Tag and rating filters that narrow the places list and the map together; the legend shows
+  the active filter and clears it in one tap.
 - Undo after removing a place, which brings its visits back too.
-- Import and export as JSON (visits nested in each place) or CSV (one row per visit); import
-  also reads files from before visits existed, and skips invalid rows and duplicates.
+- Import and export as JSON (visits nested in each place) or CSV (one row per visit), with
+  ratings, tags and emoji; import also reads files from before visits or tags existed, and
+  skips invalid rows and duplicates.
 - "Surprise me" flies to a country you have not visited yet.
 
 ## Day Ledger
@@ -99,7 +105,7 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   the password (signing out other devices) or delete the account and all its data from the
   account menu.
 - Private by default; a public map is shared read-only at `/?u=<username>` with visit dates,
-  without notes or photo links.
+  without notes, photo links, ratings, tags or emoji.
 - Responsive layout with a bottom sheet on phones, `/` to search, screen-reader labels, and light and dark themes that follow the system.
 
 ## Current Boundaries

@@ -267,3 +267,66 @@ test('the calculator page lists every Schengen member by its map name', async ()
     assert.match(html, new RegExp(`has ${SCHENGEN_MEMBERS.length} members`));
     for (const id of SCHENGEN_OPEN_BORDERS) assert.match(html, new RegExp(index.byId.get(id).name));
 });
+
+test('place details are checked like the API and filter the list and map', async () => {
+    const details = await load('details.js');
+    assert.deepEqual(details.checkDetails({ rating: '4', tags: ['Food', 'food'], emoji: ' 🥐 ' }).details,
+        { rating: 4, tags: ['food'], emoji: '🥐' });
+    assert.deepEqual(details.checkDetails({}).details, { rating: null, tags: [], emoji: '' }, 'older files have no details');
+    assert.deepEqual(details.splitTags('Street art;  road   trip, ,food'), ['street art', 'road trip', 'food']);
+    for (const bad of [{ rating: 6 }, { rating: 'great' }, { tags: 'a,b,c,d,e,f,g,h,i' }, { tags: ['x'.repeat(25)] },
+        { tags: ['-dash'] }, { emoji: '😀😀' }, { emoji: 'a' }]) {
+        assert.ok(details.checkDetails(bad).error, JSON.stringify(bad));
+    }
+    assert.ok(details.isSingleEmoji('🇯🇵') && details.isSingleEmoji('👩🏽‍💻') && !details.isSingleEmoji(7));
+    assert.equal(details.stars(3), '★★★☆☆');
+    assert.equal(details.stars(null), '');
+    assert.deepEqual([null, 1, 4].map(details.ratingLabel), ['Not rated', 'Rated 1 star out of 5', 'Rated 4 stars out of 5']);
+
+    const markers = [
+        { id: 1, rating: 5, tags: ['food', 'street art'] },
+        { id: 2, rating: 3, tags: ['hiking', 'street art'] },
+        { id: 3, tags: [] },
+        { id: 4 }
+    ];
+    assert.deepEqual(details.knownTags(markers), [...details.SUGGESTED_TAGS, 'street art']);
+    assert.deepEqual(details.usedTags(markers), ['food', 'hiking', 'street art']);
+    const ids = filters => markers.filter(marker => details.matchesDetails(marker, filters)).map(marker => marker.id);
+    assert.deepEqual(ids({ tag: 'street art', rating: 'all' }), [1, 2]);
+    assert.deepEqual(ids({ tag: 'all', rating: '4' }), [1]);
+    assert.deepEqual(ids({ tag: 'all', rating: 'none' }), [3, 4]);
+    assert.deepEqual(ids({}), [1, 2, 3, 4]);
+    assert.ok(!details.detailFilterActive({ tag: 'all', rating: 'all' }) && details.detailFilterActive({ tag: 'food' }));
+    assert.equal(details.describeDetailFilter({ tag: 'food', rating: '3' }), '#food · ★3+');
+    assert.equal(details.describeDetailFilter({ rating: '5' }), '★5');
+    assert.equal(details.describeDetailFilter({ rating: 'none' }), 'not rated');
+});
+
+test('import and export round-trip ratings, tags and emoji, and read older files', async () => {
+    const { buildCsv, buildJson, parseImportContent, validatePlace, mergePlaces } = await load('io.js');
+    const markers = [{
+        id: 1, lat: 41.9, lng: 12.5, type: 'visited', name: 'Rome, Italy', category: 'City', photoUrl: '', notes: '',
+        rating: 5, tags: ['food', 'street art'], emoji: '🍝', visits: [{ startDate: '2022-02-02' }, { startDate: '2023-03-03' }]
+    }];
+    for (const [file, content] of [['places.json', buildJson(markers)], ['places.csv', buildCsv(markers)]]) {
+        const [place] = mergePlaces(parseImportContent(file, content).map(validatePlace));
+        assert.deepEqual([place.rating, place.tags, place.emoji, place.visits.length], [5, ['food', 'street art'], '🍝', 2], file);
+    }
+    assert.match(buildCsv(markers), /"food; street art"/);
+    const old = 'lat,lng,type,name,category,notes,travelDate\n41.9,12.5,visited,Rome,City,,2020-01-01';
+    const [place] = parseImportContent('old.csv', old).map(validatePlace);
+    assert.deepEqual([place.rating, place.tags, place.emoji], [null, [], '']);
+    assert.equal(validatePlace({ ...JSON.parse(buildJson(markers))[0], emoji: 'pizza' }), null, 'an invalid detail skips the row');
+});
+
+test('country status counts only the places passed in', async () => {
+    const { createCountryIndex, computeStats, countryStatus } = await load('geo.js');
+    const index = createCountryIndex(countries);
+    const markers = [
+        { id: 1, lat: 46, lng: 2, type: 'visited', name: 'France', category: 'Country', tags: ['food'] },
+        { id: 2, lat: 35.68, lng: 139.69, type: 'wishlist', name: 'Japan', category: 'Country', tags: [] }
+    ];
+    const stats = computeStats(markers, index);
+    const status = countryStatus(markers.filter(marker => marker.tags.includes('food')), marker => stats.markerCountry.get(marker.id));
+    assert.deepEqual([[...status.visitedIds], [...status.wishlistIds]], [['FRA'], []]);
+});

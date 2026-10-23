@@ -3,7 +3,7 @@
 // The legacy travel date is derived from the visits; markers.travel_date only mirrors it
 // for the previous release until the contract step (ADR 0009).
 const MARKER_COLUMNS = `m.id, m.lat, m.lng, m.type, m.name, m.category,
-    m.photo_url AS "photoUrl", m.notes,
+    m.photo_url AS "photoUrl", m.notes, m.rating, m.tags, m.emoji,
     (SELECT max(v.start_date) FROM visits v WHERE v.marker_id = m.id) AS "travelDate",
     COALESCE((SELECT json_agg(json_build_object(
         'id', v.id, 'startDate', v.start_date, 'endDate', v.end_date, 'ongoing', v.ongoing,
@@ -77,6 +77,10 @@ function markerValues(marker) {
     return [marker.lat, marker.lng, marker.type, marker.name, marker.category, marker.photoUrl, marker.notes];
 }
 
+// Optional place details (ADR 0012) by API field and column. An update writes only the
+// fields it was sent, so older clients that do not know them keep what is stored.
+const DETAIL_COLUMNS = [['rating', 'rating', null], ['tags', 'tags', []], ['emoji', 'emoji', null]];
+
 function visitValues(visit) {
     return [visit.startDate, visit.endDate, visit.notes, visit.photoUrl, visit.ongoing];
 }
@@ -107,11 +111,13 @@ function createMarkerRepository(db) {
          */
         async create(userId, marker, client = db) {
             const travelDate = marker.visits ? null : marker.travelDate ?? null;
+            const details = DETAIL_COLUMNS.map(([field, , fallback]) => marker[field] ?? fallback);
             const { rows } = await client.query(
-                `INSERT INTO markers (lat, lng, type, name, category, photo_url, notes, travel_date, user_id)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                `INSERT INTO markers (lat, lng, type, name, category, photo_url, notes, travel_date, user_id,
+                    ${DETAIL_COLUMNS.map(([, column]) => column).join(', ')})
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, ${details.map((_, i) => `$${i + 10}`).join(', ')})
                  RETURNING id`,
-                [...markerValues(marker), travelDate, userId]
+                [...markerValues(marker), travelDate, userId, ...details]
             );
             for (const visit of marker.visits || []) {
                 await client.query(
@@ -123,17 +129,22 @@ function createMarkerRepository(db) {
             return find(userId, rows[0].id, client);
         },
 
-        /** A travel date left out keeps the visits; one sent the legacy way may add a visit. */
+        /**
+         * Fields left out keep what is stored: a travel date left out keeps the visits, and one
+         * sent the legacy way may add a visit.
+         */
         async update(userId, markerId, marker) {
             const values = [...markerValues(marker), markerId, userId];
-            let setTravelDate = '';
-            if (marker.travelDate !== undefined) {
-                values.push(marker.travelDate);
-                setTravelDate = `, travel_date = $${values.length}`;
+            let setOptional = '';
+            const optional = [['travelDate', 'travel_date'], ...DETAIL_COLUMNS];
+            for (const [field, column] of optional) {
+                if (marker[field] === undefined) continue;
+                values.push(marker[field]);
+                setOptional += `, ${column} = $${values.length}`;
             }
             const { rowCount } = await db.query(
                 `UPDATE markers SET lat = $1, lng = $2, type = $3, name = $4, category = $5,
-                    photo_url = $6, notes = $7${setTravelDate}, updated_at = now()
+                    photo_url = $6, notes = $7${setOptional}, updated_at = now()
                  WHERE id = $8 AND user_id = $9`,
                 values
             );

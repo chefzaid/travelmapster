@@ -61,6 +61,7 @@
     --land-6: #ffd9ec;
     --land-7: #f5dfb9;
     --border-ink: rgba(31, 59, 87, 0.55);
+    --star: #8a5a00;
     --shadow: 4px 4px 0 var(--shadow-color);
     --shadow-sm: 2px 2px 0 var(--shadow-color);
     --radius: 18px;
@@ -98,6 +99,7 @@
         --land-7: #d7bd90;
         --border-ink: rgba(13, 27, 42, 0.8);
         --visited-soft: #5fb7ad;
+        --star: #ffd166;
         color-scheme: dark;
     }
 }
@@ -951,6 +953,48 @@ button.chip { cursor: pointer; }
     text-overflow: ellipsis;
 }
 
+.place-tags {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--ink-soft);
+}
+
+.place-text .stars { font-size: 0.85rem; }
+
+.filter-note { flex-basis: 100%; }
+
+/* Rating, emoji and tags of a place (ADR 0012). */
+.stars { color: var(--star); font-weight: 800; letter-spacing: 0.05em; }
+
+.card-details {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    margin-bottom: 10px;
+}
+
+.card-emoji { font-size: 1.5rem; line-height: 1; }
+
+.tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.tag {
+    padding: 1px 8px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--text);
+    background: var(--paper-2);
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+}
+
 .place-actions { display: flex; }
 
 .empty {
@@ -1298,6 +1342,9 @@ button.legend-item { cursor: pointer; }
 button.legend-item:hover { background: var(--paper-2); }
 button.legend-item[aria-pressed='false'] { color: var(--muted); text-decoration: line-through; }
 button.legend-item[aria-pressed='false'] .swatch { opacity: 0.35; }
+.legend-item[hidden] { display: none; }
+button.legend-filter { color: var(--ink-dark); background: var(--sunny); }
+button.legend-filter:hover { background: var(--wishlist); }
 
 .swatch {
     display: inline-grid;
@@ -1379,6 +1426,7 @@ button.legend-item[aria-pressed='false'] .swatch { opacity: 0.35; }
 }
 
 .pin:hover .pin-body { filter: brightness(1.1); }
+.pin-emoji .pin-symbol { font-size: 15px; font-weight: 400; text-shadow: none; }
 
 @keyframes drop-in {
     from { transform: translateY(-24px) rotate(-45deg) scale(0.6); opacity: 0; }
@@ -1709,6 +1757,54 @@ button.legend-item[aria-pressed='false'] .swatch { opacity: 0.35; }
 
 .field-check input { width: 20px; height: 20px; margin: 0; accent-color: var(--primary-strong); }
 .field-check small { grid-column: 2; }
+
+.choices {
+    min-width: 0;
+    padding: 0;
+    border: 0;
+}
+
+.choices legend { padding: 0; margin-bottom: 4px; }
+
+.choice-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.choice-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 32px;
+    padding: 2px 10px 2px 8px;
+    font-size: 0.82rem;
+    font-weight: 800;
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    cursor: pointer;
+}
+
+.choice-chip input { width: 16px; height: 16px; margin: 0; accent-color: var(--primary-strong); }
+.choice-chip:has(input:checked) { color: var(--ink-dark); background: var(--visited-soft); }
+.choice-chip:has(input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+.choice-pick {
+    min-width: 36px;
+    min-height: 36px;
+    padding: 0 6px;
+    font-size: 1.2rem;
+    line-height: 1;
+    color: var(--text);
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+}
+
+.choice-pick:hover { background: var(--paper-2); }
+.choice-clear { padding: 0 10px; font-size: 0.8rem; font-weight: 800; }
 
 .day-rule {
     display: grid;

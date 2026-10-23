@@ -1,10 +1,13 @@
 // Import and export helpers for saved places and their visits. Pure functions, unit tested in Node.
 import { checkVisit, isHttpUrl, isValidDate, lastVisitDate, sortVisits } from './visits.js';
+import { checkDetails } from './details.js';
 
 export { isHttpUrl, isValidDate };
 
 // `travelDate` is the start of the latest visit, kept so older files and releases still read it.
-export const EXPORT_FIELDS = ['id', 'lat', 'lng', 'type', 'name', 'category', 'photoUrl', 'notes', 'travelDate'];
+// Files without the later fields (rating, tags, emoji) still import with them empty.
+export const EXPORT_FIELDS = ['id', 'lat', 'lng', 'type', 'name', 'category', 'photoUrl', 'notes', 'travelDate',
+    'rating', 'tags', 'emoji'];
 // CSV has one row per visit; JSON nests the visits in each place.
 export const VISIT_FIELDS = ['visitStartDate', 'visitEndDate', 'visitNotes', 'visitPhotoUrl', 'visitOngoing'];
 const CSV_FIELDS = [...EXPORT_FIELDS, ...VISIT_FIELDS];
@@ -21,15 +24,23 @@ export function buildJson(markers) {
     const records = markers.map(marker => ({
         ...Object.fromEntries(EXPORT_FIELDS.map(field => [field, marker[field] ?? ''])),
         travelDate: lastVisitDate(marker),
+        tags: marker.tags || [],
         visits: sortVisits(marker.visits).map(exportVisit)
     }));
     return JSON.stringify(records, null, 2);
 }
 
+// CSV cells hold one value: tags are joined with semicolons, which tags never contain.
+function csvValue(marker, field) {
+    if (field === 'travelDate') return lastVisitDate(marker);
+    if (field === 'tags') return (marker.tags || []).join('; ');
+    return marker[field];
+}
+
 export function buildCsv(markers) {
     const rows = [CSV_FIELDS];
     for (const marker of markers) {
-        const place = EXPORT_FIELDS.map(field => (field === 'travelDate' ? lastVisitDate(marker) : marker[field]));
+        const place = EXPORT_FIELDS.map(field => csvValue(marker, field));
         const visits = sortVisits(marker.visits).map(exportVisit);
         // A place without visits still gets one row, with empty visit columns.
         for (const visit of visits.length ? visits : [null]) {
@@ -141,6 +152,9 @@ export function validatePlace(record) {
         travelDate: '',
         visits: []
     };
+    const { details } = checkDetails(record);
+    if (!details) return null;
+    Object.assign(place, details);
 
     if (!Number.isFinite(lat) || lat < -90 || lat > 90) return null;
     if (!Number.isFinite(lng) || lng < -180 || lng > 180) return null;

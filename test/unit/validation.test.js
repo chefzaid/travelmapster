@@ -3,7 +3,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const {
-    isValidTravelDate, parseCredentials, parseLedgerSettings, parseMarkerId, parseMarkerPayload, parseProfileVisibility,
+    isSingleEmoji, isValidTravelDate, normalizeTag, parseCredentials, parseLedgerSettings, parseMarkerId, parseMarkerPayload, parseProfileVisibility,
     parseVisitPayload
 } = require('../../src/validation');
 
@@ -17,6 +17,16 @@ test('parseMarkerPayload normalizes a valid marker', () => {
         photoUrl: null, notes: null, travelDate: undefined
     });
     assert.equal(parseMarkerPayload({ ...valid, travelDate: '' }).marker.travelDate, null, 'an empty date is sent on purpose');
+});
+
+test('parseMarkerPayload reads place details only when they are sent', () => {
+    const { marker } = parseMarkerPayload({ ...valid, rating: 3, tags: ['Food', 'food', ' Road   Trip '], emoji: '🍜' });
+    assert.deepEqual([marker.rating, marker.tags, marker.emoji], [3, ['food', 'road trip'], '🍜']);
+    const cleared = parseMarkerPayload({ ...valid, rating: '', tags: null, emoji: null }).marker;
+    assert.deepEqual([cleared.rating, cleared.tags, cleared.emoji], [null, [], null]);
+    assert.equal(normalizeTag(42), '');
+    for (const emoji of ['😀', '🇫🇷', '👨‍👩‍👧‍👦', '1️⃣', '🏴󠁧󠁢󠁥󠁮󠁧󠁿', '👍🏽']) assert.ok(isSingleEmoji(emoji), emoji);
+    for (const text of ['a', '1', '#', '😀😀', '🇫', 'x😀', ' ', '😀'.repeat(17)]) assert.ok(!isSingleEmoji(text), text);
 });
 
 test('parseMarkerPayload reads visits only when asked to', () => {
