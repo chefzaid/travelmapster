@@ -24,7 +24,7 @@ test('create, list, update and delete a marker', async () => {
     assert.equal(created.status, 201);
     assert.equal(typeof created.body.id, 'number');
     const { visits, ...place } = created.body;
-    assert.deepEqual({ ...place, id: undefined }, { ...sampleMarker, id: undefined });
+    assert.deepEqual({ ...place, id: undefined }, { ...sampleMarker, id: undefined, rating: null, tags: [], emoji: null });
     assert.equal(visits.length, 1, 'the travel date becomes the first visit');
     assert.equal(visits[0].startDate, sampleMarker.travelDate);
 
@@ -108,4 +108,89 @@ test('deleting a user cascades to their markers', async () => {
     const { rows } = await ctx.pool.query('SELECT count(*)::int AS count FROM markers WHERE user_id = $1', [body.user.id]);
     assert.equal(rows[0].count, 0);
     assert.equal((await client.get('/api/auth/me')).status, 401, 'stale sessions are logged out');
+});
+
+test('a place keeps a rating, tags and an emoji, and older clients leave them alone', async () => {
+    const client = createClient(ctx.server);
+    await client.register('rater', 'rater password');
+    const created = await client.post('/api/markers', {
+        ...sampleMarker, rating: 4, tags: ['Food', ' street   food ', 'food', 'café & bar'], emoji: ' 🥐 '
+    });
+    assert.equal(created.status, 201);
+    assert.equal(created.body.rating, 4);
+    assert.deepEqual(created.body.tags, ['food', 'street food', 'café & bar'], 'tags are lowercased and deduplicated');
+    assert.equal(created.body.emoji, '🥐');
+
+    // The previous release's tabs send only the fields they know: the details stay.
+    const renamed = await client.patch(`/api/markers/${created.body.id}`, { ...sampleMarker, name: 'Paris again' });
+    assert.equal(renamed.status, 200);
+    assert.deepEqual([renamed.body.rating, renamed.body.tags, renamed.body.emoji], [4, ['food', 'street food', 'café & bar'], '🥐']);
+
+    const changed = await client.patch(`/api/markers/${created.body.id}`, { ...sampleMarker, rating: 5, tags: ['hiking'], emoji: '👨‍👩‍👧‍👦' });
+    assert.deepEqual([changed.body.rating, changed.body.tags, changed.body.emoji], [5, ['hiking'], '👨‍👩‍👧‍👦']);
+    const cleared = await client.patch(`/api/markers/${created.body.id}`, { ...sampleMarker, rating: null, tags: [], emoji: '' });
+    assert.deepEqual([cleared.body.rating, cleared.body.tags, cleared.body.emoji], [null, [], null]);
+
+    for (const emoji of ['🇯🇵', '#️⃣', '🏳️‍🌈', '❤️']) {
+        const res = await client.patch(`/api/markers/${created.body.id}`, { ...sampleMarker, emoji });
+        assert.equal(res.body.emoji, emoji, emoji);
+    }
+
+    // The previous release writes markers without the new columns.
+    const { rows: [user] } = await ctx.pool.query("SELECT id FROM users WHERE username = 'rater'");
+    const { rows: [old] } = await ctx.pool.query(
+        `INSERT INTO markers (user_id, lat, lng, type, name, category) VALUES ($1, 1, 2, 'visited', 'Old release', 'City') RETURNING id`,
+        [user.id]
+    );
+    await ctx.pool.query("UPDATE markers SET rating = 3, tags = '{work}' WHERE id = $1", [old.id]);
+    await ctx.pool.query("UPDATE markers SET name = 'Old release, renamed', notes = 'n' WHERE id = $1", [old.id]);
+    const listed = (await client.get('/api/markers')).body.find(marker => marker.id === old.id);
+    assert.deepEqual([listed.rating, listed.tags, listed.emoji], [3, ['work'], null]);
+});
+
+test('invalid ratings, tags and emoji are rejected', async () => {
+    const client = createClient(ctx.server);
+    await client.register('detail_validator', 'detail validator password');
+    const { body: marker } = await client.post('/api/markers', sampleMarker);
+    const cases = [
+        { rating: 0 },
+        { rating: 6 },
+        { rating: 4.5 },
+        { rating: '4' },
+        { tags: 'food' },
+        { tags: [42] },
+        { tags: ['x'.repeat(25)] },
+        { tags: ['-dash'] },
+        { tags: ['semi;colon'] },
+        { tags: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'] },
+        { emoji: 'a' },
+        { emoji: '1' },
+        { emoji: '😀😀' },
+        { emoji: 'x😀' },
+        { emoji: 7 },
+        { emoji: '<script>' }
+    ];
+    for (const override of cases) {
+        const res = await client.post('/api/markers', { ...sampleMarker, ...override });
+        assert.equal(res.status, 400, `expected 400 for ${JSON.stringify(override)}`);
+        assert.ok(res.body.error);
+        assert.equal((await client.patch(`/api/markers/${marker.id}`, { ...sampleMarker, ...override })).status, 400);
+    }
+    // The schema holds the limits too.
+    await assert.rejects(ctx.pool.query('UPDATE markers SET rating = 9 WHERE id = $1', [marker.id]));
+    await assert.rejects(ctx.pool.query("UPDATE markers SET tags = ARRAY['a','b','c','d','e','f','g','h','i'] WHERE id = $1", [marker.id]));
+    await assert.rejects(ctx.pool.query("UPDATE markers SET tags = ARRAY[''] WHERE id = $1", [marker.id]));
+});
+
+test('public maps never share ratings, tags or emoji', async () => {
+    const owner = createClient(ctx.server);
+    await owner.register('public_rater', 'public rater password');
+    await owner.post('/api/markers', { ...sampleMarker, rating: 2, tags: ['work', 'secret tag'], emoji: '🏥' });
+    await owner.patch('/api/profile', { profileVisibility: 'public' });
+    const profile = await createClient(ctx.server).get('/api/public/public_rater');
+    assert.equal(profile.status, 200);
+    const [shared] = profile.body.markers;
+    assert.equal(shared.name, sampleMarker.name);
+    for (const field of ['rating', 'tags', 'emoji', 'notes', 'photoUrl']) assert.equal(shared[field], undefined, field);
+    assert.doesNotMatch(JSON.stringify(profile.body), /secret tag|🏥/);
 });

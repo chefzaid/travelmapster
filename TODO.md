@@ -95,7 +95,6 @@ Everyday features that make the free atlas worth opening again; the paid work ab
 
 ### Places
 
-- [ ] Ratings, tags (food, hiking, family, work) and a custom emoji per pin, usable as list and map filters.
 - [ ] Bulk marking: select several countries on the map or a whole continent from the list in one step.
 - [ ] Import from other travel map apps (Been, Visited, Polarsteps exports) with a preview before saving.
 - [ ] Wishlist priority and a "when to go" month, with a list of wishlist places sorted by next suitable month.

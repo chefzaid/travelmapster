@@ -12,6 +12,17 @@ const NOTES_MAX_LENGTH = 2000;
 const PHOTO_URL_MAX_LENGTH = 2048;
 const IMPORT_MAX_MARKERS = 1000;
 const VISITS_MAX_PER_PLACE = 500;
+const RATING_MIN = 1;
+const RATING_MAX = 5;
+const TAGS_MAX_PER_PLACE = 8;
+const TAG_MAX_LENGTH = 24;
+// Letters and digits in any script, with inner spaces, dashes, apostrophes or ampersands.
+const TAG_PATTERN = /^[\p{L}\p{N}](?:[\p{L}\p{N} &'-]*[\p{L}\p{N}])?$/u;
+// Long ZWJ sequences (families, kisses with skin tones) stay under 16 code points.
+const EMOJI_MAX_CODE_POINTS = 16;
+// Emoji components include the zero-width joiner, variation selector 16 and the keycap.
+const EMOJI_PATTERN = /^[\p{Extended_Pictographic}\p{Emoji_Component}]+$/u;
+const graphemes = new Intl.Segmenter('en', { granularity: 'grapheme' });
 const TRIP_SLOTS = ['morning', 'afternoon', 'evening'];
 const TRIP_MAX_DAYS = 30;
 const TRIP_SLOT_MAX_LENGTH = 500;
@@ -133,6 +144,61 @@ function parseVisitList(value) {
     return { visits };
 }
 
+/** Lowercased, trimmed and with single spaces, so "Street  Food" and "street food" match. */
+function normalizeTag(value) {
+    return typeof value === 'string' ? value.trim().replace(/\s+/g, ' ').toLowerCase() : '';
+}
+
+function parseTags(value) {
+    if (value === null) return { tags: [] };
+    if (!Array.isArray(value)) return { error: 'Tags must be an array of words.' };
+    const tags = [...new Set(value.map(normalizeTag))];
+    if (tags.length > TAGS_MAX_PER_PLACE) return { error: `A place can have at most ${TAGS_MAX_PER_PLACE} tags.` };
+    if (!tags.every(tag => tag.length <= TAG_MAX_LENGTH && TAG_PATTERN.test(tag))) {
+        return { error: `Tags are 1 to ${TAG_MAX_LENGTH} letters or digits, with spaces, dashes, apostrophes or ampersands inside.` };
+    }
+    return { tags };
+}
+
+/** One emoji: a single grapheme made only of emoji characters (flags, keycaps and ZWJ sequences included). */
+function isSingleEmoji(value) {
+    if ([...value].length > EMOJI_MAX_CODE_POINTS || !EMOJI_PATTERN.test(value)) return false;
+    // Emoji_Component alone also matches plain digits, # and *: a keycap or flag needs its partner.
+    if (!/[\p{Extended_Pictographic}\u20E3]|\p{Regional_Indicator}{2}/u.test(value)) return false;
+    let count = 0;
+    for (const segment of graphemes.segment(value)) {
+        count += 1;
+        if (count > 1 || !segment.segment) return false;
+    }
+    return count === 1;
+}
+
+/**
+ * Optional details of a place (ADR 0012). A field left out stays undefined, so an update
+ * from an older client keeps what is stored; null or an empty value clears it.
+ */
+function parsePlaceDetails(body) {
+    const details = {};
+    if (body.rating !== undefined) {
+        if (body.rating === null || body.rating === '') details.rating = null;
+        else if (Number.isInteger(body.rating) && body.rating >= RATING_MIN && body.rating <= RATING_MAX) details.rating = body.rating;
+        else return { error: `Rating must be a whole number from ${RATING_MIN} to ${RATING_MAX}.` };
+    }
+    if (body.tags !== undefined) {
+        const { tags, error } = parseTags(body.tags);
+        if (error) return { error };
+        details.tags = tags;
+    }
+    if (body.emoji !== undefined) {
+        const emoji = body.emoji === null ? '' : body.emoji;
+        if (typeof emoji !== 'string') return { error: 'Emoji must be text.' };
+        const trimmed = emoji.trim();
+        if (trimmed && !isSingleEmoji(trimmed)) return { error: 'Emoji must be a single emoji.' };
+        details.emoji = trimmed || null;
+    }
+    return { details };
+}
+
 /**
  * Validates a place. With `withVisits`, an optional `visits` array is parsed too
  * (creating and importing); updates manage visits through their own routes. A
@@ -178,6 +244,8 @@ function parseMarkerPayload(body, { withVisits = false } = {}) {
     }
     const error = photoUrlError(photoUrl);
     if (error) return { error };
+    const { details, error: detailsError } = parsePlaceDetails(body);
+    if (detailsError) return { error: detailsError };
 
     const marker = {
         lat,
@@ -187,7 +255,8 @@ function parseMarkerPayload(body, { withVisits = false } = {}) {
         category,
         photoUrl: photoUrl || null,
         notes: notes || null,
-        travelDate: body.travelDate === undefined ? undefined : travelDate || null
+        travelDate: body.travelDate === undefined ? undefined : travelDate || null,
+        ...details
     };
     if (withVisits && body.visits !== undefined && body.visits !== null) {
         const { visits, error: visitError } = parseVisitList(body.visits);
@@ -368,7 +437,9 @@ module.exports = {
     IMPORT_MAX_MARKERS,
     USERNAME_PATTERN,
     VISITS_MAX_PER_PLACE,
+    isSingleEmoji,
     isValidTravelDate,
+    normalizeTag,
     normalizeText,
     parseCredentials,
     parseLedgerSettings,

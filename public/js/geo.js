@@ -242,24 +242,33 @@ export function nextRankFor(visitedCountries) {
     return RANKS.find(rank => rank.min > visitedCountries) || null;
 }
 
-export function computeStats(markers, index, { trips = 0 } = {}) {
-    const visited = new Set();
-    const wishlist = new Set();
-    const cityCountries = new Set();
-    const markerCountry = new Map();
-
+/**
+ * Which countries the map colors in for these places: visited (some only through a city)
+ * and wishlist, where a visit wins over a wish.
+ */
+export function countryStatus(markers, countryOf) {
+    const visitedIds = new Set();
+    const wishlistIds = new Set();
+    const cityOnlyIds = new Set();
     for (const marker of markers) {
-        const country = resolveMarkerCountry(index, marker);
-        markerCountry.set(marker.id, country);
+        const country = countryOf(marker);
         if (!country) continue;
         if (marker.type === 'visited') {
-            visited.add(country.id);
-            if (marker.category === 'City') cityCountries.add(country.id);
+            visitedIds.add(country.id);
+            if (marker.category === 'City') cityOnlyIds.add(country.id);
         } else {
-            wishlist.add(country.id);
+            wishlistIds.add(country.id);
         }
     }
-    for (const id of visited) wishlist.delete(id);
+    for (const id of visitedIds) wishlistIds.delete(id);
+    return { visitedIds, wishlistIds, cityOnlyIds };
+}
+
+export function computeStats(markers, index, { trips = 0 } = {}) {
+    const markerCountry = new Map();
+    for (const marker of markers) markerCountry.set(marker.id, resolveMarkerCountry(index, marker));
+    const { visitedIds: visited, wishlistIds: wishlist, cityOnlyIds: cityCountries } =
+        countryStatus(markers, marker => markerCountry.get(marker.id));
 
     const continents = CONTINENTS.map(name => {
         const total = index.countries.filter(country => country.continent === name).length;

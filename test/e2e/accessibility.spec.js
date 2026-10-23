@@ -55,6 +55,16 @@ for (const colorScheme of ['light', 'dark']) {
         await expect(page.locator('.card-popup .visit')).toHaveCount(1);
         await page.waitForTimeout(500);
         await expectAccessible(page, 'place card with a visit');
+
+        // Rating, emoji and tags (ADR 0012).
+        await page.locator('.card-popup .link-btn', { hasText: 'Edit details' }).click();
+        await expect(page.locator('dialog.dialog')).toBeVisible();
+        await page.selectOption('#dialog-rating', '5');
+        await page.getByRole('button', { name: 'Use 🍜' }).click();
+        await page.locator('.choice-chip', { hasText: '#food' }).click();
+        await expectAccessible(page, 'place details dialog');
+        await page.getByRole('button', { name: 'Save changes' }).click();
+        await expect(page.locator('dialog.dialog')).toHaveCount(0);
         await page.keyboard.press('Escape');
 
         for (const tab of ['explore', 'places', 'ledger', 'trips', 'passport']) {
@@ -62,6 +72,14 @@ for (const colorScheme of ['light', 'dark']) {
             await expect(page.locator(`#${tab}-tab`)).toBeVisible();
             await expectAccessible(page, `${tab} tab`);
         }
+
+        // A tag filter narrows the list and the map, and the legend offers to clear it.
+        await page.click('#tab-places');
+        await page.selectOption('#tag-filter', 'food');
+        await expect(page.locator('#legend-detail-filter')).toBeVisible();
+        await expectAccessible(page, 'places filtered by tag');
+        await page.click('#legend-detail-filter');
+        await expect(page.locator('#legend-detail-filter')).toBeHidden();
 
         // Day ledger: a rule dialog and the printable evidence report.
         await page.click('#tab-ledger');

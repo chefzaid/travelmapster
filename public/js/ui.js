@@ -78,12 +78,48 @@ export function confirmDialog({ title, message, confirmLabel = 'Confirm', danger
     });
 }
 
+// Several checkboxes drawn as chips in a fieldset; the form returns the checked values.
+function choicesField(field) {
+    const chosen = new Set(field.value || []);
+    return h('fieldset', { class: 'field choices', id: `dialog-${field.name}` },
+        h('legend', {}, field.label),
+        h('div', { class: 'choice-row' }, field.options.map(option => h('label', { class: 'choice-chip' },
+            h('input', { type: 'checkbox', name: field.name, value: option.value, checked: chosen.has(option.value) }),
+            h('span', {}, option.label)))),
+        field.hint ? h('small', {}, field.hint) : null);
+}
+
+// A short text input with one-tap choices that fill it in, such as a pin's emoji.
+function pickerField(field, id) {
+    const input = h('input', { id, name: field.name, value: field.value ?? '', maxlength: field.maxlength, placeholder: field.placeholder, autocomplete: 'off' });
+    const pick = value => () => {
+        input.value = value;
+        input.focus();
+    };
+    return h('div', { class: 'field' },
+        h('label', { for: id }, field.label),
+        input,
+        h('div', { class: 'choice-row', role: 'group', 'aria-label': field.choicesLabel },
+            field.choices.map(choice => h('button', { type: 'button', class: 'choice-pick', 'aria-label': `Use ${choice}`, onclick: pick(choice) }, choice)),
+            h('button', { type: 'button', class: 'choice-pick choice-clear', onclick: pick('') }, 'None')),
+        field.hint ? h('small', {}, field.hint) : null);
+}
+
 // Opens a modal containing a form; resolves with FormData values or null when cancelled.
+// Fields of type 'choices' resolve to the list of checked values.
 export function formDialog({ title, message, fields, submitLabel = 'Save', danger = false }) {
     return new Promise(resolve => {
         const form = h('form', { method: 'dialog', class: 'dialog-body' }, h('h3', {}, title), message ? h('p', {}, message) : null);
         for (const field of fields) {
             const id = `dialog-${field.name}`;
+            if (field.type === 'choices') {
+                form.append(choicesField(field));
+                continue;
+            }
+            if (field.type === 'picker') {
+                form.append(pickerField(field, id));
+                continue;
+            }
             if (field.type === 'checkbox') {
                 form.append(h('label', { class: 'field field-check', for: id },
                     h('input', { id, name: field.name, type: 'checkbox', checked: Boolean(field.value) }),
@@ -121,7 +157,12 @@ export function formDialog({ title, message, fields, submitLabel = 'Save', dange
         ));
         const dialog = h('dialog', { class: 'dialog' }, form);
         dialog.addEventListener('close', () => {
-            const values = dialog.returnValue === 'save' ? Object.fromEntries(new FormData(form)) : null;
+            let values = null;
+            if (dialog.returnValue === 'save') {
+                const data = new FormData(form);
+                values = Object.fromEntries(data);
+                for (const field of fields.filter(item => item.type === 'choices')) values[field.name] = data.getAll(field.name);
+            }
             resolve(values);
             dialog.remove();
         });

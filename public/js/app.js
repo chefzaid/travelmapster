@@ -1,8 +1,12 @@
 import { api } from './api.js';
-import { createCountryIndex, computeStats, searchCities, formatPopulation, CONTINENTS, CONTINENT_EMOJI, flagEmoji } from './geo.js';
+import { createCountryIndex, computeStats, countryStatus, searchCities, formatPopulation, CONTINENTS, CONTINENT_EMOJI, flagEmoji } from './geo.js';
 import { createTravelMap } from './map.js';
 import { h, $, $all, fill, toast, confirmDialog, formDialog, formatDate } from './ui.js';
 import { checkVisit, formatVisitDates, sortVisits, lastVisitDate, visitCountLabel, visitDays } from './visits.js';
+import {
+    EMOJI_CHOICES, checkDetails, describeDetailFilter, detailFilterActive, knownTags, matchesDetails, parseRating,
+    ratingLabel, splitTags, stars
+} from './details.js';
 import { fetchIdeas } from './ideas.js';
 import { renderPlaces } from './places.js';
 import { renderTrips, openNewTrip } from './trips.js';
@@ -22,7 +26,8 @@ const state = {
     publicUser: null,
     // Signed out, the map shows a sample traveler that visitors can try; nothing is saved.
     demo: false,
-    filters: { visited: true, wishlist: true },
+    // The legend's status toggles, and the tag and rating filter shared by the map and the Places tab.
+    filters: { visited: true, wishlist: true, tag: 'all', rating: 'all' },
     activeTab: 'explore',
     ideas: null,
     unlocked: null,
@@ -66,14 +71,37 @@ function cityMarkerFor(city) {
 }
 
 function visibleMarkers() {
-    return state.markers.filter(marker => state.filters[marker.type]);
+    return state.markers.filter(marker => state.filters[marker.type] && matchesDetails(marker, state.filters));
+}
+
+// Colors countries and draws pins for the places that pass the legend and the tag and
+// rating filter; the legend counts and the passport always count every place.
+function applyFilters() {
+    const filter = state.filters.visited && state.filters.wishlist ? 'all' : state.filters.visited ? 'visited' : state.filters.wishlist ? 'wishlist' : 'none';
+    const filtered = detailFilterActive(state.filters);
+    const status = filtered
+        ? countryStatus(state.markers.filter(marker => matchesDetails(marker, state.filters)), marker => state.stats.markerCountry.get(marker.id))
+        : state.stats;
+    travelMap.setCountryStatus(status, filter);
+    travelMap.setPins(visibleMarkers());
+    const clear = $('#legend-detail-filter');
+    clear.hidden = !filtered;
+    if (filtered) {
+        const description = describeDetailFilter(state.filters);
+        clear.querySelector('.legend-filter-text').textContent = description;
+        clear.setAttribute('aria-label', `Map filtered to ${description}. Clear the filter`);
+    }
+}
+
+function setDetailFilter(changes) {
+    Object.assign(state.filters, changes);
+    applyFilters();
+    renderActiveTab();
 }
 
 function refresh({ celebrateNew = true } = {}) {
     state.stats = computeStats(state.markers, state.index, { trips: state.trips.length });
-    const filter = state.filters.visited && state.filters.wishlist ? 'all' : state.filters.visited ? 'visited' : state.filters.wishlist ? 'wishlist' : 'none';
-    travelMap.setCountryStatus(state.stats, filter);
-    travelMap.setPins(visibleMarkers());
+    applyFilters();
     $('#legend-visited').textContent = state.stats.visitedCountries;
     $('#legend-wishlist').textContent = state.stats.wishlistCountries;
 
@@ -212,32 +240,61 @@ async function setStatus(existing, place, type) {
     }
 }
 
+const RATING_OPTIONS = [
+    { value: '', label: 'Not rated' },
+    { value: '1', label: '★ 1 · Not for me' },
+    { value: '2', label: '★★ 2 · It was OK' },
+    { value: '3', label: '★★★ 3 · Good' },
+    { value: '4', label: '★★★★ 4 · Great' },
+    { value: '5', label: '★★★★★ 5 · Loved it' }
+];
+
+function placeFormFields(draft) {
+    // The suggested tags and the traveler's most used ones, plus any this place already has.
+    const tagOptions = [...new Set([...knownTags(state.markers).slice(0, 16), ...draft.tags])];
+    return [
+        { name: 'name', label: 'Name', value: draft.name, required: true, maxlength: 160 },
+        { name: 'type', label: 'Status', type: 'select', value: draft.type, options: [
+            { value: 'visited', label: '✓ Been there' },
+            { value: 'wishlist', label: '♥ Wishlist' }
+        ] },
+        { name: 'rating', label: 'Rating', type: 'select', value: draft.rating ? String(draft.rating) : '', options: RATING_OPTIONS },
+        { name: 'emoji', label: 'Pin emoji', type: 'picker', value: draft.emoji || '', maxlength: 32, placeholder: 'Type or paste one emoji',
+            choices: EMOJI_CHOICES, choicesLabel: 'Quick emoji', hint: 'Shown on the city pin and in your list.' },
+        { name: 'tags', label: 'Tags', type: 'choices', value: draft.tags, options: tagOptions.map(tag => ({ value: tag, label: `#${tag}` })) },
+        { name: 'otherTags', label: 'Other tags', value: draft.otherTags || '', maxlength: 200, placeholder: 'street art, road trip',
+            hint: 'Separate tags with commas; at most 8 per place.' },
+        { name: 'notes', label: 'Notes about this place', type: 'textarea', value: draft.notes || '', maxlength: 2000, placeholder: 'Why you love it, tips, what to try…' },
+        { name: 'photoUrl', label: 'Photo link', type: 'url', value: draft.photoUrl || '', placeholder: 'https://…', hint: 'Link to a photo hosted anywhere (HTTP or HTTPS). Dates go on each visit.' }
+    ];
+}
+
+// A mistake reopens the form with what was typed, like the visit form.
 async function editPlace(marker) {
-    const values = await formDialog({
-        title: `Edit ${marker.name}`,
-        submitLabel: 'Save changes',
-        fields: [
-            { name: 'name', label: 'Name', value: marker.name, required: true, maxlength: 160 },
-            { name: 'type', label: 'Status', type: 'select', value: marker.type, options: [
-                { value: 'visited', label: '✓ Been there' },
-                { value: 'wishlist', label: '♥ Wishlist' }
-            ] },
-            { name: 'notes', label: 'Notes about this place', type: 'textarea', value: marker.notes || '', maxlength: 2000, placeholder: 'Why you love it, tips, what to try…' },
-            { name: 'photoUrl', label: 'Photo link', type: 'url', value: marker.photoUrl || '', placeholder: 'https://…', hint: 'Link to a photo hosted anywhere (HTTP or HTTPS). Dates go on each visit.' }
-        ]
-    });
-    if (!values) return;
-    try {
-        await updatePlace(marker, {
-            name: values.name.trim(),
-            type: values.type,
-            notes: values.notes.trim(),
-            photoUrl: values.photoUrl.trim()
-        });
-        toast(`Saved ${marker.name}.`, { tone: 'success' });
-        travelMap.closePopup();
-    } catch (error) {
-        handleError(error);
+    let draft = { ...marker, tags: marker.tags || [] };
+    for (;;) {
+        const values = await formDialog({ title: `Edit ${marker.name}`, submitLabel: 'Save changes', fields: placeFormFields(draft) });
+        if (!values) return;
+        const { details, error } = checkDetails({ rating: values.rating, tags: [...values.tags, ...splitTags(values.otherTags)], emoji: values.emoji });
+        if (error) {
+            toast(error, { tone: 'error' });
+            draft = { ...draft, ...values, rating: parseRating(values.rating) ?? null };
+            continue;
+        }
+        try {
+            await updatePlace(marker, {
+                name: values.name.trim(),
+                type: values.type,
+                notes: values.notes.trim(),
+                photoUrl: values.photoUrl.trim(),
+                ...details
+            });
+            toast(`Saved ${marker.name}.`, { tone: 'success' });
+            travelMap.closePopup();
+        } catch (error) {
+            handleError(error);
+        }
+        return;
     }
 }
 
@@ -386,9 +443,23 @@ function visitsSection(marker) {
     );
 }
 
+// Rating, emoji and tags of a saved place, shown when it has any.
+function detailsRow(marker) {
+    const tags = marker.tags || [];
+    if (!marker.rating && !marker.emoji && !tags.length) return null;
+    return h('div', { class: 'card-details' },
+        marker.emoji ? h('span', { class: 'card-emoji', title: 'Pin emoji' }, marker.emoji) : null,
+        marker.rating ? h('span', { class: 'stars' },
+            h('span', { 'aria-hidden': 'true' }, stars(marker.rating)),
+            h('span', { class: 'visually-hidden' }, ratingLabel(marker.rating))) : null,
+        tags.length ? h('ul', { class: 'tag-list', 'aria-label': 'Tags' }, tags.map(tag => h('li', { class: 'tag' }, `#${tag}`))) : null
+    );
+}
+
 function savedDetails(marker) {
     if (!marker) return null;
     return h('div', { class: 'card-saved' },
+        detailsRow(marker),
         visitsSection(marker),
         marker.notes ? h('p', { class: 'card-notes' }, marker.notes) : null,
         marker.photoUrl ? h('a', { href: marker.photoUrl, target: '_blank', rel: 'noopener noreferrer', class: 'card-photo' },
@@ -846,7 +917,10 @@ function renderActiveTab() {
     if (!state.user || !state.stats) return;
     const container = $(`#${state.activeTab}-tab`);
     const scroll = $('#panel').scrollTop;
+    // A filter that re-renders its own tab keeps the keyboard focus on it.
+    const focusedId = container.contains(document.activeElement) ? document.activeElement.id : '';
     TAB_RENDERERS[state.activeTab](container);
+    if (focusedId) document.getElementById(focusedId)?.focus({ preventScroll: true });
     $('#panel').scrollTop = scroll;
 }
 
@@ -1133,6 +1207,7 @@ function setupPanel() {
 }
 
 function setupLegend() {
+    $('#legend-detail-filter').addEventListener('click', () => setDetailFilter({ tag: 'all', rating: 'all' }));
     for (const button of $all('.legend-item[data-filter]')) {
         button.addEventListener('click', () => {
             const key = button.dataset.filter;
@@ -1153,6 +1228,7 @@ const context = {
     updatePlace,
     removePlace,
     editPlace,
+    setDetailFilter,
     showMarker,
     showIdeas,
     handleError,
