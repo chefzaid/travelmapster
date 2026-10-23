@@ -24,15 +24,45 @@ Everything below is implemented. Planned work lives in [TODO.md](../TODO.md).
 - One tap marks a place "Been there" or "Wishlist"; tapping again undoes it.
 - Instant search over countries and every town, with a world search for anything smaller ([place search](architecture.md#place-search)).
 - Notes and a photo link on every place.
-- Every visit to a place recorded on its own, with first and last day, notes and a photo link;
-  the card lists visits newest first, says how many times you have been ("Visited 3 times") and
-  lets you add, edit or remove a visit, with undo. Dates are plain calendar days.
+- Every visit to a place recorded on its own, with first and last day (or "still there"), notes
+  and a photo link; the card lists visits newest first, says how many times you have been
+  ("Visited 3 times") and lets you add, edit or remove a visit, with undo. Dates are plain
+  calendar days.
 - Places list grouped by continent, with filters (including the year of the last visit), text
   search over places and visit notes, and sorting by continent, name or last visit.
 - Undo after removing a place, which brings its visits back too.
 - Import and export as JSON (visits nested in each place) or CSV (one row per visit); import
   also reads files from before visits existed, and skips invalid rows and duplicates.
 - "Surprise me" flies to a country you have not visited yet.
+
+## Day Ledger
+
+The Ledger tab turns dated visits into days per country; the map itself stays as it is. The
+counting rules are in [ADR 0010](adr/0010-day-ledger.md).
+
+- **Counting rule** chosen by the traveler: *any part of a day* (arrival and departure days count,
+  the default) or the *midnight rule* (the day counts where you sleep, so the departure day and
+  day trips do not). A city visit counts for its country, once per day.
+- **Open-ended stays**: a visit can be marked "I'm still there" and counts through today; a visit
+  without a last day otherwise counts its first day only and is flagged so it can be completed.
+- **Schengen 90/180 calculator**: days left today, days used in the last 180, overstays, and how
+  long you could stay from any entry day. Members as of 2026, including Bulgaria and Romania;
+  Monaco, San Marino and the Vatican count, Cyprus, Ireland and Andorra do not.
+- **Your own stay rules**: "N days in any M-day window" for a country or a group of countries,
+  such as a visa limit.
+- **Tax residency**: 183 days in the calendar year for each country, plus your own thresholds over
+  a year starting on any day (such as the UK tax year from 6 April) or a rolling window. Each one
+  warns ahead of time, including when a stay still going on would reach it.
+- **Plan ahead**: try planned stays against every rule and threshold they touch before you go.
+- **Days per country** for any calendar year or the last 365, 180 or 90 days, and a **timeline**
+  of stays per country with the city visits behind them.
+- **Alerts** in the app: a badge on the Ledger tab, a list at its top and a reminder after
+  signing in.
+- **Evidence report** for any country and period: every counted day with the visit it comes from,
+  why it counts and the history of that visit's dates, as a printable page (print or save as PDF
+  from the browser) or CSV. It is built on the device, only when asked.
+- **Date history**: every visit date added, changed or removed is kept, with when, even after the
+  visit or place is gone.
 
 ## Trips
 
@@ -59,3 +89,6 @@ Everything below is implemented. Planned work lives in [TODO.md](../TODO.md).
 
 - No social login yet; a place or visit holds one photo link, not an album ([roadmap](../TODO.md)).
 - Photos are links to images hosted elsewhere; the app stores no files.
+- Ledger alerts are in-app only: there is no email yet. Overseas territories drawn as part of a
+  country on the map (such as French Guiana within France) count as that country, including for
+  Schengen. The date history starts with the day ledger release.

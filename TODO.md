@@ -22,12 +22,10 @@ Differentiators:
 
 - [ ] **ADR — product principles:** extend the [product principles](docs/features.md#product-principles) to cover the day ledger, keepsakes and paid tiers while keeping the map itself simple (country borders and towns only, no tiles).
 
-### Day ledger (builds on the dated visits of each place)
+### Day ledger (builds on the Ledger tab, [ADR 0010](docs/adr/0010-day-ledger.md))
 
-- [ ] Visit timeline with entry and exit dates per country and city; travel days counted by a documented, selectable rule.
-- [ ] Day counters per country per calendar year or rolling window, and a Schengen 90/180 calculator showing remaining days, with simulation of planned trips; configurable rules for other visa regimes.
-- [ ] Tax-residency thresholds (183 days and user-defined) with alerts before they are reached, and a day-by-day evidence report (PDF and CSV) listing the source of each day.
-- [ ] Edit history for visit dates, so evidence reports show what changed and when.
+- [ ] Email alerts before thresholds and stay limits are reached; alerts are in-app only until email exists (see [Accounts and trust](#accounts-and-trust-added-2026-10-23)), and scheduled checks need the background jobs below.
+- [ ] Overseas territories drawn as part of a country on the map (French Guiana, Réunion, Svalbard, Caribbean Netherlands) counted on their own, so they stop counting as Schengen days.
 - [ ] Automatic import from location-history exports and photo metadata (dates and GPS), processed in the browser and reduced to country and city before upload; the user reviews every visit before it is saved.
 
 ### Keepsakes and sharing
@@ -77,8 +75,7 @@ The field splits into scratch-map atlases (Been, Visited, Skratch), travel journ
 ## Technical foundation (added 2026-10-23)
 
 - [ ] Contract step of the places and visits split ([ADR 0009](docs/adr/0009-places-and-visits.md)): in a release after visits ship, drop the `markers.travel_date` mirror and its sync triggers, and accept `travelDate` only as an import field.
-- [ ] Ledger correctness: store visit days as local calendar dates with the destination's time zone, and test day counting against official Schengen calculator cases and property-based edge cases (leap years, overnight border crossings, open-ended stays).
-- [ ] Background jobs in PostgreSQL (`FOR UPDATE SKIP LOCKED` queue) for imports, PDF reports, poster rendering, emails and threshold alerts, keeping the single service ([ADR 0002](docs/adr/0002-single-service-build-free-frontend.md)).
+- [ ] Background jobs in PostgreSQL (`FOR UPDATE SKIP LOCKED` queue) for imports, poster rendering, emails and scheduled threshold alerts, keeping the single service ([ADR 0002](docs/adr/0002-single-service-build-free-frontend.md)).
 - [ ] OpenAPI description of the JSON API and a versioning rule, needed before mobile apps or Teams integrations.
 - [ ] Type checking of server and browser modules with JSDoc and `tsc --noEmit` in CI, without adding a build step.
 - [ ] Performance budget in CI: page weight, map data payload and Web Vitals on a mid-range phone profile; precompressed (Brotli) map data.
@@ -106,7 +103,7 @@ Everyday features that make the free atlas worth opening again; the paid work ab
 
 ### Trips
 
-- [ ] Plan a trip from a wishlist place, and let planned trip dates feed the ledger simulation.
+- [ ] Plan a trip from a wishlist place, and let planned trip dates become the ledger's planned stays.
 - [ ] Itinerary map: pins and a route per day, and drag-and-drop to reorder slots and days.
 - [ ] Multi-destination trips spanning several countries and cities, each with its own dates.
 - [ ] Completing a trip turns its destinations into visits with the trip's dates, after the user confirms.

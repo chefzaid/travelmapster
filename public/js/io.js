@@ -6,15 +6,15 @@ export { isHttpUrl, isValidDate };
 // `travelDate` is the start of the latest visit, kept so older files and releases still read it.
 export const EXPORT_FIELDS = ['id', 'lat', 'lng', 'type', 'name', 'category', 'photoUrl', 'notes', 'travelDate'];
 // CSV has one row per visit; JSON nests the visits in each place.
-export const VISIT_FIELDS = ['visitStartDate', 'visitEndDate', 'visitNotes', 'visitPhotoUrl'];
+export const VISIT_FIELDS = ['visitStartDate', 'visitEndDate', 'visitNotes', 'visitPhotoUrl', 'visitOngoing'];
 const CSV_FIELDS = [...EXPORT_FIELDS, ...VISIT_FIELDS];
 
 function escapeCsvField(value) {
     return `"${String(value ?? '').replace(/"/g, '""')}"`;
 }
 
-function exportVisit({ startDate, endDate, notes, photoUrl }) {
-    return { startDate, endDate: endDate || '', notes: notes || '', photoUrl: photoUrl || '' };
+function exportVisit({ startDate, endDate, notes, photoUrl, ongoing }) {
+    return { startDate, endDate: endDate || '', notes: notes || '', photoUrl: photoUrl || '', ongoing: Boolean(ongoing) };
 }
 
 export function buildJson(markers) {
@@ -33,7 +33,7 @@ export function buildCsv(markers) {
         const visits = sortVisits(marker.visits).map(exportVisit);
         // A place without visits still gets one row, with empty visit columns.
         for (const visit of visits.length ? visits : [null]) {
-            rows.push([...place, visit?.startDate, visit?.endDate, visit?.notes, visit?.photoUrl]);
+            rows.push([...place, visit?.startDate, visit?.endDate, visit?.notes, visit?.photoUrl, visit?.ongoing ? 'yes' : '']);
         }
     }
     return rows.map(row => row.map(escapeCsvField).join(',')).join('\r\n');
@@ -117,7 +117,10 @@ function text(value) {
 function recordVisits(record) {
     if (Array.isArray(record?.visits)) return record.visits;
     if (text(record?.visitStartDate) || text(record?.visitEndDate) || text(record?.visitNotes) || text(record?.visitPhotoUrl)) {
-        return [{ startDate: record.visitStartDate, endDate: record.visitEndDate, notes: record.visitNotes, photoUrl: record.visitPhotoUrl }];
+        return [{
+            startDate: record.visitStartDate, endDate: record.visitEndDate, notes: record.visitNotes,
+            photoUrl: record.visitPhotoUrl, ongoing: record.visitOngoing
+        }];
     }
     const travelDate = text(record?.travelDate);
     return travelDate ? [{ startDate: travelDate }] : [];
@@ -154,7 +157,7 @@ export function validatePlace(record) {
     return place;
 }
 
-const visitKey = visit => [visit.startDate, visit.endDate, visit.notes, visit.photoUrl].join('|');
+const visitKey = visit => [visit.startDate, visit.endDate, visit.ongoing, visit.notes, visit.photoUrl].join('|');
 
 /** Joins records of the same place (one CSV row per visit), dropping repeated visits. */
 export function mergePlaces(places) {

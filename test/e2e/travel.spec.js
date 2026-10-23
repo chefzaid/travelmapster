@@ -25,7 +25,8 @@ async function signUp(page, username) {
     await page.fill('#auth-username', username);
     await page.fill('#auth-password', 'end to end password');
     await page.click('#auth-submit');
-    await expect(page.locator('#main-view')).toBeVisible();
+    // Two bcrypt hashes and the first map render can take a while on a busy CI runner.
+    await expect(page.locator('#main-view')).toBeVisible({ timeout: 15_000 });
     await expect(page.locator('#account-name')).toHaveText(username);
 }
 
@@ -115,6 +116,80 @@ test('a traveler records several visits to the same city', async ({ page }) => {
     await expect(page.locator('#places-tab')).toContainText('Nothing matches those filters.');
     await page.locator('#last-visit-filter').selectOption('2023');
     await expect(page.locator('#places-tab .place')).toHaveCount(1);
+    expect(errors).toEqual([]);
+});
+
+// Dates relative to the browser's own today, as the ledger counts them.
+function browserDay(page, offset) {
+    return page.evaluate(days => {
+        const date = new Date();
+        date.setDate(date.getDate() + days);
+        const pad = value => String(value).padStart(2, '0');
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+    }, offset);
+}
+
+test('a traveler counts Schengen days, tries a plan, gets an alert and prints evidence', async ({ page }) => {
+    const errors = trackErrors(page);
+    await signUp(page, `e2e_ledger_${Date.now()}`);
+    await markCity(page, 'Lisbon');
+
+    // In Lisbon for the last ten days and still there.
+    await page.locator('.card-popup .visit-add').click();
+    await page.fill('#dialog-startDate', await browserDay(page, -9));
+    await page.check('#dialog-ongoing');
+    await page.getByRole('button', { name: 'Add visit' }).click();
+    await expect(page.locator('.card-popup .visit')).toContainText('still there');
+
+    await page.click('#tab-ledger');
+    const ledger = page.locator('#ledger-tab');
+    await expect(ledger.locator('.days-left strong')).toHaveText('80');
+    await expect(ledger.locator('.timeline-stay').first()).toContainText('Portugal');
+    await expect(ledger.locator('.timeline-stay').first()).toContainText('10 days');
+
+    // Eighty-five more days in Spain would break 90/180.
+    await ledger.getByRole('button', { name: '＋ Plan a stay' }).click();
+    await page.locator('#dialog-countryId').selectOption('ESP');
+    await page.fill('#dialog-startDate', await browserDay(page, 10));
+    await page.fill('#dialog-endDate', await browserDay(page, 94));
+    await page.getByRole('button', { name: 'Add to plan' }).click();
+    await expect(ledger.locator('.plan-outcomes')).toContainText('Schengen 90/180: over the limit');
+
+    // A threshold of ten days in Portugal is reached today.
+    await ledger.getByRole('button', { name: '＋ Add a threshold' }).click();
+    await page.fill('#dialog-name', 'Portugal test');
+    await page.fill('#dialog-countries', 'Portugal');
+    await page.fill('#dialog-maxDays', '10');
+    await page.fill('#dialog-warnDays', '0');
+    await page.getByRole('button', { name: 'Add rule' }).click();
+    await expect(ledger.locator('.ledger-alerts')).toContainText('Portugal test reached');
+    await expect(page.locator('#ledger-alert-count')).toBeVisible();
+
+    await ledger.getByLabel(/Midnight rule/).check();
+    await expect(ledger.getByLabel(/Midnight rule/)).toBeChecked();
+
+    // The evidence lists each day with the visit behind it, and the visit's date history.
+    await expect(ledger.locator('.history')).toContainText('Added');
+    await ledger.getByRole('button', { name: /View report/ }).click();
+    const report = page.locator('#report-view');
+    await expect(report).toBeVisible();
+    await expect(report.locator('tbody tr')).toHaveCount(1 + 10 + 1);
+    await expect(report).toContainText('Arrival day; still there');
+    const download = page.waitForEvent('download');
+    await report.getByRole('button', { name: /CSV/ }).click();
+    const csv = await (await download).createReadStream().then(stream => stream.toArray()).then(chunks => Buffer.concat(chunks).toString());
+    expect(csv.split('\r\n')).toHaveLength(11);
+    expect(csv).toContain('"Lisbon, Portugal"');
+    await page.keyboard.press('Escape');
+    await expect(report).toBeHidden();
+
+    // Settings and plans live in the account.
+    await page.reload();
+    await expect(page.locator('#main-view')).toBeVisible();
+    await page.click('#tab-ledger');
+    await expect(ledger.locator('.plan-outcomes')).toContainText('over the limit');
+    await expect(ledger.getByLabel(/Midnight rule/)).toBeChecked();
+    await expect(page.locator('.toast', { hasText: 'Day ledger' })).toBeVisible();
     expect(errors).toEqual([]);
 });
 

@@ -7,9 +7,10 @@
 ![CI](https://github.com/chefzaid/travelmapster/actions/workflows/ci.yml/badge.svg)
 
 TravelMapster is a playful travel atlas. Color in the countries you have visited, pin the
-cities you love, keep a wishlist of dream trips and plan day-by-day itineraries. One Node.js
-service serves the cartoon map and its JSON API from PostgreSQL, and runs on the platform
-supplied by [`swirl-cloud`](https://github.com/chefzaid/swirl-cloud).
+cities you love, keep a wishlist of dream trips, plan day-by-day itineraries and count the days
+you spend in each country for Schengen and tax-residency limits. One Node.js service serves the
+cartoon map and its JSON API from PostgreSQL, and runs on the platform supplied by
+[`swirl-cloud`](https://github.com/chefzaid/swirl-cloud).
 
 ## Quick Start
 

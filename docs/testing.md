@@ -5,10 +5,10 @@
 | Layer | Location | Runs against |
 |---|---|---|
 | Unit | `test/unit/` | Config, CSRF, geocoder and validation, without I/O |
-| Frontend logic | `test/frontend.test.js` | Pure browser modules (`geo.js`, `io.js`, `visits.js`, `ideas.js`) and the map data, including every tile |
-| Integration | `test/integration/` | The real Express app and PostgreSQL through Supertest, with a fake geocoder; `visits.test.js` also replays the previous release's writes and migrates a copy of the previous schema |
-| Browser | `test/e2e/travel.spec.js` | Playwright Chromium against a real server: sign-up, marking a city, recording several visits, sharing, login errors, trip planning, password change, account deletion and clicking a town drawn on the map |
-| Accessibility | `test/e2e/accessibility.spec.js` | axe WCAG 2.2 A/AA rules, including contrast and target size, on every screen in light and dark themes |
+| Frontend logic | `test/frontend.test.js`, `test/days.test.js` | Pure browser modules (`geo.js`, `io.js`, `visits.js`, `ideas.js`) and the map data, including every tile; `days.test.js` covers the day ledger with Schengen 90/180 cases and seeded property tests (leap years, overnight border crossings, open-ended stays, sliding windows) |
+| Integration | `test/integration/` | The real Express app and PostgreSQL through Supertest, with a fake geocoder; `visits.test.js` also replays the previous release's writes and migrates a copy of the previous schema, and `ledger.test.js` covers ledger settings and the date history its triggers write |
+| Browser | `test/e2e/travel.spec.js` | Playwright Chromium against a real server: sign-up, marking a city, recording several visits, the day ledger (Schengen days, a planned stay, a threshold alert, the evidence report and its CSV), sharing, login errors, trip planning, password change, account deletion and clicking a town drawn on the map |
+| Accessibility | `test/e2e/accessibility.spec.js` | axe WCAG 2.2 A/AA rules, including contrast and target size, on every screen in light and dark themes, including the ledger's rule dialog and evidence report |
 
 ## Test Database
 
@@ -54,6 +54,8 @@ Dependabot proposes weekly npm and monthly GitHub Actions and Docker updates.
 
 - Start at the narrowest layer: pure logic in unit or frontend tests, HTTP contracts in
   integration tests, and only critical journeys in Playwright.
+- Property tests use a small seeded generator in the test file, so a failure reproduces with
+  the same seed; no extra dependency.
 - Integration tests use `createTestContext()` and `createClient()` from `test/helpers.js`, which
   wire the app exactly like production and handle the CSRF token.
 - Cover the failure paths the API promises: validation errors, 401, 403 (CSRF), 404 for other

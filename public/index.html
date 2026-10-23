@@ -71,6 +71,7 @@
                         <li><span aria-hidden="true">🎨</span> Color in countries and cities</li>
                         <li><span aria-hidden="true">🛂</span> Collect stamps and badges</li>
                         <li><span aria-hidden="true">🗓️</span> Plan trips with guide ideas</li>
+                        <li><span aria-hidden="true">📒</span> Count days for Schengen and taxes</li>
                     </ul>
                 </div>
 
@@ -109,12 +110,14 @@
                 <nav class="tabs" role="tablist" aria-label="Sections">
                     <button role="tab" id="tab-explore" aria-controls="explore-tab" aria-selected="true" type="button"><span aria-hidden="true">🧭</span>Explore</button>
                     <button role="tab" id="tab-places" aria-controls="places-tab" aria-selected="false" type="button"><span aria-hidden="true">📍</span>Places</button>
+                    <button role="tab" id="tab-ledger" aria-controls="ledger-tab" aria-selected="false" type="button"><span aria-hidden="true">📒</span>Ledger<span id="ledger-alert-count" class="tab-badge" hidden><span aria-hidden="true">0</span><span class="visually-hidden"></span></span></button>
                     <button role="tab" id="tab-trips" aria-controls="trips-tab" aria-selected="false" type="button"><span aria-hidden="true">🗓️</span>Trips</button>
                     <button role="tab" id="tab-passport" aria-controls="passport-tab" aria-selected="false" type="button"><span aria-hidden="true">🛂</span>Passport</button>
                 </nav>
 
                 <div id="explore-tab" class="tab-panel" role="tabpanel" aria-labelledby="tab-explore"></div>
                 <div id="places-tab" class="tab-panel" role="tabpanel" aria-labelledby="tab-places" hidden></div>
+                <div id="ledger-tab" class="tab-panel" role="tabpanel" aria-labelledby="tab-ledger" hidden></div>
                 <div id="trips-tab" class="tab-panel" role="tabpanel" aria-labelledby="tab-trips" hidden></div>
                 <div id="passport-tab" class="tab-panel" role="tabpanel" aria-labelledby="tab-passport" hidden></div>
             </section>

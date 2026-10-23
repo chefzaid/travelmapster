@@ -45,7 +45,7 @@ async function request(method, path, body, retried = false) {
 
 // The API stores empty optional fields as null; the UI works with strings.
 function toClientVisit(visit) {
-    return { ...visit, endDate: visit.endDate || '', notes: visit.notes || '', photoUrl: visit.photoUrl || '' };
+    return { ...visit, endDate: visit.endDate || '', notes: visit.notes || '', photoUrl: visit.photoUrl || '', ongoing: Boolean(visit.ongoing) };
 }
 
 function toClientMarker(marker) {
@@ -83,6 +83,10 @@ export const api = {
     addVisit: async (markerId, visit) => toClientVisit(await request('POST', `/markers/${Number(markerId)}/visits`, visit)),
     updateVisit: async (id, visit) => toClientVisit(await request('PATCH', `/visits/${Number(id)}`, visit)),
     deleteVisit: id => request('DELETE', `/visits/${Number(id)}`),
+
+    getLedger: () => request('GET', '/ledger'),
+    saveLedger: settings => request('PUT', '/ledger', settings),
+    getVisitChanges: () => request('GET', '/ledger/changes'),
 
     getTrips: () => request('GET', '/trips'),
     createTrip: trip => request('POST', '/trips', trip),

@@ -48,10 +48,10 @@ test('a place keeps every visit, newest first, and its latest date', async () =>
     });
     assert.equal(first.status, 201);
     assert.deepEqual(first.body, {
-        id: first.body.id, startDate: '2019-07-01', endDate: '2019-07-10', notes: 'First time', photoUrl: 'https://example.com/a.jpg'
+        id: first.body.id, startDate: '2019-07-01', endDate: '2019-07-10', ongoing: false, notes: 'First time', photoUrl: 'https://example.com/a.jpg'
     });
     const second = await client.post(`/api/markers/${marker.id}/visits`, { startDate: '2023-03-04' });
-    assert.deepEqual(second.body, { id: second.body.id, startDate: '2023-03-04', endDate: null, notes: null, photoUrl: null });
+    assert.deepEqual(second.body, { id: second.body.id, startDate: '2023-03-04', endDate: null, ongoing: false, notes: null, photoUrl: null });
     await client.post(`/api/markers/${marker.id}/visits`, { startDate: '2021-12-31', endDate: '2022-01-02' });
 
     const list = await client.get(`/api/markers/${marker.id}/visits`);
@@ -65,7 +65,7 @@ test('a place keeps every visit, newest first, and its latest date', async () =>
 
     const edited = await client.patch(`/api/visits/${second.body.id}`, { startDate: '2018-01-01', endDate: '', notes: 'Earlier' });
     assert.equal(edited.status, 200);
-    assert.deepEqual(edited.body, { id: second.body.id, startDate: '2018-01-01', endDate: null, notes: 'Earlier', photoUrl: null });
+    assert.deepEqual(edited.body, { id: second.body.id, startDate: '2018-01-01', endDate: null, ongoing: false, notes: 'Earlier', photoUrl: null });
     assert.equal(await legacyTravelDate(marker.id), '2021-12-31');
 
     assert.equal((await client.delete(`/api/visits/${second.body.id}`)).status, 204);
@@ -98,7 +98,9 @@ test('invalid visits are rejected', async () => {
         { startDate: '2024-01-05', notes: 'x'.repeat(2001) },
         { startDate: '2024-01-05', photoUrl: 'javascript:alert(1)' },
         { startDate: '2024-01-05', photoUrl: 'not a url' },
-        { startDate: '2024-01-05', photoUrl: `https://example.com/${'x'.repeat(2048)}` }
+        { startDate: '2024-01-05', photoUrl: `https://example.com/${'x'.repeat(2048)}` },
+        { startDate: '2024-01-05', ongoing: 'yes' },
+        { startDate: '2024-01-05', endDate: '2024-01-06', ongoing: true }
     ];
     for (const body of cases) {
         const created = await client.post(`/api/markers/${marker.id}/visits`, body);

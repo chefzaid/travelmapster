@@ -110,7 +110,7 @@ test('import and export round-trip saved places', async () => {
     assert.equal(place.travelDate, '2024-01-02');
     assert.equal(placeKey(place), placeKey(markers[0]));
 
-    assert.deepEqual(place.visits, [{ startDate: '2024-01-02', endDate: '', notes: '', photoUrl: '' }],
+    assert.deepEqual(place.visits, [{ startDate: '2024-01-02', endDate: '', notes: '', photoUrl: '', ongoing: false }],
         'an export from before visits turns its travel date into a visit');
 
     assert.equal(validatePlace({ ...record, photoUrl: 'javascript:alert(1)' }), null);
@@ -148,7 +148,12 @@ test('visits sort newest first and describe how often you have been', async () =
     assert.equal(visits.formatVisitDates({ startDate: '2024-01-01', endDate: '2024-01-01' }, format), '<2024-01-01>');
 
     assert.deepEqual(visits.checkVisit({ startDate: ' 2024-01-01 ', endDate: '', notes: ' Hi ' }).visit,
-        { startDate: '2024-01-01', endDate: '', notes: 'Hi', photoUrl: '' });
+        { startDate: '2024-01-01', endDate: '', notes: 'Hi', photoUrl: '', ongoing: false });
+    // Still there: a form checkbox or a CSV "yes", and never with a last day.
+    assert.equal(visits.checkVisit({ startDate: '2024-01-01', ongoing: 'on' }).visit.ongoing, true);
+    assert.equal(visits.checkVisit({ startDate: '2024-01-01', ongoing: true }).visit.ongoing, true);
+    assert.match(visits.checkVisit({ startDate: '2024-01-01', endDate: '2024-01-02', ongoing: 'yes' }).error, /still on/);
+    assert.equal(visits.formatVisitDates({ startDate: '2024-01-01', endDate: '', ongoing: true }, format), '<2024-01-01> – still there');
     for (const bad of [{}, { startDate: '2024-02-30' }, { startDate: '2024-01-02', endDate: '2024-01-01' },
         { startDate: '2024-01-01', endDate: 'later' }, { startDate: '2024-01-01', notes: 'x'.repeat(2001) },
         { startDate: '2024-01-01', photoUrl: 'ftp://example.com/x' }]) {
@@ -170,14 +175,14 @@ test('import and export round-trip every visit in JSON and CSV', async () => {
             travelDate: '2023-04-01',
             visits: [
                 { id: 5, startDate: '2019-06-01', endDate: '2019-06-04', notes: 'First, "sunny"', photoUrl: 'https://example.com/1.jpg' },
-                { id: 9, startDate: '2023-04-01', endDate: '', notes: '', photoUrl: '' }
+                { id: 9, startDate: '2023-04-01', endDate: '', notes: '', photoUrl: '', ongoing: true }
             ]
         },
         { id: 2, lat: 35.68, lng: 139.69, type: 'wishlist', name: 'Japan', category: 'Country', photoUrl: '', notes: '', travelDate: '', visits: [] }
     ];
     const expected = [
-        { startDate: '2023-04-01', endDate: '', notes: '', photoUrl: '' },
-        { startDate: '2019-06-01', endDate: '2019-06-04', notes: 'First, "sunny"', photoUrl: 'https://example.com/1.jpg' }
+        { startDate: '2023-04-01', endDate: '', notes: '', photoUrl: '', ongoing: true },
+        { startDate: '2019-06-01', endDate: '2019-06-04', notes: 'First, "sunny"', photoUrl: 'https://example.com/1.jpg', ongoing: false }
     ];
 
     const fromJson = parseImportContent('places.json', buildJson(markers)).map(validatePlace);

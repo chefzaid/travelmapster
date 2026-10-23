@@ -6,11 +6,11 @@ const MARKER_COLUMNS = `m.id, m.lat, m.lng, m.type, m.name, m.category,
     m.photo_url AS "photoUrl", m.notes,
     (SELECT max(v.start_date) FROM visits v WHERE v.marker_id = m.id) AS "travelDate",
     COALESCE((SELECT json_agg(json_build_object(
-        'id', v.id, 'startDate', v.start_date, 'endDate', v.end_date,
+        'id', v.id, 'startDate', v.start_date, 'endDate', v.end_date, 'ongoing', v.ongoing,
         'notes', v.notes, 'photoUrl', v.photo_url) ORDER BY v.start_date DESC, v.id DESC)
         FROM visits v WHERE v.marker_id = m.id), '[]'::json) AS visits`;
 
-const VISIT_COLUMNS = `v.id, v.start_date AS "startDate", v.end_date AS "endDate",
+const VISIT_COLUMNS = `v.id, v.start_date AS "startDate", v.end_date AS "endDate", v.ongoing,
     v.notes, v.photo_url AS "photoUrl"`;
 
 function createUserRepository(db) {
@@ -58,7 +58,7 @@ function createUserRepository(db) {
             await db.query('UPDATE users SET password_hash = $1, updated_at = now() WHERE id = $2', [passwordHash, id]);
         },
 
-        /** Deletes the account; markers (with their visits) and trips cascade. */
+        /** Deletes the account; markers (with their visits), trips and ledger data cascade. */
         async remove(id) {
             await db.query('DELETE FROM users WHERE id = $1', [id]);
         },
@@ -78,7 +78,7 @@ function markerValues(marker) {
 }
 
 function visitValues(visit) {
-    return [visit.startDate, visit.endDate, visit.notes, visit.photoUrl];
+    return [visit.startDate, visit.endDate, visit.notes, visit.photoUrl, visit.ongoing];
 }
 
 function createMarkerRepository(db) {
@@ -115,8 +115,8 @@ function createMarkerRepository(db) {
             );
             for (const visit of marker.visits || []) {
                 await client.query(
-                    `INSERT INTO visits (marker_id, start_date, end_date, notes, photo_url)
-                     VALUES ($1, $2, $3, $4, $5)`,
+                    `INSERT INTO visits (marker_id, start_date, end_date, notes, photo_url, ongoing)
+                     VALUES ($1, $2, $3, $4, $5, $6)`,
                     [rows[0].id, ...visitValues(visit)]
                 );
             }
@@ -169,8 +169,8 @@ function createVisitRepository(db) {
 
         async create(userId, markerId, visit) {
             const { rows } = await db.query(
-                `INSERT INTO visits AS v (marker_id, start_date, end_date, notes, photo_url)
-                 SELECT m.id, $3, $4, $5, $6 FROM markers m WHERE m.id = $1 AND m.user_id = $2
+                `INSERT INTO visits AS v (marker_id, start_date, end_date, notes, photo_url, ongoing)
+                 SELECT m.id, $3, $4, $5, $6, $7 FROM markers m WHERE m.id = $1 AND m.user_id = $2
                  RETURNING ${VISIT_COLUMNS}`,
                 [markerId, userId, ...visitValues(visit)]
             );
@@ -179,7 +179,8 @@ function createVisitRepository(db) {
 
         async update(userId, visitId, visit) {
             const { rows } = await db.query(
-                `UPDATE visits v SET start_date = $3, end_date = $4, notes = $5, photo_url = $6, updated_at = now()
+                `UPDATE visits v SET start_date = $3, end_date = $4, notes = $5, photo_url = $6, ongoing = $7,
+                    updated_at = now()
                  FROM markers m
                  WHERE v.id = $1 AND m.id = v.marker_id AND m.user_id = $2
                  RETURNING ${VISIT_COLUMNS}`,
@@ -195,6 +196,50 @@ function createVisitRepository(db) {
                 [visitId, userId]
             );
             return rowCount > 0;
+        }
+    };
+}
+
+const LEDGER_DEFAULTS = Object.freeze({ dayRule: 'presence', rules: [], planned: [] });
+
+const CHANGE_COLUMNS = `id, visit_id AS "visitId", marker_id AS "markerId", place_name AS "placeName", action,
+    old_start_date AS "oldStartDate", old_end_date AS "oldEndDate", old_ongoing AS "oldOngoing",
+    new_start_date AS "newStartDate", new_end_date AS "newEndDate", new_ongoing AS "newOngoing",
+    changed_at AS "changedAt"`;
+
+/** Day-ledger settings and the history of visit dates, both scoped to their owner. */
+function createLedgerRepository(db) {
+    return {
+        /** The traveler's settings, or the defaults until they first save. */
+        async findSettings(userId) {
+            const { rows } = await db.query(
+                `SELECT day_rule AS "dayRule", rules, planned, updated_at AS "updatedAt"
+                 FROM ledger_settings WHERE user_id = $1`,
+                [userId]
+            );
+            return rows[0] || { ...LEDGER_DEFAULTS, updatedAt: null };
+        },
+
+        async saveSettings(userId, settings) {
+            const { rows } = await db.query(
+                `INSERT INTO ledger_settings (user_id, day_rule, rules, planned)
+                 VALUES ($1, $2, $3::jsonb, $4::jsonb)
+                 ON CONFLICT (user_id) DO UPDATE SET day_rule = EXCLUDED.day_rule, rules = EXCLUDED.rules,
+                    planned = EXCLUDED.planned, updated_at = now()
+                 RETURNING day_rule AS "dayRule", rules, planned, updated_at AS "updatedAt"`,
+                [userId, settings.dayRule, JSON.stringify(settings.rules), JSON.stringify(settings.planned)]
+            );
+            return rows[0];
+        },
+
+        /** Newest first; the history is written by triggers on visits and places (migration 005). */
+        async listChanges(userId, limit) {
+            const { rows } = await db.query(
+                `SELECT ${CHANGE_COLUMNS} FROM visit_changes WHERE user_id = $1
+                 ORDER BY changed_at DESC, id DESC LIMIT $2`,
+                [userId, limit]
+            );
+            return rows;
         }
     };
 }
@@ -240,4 +285,10 @@ function createTripRepository(db) {
     };
 }
 
-module.exports = { createUserRepository, createMarkerRepository, createVisitRepository, createTripRepository };
+module.exports = {
+    createUserRepository,
+    createMarkerRepository,
+    createVisitRepository,
+    createLedgerRepository,
+    createTripRepository
+};

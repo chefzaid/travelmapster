@@ -7,6 +7,8 @@ import { fetchIdeas } from './ideas.js';
 import { renderPlaces } from './places.js';
 import { renderTrips, openNewTrip } from './trips.js';
 import { renderPassport, renderPublicStats } from './passport.js';
+import { renderLedger } from './ledger.js';
+import { ledgerOverview, localToday } from './days.js';
 import { celebrate } from './confetti.js';
 
 const state = {
@@ -20,7 +22,10 @@ const state = {
     filters: { visited: true, wishlist: true },
     activeTab: 'explore',
     ideas: null,
-    unlocked: null
+    unlocked: null,
+    // Day ledger: settings from the API, the history of visit dates (loaded when needed)
+    // and the overview computed from both, cleared whenever places or visits change.
+    ledger: { settings: { dayRule: 'presence', rules: [], planned: [] }, changes: null, overview: null, alerted: false }
 };
 
 let travelMap;
@@ -78,7 +83,67 @@ function refresh({ celebrateNew = true } = {}) {
         }
     }
     state.unlocked = unlocked;
+    state.ledger.overview = null;
+    state.ledger.changes = null;
+    updateLedgerBadge();
     renderActiveTab();
+}
+
+// ---------------------------------------------------------------- day ledger
+
+function currentLedger() {
+    if (!state.ledger.overview) {
+        state.ledger.overview = ledgerOverview({
+            markers: state.markers,
+            countryOf: marker => state.stats.markerCountry.get(marker.id),
+            settings: state.ledger.settings,
+            today: localToday(),
+            nameOf: id => state.index.byId.get(id)?.name || id,
+            formatDay: formatDate
+        });
+    }
+    return state.ledger.overview;
+}
+
+function updateLedgerBadge() {
+    const badge = $('#ledger-alert-count');
+    const count = state.user ? currentLedger().alerts.length : 0;
+    badge.hidden = !count;
+    badge.querySelector('[aria-hidden]').textContent = count;
+    badge.querySelector('.visually-hidden').textContent = ` (${count} ${count === 1 ? 'alert' : 'alerts'})`;
+}
+
+// In-app alerts: once per session, a nudge toward the Ledger tab.
+function announceLedgerAlerts() {
+    const { alerts } = currentLedger();
+    if (state.ledger.alerted || !alerts.length) return;
+    state.ledger.alerted = true;
+    toast(alerts.length === 1 ? `Day ledger: ${alerts[0].message}` : `Day ledger: ${alerts.length} alerts need a look.`, {
+        tone: 'error',
+        duration: 8000,
+        action: { label: 'Open ledger', run: () => selectTab('ledger') }
+    });
+}
+
+async function saveLedger(settings) {
+    state.ledger.settings = await api.saveLedger(settings);
+    refresh({ celebrateNew: false });
+}
+
+let changesRequest = null;
+
+/** The history of visit dates, fetched once after each change to places or visits. */
+function loadVisitChanges() {
+    if (state.ledger.changes) return Promise.resolve(state.ledger.changes);
+    if (!changesRequest) {
+        changesRequest = api.getVisitChanges()
+            .then(changes => {
+                state.ledger.changes = changes;
+                return changes;
+            })
+            .finally(() => { changesRequest = null; });
+    }
+    return changesRequest;
 }
 
 async function reloadMarkers() {
@@ -184,7 +249,8 @@ async function visitDialog(marker, visit) {
             submitLabel: visit ? 'Save visit' : 'Add visit',
             fields: [
                 { name: 'startDate', label: 'First day', type: 'date', value: draft?.startDate || '', required: true },
-                { name: 'endDate', label: 'Last day', type: 'date', value: draft?.endDate || '', hint: 'Optional. Leave empty for a day trip or if you do not remember.' },
+                { name: 'endDate', label: 'Last day', type: 'date', value: draft?.endDate || '', hint: 'Optional. Without it, the day ledger counts the first day only.' },
+                { name: 'ongoing', label: 'I\'m still there', type: 'checkbox', value: draft?.ongoing, hint: 'Leave the last day empty: the day ledger counts every day up to today.' },
                 { name: 'notes', label: 'What happened', type: 'textarea', value: draft?.notes || '', maxlength: 2000, placeholder: 'Favorite memory, who you went with…' },
                 { name: 'photoUrl', label: 'Photo link', type: 'url', value: draft?.photoUrl || '', placeholder: 'https://…', hint: 'Link to a photo or album hosted anywhere (HTTP or HTTPS).' }
             ]
@@ -284,6 +350,7 @@ function visitItem(marker, visit) {
         h('div', { class: 'visit-text' },
             h('strong', {}, h('span', { 'aria-hidden': 'true' }, '📅 '), dates),
             days ? h('small', { class: 'visit-days' }, days === 1 ? '1 day' : `${days} days`) : null,
+            !visit.endDate && !visit.ongoing ? h('small', { class: 'visit-days' }, 'Last day not recorded') : null,
             visit.notes ? h('p', { class: 'visit-notes' }, visit.notes) : null,
             visit.photoUrl ? h('a', { href: visit.photoUrl, target: '_blank', rel: 'noopener noreferrer', class: 'visit-photo', 'aria-label': `Photo of the visit of ${dates} (opens in a new tab)` }, '📷 Photo') : null
         ),
@@ -743,6 +810,7 @@ const TAB_RENDERERS = {
     explore: container => renderExplore(container),
     places: container => renderPlaces(container, context),
     trips: container => renderTrips(container, context),
+    ledger: container => renderLedger(container, context),
     passport: container => renderPassport(container, context)
 };
 
@@ -911,7 +979,7 @@ function setupAccountMenu() {
         closeAccountMenu();
         const values = await formDialog({
             title: 'Delete your account?',
-            message: 'Your places, trips and passport are deleted for good. Export your places first if you want to keep them.',
+            message: 'Your places, trips, day ledger and passport are deleted for good. Export your places first if you want to keep them.',
             submitLabel: 'Delete account',
             danger: true,
             fields: [{ name: 'password', label: 'Password', type: 'password', required: true, autocomplete: 'current-password' }]
@@ -949,6 +1017,7 @@ function showSignedOut() {
     state.trips = [];
     state.unlocked = null;
     state.ideas = null;
+    state.ledger = { settings: { dayRule: 'presence', rules: [], planned: [] }, changes: null, overview: null, alerted: false };
     $('#account').hidden = true;
     travelMap.closePopup();
     refresh({ celebrateNew: false });
@@ -964,9 +1033,15 @@ async function startSession() {
     $('#public-toggle').checked = user.profileVisibility === 'public';
     $('#copy-share-btn').disabled = user.profileVisibility !== 'public';
 
-    const [markers, trips] = await Promise.all([api.getMarkers(), api.getTrips()]);
+    // A replica of the previous release has no ledger yet during a rollout: start with the defaults.
+    const [markers, trips, ledgerSettings] = await Promise.all([
+        api.getMarkers(),
+        api.getTrips(),
+        api.getLedger().catch(() => ({ dayRule: 'presence', rules: [], planned: [] }))
+    ]);
     state.markers = markers;
     state.trips = trips;
+    state.ledger = { settings: ledgerSettings, changes: null, overview: null, alerted: false };
     state.unlocked = null;
     state.ideas = null;
     setView('main');
@@ -979,6 +1054,7 @@ async function startSession() {
     state.activeTab = TAB_RENDERERS[savedTab] ? savedTab : 'explore';
     refresh({ celebrateNew: false });
     selectTab(state.activeTab);
+    announceLedgerAlerts();
 }
 
 async function startPublicView(username) {
@@ -1035,7 +1111,11 @@ const context = {
     confirmDialog,
     selectTab,
     reloadMarkers,
-    flagEmoji
+    flagEmoji,
+    currentLedger,
+    saveLedger,
+    loadVisitChanges,
+    showCountry: country => travelMap.flyToCountry(country).then(() => showCountryCard(country))
 };
 
 // ---------------------------------------------------------------- boot
