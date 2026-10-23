@@ -6,7 +6,6 @@ material design changes as an [ADR](docs/architecture.md#adr-process).
 
 - [ ] Google and Facebook login, linked to existing accounts ([ADR 0003](docs/adr/0003-sessions-and-csrf.md))
 - [ ] Travel albums: give each pinned place a description and a photo album instead of a single photo link
-- [ ] Multiple visits per place: record each visit with its own dates, description and photos, and show how many times you have been
 
 ## Product direction (added 2026-10-04)
 
@@ -23,7 +22,7 @@ Differentiators:
 
 - [ ] **ADR — product principles:** extend the [product principles](docs/features.md#product-principles) to cover the day ledger, keepsakes and paid tiers while keeping the map itself simple (country borders and towns only, no tiles).
 
-### Day ledger (builds on multiple visits per place)
+### Day ledger (builds on the dated visits of each place)
 
 - [ ] Visit timeline with entry and exit dates per country and city; travel days counted by a documented, selectable rule.
 - [ ] Day counters per country per calendar year or rolling window, and a Schengen 90/180 calculator showing remaining days, with simulation of planned trips; configurable rules for other visa regimes.
@@ -77,7 +76,7 @@ The field splits into scratch-map atlases (Been, Visited, Skratch), travel journ
 
 ## Technical foundation (added 2026-10-23)
 
-- [ ] Places and visits data model: split `markers` into places and dated visits with an expand-and-contract migration that backfills `travel_date`, compatible with the previous release during rollout.
+- [ ] Contract step of the places and visits split ([ADR 0009](docs/adr/0009-places-and-visits.md)): in a release after visits ship, drop the `markers.travel_date` mirror and its sync triggers, and accept `travelDate` only as an import field.
 - [ ] Ledger correctness: store visit days as local calendar dates with the destination's time zone, and test day counting against official Schengen calculator cases and property-based edge cases (leap years, overnight border crossings, open-ended stays).
 - [ ] Background jobs in PostgreSQL (`FOR UPDATE SKIP LOCKED` queue) for imports, PDF reports, poster rendering, emails and threshold alerts, keeping the single service ([ADR 0002](docs/adr/0002-single-service-build-free-frontend.md)).
 - [ ] OpenAPI description of the JSON API and a versioning rule, needed before mobile apps or Teams integrations.

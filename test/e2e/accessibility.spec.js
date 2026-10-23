@@ -23,6 +23,8 @@ test.beforeEach(async ({ page }) => {
 
 for (const colorScheme of ['light', 'dark']) {
     test(`every screen meets WCAG AA in the ${colorScheme} theme`, async ({ page }) => {
+        // One journey audits every screen and dialog, which takes longer than a single flow.
+        test.setTimeout(90_000);
         await page.emulateMedia({ colorScheme });
         await page.goto('/');
         await expect(page.locator('#welcome-view')).toBeVisible();
@@ -42,6 +44,17 @@ for (const colorScheme of ['light', 'dark']) {
         await page.waitForTimeout(500);
         await expect(page.locator('.maplibregl-popup.card-popup')).toHaveCount(1);
         await expectAccessible(page, 'place card');
+
+        await page.locator('.card-popup .visit-add').click();
+        await expect(page.locator('dialog.dialog')).toBeVisible();
+        await expectAccessible(page, 'visit dialog');
+        await page.fill('#dialog-startDate', '2024-05-01');
+        await page.fill('#dialog-endDate', '2024-05-04');
+        await page.fill('#dialog-notes', 'Custard tarts by the river');
+        await page.getByRole('button', { name: 'Add visit' }).click();
+        await expect(page.locator('.card-popup .visit')).toHaveCount(1);
+        await page.waitForTimeout(500);
+        await expectAccessible(page, 'place card with a visit');
         await page.keyboard.press('Escape');
 
         for (const tab of ['explore', 'places', 'trips', 'passport']) {

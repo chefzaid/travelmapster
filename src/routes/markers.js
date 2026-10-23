@@ -2,9 +2,9 @@
 
 const express = require('express');
 const { withTransaction } = require('../db/pool');
-const { IMPORT_MAX_MARKERS, parseMarkerId, parseMarkerPayload } = require('../validation');
+const { IMPORT_MAX_MARKERS, parseMarkerId, parseMarkerPayload, parseVisitPayload } = require('../validation');
 
-function createMarkerRouter({ pool, markers }) {
+function createMarkerRouter({ pool, markers, visits }) {
     const router = express.Router();
 
     router.get('/', async (req, res) => {
@@ -13,9 +13,10 @@ function createMarkerRouter({ pool, markers }) {
     });
 
     router.post('/', async (req, res) => {
-        const { marker, error } = parseMarkerPayload(req.body);
+        const { marker, error } = parseMarkerPayload(req.body, { withVisits: true });
         if (error) return res.status(400).json({ error });
-        return res.status(201).json(await markers.create(req.user.id, marker));
+        const created = await withTransaction(pool, client => markers.create(req.user.id, marker, client));
+        return res.status(201).json(created);
     });
 
     router.post('/import', async (req, res) => {
@@ -30,7 +31,7 @@ function createMarkerRouter({ pool, markers }) {
         const valid = [];
         const rejected = [];
         records.forEach((record, index) => {
-            const { marker, error } = parseMarkerPayload(record);
+            const { marker, error } = parseMarkerPayload(record, { withVisits: true });
             if (marker) valid.push(marker);
             else rejected.push({ index, error });
         });
@@ -69,6 +70,24 @@ function createMarkerRouter({ pool, markers }) {
             return res.status(404).json({ error: 'Marker not found.' });
         }
         return res.status(204).end();
+    });
+
+    router.get('/:id/visits', async (req, res) => {
+        const markerId = parseMarkerId(req.params.id);
+        if (!markerId) return res.status(400).json({ error: 'Invalid marker id.' });
+        const list = await visits.listForMarker(req.user.id, markerId);
+        if (!list) return res.status(404).json({ error: 'Marker not found.' });
+        return res.json(list);
+    });
+
+    router.post('/:id/visits', async (req, res) => {
+        const markerId = parseMarkerId(req.params.id);
+        if (!markerId) return res.status(400).json({ error: 'Invalid marker id.' });
+        const { visit, error } = parseVisitPayload(req.body);
+        if (error) return res.status(400).json({ error });
+        const created = await visits.create(req.user.id, markerId, visit);
+        if (!created) return res.status(404).json({ error: 'Marker not found.' });
+        return res.status(201).json(created);
     });
 
     return router;

@@ -44,8 +44,8 @@ function yearChart(stats) {
     if (!stats.years.length) return null;
     const max = Math.max(...stats.years.map(year => year.count));
     return h('section', {},
-        h('h3', { class: 'section-title' }, 'Trips by year'),
-        h('ul', { class: 'year-chart' }, stats.years.map(({ year, count }) => h('li', { title: `${year}: ${count} places` },
+        h('h3', { class: 'section-title' }, 'Visits by year'),
+        h('ul', { class: 'year-chart' }, stats.years.map(({ year, count }) => h('li', { title: `${year}: ${count} ${count === 1 ? 'visit' : 'visits'}` },
             h('span', { class: 'year-bar', style: `height:${Math.max(8, Math.round((count / max) * 100))}%` }, h('span', {}, count)),
             h('small', {}, `’${year.slice(2)}`)
         )))

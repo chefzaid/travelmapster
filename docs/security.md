@@ -25,8 +25,8 @@
 
 ## Authorization
 
-Every place, trip and profile route requires a session, and every query is scoped to the
-signed-in user, so another user's IDs return 404. Public maps are read-only and exist only when
+Every place, visit, trip and profile route requires a session, and every query is scoped to the
+signed-in user (visits through the place they belong to), so another user's IDs return 404. Public maps are read-only and exist only when
 their owner chose `public`; private and missing profiles return the same 404.
 
 ## Request Protection
@@ -34,7 +34,7 @@ their owner chose `public`; private and missing profiles return the same 404.
 - **CSRF**: unsafe methods need `X-CSRF-Token`, a per-session random token compared in constant
   time.
 - **Validation**: every body is checked in `src/validation.js` (lengths, types, calendar dates,
-  HTTP(S)-only photo links, trip size); bodies are limited to 100 KB, or 3 MB for imports.
+  visit end dates on or after the start, HTTP(S)-only photo links, trip size, visits per place); bodies are limited to 100 KB, or 3 MB for imports.
 - **Rate limits** per client IP on sign-in and sign-up, the API and place search
   ([defaults](development.md#configuration)), with standard `RateLimit` headers; counters live
   in PostgreSQL, so the limit holds across replicas.
@@ -44,7 +44,8 @@ their owner chose `public`; private and missing profiles return the same 404.
 
 ## Privacy
 
-- Notes and photo links are never included in public maps.
+- Notes and photo links, of places and of visits, are never included in public maps; only
+  visit dates are.
 - The browser loads photo links from their hosts and sends destination names to Wikivoyage for
   ideas; both are visible to those third parties.
 - Logs carry user IDs, never passwords, cookies or tokens.

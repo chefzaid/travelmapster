@@ -5,9 +5,9 @@
 | Layer | Location | Runs against |
 |---|---|---|
 | Unit | `test/unit/` | Config, CSRF, geocoder and validation, without I/O |
-| Frontend logic | `test/frontend.test.js` | Pure browser modules (`geo.js`, `io.js`, `ideas.js`) and the map data, including every tile |
-| Integration | `test/integration/` | The real Express app and PostgreSQL through Supertest, with a fake geocoder |
-| Browser | `test/e2e/travel.spec.js` | Playwright Chromium against a real server: sign-up, marking a city, sharing, login errors, trip planning, password change, account deletion and clicking a town drawn on the map |
+| Frontend logic | `test/frontend.test.js` | Pure browser modules (`geo.js`, `io.js`, `visits.js`, `ideas.js`) and the map data, including every tile |
+| Integration | `test/integration/` | The real Express app and PostgreSQL through Supertest, with a fake geocoder; `visits.test.js` also replays the previous release's writes and migrates a copy of the previous schema |
+| Browser | `test/e2e/travel.spec.js` | Playwright Chromium against a real server: sign-up, marking a city, recording several visits, sharing, login errors, trip planning, password change, account deletion and clicking a town drawn on the map |
 | Accessibility | `test/e2e/accessibility.spec.js` | axe WCAG 2.2 A/AA rules, including contrast and target size, on every screen in light and dark themes |
 
 ## Test Database

@@ -69,6 +69,11 @@ test('stats count visited countries, cities and badges', async () => {
         { id: 4, lat: 46, lng: 2, type: 'wishlist', name: 'France', category: 'Country' }
     ];
     const stats = computeStats(markers, index, { trips: 1 });
+    const withVisits = computeStats([
+        { ...markers[0], visits: [{ startDate: '2022-01-01', notes: 'Fun' }, { startDate: '2022-06-01' }, { startDate: '2024-01-01' }] }
+    ], index);
+    assert.deepEqual(withVisits.years, [{ year: '2022', count: 2 }, { year: '2024', count: 1 }], 'every visit counts');
+    assert.equal(withVisits.placesWithNotes, 1, 'visit notes count towards the storyteller badge');
 
     assert.equal(stats.visitedCountries, 2, 'a visited city colors in its country');
     assert.ok(stats.cityOnlyIds.has('PRT'));
@@ -105,12 +110,96 @@ test('import and export round-trip saved places', async () => {
     assert.equal(place.travelDate, '2024-01-02');
     assert.equal(placeKey(place), placeKey(markers[0]));
 
+    assert.deepEqual(place.visits, [{ startDate: '2024-01-02', endDate: '', notes: '', photoUrl: '' }],
+        'an export from before visits turns its travel date into a visit');
+
     assert.equal(validatePlace({ ...record, photoUrl: 'javascript:alert(1)' }), null);
-    assert.equal(validatePlace({ ...record, travelDate: '2024-02-30' }), null);
+    assert.equal(validatePlace({ ...record, visitStartDate: '', travelDate: '2024-02-30' }), null);
     assert.equal(validatePlace({ ...record, lat: 120 }), null);
     assert.equal(parseImportContent('places.json', JSON.stringify({ markers: [record] })).length, 1);
     assert.throws(() => parseImportContent('places.txt', ''), /json or \.csv/);
     assert.throws(() => parseImportContent('places.csv', 'name\nParis'), /must include/);
+});
+
+test('visits sort newest first and describe how often you have been', async () => {
+    const visits = await load('visits.js');
+    const marker = {
+        travelDate: '2020-01-01',
+        visits: [
+            { id: 1, startDate: '2019-05-01', endDate: '2019-05-03' },
+            { id: 3, startDate: '2023-08-10', endDate: '' },
+            { id: 2, startDate: '2023-08-10', endDate: '2023-08-10' }
+        ]
+    };
+    assert.deepEqual(visits.sortVisits(marker.visits).map(visit => visit.id), [3, 2, 1]);
+    assert.equal(visits.lastVisitDate(marker), '2023-08-10');
+    assert.equal(visits.lastVisitDate({ travelDate: '2020-01-01' }), '2020-01-01', 'older data without visits');
+    assert.equal(visits.lastVisitDate({ visits: [] }), '');
+    assert.equal(visits.visitCount(marker), 3);
+    assert.deepEqual([0, 1, 2, 5].map(visits.visitCountLabel),
+        ['No visits recorded yet', 'Visited once', 'Visited 2 times', 'Visited 5 times']);
+
+    // Days are plain calendar days, inclusive, across leap days and with no time zone.
+    assert.equal(visits.visitDays({ startDate: '2024-02-28', endDate: '2024-03-01' }), 3);
+    assert.equal(visits.visitDays({ startDate: '2024-03-30', endDate: '2024-03-31' }), 2);
+    assert.equal(visits.visitDays({ startDate: '2024-01-01', endDate: '' }), null);
+    const format = date => `<${date}>`;
+    assert.equal(visits.formatVisitDates({ startDate: '2024-01-01', endDate: '2024-01-03' }, format), '<2024-01-01> – <2024-01-03>');
+    assert.equal(visits.formatVisitDates({ startDate: '2024-01-01', endDate: '2024-01-01' }, format), '<2024-01-01>');
+
+    assert.deepEqual(visits.checkVisit({ startDate: ' 2024-01-01 ', endDate: '', notes: ' Hi ' }).visit,
+        { startDate: '2024-01-01', endDate: '', notes: 'Hi', photoUrl: '' });
+    for (const bad of [{}, { startDate: '2024-02-30' }, { startDate: '2024-01-02', endDate: '2024-01-01' },
+        { startDate: '2024-01-01', endDate: 'later' }, { startDate: '2024-01-01', notes: 'x'.repeat(2001) },
+        { startDate: '2024-01-01', photoUrl: 'ftp://example.com/x' }]) {
+        assert.ok(visits.checkVisit(bad).error, JSON.stringify(bad).slice(0, 60));
+    }
+
+    const places = [marker, { visits: [{ startDate: '2021-01-01' }] }, { visits: [] }];
+    assert.deepEqual(visits.lastVisitYears(places), ['2023', '2021']);
+    assert.deepEqual(places.map(place => visits.matchesLastVisit(place, '2023')), [true, false, false]);
+    assert.deepEqual(places.map(place => visits.matchesLastVisit(place, 'none')), [false, false, true]);
+    assert.ok(visits.matchesLastVisit(places[2], 'all'));
+});
+
+test('import and export round-trip every visit in JSON and CSV', async () => {
+    const { buildCsv, buildJson, parseImportContent, validatePlace, mergePlaces } = await load('io.js');
+    const markers = [
+        {
+            id: 1, lat: 38.72, lng: -9.14, type: 'visited', name: 'Lisbon, Portugal', category: 'City', photoUrl: '', notes: 'Trams',
+            travelDate: '2023-04-01',
+            visits: [
+                { id: 5, startDate: '2019-06-01', endDate: '2019-06-04', notes: 'First, "sunny"', photoUrl: 'https://example.com/1.jpg' },
+                { id: 9, startDate: '2023-04-01', endDate: '', notes: '', photoUrl: '' }
+            ]
+        },
+        { id: 2, lat: 35.68, lng: 139.69, type: 'wishlist', name: 'Japan', category: 'Country', photoUrl: '', notes: '', travelDate: '', visits: [] }
+    ];
+    const expected = [
+        { startDate: '2023-04-01', endDate: '', notes: '', photoUrl: '' },
+        { startDate: '2019-06-01', endDate: '2019-06-04', notes: 'First, "sunny"', photoUrl: 'https://example.com/1.jpg' }
+    ];
+
+    const fromJson = parseImportContent('places.json', buildJson(markers)).map(validatePlace);
+    assert.deepEqual(fromJson[0].visits, expected);
+    assert.equal(fromJson[0].travelDate, '2023-04-01');
+    assert.deepEqual(fromJson[1].visits, []);
+
+    const csv = buildCsv(markers);
+    assert.equal(csv.split('\r\n').length, 4, 'a header, one row per visit and one for the place without visits');
+    const rows = parseImportContent('places.csv', csv).map(validatePlace);
+    assert.equal(rows.length, 3);
+    const merged = mergePlaces(rows);
+    assert.equal(merged.length, 2);
+    assert.deepEqual(merged[0].visits, expected);
+    assert.equal(merged[0].notes, 'Trams');
+    assert.deepEqual(merged[1].visits, []);
+
+    // The same visit listed twice is kept once; a bad visit rejects only its row.
+    assert.equal(mergePlaces([...rows, rows[0]])[0].visits.length, 2);
+    const [record] = parseImportContent('places.csv', csv);
+    assert.equal(validatePlace({ ...record, visitEndDate: '2000-01-01' }), null);
+    assert.equal(validatePlace({ ...JSON.parse(buildJson(markers))[0], visits: [{ startDate: 'soon' }] }), null);
 });
 
 test('Wikivoyage listings become itinerary ideas', async () => {

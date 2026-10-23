@@ -1,15 +1,26 @@
 import { h, fill, toast, downloadFile, formatDate } from './ui.js';
 import { CONTINENTS } from './geo.js';
-import { buildCsv, parseImportContent, validatePlace, placeKey } from './io.js';
+import { buildCsv, buildJson, parseImportContent, validatePlace, placeKey, mergePlaces } from './io.js';
+import { lastVisitDate, lastVisitYears, matchesLastVisit, visitCount } from './visits.js';
 
-const view = { query: '', type: 'all', category: 'all', sort: 'continent' };
+const view = { query: '', type: 'all', category: 'all', lastVisit: 'all', sort: 'continent' };
 
 function matches(marker, country) {
     if (view.type !== 'all' && marker.type !== view.type) return false;
     if (view.category !== 'all' && marker.category !== view.category) return false;
+    if (!matchesLastVisit(marker, view.lastVisit)) return false;
     if (!view.query) return true;
-    const haystack = `${marker.name} ${country?.name || ''} ${marker.notes || ''}`.toLowerCase();
+    const visitNotes = (marker.visits || []).map(visit => visit.notes).join(' ');
+    const haystack = `${marker.name} ${country?.name || ''} ${marker.notes || ''} ${visitNotes}`.toLowerCase();
     return haystack.includes(view.query.toLowerCase());
+}
+
+function visitSummary(marker) {
+    const count = visitCount(marker);
+    const last = lastVisitDate(marker);
+    if (!count) return last ? ` · ${formatDate(last)}` : '';
+    const times = count === 1 ? '1 visit' : `${count} visits`;
+    return ` · ${times}, last ${formatDate(last)}`;
 }
 
 function chipGroup(label, key, options, onChange) {
@@ -34,8 +45,8 @@ function placeItem(marker, country, ctx) {
                 h('strong', {}, marker.name),
                 h('small', {},
                     marker.type === 'visited' ? '✓ Been there' : '♥ Wishlist',
-                    marker.travelDate ? ` · ${formatDate(marker.travelDate)}` : '',
-                    marker.photoUrl ? ' · 📷' : ''
+                    visitSummary(marker),
+                    marker.photoUrl || marker.visits?.some(visit => visit.photoUrl) ? ' · 📷' : ''
                 ),
                 marker.notes ? h('span', { class: 'place-notes' }, marker.notes) : null
             )
@@ -57,8 +68,8 @@ function sortMarkers(markers, ctx) {
     const byName = (a, b) => a.name.localeCompare(b.name);
     if (view.sort === 'name') return [['All places', [...markers].sort(byName)]];
     if (view.sort === 'date') {
-        const sorted = [...markers].sort((a, b) => (b.travelDate || '').localeCompare(a.travelDate || '') || byName(a, b));
-        return [['Newest trips first', sorted]];
+        const sorted = [...markers].sort((a, b) => lastVisitDate(b).localeCompare(lastVisitDate(a)) || byName(a, b));
+        return [['Most recent visit first', sorted]];
     }
     const groups = new Map([...CONTINENTS, 'Elsewhere'].map(name => [name, []]));
     for (const marker of markers) {
@@ -93,17 +104,12 @@ async function importFile(file, ctx, status) {
     try {
         const records = parseImportContent(file.name, await file.text());
         const existing = new Set(ctx.state.markers.map(placeKey));
-        const places = [];
-        let skipped = 0;
-        for (const record of records) {
-            const place = validatePlace(record);
-            if (!place || existing.has(placeKey(place))) {
-                skipped += 1;
-                continue;
-            }
-            existing.add(placeKey(place));
-            places.push(place);
-        }
+        const valid = records.map(validatePlace).filter(Boolean);
+        // CSV files hold one row per visit: rows of the same place count as one.
+        const merged = mergePlaces(valid);
+        let skipped = records.length - valid.length;
+        const places = merged.filter(place => !existing.has(placeKey(place)));
+        skipped += merged.length - places.length;
         status.textContent = `Importing ${places.length} ${places.length === 1 ? 'place' : 'places'}…`;
         let imported = 0;
         if (places.length) {
@@ -140,7 +146,7 @@ function dataSection(ctx) {
         }
         const date = new Date().toISOString().slice(0, 10);
         if (format === 'csv') downloadFile(`travelmapster-places-${date}.csv`, buildCsv(markers), 'text/csv');
-        else downloadFile(`travelmapster-places-${date}.json`, JSON.stringify(markers, null, 2), 'application/json');
+        else downloadFile(`travelmapster-places-${date}.json`, buildJson(markers), 'application/json');
         status.textContent = `Exported ${markers.length} places as ${format.toUpperCase()}.`;
     };
     return h('section', { class: 'data-section' },
@@ -153,6 +159,13 @@ function dataSection(ctx) {
         ),
         status
     );
+}
+
+function lastVisitOptions(markers) {
+    const years = lastVisitYears(markers);
+    // Keep a chosen year selectable even after its last place is gone.
+    if (/^\d{4}$/.test(view.lastVisit) && !years.includes(view.lastVisit)) years.push(view.lastVisit);
+    return [['all', 'Any time'], ...years.map(year => [year, `In ${year}`]), ['none', 'No date yet']];
 }
 
 export function renderPlaces(container, ctx) {
@@ -178,10 +191,17 @@ export function renderPlaces(container, ctx) {
             searchInput,
             chipGroup('Status', 'type', [['all', 'All'], ['visited', '✓ Been'], ['wishlist', '♥ Wish']], rerender),
             chipGroup('Kind', 'category', [['all', 'All'], ['Country', 'Countries'], ['City', 'Cities']], rerender),
-            h('label', { class: 'sort' }, 'Sort by ',
-                h('select', { onchange: event => { view.sort = event.target.value; update(); } },
-                    [['continent', 'Continent'], ['name', 'Name'], ['date', 'Travel date']].map(([value, label]) =>
-                        h('option', { value, selected: view.sort === value }, label)))
+            h('div', { class: 'row sort-row' },
+                h('label', { class: 'sort' }, 'Sort by ',
+                    h('select', { onchange: event => { view.sort = event.target.value; update(); } },
+                        [['continent', 'Continent'], ['name', 'Name'], ['date', 'Last visit']].map(([value, label]) =>
+                            h('option', { value, selected: view.sort === value }, label)))
+                ),
+                h('label', { class: 'sort' }, 'Last visit ',
+                    h('select', { id: 'last-visit-filter', onchange: event => { view.lastVisit = event.target.value; update(); } },
+                        lastVisitOptions(ctx.state.markers).map(([value, label]) =>
+                            h('option', { value, selected: view.lastVisit === value }, label)))
+                )
             )
         ),
         list,

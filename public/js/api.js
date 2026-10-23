@@ -44,8 +44,25 @@ async function request(method, path, body, retried = false) {
 }
 
 // The API stores empty optional fields as null; the UI works with strings.
+function toClientVisit(visit) {
+    return { ...visit, endDate: visit.endDate || '', notes: visit.notes || '', photoUrl: visit.photoUrl || '' };
+}
+
 function toClientMarker(marker) {
-    return { ...marker, photoUrl: marker.photoUrl || '', notes: marker.notes || '', travelDate: marker.travelDate || '' };
+    return {
+        ...marker,
+        photoUrl: marker.photoUrl || '',
+        notes: marker.notes || '',
+        travelDate: marker.travelDate || '',
+        visits: (marker.visits || []).map(toClientVisit)
+    };
+}
+
+// Place edits leave the visits alone: they have their own routes, and a travel date sent
+// along would be read the legacy way (migration 004).
+function placeFields(marker) {
+    const { lat, lng, type, name, category, photoUrl, notes } = marker;
+    return { lat, lng, type, name, category, photoUrl, notes };
 }
 
 export const api = {
@@ -60,8 +77,12 @@ export const api = {
     getMarkers: async () => (await request('GET', '/markers')).map(toClientMarker),
     addMarker: async marker => toClientMarker(await request('POST', '/markers', marker)),
     importMarkers: markers => request('POST', '/markers/import', { markers }),
-    updateMarker: async (id, marker) => toClientMarker(await request('PATCH', `/markers/${Number(id)}`, marker)),
+    updateMarker: async (id, marker) => toClientMarker(await request('PATCH', `/markers/${Number(id)}`, placeFields(marker))),
     deleteMarker: id => request('DELETE', `/markers/${Number(id)}`),
+
+    addVisit: async (markerId, visit) => toClientVisit(await request('POST', `/markers/${Number(markerId)}/visits`, visit)),
+    updateVisit: async (id, visit) => toClientVisit(await request('PATCH', `/visits/${Number(id)}`, visit)),
+    deleteVisit: id => request('DELETE', `/visits/${Number(id)}`),
 
     getTrips: () => request('GET', '/trips'),
     createTrip: trip => request('POST', '/trips', trip),

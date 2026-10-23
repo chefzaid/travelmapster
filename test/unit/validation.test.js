@@ -3,7 +3,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const {
-    isValidTravelDate, parseCredentials, parseMarkerId, parseMarkerPayload, parseProfileVisibility
+    isValidTravelDate, parseCredentials, parseMarkerId, parseMarkerPayload, parseProfileVisibility, parseVisitPayload
 } = require('../../src/validation');
 
 const valid = { lat: '10.5', lng: -20, type: 'visited', name: ' Rome ', category: 'City' };
@@ -13,8 +13,29 @@ test('parseMarkerPayload normalizes a valid marker', () => {
     assert.equal(error, undefined);
     assert.deepEqual(marker, {
         lat: 10.5, lng: -20, type: 'visited', name: 'Rome', category: 'City',
-        photoUrl: null, notes: null, travelDate: null
+        photoUrl: null, notes: null, travelDate: undefined
     });
+    assert.equal(parseMarkerPayload({ ...valid, travelDate: '' }).marker.travelDate, null, 'an empty date is sent on purpose');
+});
+
+test('parseMarkerPayload reads visits only when asked to', () => {
+    const body = { ...valid, visits: [{ startDate: '2024-01-01', endDate: '2024-01-02' }] };
+    assert.equal(parseMarkerPayload(body).marker.visits, undefined);
+    assert.deepEqual(parseMarkerPayload(body, { withVisits: true }).marker.visits, [
+        { startDate: '2024-01-01', endDate: '2024-01-02', notes: null, photoUrl: null }
+    ]);
+    assert.equal(parseMarkerPayload({ ...valid, visits: null }, { withVisits: true }).marker.visits, undefined);
+    assert.match(parseMarkerPayload({ ...valid, visits: [{}] }, { withVisits: true }).error, /^Visit 1: /);
+});
+
+test('parseVisitPayload keeps plain calendar dates in order', () => {
+    assert.deepEqual(parseVisitPayload({ startDate: ' 2024-02-29 ', notes: ' Leap day ', photoUrl: 'http://e.com/x.jpg' }).visit, {
+        startDate: '2024-02-29', endDate: null, notes: 'Leap day', photoUrl: 'http://e.com/x.jpg'
+    });
+    assert.equal(parseVisitPayload({ startDate: '2024-03-01', endDate: '2024-03-01' }).visit.endDate, '2024-03-01', 'a one-day visit');
+    for (const bad of [null, [], { startDate: '2023-02-29' }, { startDate: '2024-03-02', endDate: '2024-03-01' }]) {
+        assert.ok(parseVisitPayload(bad).error, JSON.stringify(bad));
+    }
 });
 
 test('parseMarkerPayload rejects non-objects and bad fields', () => {

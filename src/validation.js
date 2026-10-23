@@ -11,6 +11,7 @@ const NAME_MAX_LENGTH = 200;
 const NOTES_MAX_LENGTH = 2000;
 const PHOTO_URL_MAX_LENGTH = 2048;
 const IMPORT_MAX_MARKERS = 1000;
+const VISITS_MAX_PER_PLACE = 500;
 const TRIP_SLOTS = ['morning', 'afternoon', 'evening'];
 const TRIP_MAX_DAYS = 30;
 const TRIP_SLOT_MAX_LENGTH = 500;
@@ -62,7 +63,72 @@ function parsePasswordChange(body) {
     return { change: { currentPassword, newPassword } };
 }
 
-function parseMarkerPayload(body) {
+function photoUrlError(photoUrl) {
+    if (!photoUrl) return null;
+    if (photoUrl.length > PHOTO_URL_MAX_LENGTH) {
+        return `Photo link must be ${PHOTO_URL_MAX_LENGTH} characters or fewer.`;
+    }
+    let parsedPhotoUrl;
+    try {
+        parsedPhotoUrl = new URL(photoUrl);
+    } catch {
+        return 'Photo link must be a valid URL.';
+    }
+    if (!['http:', 'https:'].includes(parsedPhotoUrl.protocol)) {
+        return 'Photo link must use HTTP or HTTPS.';
+    }
+    return null;
+}
+
+/** A visit is a span of plain calendar dates; a missing end date means it was not recorded. */
+function parseVisitPayload(body) {
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+        return { error: 'Visit payload must be a JSON object.' };
+    }
+    const startDate = normalizeText(body.startDate);
+    const endDate = normalizeText(body.endDate);
+    const notes = normalizeText(body.notes);
+    const photoUrl = normalizeText(body.photoUrl);
+
+    if (!isValidTravelDate(startDate)) {
+        return { error: 'Visit start date must be a valid YYYY-MM-DD date.' };
+    }
+    if (endDate && !isValidTravelDate(endDate)) {
+        return { error: 'Visit end date must be a valid YYYY-MM-DD date.' };
+    }
+    // ISO dates compare correctly as strings.
+    if (endDate && endDate < startDate) {
+        return { error: 'Visit end date must be on or after the start date.' };
+    }
+    if (notes.length > NOTES_MAX_LENGTH) {
+        return { error: `Visit notes must be ${NOTES_MAX_LENGTH} characters or fewer.` };
+    }
+    const error = photoUrlError(photoUrl);
+    if (error) return { error };
+
+    return { visit: { startDate, endDate: endDate || null, notes: notes || null, photoUrl: photoUrl || null } };
+}
+
+function parseVisitList(value) {
+    if (!Array.isArray(value)) return { error: 'Visits must be an array.' };
+    if (value.length > VISITS_MAX_PER_PLACE) {
+        return { error: `A place can have at most ${VISITS_MAX_PER_PLACE} visits.` };
+    }
+    const visits = [];
+    for (const [index, item] of value.entries()) {
+        const { visit, error } = parseVisitPayload(item);
+        if (error) return { error: `Visit ${index + 1}: ${error}` };
+        visits.push(visit);
+    }
+    return { visits };
+}
+
+/**
+ * Validates a place. With `withVisits`, an optional `visits` array is parsed too
+ * (creating and importing); updates manage visits through their own routes. A
+ * `travelDate` left out stays undefined so an update keeps the visits as they are.
+ */
+function parseMarkerPayload(body, { withVisits = false } = {}) {
     if (!body || typeof body !== 'object') {
         return { error: 'Marker payload must be a JSON object.' };
     }
@@ -100,33 +166,25 @@ function parseMarkerPayload(body) {
     if (travelDate && !isValidTravelDate(travelDate)) {
         return { error: 'Travel date must be a valid YYYY-MM-DD date.' };
     }
-    if (photoUrl) {
-        if (photoUrl.length > PHOTO_URL_MAX_LENGTH) {
-            return { error: `Photo link must be ${PHOTO_URL_MAX_LENGTH} characters or fewer.` };
-        }
-        let parsedPhotoUrl;
-        try {
-            parsedPhotoUrl = new URL(photoUrl);
-        } catch {
-            return { error: 'Photo link must be a valid URL.' };
-        }
-        if (!['http:', 'https:'].includes(parsedPhotoUrl.protocol)) {
-            return { error: 'Photo link must use HTTP or HTTPS.' };
-        }
-    }
+    const error = photoUrlError(photoUrl);
+    if (error) return { error };
 
-    return {
-        marker: {
-            lat,
-            lng,
-            type,
-            name,
-            category,
-            photoUrl: photoUrl || null,
-            notes: notes || null,
-            travelDate: travelDate || null
-        }
+    const marker = {
+        lat,
+        lng,
+        type,
+        name,
+        category,
+        photoUrl: photoUrl || null,
+        notes: notes || null,
+        travelDate: body.travelDate === undefined ? undefined : travelDate || null
     };
+    if (withVisits && body.visits !== undefined && body.visits !== null) {
+        const { visits, error: visitError } = parseVisitList(body.visits);
+        if (visitError) return { error: visitError };
+        marker.visits = visits;
+    }
+    return { marker };
 }
 
 function parseTripPayload(body) {
@@ -186,6 +244,7 @@ function parseProfileVisibility(body) {
 module.exports = {
     IMPORT_MAX_MARKERS,
     USERNAME_PATTERN,
+    VISITS_MAX_PER_PLACE,
     isValidTravelDate,
     normalizeText,
     parseCredentials,
@@ -194,5 +253,6 @@ module.exports = {
     parseMarkerId,
     parseMarkerPayload,
     parseProfileVisibility,
-    parseTripPayload
+    parseTripPayload,
+    parseVisitPayload
 };

@@ -70,6 +70,54 @@ test('a traveler signs up, colors in a city, shares a public map and logs out', 
     expect(errors).toEqual([]);
 });
 
+async function addVisit(page, startDate, endDate = '') {
+    await page.locator('.card-popup .visit-add').click();
+    await page.fill('#dialog-startDate', startDate);
+    if (endDate) await page.fill('#dialog-endDate', endDate);
+    await page.getByRole('button', { name: 'Add visit' }).click();
+}
+
+test('a traveler records several visits to the same city', async ({ page }) => {
+    const errors = trackErrors(page);
+    await signUp(page, `e2e_visits_${Date.now()}`);
+    await markCity(page, 'Lisbon');
+    const card = page.locator('.maplibregl-popup.card-popup');
+    await expect(card.locator('.visits-title')).toHaveText('No visits recorded yet');
+
+    await addVisit(page, '2019-06-01', '2019-06-04');
+    await expect(card.locator('.visits-title')).toHaveText('Visited once');
+    await addVisit(page, '2023-04-01');
+    await expect(card.locator('.visits-title')).toHaveText('Visited 2 times');
+    // Newest first.
+    await expect(card.locator('.visit').first()).toContainText('2023');
+
+    // An end before the start is refused before it reaches the server, keeping what was typed.
+    await card.locator('.visit-add').click();
+    await page.fill('#dialog-startDate', '2024-01-05');
+    await page.fill('#dialog-endDate', '2024-01-01');
+    await page.getByRole('button', { name: 'Add visit' }).click();
+    await expect(page.locator('.toast-error')).toContainText('on or after');
+    await expect(page.locator('#dialog-startDate')).toHaveValue('2024-01-05');
+    await page.getByRole('button', { name: 'Cancel' }).click();
+    await expect(card.locator('.visit')).toHaveCount(2);
+
+    await card.locator('.visit').last().getByRole('button', { name: /Remove the visit/ }).click();
+    await expect(card.locator('.visits-title')).toHaveText('Visited once');
+    await page.locator('.toast', { hasText: 'Removed the visit' }).getByRole('button', { name: 'Undo' }).click();
+    await expect(card.locator('.visits-title')).toHaveText('Visited 2 times');
+
+    await page.reload();
+    await expect(page.locator('#main-view')).toBeVisible();
+    await page.click('#tab-places');
+    await expect(page.locator('#places-tab .place')).toContainText('2 visits');
+    // Filtering goes by the year of the last visit.
+    await page.locator('#last-visit-filter').selectOption('none');
+    await expect(page.locator('#places-tab')).toContainText('Nothing matches those filters.');
+    await page.locator('#last-visit-filter').selectOption('2023');
+    await expect(page.locator('#places-tab .place')).toHaveCount(1);
+    expect(errors).toEqual([]);
+});
+
 test('private maps are not shared', async ({ page }) => {
     const username = `e2e_private_${Date.now()}`;
     await signUp(page, username);

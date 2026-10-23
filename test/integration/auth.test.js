@@ -104,7 +104,9 @@ test('changing the password needs the current one and signs out other devices', 
 test('deleting the account removes all travel data and every session', async () => {
     const client = createClient(ctx.server);
     const { body } = await client.register('leaver', 'leaving for good');
-    await client.post('/api/markers', { lat: 1, lng: 2, type: 'visited', name: 'Somewhere', category: 'City' });
+    const { body: place } = await client.post('/api/markers', {
+        lat: 1, lng: 2, type: 'visited', name: 'Somewhere', category: 'City', visits: [{ startDate: '2024-01-01', notes: 'Private' }]
+    });
     await client.post('/api/trips', { title: 'Last trip', destination: 'Somewhere', plan: [{ morning: 'Pack' }] });
     const otherDevice = createClient(ctx.server);
     await otherDevice.post('/api/auth/login', { username: 'leaver', password: 'leaving for good' });
@@ -121,6 +123,8 @@ test('deleting the account removes all travel data and every session', async () 
         const { rows } = await ctx.pool.query(`SELECT count(*)::int AS n FROM ${table} WHERE ${column} = $1`, [body.user.id]);
         assert.equal(rows[0].n, 0, `${table} rows are gone`);
     }
+    const { rows: visits } = await ctx.pool.query('SELECT count(*)::int AS n FROM visits WHERE marker_id = $1', [place.id]);
+    assert.equal(visits[0].n, 0, 'visits are gone');
     assert.equal((await createClient(ctx.server).register('leaver', 'a new beginning')).status, 201, 'the username is free again');
 });
 
