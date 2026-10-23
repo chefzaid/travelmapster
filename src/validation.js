@@ -5,6 +5,8 @@ const MARKER_TYPES = new Set(['visited', 'wishlist']);
 const STAYS = new Set(['visit', 'lived', 'transit']);
 const MARKER_CATEGORIES = new Set(['Country', 'City']);
 const PROFILE_VISIBILITIES = new Set(['private', 'public']);
+// Every territory on the map, or UN members and observer states (ADR 0015).
+const COUNTRY_LISTS = new Set(['all', 'un']);
 const USERNAME_PATTERN = /^[A-Za-z0-9_.-]{3,32}$/;
 const PASSWORD_MIN_LENGTH = 8;
 // bcrypt ignores everything after 72 bytes, so longer passwords are rejected.
@@ -517,7 +519,8 @@ function parseMarkerId(value) {
 
 /**
  * Account settings, each optional so a client changes only what it sends: who can see the
- * map, and the home country (a map code, or null or empty to clear it).
+ * map, the home country (a map code, or null or empty to clear it) and the list of countries
+ * the passport counts against.
  */
 function parseProfile(body) {
     if (!plainObject(body)) return { error: 'Profile changes must be a JSON object.' };
@@ -536,7 +539,11 @@ function parseProfile(body) {
         }
         profile.homeCountry = homeCountry || null;
     }
-    if (!Object.keys(profile).length) return { error: 'Send profileVisibility or homeCountry.' };
+    if (body.countryList !== undefined) {
+        if (!COUNTRY_LISTS.has(body.countryList)) return { error: 'Country list must be all or un.' };
+        profile.countryList = body.countryList;
+    }
+    if (!Object.keys(profile).length) return { error: 'Send profileVisibility, homeCountry or countryList.' };
     return { profile };
 }
 

@@ -17,13 +17,14 @@ const VISIT_COLUMNS = `v.id, v.start_date AS "startDate", v.end_date AS "endDate
     v.notes, v.photo_url AS "photoUrl"`;
 
 // Account settings by API field and column.
-const PROFILE_COLUMNS = [['profileVisibility', 'profile_visibility'], ['homeCountry', 'home_country']];
+const PROFILE_COLUMNS = [['profileVisibility', 'profile_visibility'], ['homeCountry', 'home_country'], ['countryList', 'country_list']];
 
 function createUserRepository(db) {
     return {
         async findByUsername(username) {
             const { rows } = await db.query(
-                'SELECT id, username, password_hash, profile_visibility, home_country FROM users WHERE lower(username) = lower($1)',
+                `SELECT id, username, password_hash, profile_visibility, home_country, country_list
+                 FROM users WHERE lower(username) = lower($1)`,
                 [username]
             );
             return rows[0] || null;
@@ -31,7 +32,7 @@ function createUserRepository(db) {
 
         async findById(id) {
             const { rows } = await db.query(
-                'SELECT id, username, profile_visibility, home_country FROM users WHERE id = $1',
+                'SELECT id, username, profile_visibility, home_country, country_list FROM users WHERE id = $1',
                 [id]
             );
             return rows[0] || null;
@@ -42,7 +43,7 @@ function createUserRepository(db) {
             const { rows } = await db.query(
                 `INSERT INTO users (username, password_hash) VALUES ($1, $2)
                  ON CONFLICT DO NOTHING
-                 RETURNING id, username, profile_visibility, home_country`,
+                 RETURNING id, username, profile_visibility, home_country, country_list`,
                 [username, passwordHash]
             );
             return rows[0] || null;
@@ -59,7 +60,8 @@ function createUserRepository(db) {
             }
             const { rows } = await db.query(
                 `UPDATE users SET ${set}updated_at = now() WHERE id = $1
-                 RETURNING profile_visibility AS "profileVisibility", home_country AS "homeCountry"`,
+                 RETURNING profile_visibility AS "profileVisibility", home_country AS "homeCountry",
+                    country_list AS "countryList"`,
                 values
             );
             return rows[0] || null;

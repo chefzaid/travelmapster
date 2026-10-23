@@ -27,6 +27,10 @@ Everything below is implemented. Planned work lives in [TODO.md](../TODO.md).
 - One tap marks a place "Been there", "Lived there", "Transit only" or "Wishlist"; tapping
   again undoes it. A layover is shown but never counted as a visit.
 - A home country, set in Settings or from its card; it is never shown on a public map.
+- The list of countries to count, in Settings: every territory on the map (241, the default) or
+  UN members and observer states (195). Territories outside the list, such as Kosovo, Taiwan or
+  Greenland on the UN list, are still colored in and named in the passport, but not counted; the
+  rule for disputed territories is in [ADR 0015](adr/0015-country-lists.md).
 - Mark many countries at once: pick them on the map (or through search), or choose a whole
   continent in the Places tab, then mark them "Been there" or "Wishlist" in one step, with undo.
   Countries you have been to never become wishlist ones; marking "Been there" turns layovers
@@ -115,8 +119,9 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
 
 - Six traveler ranks, from "Armchair traveler" to "Legend of the map", with progress to the next.
 - Countries been to (your home country, countries you lived in and those you visited), share of
-  the world, continents, cities and trips; countries lived in and layovers counted on their own;
-  per-continent progress bars.
+  the world (or of UN countries), continents, cities and trips, all counted on your chosen
+  country list; countries lived in and layovers counted on their own; per-continent progress
+  bars.
 - A stamp for every country been to, marked "Home" or "Lived" where it applies, 13 badges with
   a confetti celebration, and a visits-by-year chart counting every visit (stays where you lived
   and layovers are not visits).
@@ -127,8 +132,8 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   the password (signing out other devices) or delete the account and all its data from the
   account menu.
 - Private by default; a public map is shared read-only at `/?u=<username>` with visit dates and
-  whether a place was lived in or a layover, without notes, photo links, ratings, tags, emoji,
-  wishlist plans or the home country.
+  whether a place was lived in or a layover, counted on the owner's country list, without notes,
+  photo links, ratings, tags, emoji, wishlist plans or the home country.
 - Any place can be hidden from the public map, with its visits, so a public profile keeps
   sensitive trips to itself; the owner's map, passport and ledger still count it
   ([ADR 0013](adr/0013-hidden-places.md)).

@@ -18,6 +18,7 @@ erDiagram
         text password_hash "bcrypt"
         text profile_visibility "private | public"
         text home_country "map code, optional, never public"
+        text country_list "all | un"
     }
     markers {
         bigint id PK
@@ -77,7 +78,7 @@ erDiagram
 
 | Table | Contents and rules |
 |---|---|
-| `users` | `username` is 3–32 of `A-Z a-z 0-9 _ . -`, unique regardless of case. Passwords are 8–72 bytes and stored only as bcrypt hashes (cost 12). `profile_visibility` defaults to `private`. `home_country` is an optional three-letter map code ([ADR 0014](adr/0014-home-lived-and-transit.md)). |
+| `users` | `username` is 3–32 of `A-Z a-z 0-9 _ . -`, unique regardless of case. Passwords are 8–72 bytes and stored only as bcrypt hashes (cost 12). `profile_visibility` defaults to `private`. `home_country` is an optional three-letter map code ([ADR 0014](adr/0014-home-lived-and-transit.md)); `country_list` is `all` (the default) or `un`, the countries the passport counts against ([ADR 0015](adr/0015-country-lists.md)). |
 | `markers` | A saved place ("marker" in the API). `name` 1–200 characters, `notes` up to 2,000, `photo_url` an HTTP(S) URL up to 2,048. Coordinates are range-checked. `rating` is 1–5 or empty; `tags` holds up to 8 lowercase tags of 1–24 letters or digits (with inner spaces, dashes, apostrophes or ampersands); `emoji` is a single emoji of at most 16 code points ([ADR 0012](adr/0012-place-details.md)). `hide_from_public` keeps the place and its visits off the owner's public map ([ADR 0013](adr/0013-hidden-places.md)). For wishlist plans, `priority` is `high`, `medium`, `low` or empty and `best_months` holds month numbers 1–12. `stay` says how the traveler was at a place they have been to: `visit` (the default), `lived` or `transit`; the API keeps it at `visit` for wishlist places and reads it only for visited ones. `travel_date` only mirrors the start of the latest visit for the previous release ([below](#places-and-visits)). |
 | `visits` | One stay at a place: `start_date` required, `end_date` optional and never before the start, `ongoing` true for a stay still going on (the API refuses it with an end date), `notes` up to 2,000, `photo_url` an HTTP(S) URL up to 2,048. At most 500 per place when created with it or imported. |
 | `ledger_settings` | One row per traveler once they save: `day_rule`, and JSON arrays `rules` (at most 20 stay rules and thresholds, each with an id, name, 1–80 three-letter country codes, day counts and a warning margin) and `planned` (at most 30 stays with a country and first and last day). Validated in `validation.js`. |
@@ -115,7 +116,9 @@ on it, so its replicas list hidden places on public maps while they run
 same way as 006. Migration 009 added `markers.stay` (default `visit`) and `users.home_country`
 the same way; the previous release reads lived-in and transit places as plain visits, and a
 place it moves to the wishlist keeps its old `stay`, which the API ignores for wishlist places
-([ADR 0014](adr/0014-home-lived-and-transit.md)).
+([ADR 0014](adr/0014-home-lived-and-transit.md)). Migration 010 added `users.country_list` with
+the default `all`, which counts every territory as the previous release does
+([ADR 0015](adr/0015-country-lists.md)).
 
 ## Day Ledger
 
@@ -163,6 +166,12 @@ abandoned places. `minZoom` is the first half zoom step at which the place's dot
 beside the places shown before it, ranked by capitals, Natural Earth's curated label zooms and
 population; places that never fit get `11.5` and show as dots at the deepest zoom.
 
+Each feature is a territory as Natural Earth draws it, following who controls an area on the
+ground; disputed and partially recognized territories such as Kosovo, Taiwan, Western Sahara,
+Northern Cyprus, Somaliland and the Siachen Glacier are features of their own. The passport
+counts them according to the traveler's country list, and a place is never moved to another
+territory ([ADR 0015](adr/0015-country-lists.md)).
+
 To rebuild, see [development](development.md#rebuilding-map-data).
 
 ## Import And Export
@@ -188,7 +197,8 @@ one transaction and reports the invalid rows it skipped.
 
 ## Privacy
 
-Data is private to its owner. A public profile exposes username, coordinates, type, stay, name,
+Data is private to its owner. A public profile exposes username, the country list it is counted
+on, coordinates, type, stay, name,
 category, latest travel date and visit dates of each place, never the home country, the notes or
 photo links of places or visits, ratings, tags, emoji or wishlist plans, nor anything of the places hidden from it, whether a stay is still going on, ledger settings or date history
 ([security](security.md#privacy)). Deleting an account removes the user, their

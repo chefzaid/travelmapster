@@ -15,6 +15,7 @@ import { renderLedger } from './ledger.js';
 import { SCHENGEN_RULE, ledgerOverview, localToday } from './days.js';
 import { DEMO_HOME, demoMarkers } from './demo.js';
 import { HOME, STATUSES, statusFields, statusInfo, statusLabel, statusOf } from './status.js';
+import { COUNTRY_LISTS, countedCountries, shareLabel } from './lists.js';
 import { applyBulkResult, bulkRequest, bulkSummary, planBulkMark, undoRequest } from './bulk.js';
 import { celebrate } from './confetti.js';
 
@@ -26,6 +27,8 @@ const state = {
     index: null,
     cities: [],
     publicUser: null,
+    // The shared map owner's country list, so visitors see the same counts.
+    publicCountryList: 'all',
     // Signed out, the map shows a sample traveler that visitors can try; nothing is saved.
     demo: false,
     // The legend's status toggles, and the tag and rating filter shared by the map and the Places tab.
@@ -84,6 +87,12 @@ function homeCountryId() {
     return state.demo ? DEMO_HOME : null;
 }
 
+// The list of countries the passport counts against (ADR 0015).
+function countryListId() {
+    if (state.user) return state.user.countryList || 'all';
+    return state.publicUser ? state.publicCountryList : 'all';
+}
+
 // Colors countries and draws pins for the places that pass the legend and the tag and
 // rating filter; the legend counts and the passport always count every place.
 function applyFilters() {
@@ -111,7 +120,9 @@ function setDetailFilter(changes) {
 }
 
 function refresh({ celebrateNew = true } = {}) {
-    state.stats = computeStats(state.markers, state.index, { trips: state.trips.length, homeId: homeCountryId() });
+    state.stats = computeStats(state.markers, state.index, {
+        trips: state.trips.length, homeId: homeCountryId(), countryList: countryListId()
+    });
     applyFilters();
     $('#legend-visited').textContent = state.stats.visitedCountries;
     $('#legend-lived').textContent = state.stats.livedCountries;
@@ -636,16 +647,21 @@ function countryStatusRow(country, existing) {
         derived ? h('small', { class: 'muted' }, DERIVED_NOTES[derived]) : null);
 }
 
-async function setHomeCountry(country) {
-    const homeCountry = country?.id || null;
+// Saves account settings and recounts the map and passport with them.
+async function saveSettings(changes, message) {
     try {
-        const profile = await api.saveProfile({ homeCountry });
-        state.user.homeCountry = profile.homeCountry;
+        const profile = await api.saveProfile(changes);
+        Object.assign(state.user, profile);
         refresh();
-        toast(country ? `${country.name} is your home country. 🏠` : 'Home country cleared.', { tone: 'success' });
+        toast(message, { tone: 'success' });
     } catch (error) {
         handleError(error);
     }
+}
+
+function setHomeCountry(country) {
+    return saveSettings({ homeCountry: country?.id || null },
+        country ? `${country.name} is your home country. 🏠` : 'Home country cleared.');
 }
 
 // Signed-in travelers set their home country from its card, or in the settings.
@@ -1013,7 +1029,7 @@ function renderExplore(container) {
             h('p', { class: 'eyebrow' }, stats.rank.title),
             h('h2', {}, `Hi ${state.user.username}! `, h('span', { 'aria-hidden': 'true' }, '👋')),
             h('p', { class: 'muted' }, stats.visitedCountries
-                ? `You've colored in ${stats.visitedCountries} ${stats.visitedCountries === 1 ? 'country' : 'countries'}, ${stats.worldPercent}% of the world.`
+                ? `You've colored in ${stats.visitedCountries} ${stats.visitedCountries === 1 ? 'country' : 'countries'}, ${stats.worldPercent}% ${shareLabel(stats.countryList)}.`
                 : 'Click any country you have visited to color it in.')
         ),
         state.markers.length === 0 ? h('section', { class: 'onboarding' },
@@ -1216,7 +1232,7 @@ function setupAuth() {
     });
 }
 
-// Account settings that change how the map and passport count (ADR 0014).
+// Account settings that change how the map and passport count (ADR 0014, 0015).
 async function openSettings() {
     const countries = [...state.index.countries].sort((a, b) => a.name.localeCompare(b.name));
     const values = await formDialog({
@@ -1225,13 +1241,20 @@ async function openSettings() {
         fields: [
             { name: 'homeCountry', label: 'Home country', type: 'select', value: state.user.homeCountry || '',
                 options: [{ value: '', label: 'No home country' }, ...countries.map(country => ({ value: country.id, label: `${country.flag} ${country.name}` }))],
-                hint: 'Shown with its own color and counted as a country you have been to and lived in. It is never shown on your public map.' }
+                hint: 'Shown with its own color and counted as a country you have been to and lived in. It is never shown on your public map.' },
+            { name: 'countryList', label: 'Count countries from', type: 'select', value: state.user.countryList || 'all',
+                options: COUNTRY_LISTS.map(list => ({ value: list.id, label: `${list.label} (${countedCountries(state.index, list.id).length})` })),
+                hint: 'Your passport, ranks and share of the world count only this list; the map still colors in every '
+                    + 'territory. Places such as Kosovo, Taiwan or Greenland are not UN members or observers, so they count '
+                    + 'only on the full list.' }
         ]
     });
     if (!values) return;
-    const homeCountry = values.homeCountry || null;
-    if (homeCountry === (state.user.homeCountry || null)) return;
-    await setHomeCountry(state.index.byId.get(homeCountry) || null);
+    const changes = {};
+    if ((values.homeCountry || null) !== (state.user.homeCountry || null)) changes.homeCountry = values.homeCountry || null;
+    if (values.countryList !== (state.user.countryList || 'all')) changes.countryList = values.countryList;
+    if (!Object.keys(changes).length) return;
+    await saveSettings(changes, 'Settings saved.');
 }
 
 function shareUrl() {
@@ -1394,6 +1417,8 @@ async function startPublicView(username) {
     try {
         const data = await api.getPublicMap(username);
         state.publicUser = data.username;
+        // A replica of an older release sends no list: count every territory, as it did.
+        state.publicCountryList = data.countryList || 'all';
         state.markers = data.markers;
         refresh({ celebrateNew: false });
         $('#public-title').textContent = `${data.username}'s travel map`;

@@ -56,7 +56,7 @@ The field splits into scratch-map atlases (Been, Visited, Skratch), travel journ
 - [ ] Competitive review in `docs/`: features, pricing and privacy stance of the main atlas, journal, planner and day-tracking apps, refreshed every six months, with the gaps TravelMapster targets.
 - [ ] Plan pricing on the landing page once paid plans exist: it shows the free plan and keepsakes as coming soon today, without prices ([ADR 0011](docs/adr/0011-public-pages.md)).
 - [ ] Public maps worth sharing: opt-in indexing (shared maps are sent with `noindex` and left out of the sitemap until then), an Open Graph preview image of the user's map, and a "make your own map" call to action.
-- [ ] Choice of country list for counting (UN members, all 250 territories, travel-club lists such as TCC), with a documented rule for disputed and partially recognized territories.
+- [ ] Travel-club country lists (such as the Travelers' Century Club's) as a choice for counting, beside the UN and full-map lists ([ADR 0015](docs/adr/0015-country-lists.md)): needs the club's permission or a licence, and map data that draws the parts those lists count on their own (states, islands and regions such as Alaska or the Canary Islands).
 - [ ] Referrals: an invite link that gives both sides a free Pro month or a poster discount.
 - [ ] Localization: extract UI strings and ship French, Spanish, German and Arabic (right-to-left layout), with country names from Natural Earth's localized fields.
 - [ ] Privacy-respecting product metrics: server-side aggregate counters for the funnel (sign-up, first place, ten places, first ledger use, paid) and retention, with no third-party analytics.

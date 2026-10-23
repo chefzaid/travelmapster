@@ -1,5 +1,6 @@
 import { h, $, fill } from './ui.js';
 import { HOME } from './status.js';
+import { countryList, shareLabel } from './lists.js';
 
 function statTile(value, label, tone = '') {
     return h('div', { class: `stat ${tone}` }, h('strong', {}, value), h('small', {}, label));
@@ -28,7 +29,7 @@ function stampRibbon(stats, id) {
 }
 
 function stamps(stats, index, onPick) {
-    const visited = [...stats.visitedIds].map(id => index.byId.get(id)).filter(Boolean)
+    const visited = [...stats.visitedIds].filter(id => stats.countedIds.has(id)).map(id => index.byId.get(id)).filter(Boolean)
         .sort((a, b) => a.name.localeCompare(b.name));
     if (!visited.length) {
         return h('p', { class: 'muted small' }, 'Your passport is empty. Every country you visit earns a stamp.');
@@ -49,6 +50,14 @@ function stamps(stats, index, onPick) {
             )
         );
     }));
+}
+
+// Territories been to that the chosen list leaves out are named, not stamped.
+function uncountedNote(stats, index) {
+    const names = stats.uncountedIds.map(id => index.byId.get(id)?.name).filter(Boolean).sort();
+    if (!names.length) return null;
+    return h('p', { class: 'muted small' }, h('span', { 'aria-hidden': 'true' }, '🗺️ '),
+        `Also been to, not on the ${countryList(stats.countryList).unit} list: ${names.join(', ')}.`);
 }
 
 // Layovers are listed but never stamped: they are not visits.
@@ -73,7 +82,7 @@ function yearChart(stats) {
 
 export function renderPublicStats(container, stats) {
     fill(container,
-        h('p', { class: 'muted' }, `${stats.rank.title} · ${stats.worldPercent}% of the world`),
+        h('p', { class: 'muted' }, `${stats.rank.title} · ${stats.worldPercent}% ${shareLabel(stats.countryList)}`),
         h('div', { class: 'stat-grid' },
             statTile(stats.visitedCountries, 'countries', 'tone-visited'),
             statTile(stats.visitedContinents, 'continents'),
@@ -106,7 +115,7 @@ export function renderPassport(container, ctx) {
         ),
         h('div', { class: 'stat-grid' },
             statTile(stats.visitedCountries, 'countries', 'tone-visited'),
-            statTile(`${stats.worldPercent}%`, 'of the world'),
+            statTile(`${stats.worldPercent}%`, shareLabel(stats.countryList)),
             statTile(`${stats.visitedContinents}/6`, 'continents'),
             statTile(stats.visitedCities, 'cities'),
             // Lived in and transit only are counted on their own, when there are any.
@@ -121,7 +130,10 @@ export function renderPassport(container, ctx) {
             stamps(stats, index, country => {
                 ctx.map.flyToCountry(country);
             }),
-            transitNote(stats, index)
+            uncountedNote(stats, index),
+            transitNote(stats, index),
+            h('p', { class: 'muted small' }, `Counting ${countryList(stats.countryList).phrase} `
+                + `(${stats.totalCountries}). Change it in ⚙️ Settings.`)
         ),
         h('section', {},
             h('h3', { class: 'section-title' }, 'Badges', h('span', { class: 'count' }, `${unlocked}/${stats.achievements.length}`)),

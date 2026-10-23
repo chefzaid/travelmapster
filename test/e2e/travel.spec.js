@@ -170,7 +170,7 @@ test('a traveler marks several countries and a whole continent at once, with und
     expect(errors).toEqual([]);
 });
 
-test('a traveler sets a home country, a city lived in and a layover, and the passport counts them apart', async ({ page }) => {
+test('a traveler sets a home country, a city lived in, a layover and the UN list, and the passport counts them apart', async ({ page }) => {
     test.setTimeout(60_000);
     const errors = trackErrors(page);
     await signUp(page, `e2e_home_${Date.now()}`);
@@ -206,6 +206,19 @@ test('a traveler sets a home country, a city lived in and a layover, and the pas
     await page.locator('.filter-chip', { hasText: 'Transit' }).click();
     await expect(page.locator('#places-tab .place')).toHaveCount(1);
     await expect(page.locator('#places-tab .place')).toContainText('Dubai');
+
+    // Counting UN members and observers leaves Kosovo out, but the map keeps it (ADR 0015).
+    await markCity(page, 'Pristina');
+    await expect(page.locator('#legend-visited')).toHaveText('3');
+    await page.keyboard.press('Escape');
+    await page.click('#account-btn');
+    await page.click('#settings-btn');
+    await page.selectOption('#dialog-countryList', 'un');
+    await page.getByRole('button', { name: 'Save settings' }).click();
+    await expect(page.locator('#legend-visited')).toHaveText('2');
+    await page.click('#tab-passport');
+    await expect(page.locator('#passport-tab')).toContainText('of UN countries');
+    await expect(page.locator('#passport-tab')).toContainText('not on the UN countries list: Kosovo.');
     expect(errors).toEqual([]);
 });
 

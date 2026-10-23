@@ -14,7 +14,8 @@ function publicUser(user) {
         id: user.id,
         username: user.username,
         profileVisibility: user.profile_visibility || 'private',
-        homeCountry: user.home_country || null
+        homeCountry: user.home_country || null,
+        countryList: user.country_list || 'all'
     };
 }
 

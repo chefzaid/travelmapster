@@ -1,5 +1,6 @@
 // Pure geography and statistics helpers. No DOM or map access, so they can be unit tested in Node.
 import { statusOf } from './status.js';
+import { countedCountries, countryList } from './lists.js';
 
 export const CONTINENTS = ['Africa', 'Asia', 'Europe', 'North America', 'Oceania', 'South America'];
 
@@ -284,14 +285,23 @@ export function countryLook(id, status, shown = ALL_STATUSES_SHOWN) {
     return null;
 }
 
-export function computeStats(markers, index, { trips = 0, homeId = null } = {}) {
+/**
+ * Counts, ranks and badges for these places. Counts include only the countries of the chosen
+ * list (ADR 0015); the map and the day ledger still use every territory, so the status sets
+ * (`visitedIds` and the others) hold all of them.
+ */
+export function computeStats(markers, index, { trips = 0, homeId = null, countryList: listId = 'all' } = {}) {
     const markerCountry = new Map();
     for (const marker of markers) markerCountry.set(marker.id, resolveMarkerCountry(index, marker));
     const status = countryStatus(markers, marker => markerCountry.get(marker.id), { homeId: index.byId.has(homeId) ? homeId : null });
-    const visited = status.visitedIds;
+    const list = countryList(listId);
+    const counted = countedCountries(index, list.id);
+    const countedIds = new Set(counted.map(country => country.id));
+    const inList = ids => new Set([...ids].filter(id => countedIds.has(id)));
+    const visited = inList(status.visitedIds);
 
     const continents = CONTINENTS.map(name => {
-        const total = index.countries.filter(country => country.continent === name).length;
+        const total = counted.filter(country => country.continent === name).length;
         const count = [...visited].filter(id => index.byId.get(id)?.continent === name).length;
         return { name, emoji: CONTINENT_EMOJI[name], total, visited: count, percent: total ? Math.round((count / total) * 100) : 0 };
     });
@@ -312,17 +322,21 @@ export function computeStats(markers, index, { trips = 0, homeId = null } = {}) 
 
     const stats = {
         visitedCountries: visited.size,
-        livedCountries: status.livedIds.size,
-        transitCountries: status.transitIds.size,
-        wishlistCountries: status.wishlistIds.size,
+        livedCountries: inList(status.livedIds).size,
+        transitCountries: inList(status.transitIds).size,
+        wishlistCountries: inList(status.wishlistIds).size,
         visitedCities: new Set(beenCities.map(m => m.name)).size,
         wishlistPlaces: markers.filter(m => m.type === 'wishlist').length,
         totalPlaces: markers.length,
         placesWithNotes: markers.filter(m => m.notes || hasVisitWith(m, 'notes')).length,
         placesWithPhotos: markers.filter(m => m.photoUrl || hasVisitWith(m, 'photoUrl')).length,
         visitedContinents: continents.filter(c => c.visited > 0).length,
-        worldPercent: index.countries.length ? Math.round((visited.size / index.countries.length) * 1000) / 10 : 0,
-        totalCountries: index.countries.length,
+        worldPercent: counted.length ? Math.round((visited.size / counted.length) * 1000) / 10 : 0,
+        totalCountries: counted.length,
+        countryList: list.id,
+        countedIds,
+        // Territories been to that the list leaves out, such as Kosovo or Greenland on the UN list.
+        uncountedIds: [...status.visitedIds].filter(id => !countedIds.has(id)),
         trips,
         continents,
         years: [...years.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([year, count]) => ({ year, count })),
