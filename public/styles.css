@@ -2353,14 +2353,17 @@ input[aria-invalid='true'] { border-color: var(--danger); }
         left: 10px;
         top: 64px;
         bottom: auto;
+        flex-wrap: wrap;
+        max-width: calc(100% - 20px);
         padding: 4px;
         border-width: 2px;
+        border-radius: 20px;
     }
 
     .select-bar { top: 104px; left: 10px; right: 10px; bottom: auto; }
 
     .legend-static { display: none; }
-    .legend-item { padding: 2px 8px; font-size: 0.72rem; }
+    .legend-item { padding: 2px 8px; font-size: 0.72rem; white-space: nowrap; }
 
     .zoom-control { display: none; }
     .maplibregl-ctrl-bottom-right { top: 64px; right: 0; bottom: auto; }

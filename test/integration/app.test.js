@@ -92,7 +92,7 @@ test('profile visibility controls the public map', async () => {
 
     assert.equal((await owner.patch('/api/profile', { profileVisibility: 'sideways' })).status, 400);
     const changed = await owner.patch('/api/profile', { profileVisibility: 'public' });
-    assert.deepEqual(changed.body, { profileVisibility: 'public', homeCountry: null });
+    assert.deepEqual(changed.body, { profileVisibility: 'public', homeCountry: null, countryList: 'all' });
     assert.equal((await owner.get('/api/auth/me')).body.user.profileVisibility, 'public');
 
     const profile = await visitor.get('/api/public/Explorer');
@@ -113,7 +113,7 @@ test('a traveler sets a home country that only they can see (ADR 0014)', async (
 
     const set = await owner.patch('/api/profile', { homeCountry: 'PRT' });
     assert.equal(set.status, 200);
-    assert.deepEqual(set.body, { profileVisibility: 'private', homeCountry: 'PRT' });
+    assert.deepEqual(set.body, { profileVisibility: 'private', homeCountry: 'PRT', countryList: 'all' });
     assert.equal((await owner.get('/api/auth/me')).body.user.homeCountry, 'PRT');
     // The previous release's tabs send only the visibility: the home country stays.
     await owner.patch('/api/profile', { profileVisibility: 'public' });
@@ -130,6 +130,32 @@ test('a traveler sets a home country that only they can see (ADR 0014)', async (
     const forged = await owner.agent.patch('/api/profile').set('X-CSRF-Token', 'forged').send({ homeCountry: 'ESP' });
     assert.equal(forged.status, 403);
     assert.equal((await owner.get('/api/auth/me')).body.user.homeCountry, null);
+});
+
+test('a traveler chooses the list of countries to count, which a public map shares (ADR 0015)', async () => {
+    const owner = createClient(ctx.server);
+    await owner.register('counter', 'counter password');
+    assert.equal((await owner.get('/api/auth/me')).body.user.countryList, 'all', 'every territory counts, as before');
+
+    const set = await owner.patch('/api/profile', { countryList: 'un', profileVisibility: 'public' });
+    assert.deepEqual(set.body, { profileVisibility: 'public', homeCountry: null, countryList: 'un' });
+    assert.equal((await owner.get('/api/auth/me')).body.user.countryList, 'un');
+    const shared = await createClient(ctx.server).get('/api/public/counter');
+    assert.equal(shared.body.countryList, 'un', 'visitors count the way the owner does');
+
+    for (const countryList of ['tcc', 'UN', null, 7]) {
+        assert.equal((await owner.patch('/api/profile', { countryList })).status, 400, String(countryList));
+    }
+    await assert.rejects(ctx.pool.query("UPDATE users SET country_list = 'tcc' WHERE username = 'counter'"));
+    // The previous release creates accounts without the column.
+    await ctx.pool.query("INSERT INTO users (username, password_hash) VALUES ('old_release_user', 'x')");
+    const { rows: [old] } = await ctx.pool.query("SELECT country_list FROM users WHERE username = 'old_release_user'");
+    assert.equal(old.country_list, 'all');
+
+    assert.equal((await createClient(ctx.server).patch('/api/profile', { countryList: 'all' })).status, 401);
+    const forged = await owner.agent.patch('/api/profile').set('X-CSRF-Token', 'forged').send({ countryList: 'all' });
+    assert.equal(forged.status, 403);
+    assert.equal((await owner.get('/api/auth/me')).body.user.countryList, 'un');
 });
 
 test('geocode proxy requires login, validates input and hides upstream failures', async () => {

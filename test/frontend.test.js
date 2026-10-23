@@ -481,3 +481,41 @@ test('import and export keep whether a place was lived in or passed through', as
     assert.equal(io.validatePlace({ ...markers[0], stay: 'home' }), null);
     assert.equal(io.validatePlace({ ...markers[2], stay: 'transit' }), null, 'a wish is never a layover');
 });
+
+test('the passport counts against every territory or the UN list, by a documented rule (ADR 0015)', async () => {
+    const { createCountryIndex, computeStats } = await load('geo.js');
+    const lists = await load('lists.js');
+    const index = createCountryIndex(countries);
+    const ids = new Set(index.countries.map(country => country.id));
+
+    assert.equal(lists.UN_MEMBERS.length, 193);
+    assert.equal(new Set(lists.UN_MEMBERS).size, 193);
+    assert.deepEqual(lists.UN_OBSERVERS, ['VAT', 'PSX']);
+    assert.deepEqual([...lists.UN_MEMBERS, ...lists.UN_OBSERVERS].filter(id => !ids.has(id)), [], 'every UN country is on the map');
+    assert.equal(lists.countedCountries(index, 'un').length, 195);
+    assert.equal(lists.countedCountries(index, 'all').length, index.countries.length);
+    assert.equal(lists.countedCountries(index, 'nonsense').length, index.countries.length, 'an unknown list counts everything');
+    // Disputed and partially recognized territories the map draws on their own.
+    for (const id of ['KOS', 'TWN', 'SAH', 'PSX', 'CYN', 'SOL', 'KAS']) assert.ok(ids.has(id), id);
+    const un = new Set(lists.countedCountries(index, 'un').map(country => country.id));
+    assert.deepEqual(['KOS', 'TWN', 'SAH', 'CYN', 'SOL', 'KAS', 'GRL', 'HKG', 'PRI'].filter(id => un.has(id)), []);
+    assert.deepEqual(['PSX', 'VAT', 'SRB', 'CHN', 'MAR', 'CYP', 'SOM', 'SDS'].filter(id => !un.has(id)), []);
+
+    const markers = [
+        { id: 1, lat: 42.6, lng: 21.0, type: 'visited', name: 'Kosovo', category: 'Country' },
+        { id: 2, lat: 44.8, lng: 20.5, type: 'visited', name: 'Serbia', category: 'Country' },
+        { id: 3, lat: 25.03, lng: 121.56, type: 'visited', name: 'Taipei, Taiwan', category: 'City' },
+        { id: 4, lat: 31.9, lng: 35.2, type: 'visited', name: 'Ramallah, Palestine', category: 'City' }
+    ];
+    const all = computeStats(markers, index);
+    const unStats = computeStats(markers, index, { countryList: 'un' });
+    assert.equal(all.countryList, 'all');
+    assert.deepEqual([all.visitedCountries, all.totalCountries], [4, index.countries.length]);
+    assert.deepEqual([unStats.visitedCountries, unStats.totalCountries], [2, 195]);
+    assert.equal(unStats.worldPercent, 1);
+    assert.deepEqual(unStats.uncountedIds.sort(), ['KOS', 'TWN'], 'territories left out are named, never moved to another country');
+    assert.ok(unStats.visitedIds.has('KOS'), 'the map still colors them in');
+    assert.equal(unStats.continents.reduce((sum, continent) => sum + continent.total, 0), 195);
+    assert.equal(lists.shareLabel('un'), 'of UN countries');
+    assert.equal(lists.shareLabel('all'), 'of the world');
+});

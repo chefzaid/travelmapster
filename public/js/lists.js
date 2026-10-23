@@ -1,0 +1,43 @@
+// The lists of countries a traveler can count against (ADR 0015): every territory the map
+// draws, or the members and observer states of the United Nations. A list only decides which
+// territories count; places always belong to the territory the map draws them in. Pure, unit
+// tested in Node.
+
+// The 193 UN member states by map code; Natural Earth codes South Sudan SDS.
+export const UN_MEMBERS = Object.freeze(`
+    AFG ALB DZA AND AGO ATG ARG ARM AUS AUT AZE BHS BHR BGD BRB BLR BEL BLZ BEN BTN BOL BIH BWA BRA BRN BGR
+    BFA BDI CPV KHM CMR CAN CAF TCD CHL CHN COL COM COG CRI CIV HRV CUB CYP CZE PRK COD DNK DJI DMA DOM ECU
+    EGY SLV GNQ ERI EST SWZ ETH FJI FIN FRA GAB GMB GEO DEU GHA GRC GRD GTM GIN GNB GUY HTI HND HUN ISL IND
+    IDN IRN IRQ IRL ISR ITA JAM JPN JOR KAZ KEN KIR KWT KGZ LAO LVA LBN LSO LBR LBY LIE LTU LUX MDG MWI MYS
+    MDV MLI MLT MHL MRT MUS MEX FSM MCO MNG MNE MAR MOZ MMR NAM NRU NPL NLD NZL NIC NER NGA MKD NOR OMN PAK
+    PLW PAN PNG PRY PER PHL POL PRT QAT KOR MDA ROU RUS RWA KNA LCA VCT WSM SMR STP SAU SEN SRB SYC SLE SGP
+    SVK SVN SLB SOM ZAF SDS ESP LKA SDN SUR SWE CHE SYR TJK THA TLS TGO TON TTO TUN TUR TKM TUV UGA UKR ARE
+    GBR TZA USA URY UZB VUT VEN VNM YEM ZMB ZWE`.trim().split(/\s+/));
+
+// The two non-member observer states: the Holy See (Vatican City) and Palestine.
+export const UN_OBSERVERS = Object.freeze(['VAT', 'PSX']);
+
+export const COUNTRY_LISTS = Object.freeze([
+    { id: 'all', label: 'Every territory on the map', phrase: 'every territory on the map', unit: 'territories', ids: null },
+    {
+        id: 'un', label: 'UN members and observer states', phrase: 'UN members and observer states', unit: 'UN countries',
+        ids: Object.freeze([...UN_MEMBERS, ...UN_OBSERVERS])
+    }
+]);
+
+export function countryList(id) {
+    return COUNTRY_LISTS.find(list => list.id === id) || COUNTRY_LISTS[0];
+}
+
+/** What the share of countries been to is a share of. */
+export function shareLabel(listId) {
+    return listId === 'un' ? 'of UN countries' : 'of the world';
+}
+
+/** The countries of the map that a list counts, in map order. */
+export function countedCountries(index, listId) {
+    const { ids } = countryList(listId);
+    if (!ids) return index.countries;
+    const counted = new Set(ids);
+    return index.countries.filter(country => counted.has(country.id));
+}

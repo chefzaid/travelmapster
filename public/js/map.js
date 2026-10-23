@@ -530,9 +530,12 @@ export function createTravelMap(element, { index, cities, onCountryClick, onCity
     function safeArea() {
         const topbar = document.querySelector('.topbar');
         const panel = document.getElementById('panel');
+        const legend = document.getElementById('legend');
         const narrow = window.innerWidth <= 760;
+        // On phones the legend sits under the top bar.
+        const top = Math.max(topbar ? topbar.getBoundingClientRect().bottom : 74, narrow && legend ? legend.getBoundingClientRect().bottom : 0);
         return {
-            top: (topbar ? topbar.getBoundingClientRect().bottom : 74) + 16,
+            top: top + 16,
             left: !panel || panel.hidden || narrow ? 40 : panel.getBoundingClientRect().right + 40,
             right: 40,
             bottom: 80

@@ -67,8 +67,8 @@ JSON under `/api`; errors are `{ "error": "…" }` with a matching status. All r
 | GET | `/api/ledger/changes` | History of visit dates, newest first (latest 5,000) |
 | GET, POST | `/api/trips` | List or create itineraries |
 | PUT, DELETE | `/api/trips/:id` | Replace or remove an itinerary |
-| PATCH | `/api/profile` | Change account settings, each optional: `profileVisibility` (`private` or `public`) and `homeCountry` (a map code or `null`); returns them all |
-| GET | `/api/public/:username` | Read-only public map with visit dates and each place's `stay`, without notes, photo links, ratings, tags, emoji, wishlist plans or the home country, and without places hidden from it ([ADR 0013](adr/0013-hidden-places.md)) |
+| PATCH | `/api/profile` | Change account settings, each optional: `profileVisibility` (`private` or `public`), `homeCountry` (a map code or `null`) and `countryList` (`all` or `un`, [ADR 0015](adr/0015-country-lists.md)); returns them all |
+| GET | `/api/public/:username` | Read-only public map with the owner's `countryList`, visit dates and each place's `stay`, without notes, photo links, ratings, tags, emoji, wishlist plans or the home country, and without places hidden from it ([ADR 0013](adr/0013-hidden-places.md)) |
 | GET | `/api/places?q=&limit=` | Search every town in the map data (public, 1–20 results) |
 | GET | `/api/geocode?q=&kind=city\|country&limit=` | World place search (1–10 results) |
 
@@ -81,6 +81,7 @@ JSON under `/api`; errors are `{ "error": "…" }` with a matching status. All r
 | `public/js/schengen.js`, `calculator.js` | Free Schengen calculator: stay checks and results over `days.js` (pure, unit and property tested), and the page that draws them |
 | `public/js/map.js` | MapLibre GL map ([ADR 0008](adr/0008-maplibre-gl.md)): cartoon style from the CSS tokens, country states, towns and tile loading, pins, cards and camera |
 | `public/js/geo.js` | Country index, city search, country statuses and how the map draws them, stats, ranks and badges (pure, unit tested) |
+| `public/js/lists.js` | The country lists the passport counts against: every territory on the map, or UN members and observer states ([ADR 0015](adr/0015-country-lists.md)) (pure, unit tested) |
 | `public/js/status.js` | Place statuses: been there, lived there, transit only and wishlist, and their API fields ([ADR 0014](adr/0014-home-lived-and-transit.md)) (pure, unit tested) |
 | `public/js/places.js`, `io.js` | Places tab, import and export (pure `io.js` is unit tested) |
 | `public/js/bulk.js` | Marking several countries at once: the bulk change, its undo and the updated places (pure, unit tested) |
@@ -167,5 +168,6 @@ number (`NNNN-short-title.md`) and the template below. Statuses: **Proposed**, *
 - [ADR 0012: Optional details on saved places](adr/0012-place-details.md)
 - [ADR 0013: Hide single places from a public map](adr/0013-hidden-places.md)
 - [ADR 0014: Home country, lived-there and transit-only places](adr/0014-home-lived-and-transit.md)
+- [ADR 0015: Choose the country list to count against](adr/0015-country-lists.md)
 
 Superseded: [ADR 0007: Draw towns on a canvas layer](adr/0007-canvas-towns.md).
