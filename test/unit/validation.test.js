@@ -25,6 +25,9 @@ test('parseMarkerPayload reads place details only when they are sent', () => {
     const cleared = parseMarkerPayload({ ...valid, rating: '', tags: null, emoji: null }).marker;
     assert.deepEqual([cleared.rating, cleared.tags, cleared.emoji], [null, [], null]);
     assert.equal(normalizeTag(42), '');
+    const plans = parseMarkerPayload({ ...valid, priority: 'medium', bestMonths: [12, 1, 12] }).marker;
+    assert.deepEqual([plans.priority, plans.bestMonths, plans.hideFromPublic], ['medium', [1, 12], undefined]);
+    assert.match(parseMarkerPayload({ ...valid, bestMonths: [0] }).error, /month numbers/);
     for (const emoji of ['😀', '🇫🇷', '👨‍👩‍👧‍👦', '1️⃣', '🏴󠁧󠁢󠁥󠁮󠁧󠁿', '👍🏽']) assert.ok(isSingleEmoji(emoji), emoji);
     for (const text of ['a', '1', '#', '😀😀', '🇫', 'x😀', ' ', '😀'.repeat(17)]) assert.ok(!isSingleEmoji(text), text);
 });

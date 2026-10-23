@@ -975,6 +975,7 @@ button.chip { cursor: pointer; }
 }
 
 .card-emoji { font-size: 1.5rem; line-height: 1; }
+.card-months { font-size: 0.85rem; font-weight: 800; }
 
 .tag-list {
     display: flex;

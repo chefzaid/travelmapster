@@ -4,6 +4,7 @@
 // for the previous release until the contract step (ADR 0009).
 const MARKER_COLUMNS = `m.id, m.lat, m.lng, m.type, m.name, m.category,
     m.photo_url AS "photoUrl", m.notes, m.rating, m.tags, m.emoji, m.hide_from_public AS "hideFromPublic",
+    m.priority, m.best_months AS "bestMonths",
     (SELECT max(v.start_date) FROM visits v WHERE v.marker_id = m.id) AS "travelDate",
     COALESCE((SELECT json_agg(json_build_object(
         'id', v.id, 'startDate', v.start_date, 'endDate', v.end_date, 'ongoing', v.ongoing,
@@ -80,7 +81,8 @@ function markerValues(marker) {
 // Optional place details (ADR 0012, 0013) by API field, column and default. An update writes
 // only the fields it was sent, so older clients that do not know them keep what is stored.
 const DETAIL_COLUMNS = [
-    ['rating', 'rating', null], ['tags', 'tags', []], ['emoji', 'emoji', null], ['hideFromPublic', 'hide_from_public', false]
+    ['rating', 'rating', null], ['tags', 'tags', []], ['emoji', 'emoji', null], ['hideFromPublic', 'hide_from_public', false],
+    ['priority', 'priority', null], ['bestMonths', 'best_months', []]
 ];
 
 function visitValues(visit) {

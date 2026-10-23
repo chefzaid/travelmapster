@@ -25,7 +25,7 @@ test('create, list, update and delete a marker', async () => {
     assert.equal(typeof created.body.id, 'number');
     const { visits, ...place } = created.body;
     assert.deepEqual({ ...place, id: undefined }, {
-        ...sampleMarker, id: undefined, rating: null, tags: [], emoji: null, hideFromPublic: false
+        ...sampleMarker, id: undefined, rating: null, tags: [], emoji: null, hideFromPublic: false, priority: null, bestMonths: []
     });
     assert.equal(visits.length, 1, 'the travel date becomes the first visit');
     assert.equal(visits[0].startDate, sampleMarker.travelDate);
@@ -237,4 +237,34 @@ test('places hidden from the public map never appear on it', async () => {
     const forged = await owner.agent.patch(`/api/markers/${hidden.id}`).set('X-CSRF-Token', 'forged').send({ ...sampleMarker, hideFromPublic: true });
     assert.equal(forged.status, 403);
     assert.equal((await createClient(ctx.server).patch(`/api/markers/${hidden.id}`, sampleMarker)).status, 401);
+});
+
+test('wishlist places keep a priority and the best months to go', async () => {
+    const client = createClient(ctx.server);
+    await client.register('dreamer', 'dreamer password');
+    const wish = { ...sampleMarker, type: 'wishlist', name: 'Japan', category: 'Country', travelDate: undefined };
+    const created = await client.post('/api/markers', { ...wish, priority: 'high', bestMonths: [11, 3, 4, 3] });
+    assert.equal(created.status, 201);
+    assert.deepEqual([created.body.priority, created.body.bestMonths], ['high', [3, 4, 11]], 'months are sorted and unique');
+
+    const renamed = await client.patch(`/api/markers/${created.body.id}`, { ...wish, name: 'Japan!' });
+    assert.deepEqual([renamed.body.priority, renamed.body.bestMonths], ['high', [3, 4, 11]], 'older clients keep the plans');
+    const cleared = await client.patch(`/api/markers/${created.body.id}`, { ...wish, priority: '', bestMonths: null });
+    assert.deepEqual([cleared.body.priority, cleared.body.bestMonths], [null, []]);
+
+    for (const override of [{ priority: 'urgent' }, { priority: 1 }, { bestMonths: [0] }, { bestMonths: [13] }, { bestMonths: ['4'] },
+        { bestMonths: 4 }, { bestMonths: [4.5] }]) {
+        const res = await client.post('/api/markers', { ...wish, ...override });
+        assert.equal(res.status, 400, JSON.stringify(override));
+        assert.equal((await client.patch(`/api/markers/${created.body.id}`, { ...wish, ...override })).status, 400);
+    }
+    await assert.rejects(ctx.pool.query("UPDATE markers SET best_months = '{0}' WHERE id = $1", [created.body.id]));
+    await assert.rejects(ctx.pool.query("UPDATE markers SET priority = 'now' WHERE id = $1", [created.body.id]));
+
+    await client.patch(`/api/markers/${created.body.id}`, { ...wish, priority: 'low', bestMonths: [10] });
+    await client.patch('/api/profile', { profileVisibility: 'public' });
+    const [shared] = (await createClient(ctx.server).get('/api/public/dreamer')).body.markers;
+    assert.equal(shared.name, 'Japan');
+    assert.equal(shared.priority, undefined);
+    assert.equal(shared.bestMonths, undefined);
 });

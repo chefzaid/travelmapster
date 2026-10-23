@@ -5,9 +5,9 @@ import { checkDetails } from './details.js';
 export { isHttpUrl, isValidDate };
 
 // `travelDate` is the start of the latest visit, kept so older files and releases still read it.
-// Files without the later fields (rating, tags, emoji, hideFromPublic) still import with them empty.
+// Files without the later fields (rating to bestMonths) still import with them empty.
 export const EXPORT_FIELDS = ['id', 'lat', 'lng', 'type', 'name', 'category', 'photoUrl', 'notes', 'travelDate',
-    'rating', 'tags', 'emoji', 'hideFromPublic'];
+    'rating', 'tags', 'emoji', 'hideFromPublic', 'priority', 'bestMonths'];
 // CSV has one row per visit; JSON nests the visits in each place.
 export const VISIT_FIELDS = ['visitStartDate', 'visitEndDate', 'visitNotes', 'visitPhotoUrl', 'visitOngoing'];
 const CSV_FIELDS = [...EXPORT_FIELDS, ...VISIT_FIELDS];
@@ -26,15 +26,18 @@ export function buildJson(markers) {
         travelDate: lastVisitDate(marker),
         tags: marker.tags || [],
         hideFromPublic: Boolean(marker.hideFromPublic),
+        bestMonths: marker.bestMonths || [],
         visits: sortVisits(marker.visits).map(exportVisit)
     }));
     return JSON.stringify(records, null, 2);
 }
 
-// CSV cells hold one value: tags are joined with semicolons, which tags never contain.
+// CSV cells hold one value: tags and month numbers are joined with semicolons, which tags
+// never contain.
 function csvValue(marker, field) {
     if (field === 'travelDate') return lastVisitDate(marker);
     if (field === 'tags') return (marker.tags || []).join('; ');
+    if (field === 'bestMonths') return (marker.bestMonths || []).join(';');
     if (field === 'hideFromPublic') return marker.hideFromPublic ? 'yes' : '';
     return marker[field];
 }

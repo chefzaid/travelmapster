@@ -2,7 +2,7 @@ import { h, fill, toast, downloadFile, formatDate } from './ui.js';
 import { CONTINENTS } from './geo.js';
 import { buildCsv, buildJson, parseImportContent, validatePlace, placeKey, mergePlaces } from './io.js';
 import { lastVisitDate, lastVisitYears, matchesLastVisit, visitCount } from './visits.js';
-import { matchesDetails, ratingLabel, stars, usedTags } from './details.js';
+import { groupByNextMonth, matchesDetails, monthsLabel, priorityLabel, ratingLabel, stars, usedTags } from './details.js';
 
 const view = { query: '', type: 'all', category: 'all', lastVisit: 'all', sort: 'continent' };
 
@@ -54,6 +54,9 @@ function placeItem(marker, country, ctx) {
                     marker.photoUrl || marker.visits?.some(visit => visit.photoUrl) ? ' · 📷' : '',
                     marker.hideFromPublic ? ' · 🔒 Not on public map' : ''
                 ),
+                marker.type === 'wishlist' && (marker.priority || marker.bestMonths?.length) ? h('small', {},
+                    [priorityLabel(marker.priority), marker.bestMonths?.length ? `Best ${monthsLabel(marker.bestMonths)}` : '']
+                        .filter(Boolean).join(' · ')) : null,
                 marker.rating ? h('small', { class: 'stars' },
                     h('span', { 'aria-hidden': 'true' }, stars(marker.rating)),
                     h('span', { class: 'visually-hidden' }, ratingLabel(marker.rating))) : null,
@@ -77,6 +80,8 @@ function placeItem(marker, country, ctx) {
 function sortMarkers(markers, ctx) {
     const byName = (a, b) => a.name.localeCompare(b.name);
     if (view.sort === 'name') return [['All places', [...markers].sort(byName)]];
+    // The wishlist by the next month that suits each place (only wishlist places are listed).
+    if (view.sort === 'season') return groupByNextMonth(markers, new Date().getMonth() + 1);
     if (view.sort === 'date') {
         const sorted = [...markers].sort((a, b) => lastVisitDate(b).localeCompare(lastVisitDate(a)) || byName(a, b));
         return [['Most recent visit first', sorted]];
@@ -91,7 +96,8 @@ function sortMarkers(markers, ctx) {
 
 function renderList(list, summary, ctx) {
     const { state } = ctx;
-    const filtered = state.markers.filter(marker => matches(marker, state.stats.markerCountry.get(marker.id), state.filters));
+    const filtered = state.markers.filter(marker => matches(marker, state.stats.markerCountry.get(marker.id), state.filters)
+        && (view.sort !== 'season' || marker.type === 'wishlist'));
     summary.textContent = `${filtered.length} of ${state.markers.length} places`;
     if (!state.markers.length) {
         list.replaceChildren(h('div', { class: 'empty' },
@@ -225,8 +231,8 @@ export function renderPlaces(container, ctx) {
             chipGroup('Kind', 'category', [['all', 'All'], ['Country', 'Countries'], ['City', 'Cities']], rerender),
             h('div', { class: 'row sort-row' },
                 h('label', { class: 'sort' }, 'Sort by ',
-                    h('select', { onchange: event => { view.sort = event.target.value; update(); } },
-                        [['continent', 'Continent'], ['name', 'Name'], ['date', 'Last visit']].map(([value, label]) =>
+                    h('select', { id: 'places-sort', onchange: event => { view.sort = event.target.value; update(); } },
+                        [['continent', 'Continent'], ['name', 'Name'], ['date', 'Last visit'], ['season', 'When to go (wishlist)']].map(([value, label]) =>
                             h('option', { value, selected: view.sort === value }, label)))
                 ),
                 h('label', { class: 'sort' }, 'Last visit ',

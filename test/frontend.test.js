@@ -271,8 +271,9 @@ test('the calculator page lists every Schengen member by its map name', async ()
 test('place details are checked like the API and filter the list and map', async () => {
     const details = await load('details.js');
     assert.deepEqual(details.checkDetails({ rating: '4', tags: ['Food', 'food'], emoji: ' 🥐 ' }).details,
-        { rating: 4, tags: ['food'], emoji: '🥐' });
-    assert.deepEqual(details.checkDetails({}).details, { rating: null, tags: [], emoji: '' }, 'older files have no details');
+        { rating: 4, tags: ['food'], emoji: '🥐', priority: null, bestMonths: [] });
+    assert.deepEqual(details.checkDetails({}).details, { rating: null, tags: [], emoji: '', priority: null, bestMonths: [] },
+        'older files have no details');
     assert.deepEqual(details.splitTags('Street art;  road   trip, ,food'), ['street art', 'road trip', 'food']);
     for (const bad of [{ rating: 6 }, { rating: 'great' }, { tags: 'a,b,c,d,e,f,g,h,i' }, { tags: ['x'.repeat(25)] },
         { tags: ['-dash'] }, { emoji: '😀😀' }, { emoji: 'a' }]) {
@@ -331,4 +332,47 @@ test('country status counts only the places passed in', async () => {
     const stats = computeStats(markers, index);
     const status = countryStatus(markers.filter(marker => marker.tags.includes('food')), marker => stats.markerCountry.get(marker.id));
     assert.deepEqual([[...status.visitedIds], [...status.wishlistIds]], [['FRA'], []]);
+});
+
+test('wishlist places sort by the next month that suits them', async () => {
+    const details = await load('details.js');
+    const labels = [[11, 12, 1, 2], [3, 9], [4, 5, 6], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], []].map(months => details.monthsLabel(months));
+    assert.deepEqual(labels, ['Nov–Feb', 'Mar, Sep', 'Apr–Jun', 'All year', ''], 'runs of months wrap past December');
+    assert.equal(details.monthsUntil([1, 11], 10), 1);
+    assert.equal(details.monthsUntil([10], 10), 0);
+    assert.equal(details.monthsUntil([9], 10), 11, 'a month just gone is the furthest away');
+    assert.equal(details.monthsUntil([], 10), null);
+    assert.deepEqual(details.checkMonths('4;5; 6').months, [4, 5, 6]);
+    assert.ok(details.checkMonths(['13']).error);
+    assert.ok(details.checkDetails({ priority: 'urgent' }).error);
+    assert.equal(details.priorityLabel('high'), '🔥 Must go');
+    assert.equal(details.priorityLabel(null), '');
+
+    const markers = [
+        { name: 'Peru', type: 'wishlist', bestMonths: [11, 12, 1], priority: 'low' },
+        { name: 'Japan', type: 'wishlist', bestMonths: [3, 4, 11], priority: 'high' },
+        { name: 'Iceland', type: 'wishlist', bestMonths: [6, 7] },
+        { name: 'Chile', type: 'wishlist', bestMonths: [] },
+        { name: 'Oman', type: 'wishlist', bestMonths: [10], priority: 'medium' },
+        { name: 'Spain', type: 'visited', bestMonths: [10], priority: 'high' }
+    ];
+    const groups = details.groupByNextMonth(markers.filter(marker => marker.type === 'wishlist'), 10);
+    assert.deepEqual(groups.map(([title, items]) => [title, items.map(item => item.name)]), [
+        ['October (this month)', ['Oman']],
+        ['November (next month)', ['Japan', 'Peru']],
+        ['June', ['Iceland']],
+        ['No month chosen', ['Chile']]
+    ]);
+    assert.equal(details.groupByNextMonth(markers.slice(0, 1), 12)[0][0], 'December (this month)');
+    assert.equal(details.nextInSeason(markers, 10).name, 'Oman', 'visited places are never suggested');
+    assert.equal(details.nextInSeason(markers, 2).name, 'Japan');
+    assert.equal(details.nextInSeason([{ name: 'Chile', type: 'wishlist' }], 2), null);
+
+    const { buildCsv, buildJson, parseImportContent, validatePlace } = await load('io.js');
+    const wish = [{ id: 1, lat: 36, lng: 138, type: 'wishlist', name: 'Japan', category: 'Country', priority: 'high', bestMonths: [3, 4, 11], visits: [] }];
+    for (const [file, content] of [['places.json', buildJson(wish)], ['places.csv', buildCsv(wish)]]) {
+        const [place] = parseImportContent(file, content).map(validatePlace);
+        assert.deepEqual([place.priority, place.bestMonths], ['high', [3, 4, 11]], file);
+    }
+    assert.match(buildCsv(wish), /"3;4;11"/);
 });
