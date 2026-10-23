@@ -82,3 +82,30 @@ for (const colorScheme of ['light', 'dark']) {
         await expectAccessible(page, 'change password dialog');
     });
 }
+
+for (const colorScheme of ['light', 'dark']) {
+    test(`public pages meet WCAG AA in the ${colorScheme} theme`, async ({ page }) => {
+        await page.emulateMedia({ colorScheme });
+        // Landing page with a demo place card open.
+        await page.goto('/');
+        await expect(page.locator('#demo-ledger')).toContainText('Schengen days');
+        await page.fill('#global-search', 'Lisbon');
+        await page.locator('#search-results [role="option"]').filter({ hasText: 'Lisbon' }).first().click();
+        await expect(page.locator('.maplibregl-popup.card-popup .card-status .chip-visited')).toBeVisible();
+        await page.waitForTimeout(500);
+        await expectAccessible(page, 'demo place card');
+
+        // The Schengen calculator with a result, an overstay and a faulty row.
+        await page.goto('/schengen-calculator');
+        await expectAccessible(page, 'empty calculator');
+        await page.fill('#stay-1-entry', '2026-01-01');
+        await page.fill('#stay-1-exit', '2026-04-30');
+        await page.click('#add-stay');
+        await page.fill('#stay-2-entry', '2026-06-01');
+        await page.fill('#stay-2-exit', '2026-05-01');
+        await page.fill('#check-date', '2026-03-01');
+        await expect(page.locator('.overstay')).toBeVisible();
+        await expect(page.locator('#stay-2-error')).toBeVisible();
+        await expectAccessible(page, 'calculator with an overstay');
+    });
+}

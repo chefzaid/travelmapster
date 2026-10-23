@@ -22,6 +22,33 @@ test('only the public/ directory is served', async () => {
     await http.get('/vendor/maplibre/maplibre-gl.mjs').expect(200);
 });
 
+test('the Schengen calculator is a public page with its own title and description', async () => {
+    const http = request(ctx.app);
+    const page = await http.get('/schengen-calculator').expect(200);
+    assert.equal(page.headers['cache-control'], 'no-cache');
+    assert.match(page.headers['content-security-policy'], /script-src 'self'/);
+    assert.match(page.text, /<title>[^<]*Schengen 90\/180 calculator[^<]*<\/title>/);
+    assert.match(page.text, /<meta name="description" content="[^"]{50,160}">/);
+    assert.match(page.text, /<h1>/);
+    assert.ok(!page.text.includes('__assets__'), 'every placeholder is rewritten');
+    assert.match(page.text, /src="\/a\/[0-9a-f]{12}\/js\/calculator\.js"/);
+    const old = await http.get('/schengen-calculator.html').expect(301);
+    assert.equal(old.headers.location, '/schengen-calculator');
+});
+
+test('crawlers get robots.txt and a sitemap of public pages, and shared maps are not indexed', async () => {
+    const http = request(ctx.app);
+    const robots = await http.get('/robots.txt').set('Host', 'travel.test').expect(200);
+    assert.match(robots.headers['content-type'], /text\/plain/);
+    assert.match(robots.text, /Sitemap: http:\/\/travel\.test\/sitemap\.xml/);
+    const sitemap = await http.get('/sitemap.xml').set('Host', 'travel.test').expect(200);
+    assert.match(sitemap.headers['content-type'], /application\/xml/);
+    assert.match(sitemap.text, /<loc>http:\/\/travel\.test\/schengen-calculator<\/loc>/);
+
+    assert.equal((await http.get('/')).headers['x-robots-tag'], undefined);
+    assert.equal((await http.get('/?u=explorer')).headers['x-robots-tag'], 'noindex');
+});
+
 test('security headers are set', async () => {
     const res = await request(ctx.app).get('/');
     const csp = res.headers['content-security-policy'];

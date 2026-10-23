@@ -28,3 +28,11 @@ test('trust proxy accepts booleans, hop counts and CIDR lists', () => {
 test('invalid integers are rejected', () => {
     assert.throws(() => loadConfig({ PORT: 'eighty' }), /PORT/);
 });
+
+test('the public URL is reduced to an http(s) origin', () => {
+    assert.equal(loadConfig({}).publicUrl, null);
+    assert.equal(loadConfig({ PUBLIC_URL: 'https://travel.example.org/' }).publicUrl, 'https://travel.example.org');
+    assert.equal(loadConfig({ PUBLIC_URL: 'http://localhost:3000/app' }).publicUrl, 'http://localhost:3000');
+    assert.throws(() => loadConfig({ PUBLIC_URL: 'travel.example.org' }), /PUBLIC_URL/);
+    assert.throws(() => loadConfig({ PUBLIC_URL: 'ftp://travel.example.org' }), /PUBLIC_URL/);
+});

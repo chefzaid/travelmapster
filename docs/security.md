@@ -43,11 +43,15 @@ their owner chose `public`; private and missing profiles return the same 404.
 - **Headers** (helmet): CSP allowing only same-origin scripts and styles (no inline), no framing,
   HSTS in production, no `X-Powered-By`. API responses are `Cache-Control: no-store`.
 - Only `public/` is served statically; source, configuration and dependencies are never reachable.
+- Public pages (the landing page and the Schengen calculator) run under the same CSP; the
+  calculator makes no API call and stores nothing, and changes on the landing page's demo map
+  never reach the API ([ADR 0011](adr/0011-public-pages.md)).
 
 ## Privacy
 
 - Notes and photo links, of places and of visits, are never included in public maps; only
-  visit dates are. Whether a stay is still going on is never shared either, as it would tell
+  visit dates are. Shared maps are sent with `X-Robots-Tag: noindex` and left out of the
+  sitemap, so search engines do not list them. Whether a stay is still going on is never shared either, as it would tell
   where the traveler is now, and neither are ledger settings or the date history.
 - Day counts, alerts and evidence reports are computed in the browser and only when the
   traveler opens the Ledger tab or asks for a report ([ADR 0010](adr/0010-day-ledger.md)).

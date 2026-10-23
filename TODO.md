@@ -54,9 +54,8 @@ Differentiators:
 The field splits into scratch-map atlases (Been, Visited, Skratch), travel journals (Polarsteps, Journi), trip planners (Wanderlog, TripIt) and day-tracking tools for tax residency (Monaeo and similar). Atlases are free and crowded, journals depend on phone tracking, and day trackers are dry, costly and built for advisers. TravelMapster's opening is the overlap: the atlas wins the user for free, the ledger earns the subscription, and keepsakes pay one-off. Growth should come from things people share or search for, not from ads or third-party trackers.
 
 - [ ] Competitive review in `docs/`: features, pricing and privacy stance of the main atlas, journal, planner and day-tracking apps, refreshed every six months, with the gaps TravelMapster targets.
-- [ ] Landing page for signed-out visitors: a live demo map, the atlas, ledger and keepsakes story, and plan pricing, instead of opening straight onto sign-up.
-- [ ] Free Schengen 90/180 calculator page usable without an account (dates in the browser, nothing stored), linking to the ledger; the main search-driven acquisition channel.
-- [ ] Public maps worth sharing: opt-in indexing, an Open Graph preview image of the user's map, and a "make your own map" call to action.
+- [ ] Plan pricing on the landing page once paid plans exist: it shows the free plan and keepsakes as coming soon today, without prices ([ADR 0011](docs/adr/0011-public-pages.md)).
+- [ ] Public maps worth sharing: opt-in indexing (shared maps are sent with `noindex` and left out of the sitemap until then), an Open Graph preview image of the user's map, and a "make your own map" call to action.
 - [ ] Choice of country list for counting (UN members, all 250 territories, travel-club lists such as TCC), with a documented rule for disputed and partially recognized territories.
 - [ ] Referrals: an invite link that gives both sides a free Pro month or a poster discount.
 - [ ] Localization: extract UI strings and ship French, Spanish, German and Arabic (right-to-left layout), with country names from Natural Earth's localized fields.

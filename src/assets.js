@@ -20,16 +20,20 @@ function fingerprint(directory) {
     return hash.digest('hex').slice(0, 12);
 }
 
+// The HTML pages, by the file in public/ that holds them.
+const PAGES = ['index.html', 'schengen-calculator.html'];
+
 /**
- * The page links its scripts, styles and data under /a/<fingerprint>/. Those URLs can be
- * cached for a year, because a release changes the fingerprint; the page itself is never
- * cached, so browsers and the CDN always load one consistent set of files.
+ * The pages link their scripts, styles and data under /a/<fingerprint>/. Those URLs can be
+ * cached for a year, because a release changes the fingerprint; the pages themselves are
+ * never cached, so browsers and the CDN always load one consistent set of files.
  */
 function createAssets(publicDir) {
     const version = fingerprint(publicDir);
     const base = `/a/${version}/`;
-    const indexHtml = fs.readFileSync(path.join(publicDir, 'index.html'), 'utf8').replaceAll(PLACEHOLDER, base);
-    return { version, base, indexHtml, placeholder: PLACEHOLDER };
+    const pages = Object.fromEntries(PAGES.map(file =>
+        [file, fs.readFileSync(path.join(publicDir, file), 'utf8').replaceAll(PLACEHOLDER, base)]));
+    return { version, base, pages, placeholder: PLACEHOLDER };
 }
 
 module.exports = { createAssets, fingerprint };

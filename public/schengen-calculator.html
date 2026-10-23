@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Schengen 90/180 calculator: count your days, free · TravelMapster</title>
+    <meta name="description" content="Free Schengen 90/180 calculator: see days used, days left, overstays and the latest day you can stay. No account, and your dates never leave your browser.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="TravelMapster">
+    <meta property="og:title" content="Free Schengen 90/180 calculator">
+    <meta property="og:description" content="Days used, days left and the latest day you can stay in the Schengen area. No account; your dates stay in your browser.">
+    <meta name="theme-color" content="#7cc6e8">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <!-- The server rewrites /__assets__/ to this release's cacheable /a/<fingerprint>/ path. -->
+    <link rel="preload" href="/__assets__/vendor/fonts/fredoka-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/__assets__/styles.css">
+</head>
+<body class="page">
+    <a class="skip-link" href="#calculator">Skip to the calculator</a>
+
+    <header class="page-header">
+        <a class="brand" href="/" aria-label="TravelMapster home">
+            <img src="/__assets__/logo.svg" alt="" width="40" height="40">
+            <span class="brand-name">Travel<span>Mapster</span></span>
+        </a>
+        <nav class="page-nav" aria-label="Site">
+            <a class="btn btn-ghost btn-sm" href="/">Travel map</a>
+            <a class="btn btn-primary btn-sm" href="/#sign-up">Sign up free</a>
+        </nav>
+    </header>
+
+    <main class="page-main">
+        <div class="page-intro">
+            <p class="eyebrow">Free tool · no account</p>
+            <h1>Schengen <span class="scribble">90/180</span> calculator</h1>
+            <p class="lead">Add your stays in the Schengen area, past and planned. You'll see how many of your
+                90 days you have used, how many are left, whether a trip goes over the limit and the
+                latest day you can stay.</p>
+            <p class="privacy-note"><span aria-hidden="true">🔒</span> Your dates stay in this browser tab. Nothing is sent or saved, so closing the tab clears them.</p>
+        </div>
+
+        <section id="calculator" class="calculator" aria-labelledby="calculator-title" tabindex="-1">
+            <form id="calculator-form" class="calculator-form" novalidate>
+                <h2 id="calculator-title">Your stays in the Schengen area</h2>
+                <p class="muted small">Entry and exit days both count. Leave the exit day empty if you are still there.</p>
+                <ol id="stay-list" class="stay-list"></ol>
+                <button id="add-stay" class="btn btn-ghost btn-sm" type="button">＋ Add a stay</button>
+                <label class="field check-date" for="check-date">
+                    <span>Day to check</span>
+                    <input id="check-date" name="checkDate" type="date">
+                    <small>Today unless you change it: try the day you plan to enter.</small>
+                </label>
+                <noscript><p class="form-error">The calculator needs JavaScript. The rules below explain how to count by hand.</p></noscript>
+            </form>
+
+            <div id="calculator-result" class="calculator-result">
+                <p class="muted">Add a stay to see your days.</p>
+            </div>
+            <p id="result-announcer" class="visually-hidden" aria-live="polite"></p>
+        </section>
+
+        <aside class="cta-card" aria-labelledby="cta-title">
+            <p class="eyebrow">Keep counting without the spreadsheet</p>
+            <h2 id="cta-title">Let your travel map keep the ledger</h2>
+            <p>With a free TravelMapster account, every trip you pin on your map counts toward a day ledger:
+                Schengen days, your own visa limits and the 183-day tax-residency rule, with alerts before you
+                reach a limit and a printable evidence report.</p>
+            <div class="cta-actions">
+                <a class="btn btn-primary" href="/#sign-up">Create my free map</a>
+                <a class="btn btn-ghost" href="/">See the demo map</a>
+            </div>
+        </aside>
+
+        <section class="page-section" aria-labelledby="rule-title">
+            <h2 id="rule-title">How the 90/180 rule works</h2>
+            <ul class="rule-list">
+                <li><strong>90 days in any 180.</strong> Visitors on a short stay may spend at most 90 days in
+                    the Schengen area within any 180-day period, with or without a visa.</li>
+                <li><strong>The window rolls.</strong> On any day, look back over that day and the 179 days
+                    before it. The days you spent in the area in that window must not add up to more than 90.</li>
+                <li><strong>Entry and exit days count.</strong> Any part of a day in the area counts as a whole
+                    day, so a day trip counts as one.</li>
+                <li><strong>One area, one count.</strong> Days in every member country add up together; moving
+                    from France to Spain does not reset anything.</li>
+                <li><strong>Days come back slowly.</strong> A day drops out of the count 180 days after it, so
+                    after a long stay you regain days one by one.</li>
+            </ul>
+            <p class="muted small">Days spent under a residence permit or a long-stay national visa of a member country
+                do not count toward the 90. This calculator is a guide, not legal advice: border officers make the
+                final decision.</p>
+        </section>
+
+        <section class="page-section" aria-labelledby="members-title">
+            <h2 id="members-title">Which countries count?</h2>
+            <p>The Schengen area has 29 members as of 2026, including Bulgaria and Romania since 1 January 2025:</p>
+            <ul class="member-list">
+                <li>Austria</li><li>Belgium</li><li>Bulgaria</li><li>Croatia</li><li>Czechia</li><li>Denmark</li>
+                <li>Estonia</li><li>Finland</li><li>France</li><li>Germany</li><li>Greece</li><li>Hungary</li>
+                <li>Iceland</li><li>Italy</li><li>Latvia</li><li>Liechtenstein</li><li>Lithuania</li>
+                <li>Luxembourg</li><li>Malta</li><li>Netherlands</li><li>Norway</li><li>Poland</li>
+                <li>Portugal</li><li>Romania</li><li>Slovakia</li><li>Slovenia</li><li>Spain</li><li>Sweden</li>
+                <li>Switzerland</li>
+            </ul>
+            <p>Days in <strong>Monaco</strong>, <strong>San Marino</strong> and <strong>Vatican City</strong> count too,
+                as they are reached only through the area. <strong>Cyprus</strong> and <strong>Ireland</strong> (EU
+                members outside the area) and <strong>Andorra</strong> do not count, and neither do overseas
+                territories outside Europe, such as French Guiana or Réunion.</p>
+        </section>
+    </main>
+
+    <footer class="page-footer">
+        <p><a href="/">TravelMapster</a>: a playful travel atlas and day ledger. No ads, no trackers.</p>
+    </footer>
+
+    <div id="toasts" class="toasts" aria-live="polite"></div>
+
+    <script type="module" src="/__assets__/js/calculator.js"></script>
+</body>
+</html>
