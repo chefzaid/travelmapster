@@ -15,7 +15,9 @@ function publicUser(user) {
         username: user.username,
         profileVisibility: user.profile_visibility || 'private',
         homeCountry: user.home_country || null,
-        countryList: user.country_list || 'all'
+        countryList: user.country_list || 'all',
+        mapPalette: user.map_palette || 'standard',
+        publicJourneys: Boolean(user.public_journeys)
     };
 }
 

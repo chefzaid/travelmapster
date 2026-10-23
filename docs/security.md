@@ -57,7 +57,8 @@ their owner chose `public`; private and missing profiles return the same 404.
   sitemap, so search engines do not list them. Whether a stay is still going on is never shared either, as it would tell
   where the traveler is now, and neither are the home country ([ADR 0014](adr/0014-home-lived-and-transit.md)),
   ledger settings or the date history. Whether a shared place was lived in or a layover is shown,
-  like its status.
+  like its status. Journey lines, which make the order of trips obvious, are drawn for visitors
+  only when the owner turns them on ([ADR 0016](adr/0016-timeline-journeys-and-palettes.md)).
 - Day counts, alerts and evidence reports are computed in the browser and only when the
   traveler opens the Ledger tab or asks for a report ([ADR 0010](adr/0010-day-ledger.md)).
   Evidence CSV files defuse cells that a spreadsheet would run as formulas.

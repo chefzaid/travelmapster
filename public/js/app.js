@@ -17,6 +17,9 @@ import { DEMO_HOME, demoMarkers } from './demo.js';
 import { HOME, STATUSES, statusFields, statusInfo, statusLabel, statusOf } from './status.js';
 import { COUNTRY_LISTS, countedCountries, shareLabel } from './lists.js';
 import { applyBulkResult, bulkRequest, bulkSummary, planBulkMark, undoRequest } from './bulk.js';
+import { placesInYear, timelineYears } from './timeline.js';
+import { groupTrips, journeyArc, journeyLegs, journeyStops, routeLabel } from './journeys.js';
+import { PALETTES, paletteId } from './palettes.js';
 import { celebrate } from './confetti.js';
 
 const state = {
@@ -27,8 +30,10 @@ const state = {
     index: null,
     cities: [],
     publicUser: null,
-    // The shared map owner's country list, so visitors see the same counts.
+    // The shared map owner's country list, so visitors see the same counts, and whether they
+    // let visitors see journey lines (ADR 0016).
     publicCountryList: 'all',
+    publicJourneys: false,
     // Signed out, the map shows a sample traveler that visitors can try; nothing is saved.
     demo: false,
     // The legend's status toggles, and the tag and rating filter shared by the map and the Places tab.
@@ -36,6 +41,9 @@ const state = {
     activeTab: 'explore',
     // Countries picked on the map to mark at once, or null when not picking.
     selection: null,
+    // The timeline (ADR 0016): the map by the end of a year or during it, journey lines, the
+    // replay choices for the year and a function that stops a running replay.
+    timeline: { open: false, year: null, mode: 'by', journeys: false, choices: new Map(), replaying: false, stopReplay: null },
     ideas: null,
     unlocked: null,
     // Day ledger: settings from the API, the history of visit dates (loaded when needed)
@@ -77,10 +85,6 @@ function cityMarkerFor(city) {
     ));
 }
 
-function visibleMarkers() {
-    return state.markers.filter(marker => state.filters[statusOf(marker)] && matchesDetails(marker, state.filters));
-}
-
 // The traveler's home country (ADR 0014); the demo traveler has one too. Public maps never share it.
 function homeCountryId() {
     if (state.user) return state.user.homeCountry || null;
@@ -93,17 +97,23 @@ function countryListId() {
     return state.publicUser ? state.publicCountryList : 'all';
 }
 
-// Colors countries and draws pins for the places that pass the legend and the tag and
-// rating filter; the legend counts and the passport always count every place.
+const countryOfMarker = marker => state.stats.markerCountry.get(marker.id);
+
+// Colors countries and draws pins for the places that pass the timeline, the legend and the tag
+// and rating filter; the legend counts and the passport always count every place.
 function applyFilters() {
     const shown = Object.fromEntries(STATUSES.map(({ id }) => [id, state.filters[id]]));
     const filtered = detailFilterActive(state.filters);
-    const status = filtered
-        ? countryStatus(state.markers.filter(marker => matchesDetails(marker, state.filters)), marker => state.stats.markerCountry.get(marker.id),
-            { homeId: state.stats.homeId })
+    const timeline = timelineView();
+    let markers = timeline ? timeline.markers : state.markers;
+    if (filtered) markers = markers.filter(marker => matchesDetails(marker, state.filters));
+    const status = filtered || timeline
+        ? countryStatus(markers, countryOfMarker, { homeId: state.stats.homeId })
         : state.stats;
     travelMap.setCountryStatus(status, shown);
-    travelMap.setPins(visibleMarkers());
+    const visible = markers.filter(marker => state.filters[statusOf(marker)]);
+    travelMap.setPins(visible);
+    renderTimeline(timeline, visible);
     const clear = $('#legend-detail-filter');
     clear.hidden = !filtered;
     if (filtered) {
@@ -149,6 +159,257 @@ function refresh({ celebrateNew = true } = {}) {
     updateLedgerBadge();
     renderActiveTab();
     if (state.demo) renderDemoLedger();
+}
+
+// ---------------------------------------------------------------- timeline and journeys
+
+// The map by the end of the chosen year, or during it, while the timeline is open; null when it
+// is closed or no visit has a date (ADR 0016).
+function timelineView() {
+    const { open, mode } = state.timeline;
+    if (!open || !state.stats) return null;
+    const today = localToday();
+    const years = timelineYears(state.markers, today);
+    if (!years) return null;
+    const year = Math.min(Math.max(state.timeline.year ?? years.latest, years.first), years.last);
+    state.timeline.year = year;
+    return { years, year, mode, ...placesInYear(state.markers, { year, mode, today }) };
+}
+
+// Visitors of a public map see journey lines only when its owner shares them.
+function journeysAllowed() {
+    return !state.publicUser || state.publicJourneys;
+}
+
+function stopsOf(markers) {
+    return journeyStops(markers, { countryOf: countryOfMarker, today: localToday() });
+}
+
+const plural = (count, one, many) => `${count} ${count === 1 ? one : many}`;
+
+function renderTimeline(view, visible) {
+    if (!state.timeline.open) {
+        travelMap.setJourneys([]);
+        return;
+    }
+    const range = $('#time-year');
+    const summary = $('#time-summary');
+    range.disabled = !view;
+    $('#time-journeys').hidden = !view || !journeysAllowed();
+    if (!view) {
+        $('#time-year-value').textContent = '';
+        range.removeAttribute('aria-valuetext');
+        summary.textContent = state.user
+            ? 'Add dates to your visits to see your map year by year.'
+            : 'No visit on this map has dates yet.';
+        travelMap.setJourneys([]);
+        return;
+    }
+    range.min = view.years.first;
+    range.max = view.years.last;
+    range.value = view.year;
+    const during = view.mode === 'during';
+    const words = during ? `During ${view.year}` : `By the end of ${view.year}`;
+    range.setAttribute('aria-valuetext', words);
+    $('#time-year-value').textContent = view.year;
+    // Countries been to, on the traveler's country list; the home country has no dates, so it
+    // is always drawn but counted only by the end of a year.
+    const been = countryStatus(view.markers, countryOfMarker, { homeId: during ? null : state.stats.homeId }).visitedIds;
+    const count = [...been].filter(id => state.stats.countedIds.has(id)).length;
+    const text = `${words}: ${plural(count, 'country', 'countries')} ${during ? 'visited' : 'been to'}.`
+        + (view.undated ? ` ${plural(view.undated, 'place', 'places')} without dates ${view.undated === 1 ? 'is' : 'are'} not shown.` : '');
+    // The summary is a live region: only a change is announced.
+    if (summary.textContent !== text) summary.textContent = text;
+    renderJourneys(view, visible);
+}
+
+// The journey lines of the places shown, and the year's trips to replay.
+function renderJourneys(view, visible) {
+    if (!journeysAllowed()) {
+        travelMap.setJourneys([]);
+        return;
+    }
+    const yearStops = stopsOf(placesInYear(visible, { year: view.year, mode: 'during', today: localToday() }).markers);
+    const trips = groupTrips(yearStops);
+    const choices = new Map([['year', yearStops]]);
+    const options = [h('option', { value: 'year' }, `Every journey in ${view.year}`)];
+    for (const trip of trips) {
+        const key = `${trip.startDate}:${trip.stops[0].markerId}`;
+        choices.set(key, trip.stops);
+        options.push(h('option', { value: key }, `${formatDate(trip.startDate)}: ${routeLabel(trip.stops)}`));
+    }
+    const pick = $('#journey-pick');
+    const chosen = choices.has(pick.value) ? pick.value : 'year';
+    state.timeline.choices = choices;
+    pick.replaceChildren(...options);
+    pick.value = chosen;
+    const canReplay = journeyLegs(yearStops).length > 0;
+    pick.disabled = !canReplay;
+    $('#journey-replay').disabled = !canReplay && !state.timeline.replaying;
+    // A replay keeps its route on the map until something changes.
+    if (state.timeline.replaying) return;
+    const legs = state.timeline.journeys ? journeyLegs(stopsOf(visible)) : [];
+    travelMap.setJourneys(legs.map(({ from, to }) => journeyArc(from, to)));
+}
+
+function stopReplay() {
+    state.timeline.stopReplay?.();
+}
+
+// Replays the chosen trip or the whole year, leg by leg; pressed again, it stops.
+function toggleReplay() {
+    if (state.timeline.stopReplay) {
+        stopReplay();
+        applyFilters();
+        return;
+    }
+    const stops = state.timeline.choices.get($('#journey-pick').value) || [];
+    const legs = journeyLegs(stops);
+    if (!legs.length) return;
+    const button = $('#journey-replay');
+    const now = $('#journey-now');
+    const leg = $('#journey-leg');
+    const route = routeLabel(stops, 8);
+    button.textContent = '■ Stop';
+    now.textContent = `Replaying ${plural(legs.length, 'journey', 'journeys')}: ${route}.`;
+    state.timeline.replaying = true;
+    const stop = travelMap.replayJourneys(legs.map(({ from, to }) => journeyArc(from, to)), {
+        reduceMotion: Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches),
+        onLeg: i => {
+            leg.textContent = `✈️ ${legs[i].from.name} → ${legs[i].to.name} · ${formatDate(legs[i].to.startDate)}`;
+        },
+        onDone: finished => {
+            state.timeline.replaying = false;
+            state.timeline.stopReplay = null;
+            button.textContent = '▶ Replay';
+            now.textContent = finished ? `Replay finished: ${route}.` : 'Replay stopped.';
+            if (!finished) leg.textContent = '';
+        }
+    });
+    // With reduced motion the replay has already finished.
+    state.timeline.stopReplay = state.timeline.replaying ? stop : null;
+}
+
+function setTimelineOpen(open) {
+    const bar = $('#time-bar');
+    const hadFocus = bar.contains(document.activeElement);
+    if (!open) stopReplay();
+    state.timeline.open = open;
+    bar.hidden = !open;
+    $('#timeline-btn').setAttribute('aria-expanded', String(open));
+    $('#journey-now').textContent = '';
+    $('#journey-leg').textContent = '';
+    if (open) {
+        stopSelecting();
+        travelMap.closePopup();
+        // On phones, tuck the bottom sheet away so the map shows above the timeline.
+        if (window.innerWidth <= 760) {
+            $('#panel').classList.add('is-collapsed');
+            $('#panel-handle').setAttribute('aria-expanded', 'false');
+        }
+    }
+    if (state.stats) applyFilters();
+    if (open) ($('#time-year').disabled ? $('#time-close') : $('#time-year')).focus();
+    else if (hadFocus) $('#timeline-btn').focus();
+}
+
+function setupTimeline() {
+    $('#timeline-btn').addEventListener('click', () => setTimelineOpen(!state.timeline.open));
+    $('#time-close').addEventListener('click', () => setTimelineOpen(false));
+    $('#time-bar').addEventListener('keydown', event => {
+        if (event.key === 'Escape' && !document.querySelector('dialog[open]')) setTimelineOpen(false);
+    });
+    $('#time-year').addEventListener('input', event => {
+        stopReplay();
+        state.timeline.year = Number(event.target.value);
+        applyFilters();
+    });
+    for (const radio of $all('input[name="time-mode"]')) {
+        radio.addEventListener('change', () => {
+            stopReplay();
+            state.timeline.mode = radio.value;
+            applyFilters();
+        });
+    }
+    $('#journey-toggle').addEventListener('change', event => {
+        stopReplay();
+        state.timeline.journeys = event.target.checked;
+        applyFilters();
+    });
+    $('#journey-pick').addEventListener('change', () => {
+        if (state.timeline.stopReplay) toggleReplay();
+    });
+    $('#journey-replay').addEventListener('click', toggleReplay);
+}
+
+// ---------------------------------------------------------------- palettes and printing
+
+const PALETTE_KEY = 'travelmapster.palette';
+
+function storedPalette() {
+    try {
+        return localStorage.getItem(PALETTE_KEY);
+    } catch {
+        return null;
+    }
+}
+
+// Switches the map colors (ADR 0016); the CSS tokens change, then the map redraws from them.
+// The choice is remembered in this browser, so the next visit starts with it.
+function applyPalette(id) {
+    const palette = paletteId(id);
+    const root = document.documentElement;
+    const changed = (root.dataset.palette || 'standard') !== palette;
+    if (palette === 'standard') delete root.dataset.palette;
+    else root.dataset.palette = palette;
+    try {
+        localStorage.setItem(PALETTE_KEY, palette);
+    } catch {
+        // Storage can be unavailable; the palette still applies to this page.
+    }
+    $('#public-palette').value = palette;
+    if (changed) travelMap?.refreshTheme();
+}
+
+function printTitle() {
+    const owner = state.user?.username || state.publicUser;
+    const title = owner ? `${owner}'s travel map` : 'A sample TravelMapster map';
+    const view = timelineView();
+    if (!view) return title;
+    return `${title}, ${view.mode === 'during' ? 'places visited during' : 'by the end of'} ${view.year}`;
+}
+
+// Printing shows a picture of the map as it is on screen (see the print styles). The evidence
+// report prints on its own.
+function preparePrint() {
+    const image = $('#map-print');
+    if (document.body.classList.contains('is-reporting') || image.getAttribute('src')) return;
+    $('#print-title').textContent = printTitle();
+    image.src = travelMap.snapshot();
+}
+
+async function printMap() {
+    preparePrint();
+    try {
+        await $('#map-print').decode();
+    } catch {
+        // Print anyway: the browser waits for the picture or prints the page without it.
+    }
+    window.print();
+}
+
+function setupPrinting() {
+    window.addEventListener('beforeprint', preparePrint);
+    window.addEventListener('afterprint', () => $('#map-print').removeAttribute('src'));
+    $('#print-btn').addEventListener('click', () => {
+        closeAccountMenu();
+        printMap();
+    });
+    $('#public-print').addEventListener('click', printMap);
+    const select = $('#public-palette');
+    select.replaceChildren(...PALETTES.map(palette => h('option', { value: palette.id }, palette.label)));
+    select.value = paletteId(document.documentElement.dataset.palette);
+    select.addEventListener('change', () => applyPalette(select.value));
 }
 
 // ---------------------------------------------------------------- day ledger
@@ -394,6 +655,7 @@ function updateSelection() {
 }
 
 function startSelecting() {
+    if (state.timeline.open) setTimelineOpen(false);
     state.selection = new Set();
     travelMap.closePopup();
     $('#select-bar').hidden = false;
@@ -652,6 +914,7 @@ async function saveSettings(changes, message) {
     try {
         const profile = await api.saveProfile(changes);
         Object.assign(state.user, profile);
+        if (profile.mapPalette) applyPalette(profile.mapPalette);
         refresh();
         toast(message, { tone: 'success' });
     } catch (error) {
@@ -1246,13 +1509,21 @@ async function openSettings() {
                 options: COUNTRY_LISTS.map(list => ({ value: list.id, label: `${list.label} (${countedCountries(state.index, list.id).length})` })),
                 hint: 'Your passport, ranks and share of the world count only this list; the map still colors in every '
                     + 'territory. Places such as Kosovo, Taiwan or Greenland are not UN members or observers, so they count '
-                    + 'only on the full list.' }
+                    + 'only on the full list.' },
+            { name: 'mapPalette', label: 'Map colors', type: 'select', value: paletteId(state.user.mapPalette),
+                options: PALETTES.map(palette => ({ value: palette.id, label: palette.label })),
+                hint: 'Color-blind safe colors keep every status apart for all kinds of color vision; print-friendly colors '
+                    + 'suit paper and grayscale printers. Patterns and outlines stay the same.' },
+            { name: 'publicJourneys', label: 'Show journey lines on my public map', type: 'checkbox', value: state.user.publicJourneys,
+                hint: 'Visitors already see your visit dates; with this on, the timeline also draws the order you traveled in.' }
         ]
     });
     if (!values) return;
     const changes = {};
     if ((values.homeCountry || null) !== (state.user.homeCountry || null)) changes.homeCountry = values.homeCountry || null;
     if (values.countryList !== (state.user.countryList || 'all')) changes.countryList = values.countryList;
+    if (values.mapPalette !== paletteId(state.user.mapPalette)) changes.mapPalette = values.mapPalette;
+    if ((values.publicJourneys === 'on') !== Boolean(state.user.publicJourneys)) changes.publicJourneys = values.publicJourneys === 'on';
     if (!Object.keys(changes).length) return;
     await saveSettings(changes, 'Settings saved.');
 }
@@ -1372,6 +1643,7 @@ function showSignedOut() {
     state.ledger = { settings: { dayRule: 'presence', rules: [], planned: [] }, changes: null, overview: null, alerted: false };
     $('#account').hidden = true;
     stopSelecting();
+    setTimelineOpen(false);
     travelMap.closePopup();
     refresh({ celebrateNew: false });
     setView('welcome');
@@ -1382,6 +1654,9 @@ async function startSession() {
     const user = await api.currentUser();
     state.user = user;
     state.demo = false;
+    setTimelineOpen(false);
+    // A replica of the previous release sends no palette: keep this browser's.
+    if (user.mapPalette) applyPalette(user.mapPalette);
     travelMap.closePopup();
     $('#account').hidden = false;
     $('#account-name').textContent = user.username;
@@ -1419,6 +1694,7 @@ async function startPublicView(username) {
         state.publicUser = data.username;
         // A replica of an older release sends no list: count every territory, as it did.
         state.publicCountryList = data.countryList || 'all';
+        state.publicJourneys = Boolean(data.showJourneys);
         state.markers = data.markers;
         refresh({ celebrateNew: false });
         $('#public-title').textContent = `${data.username}'s travel map`;
@@ -1496,6 +1772,8 @@ async function boot() {
 }
 
 async function init() {
+    // Start with this browser's palette; a signed-in traveler's own choice follows.
+    applyPalette(storedPalette());
     await loadMapData();
     travelMap = createTravelMap($('#map'), {
         index: state.index,
@@ -1503,7 +1781,12 @@ async function init() {
         // While picking countries, clicks pick the country instead of opening its card.
         onCountryClick: (country, latlng) => (state.selection ? toggleSelected(country) : showCountryCard(country, latlng)),
         onCityClick: city => (state.selection ? toggleSelected(state.index.byId.get(city.countryId)) : showCityCard(city)),
-        onPinClick: marker => (state.selection ? toggleSelected(state.stats.markerCountry.get(marker.id)) : showSavedCityCard(marker)),
+        // A pin may show a place as the timeline trims it; its card shows the whole place.
+        onPinClick: pinned => {
+            const marker = state.markers.find(item => item.id === pinned.id) || pinned;
+            if (state.selection) toggleSelected(state.stats.markerCountry.get(marker.id));
+            else showSavedCityCard(marker);
+        },
         // On phones, tuck the bottom sheet away so map cards have room.
         onPopupOpen: () => {
             if (window.innerWidth <= 760) {
@@ -1520,6 +1803,8 @@ async function init() {
     setupLegend();
     setupSelectBar();
     setupLanding();
+    setupTimeline();
+    setupPrinting();
     $('#surprise-btn').addEventListener('click', surprise);
     await boot();
 }
