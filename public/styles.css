@@ -61,6 +61,14 @@
     --transit: #dde4ec;
     --transit-ink: #4d6175;
     --transit-soft: #e9eef3;
+    --visited-hover: #5ad8cc;
+    --visited-stripe: #45d4c6;
+    --wishlist-hover: #ffd452;
+    --wishlist-stripe: #ffe08a;
+    /* Journey lines between visits, on a light casing that keeps them visible on any fill. */
+    --journey: #c93636;
+    --journey-casing: #fffdf7;
+    --atlas-line: rgba(255, 255, 255, 0.6);
     --danger: #e5484d;
     --danger-strong: #c62f33;
     --danger-text: #c62f33;
@@ -115,6 +123,78 @@
         --transit-soft: #a9b8c8;
         --star: #ffd166;
         color-scheme: dark;
+    }
+}
+
+/* Map palettes chosen in Settings (ADR 0016). They replace the map and status tokens, so the
+   map, legend, pins and chips change together, and keep each status's outline and pattern.
+   Map labels (--ink-dark) keep 4.5:1 on every fill and land colour, and each status outline
+   3:1 on its fill; test/map.test.js checks both, and that the statuses stay apart for
+   protanopia, deuteranopia and tritanopia (and in grayscale for print). */
+
+/* Color-blind safe: Okabe-Ito hues on neutral land, so statuses never hide among pastels. */
+:root[data-palette='colorblind'],
+:root[data-palette='print'] {
+    --land-1: #f6f3ea;
+    --land-2: #efece4;
+    --land-3: #f3eee2;
+    --land-4: #ebe9e2;
+    --land-5: #f1ede6;
+    --land-6: #f5f1ec;
+    --land-7: #eeebe0;
+    --visited: #56b4e9;
+    --visited-ink: #005a8c;
+    --visited-soft: #b3dcf5;
+    --visited-hover: #86c9ef;
+    --visited-stripe: #86c9ef;
+    --wishlist: #e8d83a;
+    --wishlist-ink: #7a6500;
+    --wishlist-hover: #f6ee8a;
+    --wishlist-stripe: #f8f2a8;
+    --lived: #e5a1d0;
+    --lived-ink: #8e2f6b;
+    --lived-soft: #f3d9e8;
+    --home: #e69f00;
+    --home-ink: #7a3d00;
+    --home-soft: #fbe2b3;
+    --transit: #c8c8c8;
+    --transit-ink: #4d4d4d;
+    --transit-soft: #e2e2e2;
+    --journey: #1a1a1a;
+    --journey-casing: #ffffff;
+}
+
+/* Print-friendly: the same safe hues on white paper with black ink, so a print uses little
+   ink and reads in grayscale too. The map keeps these colours in the dark theme. */
+:root[data-palette='print'] {
+    --ink-dark: #111111;
+    --ocean: #ffffff;
+    --ocean-deep: #ffffff;
+    --ocean-dots: transparent;
+    --graticule: #4d4d4d;
+    --atlas-line: rgba(0, 0, 0, 0.25);
+    --border-ink: rgba(0, 0, 0, 0.6);
+    --land-1: #fbfbf8;
+    --land-2: #f3f3ef;
+    --land-3: #f7f6f2;
+    --land-4: #fbfbf8;
+    --land-5: #f3f3ef;
+    --land-6: #f7f6f2;
+    --land-7: #f5f5f1;
+    --journey: #000000;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root[data-palette='colorblind'] {
+        --land-1: #c9c4b8;
+        --land-2: #beb9ae;
+        --land-3: #c4bdae;
+        --land-4: #b8b5ad;
+        --land-5: #c1bab2;
+        --land-6: #c6c0b9;
+        --land-7: #bbb6a8;
+        --transit: #8e8e8e;
+        --transit-ink: #262626;
     }
 }
 
@@ -1217,7 +1297,7 @@ button.chip { cursor: pointer; }
 .bar > span {
     display: block;
     height: 100%;
-    background: repeating-linear-gradient(45deg, var(--visited), var(--visited) 6px, #45d4c6 6px, #45d4c6 12px);
+    background: repeating-linear-gradient(45deg, var(--visited), var(--visited) 6px, var(--visited-stripe) 6px, var(--visited-stripe) 12px);
     transition: width 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.2);
 }
 
@@ -1408,7 +1488,7 @@ button.legend-filter:hover { background: var(--wishlist); }
 .swatch-lived { background: repeating-linear-gradient(45deg, var(--lived), var(--lived) 3px, var(--lived-ink) 3px, var(--lived-ink) 4px); border-color: var(--lived-ink); }
 .swatch-home { background: radial-gradient(var(--home-ink) 1.5px, var(--home) 2px) 0 0 / 6px 6px; border-color: var(--home-ink); border-width: 3px; }
 .swatch-transit { background: var(--transit); border-style: dotted; border-color: var(--transit-ink); }
-.swatch-wishlist { background: repeating-linear-gradient(45deg, var(--wishlist), var(--wishlist) 3px, #ffe08a 3px, #ffe08a 6px); }
+.swatch-wishlist { background: repeating-linear-gradient(45deg, var(--wishlist), var(--wishlist) 3px, var(--wishlist-stripe) 3px, var(--wishlist-stripe) 6px); }
 .swatch-capital { border: 0; font-size: 0.9rem; }
 
 .compass {
@@ -1458,6 +1538,116 @@ button.legend-filter:hover { background: var(--wishlist); }
 .select-bar[hidden] { display: none; }
 .select-count { margin: 0; font-weight: 800; }
 .select-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* The timeline: the map year by year, with journey lines (ADR 0016). */
+.time-bar {
+    position: absolute;
+    z-index: 850;
+    left: calc(var(--panel-width) + 40px);
+    right: 96px;
+    bottom: 76px;
+    display: grid;
+    gap: 8px;
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 10px 14px 12px;
+    background: var(--paper);
+    border: 3px solid var(--ink);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.time-bar[hidden] { display: none; }
+.time-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.time-title { margin: 0 auto 0 0; font-size: 1.05rem; }
+
+.time-modes {
+    display: inline-flex;
+    gap: 2px;
+    margin: 0;
+    padding: 3px;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+}
+
+.time-modes label {
+    position: relative;
+    padding: 3px 12px;
+    font-size: 0.82rem;
+    font-weight: 800;
+    border-radius: 999px;
+    cursor: pointer;
+}
+
+.time-modes input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+.time-modes label:has(input:checked) { color: var(--paper); background: var(--text); }
+.time-modes label:has(input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; }
+.time-range { display: flex; align-items: center; gap: 12px; }
+.time-range label { font-weight: 800; }
+
+.time-year {
+    min-width: 3.4em;
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.time-range input[type='range'] {
+    flex: 1;
+    min-width: 0;
+    height: 28px;
+    padding: 0;
+    background: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    appearance: none;
+    cursor: pointer;
+}
+
+.time-range input[type='range']::-webkit-slider-runnable-track {
+    height: 10px;
+    background: var(--paper-2);
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+}
+
+.time-range input[type='range']::-moz-range-track {
+    height: 6px;
+    background: var(--paper-2);
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+}
+
+.time-range input[type='range']::-webkit-slider-thumb {
+    width: 24px;
+    height: 24px;
+    margin-top: -9px;
+    background: var(--primary-strong);
+    border: 3px solid var(--ink);
+    border-radius: 50%;
+    appearance: none;
+}
+
+.time-range input[type='range']::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: var(--primary-strong);
+    border: 3px solid var(--ink);
+    border-radius: 50%;
+}
+
+.time-range input[type='range']:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.time-range input[type='range']:disabled { cursor: not-allowed; opacity: 0.5; }
+.time-summary { margin: 0; font-size: 0.85rem; font-weight: 700; }
+.time-journeys { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.time-journeys[hidden] { display: none; }
+.time-journeys .switch { padding: 4px 0; font-weight: 800; }
+.time-journeys select { flex: 1 1 160px; width: auto; min-width: 0; padding: 5px 10px; }
+.time-now { margin: 0; font-size: 0.85rem; font-weight: 700; color: var(--muted); }
+.time-now:not(:has(:not(:empty))) { display: none; }
+button.legend-timeline[aria-expanded='true'] { color: var(--paper); background: var(--text); }
 
 /* ------------------------------------------------------------ the map */
 
@@ -2083,6 +2273,52 @@ button.legend-filter:hover { background: var(--wishlist); }
     .report .eyebrow { color: #333; }
 }
 
+/* Printing the map page (ADR 0016): a picture of the map as it is on screen, drawn just before
+   printing (js/app.js), with a title and the legend, on a landscape page. The evidence report
+   above prints on its own. */
+.print-sheet { display: none; }
+
+@page map-sheet {
+    size: landscape;
+    margin: 10mm;
+}
+
+@media print {
+    body:not(.is-reporting) { height: auto; overflow: visible; color: #000; background: #fff; }
+    body:not(.is-reporting) .app { display: flex; flex-direction: column; height: auto; page: map-sheet; }
+
+    body:not(.is-reporting) :is(.map, .topbar, .panel, .compass, .select-bar, .time-bar, .skip-link, .toasts, .legend-timeline, .legend-filter) {
+        display: none !important;
+    }
+
+    body:not(.is-reporting) .print-sheet { display: block; }
+    .print-title { margin: 0 0 4mm; font-family: var(--font-display); font-size: 16pt; font-weight: 600; color: #000; }
+
+    .print-sheet img {
+        display: block;
+        width: 100%;
+        max-height: 150mm;
+        object-fit: contain;
+        border: 1px solid #999;
+    }
+
+    body:not(.is-reporting) .legend {
+        position: static;
+        order: 1;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 4mm;
+        color: #000;
+        background: none;
+        border: 0;
+        box-shadow: none;
+    }
+
+    body:not(.is-reporting) .legend-item { color: #000; text-decoration: none; }
+    body:not(.is-reporting) .legend-item[aria-pressed='false'] { display: none; }
+    body:not(.is-reporting) .swatch { print-color-adjust: exact; }
+}
+
 /* ------------------------------------------------------------ landing */
 
 .app[data-state='welcome'] { --panel-width: 420px; }
@@ -2361,6 +2597,8 @@ input[aria-invalid='true'] { border-color: var(--danger); }
     }
 
     .select-bar { top: 104px; left: 10px; right: 10px; bottom: auto; }
+    /* Above the tucked-away bottom sheet, clear of the legend at the top. */
+    .time-bar { left: 10px; right: 10px; bottom: 102px; padding: 8px 10px 10px; }
 
     .legend-static { display: none; }
     .legend-item { padding: 2px 8px; font-size: 0.72rem; white-space: nowrap; }

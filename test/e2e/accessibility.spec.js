@@ -126,6 +126,80 @@ for (const colorScheme of ['light', 'dark']) {
     });
 }
 
+// Saves places and settings through the API, as the app does.
+async function seed(page, places, profile) {
+    await page.evaluate(async ({ list, settings }) => {
+        const { csrfToken } = await (await fetch('/api/csrf-token')).json();
+        const send = (method, path, body) => fetch(path, {
+            method, headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken }, body: JSON.stringify(body)
+        });
+        for (const place of list) await send('POST', '/api/markers', place);
+        await send('PATCH', '/api/profile', settings);
+    }, { list: places, settings: profile });
+    await page.reload();
+    await page.locator('#main-view').waitFor();
+}
+
+for (const colorScheme of ['light', 'dark']) {
+    test(`the timeline, map palettes and a public map meet WCAG AA in the ${colorScheme} theme`, async ({ page }) => {
+        test.setTimeout(90_000);
+        await page.emulateMedia({ colorScheme, reducedMotion: 'reduce' });
+        const username = `a11y_map_${colorScheme}_${Date.now()}`;
+        await page.goto('/');
+        await expect(page.locator('#welcome-view')).toBeVisible();
+        await page.click('#tab-register');
+        await page.fill('#auth-username', username);
+        await page.fill('#auth-password', 'accessible password');
+        await page.click('#auth-submit');
+        // Two bcrypt hashes can take a while on a busy runner.
+        await expect(page.locator('#main-view')).toBeVisible({ timeout: 15_000 });
+        await seed(page, [
+            { name: 'Lisbon, Portugal', lat: 38.725, lng: -9.15, category: 'City', type: 'visited', emoji: '🐟', visits: [{ startDate: '2024-05-01', endDate: '2024-05-04' }] },
+            { name: 'Madrid, Spain', lat: 40.417, lng: -3.704, category: 'City', type: 'visited', visits: [{ startDate: '2024-05-05', endDate: '2024-05-08' }] },
+            { name: 'Berlin, Germany', lat: 52.52, lng: 13.405, category: 'City', type: 'visited', stay: 'lived', visits: [{ startDate: '2020-01-01', endDate: '2022-12-31' }] },
+            { name: 'Dubai, United Arab Emirates', lat: 25.205, lng: 55.271, category: 'City', type: 'visited', stay: 'transit', visits: [{ startDate: '2024-05-09' }] },
+            { name: 'Peru', lat: -9.2, lng: -75, category: 'Country', type: 'wishlist' }
+        ], { homeCountry: 'CAN', profileVisibility: 'public', publicJourneys: true });
+
+        // The timeline with journey lines, after a replay.
+        await page.click('#timeline-btn');
+        await page.locator('.time-journeys .switch').click();
+        await page.click('#journey-replay');
+        await expect(page.locator('#journey-now')).toContainText('Replay finished');
+        await page.locator('.time-modes label', { hasText: 'Visited during' }).click();
+        await expect(page.locator('#time-summary')).toContainText('During 2024');
+        await expectAccessible(page, 'timeline after a replay');
+        await page.click('#time-close');
+        await expect(page.locator('#time-bar')).toBeHidden();
+
+        // Every palette keeps cards, chips, pins, stamps and the legend at AA.
+        for (const palette of ['colorblind', 'print']) {
+            await page.click('#account-btn');
+            await page.click('#settings-btn');
+            await page.selectOption('#dialog-mapPalette', palette);
+            await page.getByRole('button', { name: 'Save settings' }).click();
+            await expect(page.locator('html')).toHaveAttribute('data-palette', palette);
+            await page.locator('.pin[aria-label^="Lisbon"]').click();
+            await expect(page.locator('.maplibregl-popup.card-popup .card-status .chip-visited')).toBeVisible();
+            await page.waitForTimeout(500);
+            await expectAccessible(page, `place card in the ${palette} palette`);
+            await page.keyboard.press('Escape');
+            // The passport's tiles, stamps and bars use the most palette colors.
+            await page.click('#tab-passport');
+            await expect(page.locator('#passport-tab')).toBeVisible();
+            await expectAccessible(page, `passport in the ${palette} palette`);
+        }
+
+        // A visitor's public map, with its own palette choice and the timeline.
+        await page.goto(`/?u=${username}`);
+        await expect(page.locator('#public-view')).toBeVisible();
+        await page.selectOption('#public-palette', 'colorblind');
+        await page.click('#timeline-btn');
+        await expect(page.locator('#time-journeys')).toBeVisible();
+        await expectAccessible(page, 'public map with the timeline');
+    });
+}
+
 for (const colorScheme of ['light', 'dark']) {
     test(`public pages meet WCAG AA in the ${colorScheme} theme`, async ({ page }) => {
         await page.emulateMedia({ colorScheme });

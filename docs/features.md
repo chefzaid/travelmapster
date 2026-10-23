@@ -19,6 +19,21 @@ Everything below is implemented. Planned work lives in [TODO.md](../TODO.md).
   with stripes, and airport layovers ("transit only") are pale with a dotted outline, so every
   status differs by pattern or outline as well as color ([ADR 0014](adr/0014-home-lived-and-transit.md)).
 - The legend doubles as a filter for each status.
+- **Timeline** (opened from the legend): a year slider replays the map as it was by the end of
+  any year, or shows only the places visited during it, from the visit dates. Places without
+  dates and wishlist places are left out (the timeline says how many lack dates), places lived
+  in and layovers follow their dated stays, and the home country, which has no dates, is always
+  drawn. It works with the keyboard, on phones and on public maps
+  ([ADR 0016](adr/0016-timeline-journeys-and-palettes.md)).
+- **Journey lines**, switched on in the timeline: dashed cartoon arcs with arrows between
+  consecutive visits (a city visit at the city, a visit to a whole country at its label), and
+  an animated replay of the year or of one trip, which can be stopped and is drawn at once
+  with reduced motion.
+- **Map palettes** chosen in Settings: cheerful (standard), color-blind safe and
+  print-friendly, each tested for WCAG AA label contrast and, for the last two, for statuses
+  that stay apart with every kind of color vision and in grayscale.
+- **Printing the map** ("Print my map", or the browser's print) gives a landscape page with
+  the map as shown, a title and the legend, without the controls.
 - No third-party map services: map data, fonts and MapLibre GL are served by the app.
 
 ## Places
@@ -133,7 +148,9 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   account menu.
 - Private by default; a public map is shared read-only at `/?u=<username>` with visit dates and
   whether a place was lived in or a layover, counted on the owner's country list, without notes,
-  photo links, ratings, tags, emoji, wishlist plans or the home country.
+  photo links, ratings, tags, emoji, wishlist plans or the home country. Visitors can use the
+  timeline, pick their own map colors and print the map; journey lines show only when the owner
+  turns them on in Settings ([ADR 0016](adr/0016-timeline-journeys-and-palettes.md)).
 - Any place can be hidden from the public map, with its visits, so a public profile keeps
   sensitive trips to itself; the owner's map, passport and ledger still count it
   ([ADR 0013](adr/0013-hidden-places.md)).

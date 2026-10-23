@@ -67,8 +67,8 @@ JSON under `/api`; errors are `{ "error": "…" }` with a matching status. All r
 | GET | `/api/ledger/changes` | History of visit dates, newest first (latest 5,000) |
 | GET, POST | `/api/trips` | List or create itineraries |
 | PUT, DELETE | `/api/trips/:id` | Replace or remove an itinerary |
-| PATCH | `/api/profile` | Change account settings, each optional: `profileVisibility` (`private` or `public`), `homeCountry` (a map code or `null`) and `countryList` (`all` or `un`, [ADR 0015](adr/0015-country-lists.md)); returns them all |
-| GET | `/api/public/:username` | Read-only public map with the owner's `countryList`, visit dates and each place's `stay`, without notes, photo links, ratings, tags, emoji, wishlist plans or the home country, and without places hidden from it ([ADR 0013](adr/0013-hidden-places.md)) |
+| PATCH | `/api/profile` | Change account settings, each optional: `profileVisibility` (`private` or `public`), `homeCountry` (a map code or `null`), `countryList` (`all` or `un`, [ADR 0015](adr/0015-country-lists.md)), `mapPalette` (`standard`, `colorblind` or `print`) and `publicJourneys` (a boolean, [ADR 0016](adr/0016-timeline-journeys-and-palettes.md)); returns them all |
+| GET | `/api/public/:username` | Read-only public map with the owner's `countryList`, `showJourneys` (whether visitors see journey lines), visit dates and each place's `stay`, without notes, photo links, ratings, tags, emoji, wishlist plans, the palette or the home country, and without places hidden from it ([ADR 0013](adr/0013-hidden-places.md)) |
 | GET | `/api/places?q=&limit=` | Search every town in the map data (public, 1–20 results) |
 | GET | `/api/geocode?q=&kind=city\|country&limit=` | World place search (1–10 results) |
 
@@ -76,10 +76,12 @@ JSON under `/api`; errors are `{ "error": "…" }` with a matching status. All r
 
 | Module | Responsibility |
 |---|---|
-| `public/js/app.js` | App shell: auth, landing page and demo map, map cards, search, tabs, public view |
+| `public/js/app.js` | App shell: auth, landing page and demo map, map cards, search, tabs, public view, the timeline bar, palettes and printing |
 | `public/js/demo.js` | The landing page's sample traveler, with dates relative to today (pure, unit tested) |
 | `public/js/schengen.js`, `calculator.js` | Free Schengen calculator: stay checks and results over `days.js` (pure, unit and property tested), and the page that draws them |
-| `public/js/map.js` | MapLibre GL map ([ADR 0008](adr/0008-maplibre-gl.md)): cartoon style from the CSS tokens, country states, towns and tile loading, pins, cards and camera |
+| `public/js/map.js` | MapLibre GL map ([ADR 0008](adr/0008-maplibre-gl.md)): cartoon style from the CSS tokens (redrawn when the palette or theme changes), country states, towns and tile loading, pins, journey lines and their replay, cards, camera and the picture printed |
+| `public/js/timeline.js`, `journeys.js` | The map by the end of a year or during it, and journey stops, legs, trips and arcs ([ADR 0016](adr/0016-timeline-journeys-and-palettes.md)) (pure, unit tested) |
+| `public/js/palettes.js` | The map palettes offered in Settings; their colors are token overrides in `styles.css` (pure, unit tested) |
 | `public/js/geo.js` | Country index, city search, country statuses and how the map draws them, stats, ranks and badges (pure, unit tested) |
 | `public/js/lists.js` | The country lists the passport counts against: every territory on the map, or UN members and observer states ([ADR 0015](adr/0015-country-lists.md)) (pure, unit tested) |
 | `public/js/status.js` | Place statuses: been there, lived there, transit only and wishlist, and their API fields ([ADR 0014](adr/0014-home-lived-and-transit.md)) (pure, unit tested) |
@@ -92,7 +94,7 @@ JSON under `/api`; errors are `{ "error": "…" }` with a matching status. All r
 | `public/js/trips.js`, `ideas.js` | Trip planner and Wikivoyage ideas |
 | `public/js/passport.js` | Passport tab |
 | `public/js/api.js`, `ui.js`, `confetti.js` | API client with CSRF handling, DOM helpers, celebration |
-| `public/styles.css` | Design tokens and components for light and dark themes |
+| `public/styles.css` | Design tokens, map palettes and components for light and dark themes, and print styles for the map and the evidence report |
 
 ## Key Flows
 
@@ -169,5 +171,6 @@ number (`NNNN-short-title.md`) and the template below. Statuses: **Proposed**, *
 - [ADR 0013: Hide single places from a public map](adr/0013-hidden-places.md)
 - [ADR 0014: Home country, lived-there and transit-only places](adr/0014-home-lived-and-transit.md)
 - [ADR 0015: Choose the country list to count against](adr/0015-country-lists.md)
+- [ADR 0016: Map timeline, journey lines and palettes](adr/0016-timeline-journeys-and-palettes.md)
 
 Superseded: [ADR 0007: Draw towns on a canvas layer](adr/0007-canvas-towns.md).

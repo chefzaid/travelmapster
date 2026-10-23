@@ -92,7 +92,7 @@ test('profile visibility controls the public map', async () => {
 
     assert.equal((await owner.patch('/api/profile', { profileVisibility: 'sideways' })).status, 400);
     const changed = await owner.patch('/api/profile', { profileVisibility: 'public' });
-    assert.deepEqual(changed.body, { profileVisibility: 'public', homeCountry: null, countryList: 'all' });
+    assert.deepEqual(changed.body, { profileVisibility: 'public', homeCountry: null, countryList: 'all', mapPalette: 'standard', publicJourneys: false });
     assert.equal((await owner.get('/api/auth/me')).body.user.profileVisibility, 'public');
 
     const profile = await visitor.get('/api/public/Explorer');
@@ -113,7 +113,7 @@ test('a traveler sets a home country that only they can see (ADR 0014)', async (
 
     const set = await owner.patch('/api/profile', { homeCountry: 'PRT' });
     assert.equal(set.status, 200);
-    assert.deepEqual(set.body, { profileVisibility: 'private', homeCountry: 'PRT', countryList: 'all' });
+    assert.deepEqual(set.body, { profileVisibility: 'private', homeCountry: 'PRT', countryList: 'all', mapPalette: 'standard', publicJourneys: false });
     assert.equal((await owner.get('/api/auth/me')).body.user.homeCountry, 'PRT');
     // The previous release's tabs send only the visibility: the home country stays.
     await owner.patch('/api/profile', { profileVisibility: 'public' });
@@ -132,13 +132,52 @@ test('a traveler sets a home country that only they can see (ADR 0014)', async (
     assert.equal((await owner.get('/api/auth/me')).body.user.homeCountry, null);
 });
 
+test('a traveler picks a map palette and whether a public map shows journey lines (ADR 0016)', async () => {
+    const owner = createClient(ctx.server);
+    await owner.register('painter', 'painter password');
+    const me = (await owner.get('/api/auth/me')).body.user;
+    assert.equal(me.mapPalette, 'standard');
+    assert.equal(me.publicJourneys, false, 'journey lines stay off public maps until the owner opts in');
+
+    const set = await owner.patch('/api/profile', { mapPalette: 'colorblind', profileVisibility: 'public' });
+    assert.equal(set.status, 200);
+    assert.deepEqual(set.body, { profileVisibility: 'public', homeCountry: null, countryList: 'all', mapPalette: 'colorblind', publicJourneys: false });
+    assert.equal((await owner.get('/api/auth/me')).body.user.mapPalette, 'colorblind');
+    const visitor = createClient(ctx.server);
+    const shared = (await visitor.get('/api/public/painter')).body;
+    assert.equal(shared.showJourneys, false);
+    assert.equal(shared.mapPalette, undefined, 'visitors choose their own colors');
+
+    assert.equal((await owner.patch('/api/profile', { publicJourneys: true })).body.publicJourneys, true);
+    assert.equal((await owner.get('/api/auth/me')).body.user.publicJourneys, true);
+    assert.equal((await visitor.get('/api/public/painter')).body.showJourneys, true);
+    // The previous release's tabs send only the visibility: the display settings stay.
+    await owner.patch('/api/profile', { profileVisibility: 'public' });
+    assert.equal((await owner.get('/api/auth/me')).body.user.mapPalette, 'colorblind');
+
+    for (const body of [{ mapPalette: 'neon' }, { mapPalette: null }, { publicJourneys: 'yes' }, { publicJourneys: true, mapPalette: 'Print' }]) {
+        assert.equal((await owner.patch('/api/profile', body)).status, 400, JSON.stringify(body));
+    }
+    assert.equal((await owner.get('/api/auth/me')).body.user.publicJourneys, true, 'a refused change changes nothing');
+    await assert.rejects(ctx.pool.query("UPDATE users SET map_palette = 'neon' WHERE username = 'painter'"));
+    // The previous release creates accounts without the columns.
+    await ctx.pool.query("INSERT INTO users (username, password_hash) VALUES ('old_palette_user', 'x')");
+    const { rows: [old] } = await ctx.pool.query("SELECT map_palette, public_journeys FROM users WHERE username = 'old_palette_user'");
+    assert.deepEqual(old, { map_palette: 'standard', public_journeys: false });
+
+    assert.equal((await createClient(ctx.server).patch('/api/profile', { mapPalette: 'print' })).status, 401);
+    const forged = await owner.agent.patch('/api/profile').set('X-CSRF-Token', 'forged').send({ mapPalette: 'print' });
+    assert.equal(forged.status, 403);
+    assert.equal((await owner.get('/api/auth/me')).body.user.mapPalette, 'colorblind');
+});
+
 test('a traveler chooses the list of countries to count, which a public map shares (ADR 0015)', async () => {
     const owner = createClient(ctx.server);
     await owner.register('counter', 'counter password');
     assert.equal((await owner.get('/api/auth/me')).body.user.countryList, 'all', 'every territory counts, as before');
 
     const set = await owner.patch('/api/profile', { countryList: 'un', profileVisibility: 'public' });
-    assert.deepEqual(set.body, { profileVisibility: 'public', homeCountry: null, countryList: 'un' });
+    assert.deepEqual(set.body, { profileVisibility: 'public', homeCountry: null, countryList: 'un', mapPalette: 'standard', publicJourneys: false });
     assert.equal((await owner.get('/api/auth/me')).body.user.countryList, 'un');
     const shared = await createClient(ctx.server).get('/api/public/counter');
     assert.equal(shared.body.countryList, 'un', 'visitors count the way the owner does');

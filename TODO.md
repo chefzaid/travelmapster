@@ -86,12 +86,6 @@ The field splits into scratch-map atlases (Been, Visited, Skratch), travel journ
 
 Everyday features that make the free atlas worth opening again; the paid work above builds on them.
 
-### Map
-
-- [ ] Year slider: replay the map as it was at the end of any year, and filter places by year.
-- [ ] Journey lines between consecutive visits, drawn as cartoon arcs, with an animated replay of a trip or a year.
-- [ ] Color-blind safe and print-friendly map palettes, chosen in settings.
-
 ### Places
 
 - [ ] Import from other travel map apps (Been, Visited, Polarsteps exports) with a preview before saving.

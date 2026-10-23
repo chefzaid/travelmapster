@@ -6,7 +6,8 @@ const port = Number(process.env.E2E_PORT || 3100);
 
 module.exports = defineConfig({
     testDir: 'test/e2e',
-    timeout: 30_000,
+    // Journeys sign up (two bcrypt hashes) and draw the map in software WebGL, two at a time.
+    timeout: 60_000,
     retries: process.env.CI ? 1 : 0,
     reporter: process.env.CI ? [['list'], ['junit', { outputFile: 'test-results/playwright-junit.xml' }]] : 'list',
     use: {

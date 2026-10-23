@@ -19,6 +19,8 @@ erDiagram
         text profile_visibility "private | public"
         text home_country "map code, optional, never public"
         text country_list "all | un"
+        text map_palette "standard | colorblind | print"
+        boolean public_journeys "journey lines on the public map"
     }
     markers {
         bigint id PK
@@ -78,7 +80,7 @@ erDiagram
 
 | Table | Contents and rules |
 |---|---|
-| `users` | `username` is 3–32 of `A-Z a-z 0-9 _ . -`, unique regardless of case. Passwords are 8–72 bytes and stored only as bcrypt hashes (cost 12). `profile_visibility` defaults to `private`. `home_country` is an optional three-letter map code ([ADR 0014](adr/0014-home-lived-and-transit.md)); `country_list` is `all` (the default) or `un`, the countries the passport counts against ([ADR 0015](adr/0015-country-lists.md)). |
+| `users` | `username` is 3–32 of `A-Z a-z 0-9 _ . -`, unique regardless of case. Passwords are 8–72 bytes and stored only as bcrypt hashes (cost 12). `profile_visibility` defaults to `private`. `home_country` is an optional three-letter map code ([ADR 0014](adr/0014-home-lived-and-transit.md)); `country_list` is `all` (the default) or `un`, the countries the passport counts against ([ADR 0015](adr/0015-country-lists.md)). `map_palette` is `standard` (the default), `colorblind` or `print`, and `public_journeys` (default false) lets visitors of a public map see journey lines ([ADR 0016](adr/0016-timeline-journeys-and-palettes.md)). |
 | `markers` | A saved place ("marker" in the API). `name` 1–200 characters, `notes` up to 2,000, `photo_url` an HTTP(S) URL up to 2,048. Coordinates are range-checked. `rating` is 1–5 or empty; `tags` holds up to 8 lowercase tags of 1–24 letters or digits (with inner spaces, dashes, apostrophes or ampersands); `emoji` is a single emoji of at most 16 code points ([ADR 0012](adr/0012-place-details.md)). `hide_from_public` keeps the place and its visits off the owner's public map ([ADR 0013](adr/0013-hidden-places.md)). For wishlist plans, `priority` is `high`, `medium`, `low` or empty and `best_months` holds month numbers 1–12. `stay` says how the traveler was at a place they have been to: `visit` (the default), `lived` or `transit`; the API keeps it at `visit` for wishlist places and reads it only for visited ones. `travel_date` only mirrors the start of the latest visit for the previous release ([below](#places-and-visits)). |
 | `visits` | One stay at a place: `start_date` required, `end_date` optional and never before the start, `ongoing` true for a stay still going on (the API refuses it with an end date), `notes` up to 2,000, `photo_url` an HTTP(S) URL up to 2,048. At most 500 per place when created with it or imported. |
 | `ledger_settings` | One row per traveler once they save: `day_rule`, and JSON arrays `rules` (at most 20 stay rules and thresholds, each with an id, name, 1–80 three-letter country codes, day counts and a warning margin) and `planned` (at most 30 stays with a country and first and last day). Validated in `validation.js`. |
@@ -118,7 +120,9 @@ the same way; the previous release reads lived-in and transit places as plain vi
 place it moves to the wishlist keeps its old `stay`, which the API ignores for wishlist places
 ([ADR 0014](adr/0014-home-lived-and-transit.md)). Migration 010 added `users.country_list` with
 the default `all`, which counts every territory as the previous release does
-([ADR 0015](adr/0015-country-lists.md)).
+([ADR 0015](adr/0015-country-lists.md)). Migration 011 added `users.map_palette` (default
+`standard`) and `users.public_journeys` (default false); the previous release never reads them
+([ADR 0016](adr/0016-timeline-journeys-and-palettes.md)).
 
 ## Day Ledger
 
@@ -199,7 +203,8 @@ one transaction and reports the invalid rows it skipped.
 
 Data is private to its owner. A public profile exposes username, the country list it is counted
 on, coordinates, type, stay, name,
-category, latest travel date and visit dates of each place, never the home country, the notes or
+category, latest travel date and visit dates of each place, and whether journey lines may be
+drawn between them, never the map palette, the home country, the notes or
 photo links of places or visits, ratings, tags, emoji or wishlist plans, nor anything of the places hidden from it, whether a stay is still going on, ledger settings or date history
 ([security](security.md#privacy)). Deleting an account removes the user, their
 places, visits, ledger settings, date history, trips and sessions at once.

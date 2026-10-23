@@ -33,6 +33,8 @@ function createPublicProfileRouter({ users, markers }) {
             username: user.username,
             // The owner's list, so visitors see the same counts (ADR 0015).
             countryList: user.country_list || 'all',
+            // Journey lines show the order of the owner's trips, so only when they opt in (ADR 0016).
+            showJourneys: Boolean(user.public_journeys),
             // The home country stays private: it says where the traveler lives now (ADR 0014).
             markers: places.map(({ id, lat, lng, type, stay, name, category, travelDate, visits }) => ({
                 // Personal notes and photo links, of places and visits, and ratings, tags and

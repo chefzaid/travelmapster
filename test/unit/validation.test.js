@@ -92,6 +92,10 @@ test('parseProfile changes only the settings it is sent', () => {
     for (const body of [{}, null, [], 'public']) assert.ok(parseProfile(body).error, JSON.stringify(body));
     assert.deepEqual(parseProfile({ countryList: 'un' }), { profile: { countryList: 'un' } });
     for (const countryList of ['UN', 'tcc', '', null, 1]) assert.ok(parseProfile({ countryList }).error, String(countryList));
+    assert.deepEqual(parseProfile({ mapPalette: 'print', publicJourneys: true }), { profile: { mapPalette: 'print', publicJourneys: true } });
+    assert.deepEqual(parseProfile({ publicJourneys: false }), { profile: { publicJourneys: false } });
+    for (const mapPalette of ['Print', 'neon', '', null]) assert.ok(parseProfile({ mapPalette }).error, String(mapPalette));
+    for (const publicJourneys of ['true', 1, null]) assert.ok(parseProfile({ publicJourneys }).error, String(publicJourneys));
 });
 
 test('a place lived in or passed through is one the traveler has been to', () => {

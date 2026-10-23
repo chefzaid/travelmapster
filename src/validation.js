@@ -7,6 +7,8 @@ const MARKER_CATEGORIES = new Set(['Country', 'City']);
 const PROFILE_VISIBILITIES = new Set(['private', 'public']);
 // Every territory on the map, or UN members and observer states (ADR 0015).
 const COUNTRY_LISTS = new Set(['all', 'un']);
+// Map colours: the cheerful default, colour-blind safe, or print-friendly (ADR 0016).
+const MAP_PALETTES = new Set(['standard', 'colorblind', 'print']);
 const USERNAME_PATTERN = /^[A-Za-z0-9_.-]{3,32}$/;
 const PASSWORD_MIN_LENGTH = 8;
 // bcrypt ignores everything after 72 bytes, so longer passwords are rejected.
@@ -519,8 +521,8 @@ function parseMarkerId(value) {
 
 /**
  * Account settings, each optional so a client changes only what it sends: who can see the
- * map, the home country (a map code, or null or empty to clear it) and the list of countries
- * the passport counts against.
+ * map, the home country (a map code, or null or empty to clear it), the list of countries
+ * the passport counts against, the map palette and whether a public map shows journey lines.
  */
 function parseProfile(body) {
     if (!plainObject(body)) return { error: 'Profile changes must be a JSON object.' };
@@ -543,7 +545,17 @@ function parseProfile(body) {
         if (!COUNTRY_LISTS.has(body.countryList)) return { error: 'Country list must be all or un.' };
         profile.countryList = body.countryList;
     }
-    if (!Object.keys(profile).length) return { error: 'Send profileVisibility, homeCountry or countryList.' };
+    if (body.mapPalette !== undefined) {
+        if (!MAP_PALETTES.has(body.mapPalette)) return { error: 'Map palette must be standard, colorblind or print.' };
+        profile.mapPalette = body.mapPalette;
+    }
+    if (body.publicJourneys !== undefined) {
+        if (typeof body.publicJourneys !== 'boolean') return { error: 'Public journeys must be true or false.' };
+        profile.publicJourneys = body.publicJourneys;
+    }
+    if (!Object.keys(profile).length) {
+        return { error: 'Send profileVisibility, homeCountry, countryList, mapPalette or publicJourneys.' };
+    }
     return { profile };
 }
 

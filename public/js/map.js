@@ -29,8 +29,10 @@ function readTheme() {
         visited: token('--visited'),
         visitedInk: token('--visited-ink'),
         visitedSoft: token('--visited-soft'),
+        visitedHover: token('--visited-hover'),
         wishlist: token('--wishlist'),
         wishlistInk: token('--wishlist-ink'),
+        wishlistHover: token('--wishlist-hover'),
         lived: token('--lived'),
         livedInk: token('--lived-ink'),
         home: token('--home'),
@@ -39,6 +41,10 @@ function readTheme() {
         transitInk: token('--transit-ink'),
         capital: token('--primary-strong'),
         graticule: token('--graticule'),
+        atlasLine: token('--atlas-line'),
+        journey: token('--journey'),
+        journeyCasing: token('--journey-casing'),
+        ocean: token('--ocean'),
         shadow: token('--shadow-color')
     };
 }
@@ -100,6 +106,34 @@ function patternImage(colour, kind) {
 
 const PATTERNS = [['pattern-lived', 'livedInk', 'stripes'], ['pattern-home', 'homeInk', 'dots']];
 
+// The arrow in the middle of each journey line, pointing the way the traveler went.
+function arrowImage(theme) {
+    const ratio = 2;
+    const size = 16;
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = size * ratio;
+    const context = canvas.getContext('2d');
+    context.scale(ratio, ratio);
+    context.beginPath();
+    context.moveTo(4, 3);
+    context.lineTo(12, 8);
+    context.lineTo(4, 13);
+    context.closePath();
+    context.lineJoin = 'round';
+    context.lineWidth = 3;
+    context.strokeStyle = theme.journeyCasing;
+    context.stroke();
+    context.fillStyle = theme.journey;
+    context.fill();
+    return context.getImageData(0, 0, canvas.width, canvas.height);
+}
+
+const EMPTY = { type: 'FeatureCollection', features: [] };
+const lineFeatures = lines => ({
+    type: 'FeatureCollection',
+    features: lines.map(coordinates => ({ type: 'Feature', geometry: { type: 'LineString', coordinates }, properties: {} }))
+});
+
 const state = name => ['boolean', ['feature-state', name], false];
 // A country's status (see countryLook in geo.js), or '' when it has none.
 const look = ['to-string', ['feature-state', 'status']];
@@ -117,8 +151,8 @@ function countryFill(theme) {
         land];
     const hovered = ['case',
         ['!', state('hover')], status,
-        lookIs('visited', 'cityOnly'), '#5ad8cc',
-        lookIs('wishlist'), '#ffd452',
+        lookIs('visited', 'cityOnly'), theme.visitedHover,
+        lookIs('wishlist'), theme.wishlistHover,
         lookIs('home', 'lived', 'transit'), status,
         '#fff'];
     return ['step', ['zoom'], hovered, toMapZoom(HOVER_FILL_MAX_ZOOM), status];
@@ -169,14 +203,16 @@ function buildStyle(theme, countries, labels) {
                     ])
                 }
             },
-            cities: { type: 'geojson', data: { type: 'FeatureCollection', features: [] } }
+            cities: { type: 'geojson', data: EMPTY },
+            journeys: { type: 'geojson', data: EMPTY },
+            'journey-head': { type: 'geojson', data: EMPTY }
         },
         layers: [
             // No background layer: the dotted ocean is the container's CSS background.
             {
                 id: 'atlas-lines', type: 'line', source: 'atlas', filter: ['==', ['geometry-type'], 'LineString'],
                 layout: { 'line-cap': 'round' },
-                paint: { 'line-color': 'rgba(255,255,255,0.6)', 'line-width': 1.5, 'line-dasharray': [0.5, 5] }
+                paint: { 'line-color': theme.atlasLine, 'line-width': 1.5, 'line-dasharray': [0.5, 5] }
             },
             {
                 id: 'land-shadow', type: 'fill', source: 'countries',
@@ -221,6 +257,26 @@ function buildStyle(theme, countries, labels) {
                     'line-width': ['*', 7, ['number', ['feature-state', 'pulse'], 0]],
                     'line-opacity': ['number', ['feature-state', 'pulse'], 0]
                 }
+            },
+            // Journey lines between visits (ADR 0016): a dashed path on a light casing, with an arrow.
+            {
+                id: 'journey-casing', type: 'line', source: 'journeys', layout: { 'line-join': 'round', 'line-cap': 'round' },
+                paint: { 'line-color': theme.journeyCasing, 'line-width': 7, 'line-opacity': 0.9 }
+            },
+            {
+                id: 'journey-lines', type: 'line', source: 'journeys', layout: { 'line-join': 'round', 'line-cap': 'round' },
+                paint: { 'line-color': theme.journey, 'line-width': 3, 'line-dasharray': [1.6, 1.4] }
+            },
+            {
+                id: 'journey-arrows', type: 'symbol', source: 'journeys',
+                layout: {
+                    'symbol-placement': 'line-center', 'icon-image': 'journey-arrow',
+                    'icon-allow-overlap': true, 'icon-ignore-placement': true, 'icon-rotation-alignment': 'map'
+                }
+            },
+            {
+                id: 'journey-head', type: 'circle', source: 'journey-head',
+                paint: { 'circle-radius': 7, 'circle-color': theme.journey, 'circle-stroke-color': theme.journeyCasing, 'circle-stroke-width': 3 }
             },
             {
                 id: 'atlas-labels', type: 'symbol', source: 'atlas', filter: ['==', ['geometry-type'], 'Point'],
@@ -316,6 +372,7 @@ export function createTravelMap(element, { index, cities, onCountryClick, onCity
         return [
             ['dot', dotImage(theme, false)],
             ['dot-capital', dotImage(theme, true)],
+            ['journey-arrow', arrowImage(theme)],
             ...PATTERNS.map(([name, colour, kind]) => [name, patternImage(theme[colour], kind)])
         ];
     }
@@ -498,30 +555,45 @@ export function createTravelMap(element, { index, cities, onCountryClick, onCity
 
     // ---- the traveler's own pins
 
-    let pins = [];
+    // Pins by what they show, so a pin that stays (as the timeline moves) is not drawn again.
+    let pins = new Map();
     function setPins(markers) {
-        for (const pin of pins) pin.remove();
-        pins = markers.filter(marker => marker.category === 'City').map(marker => {
-            const pinElement = document.createElement('button');
-            pinElement.type = 'button';
-            // The traveler's emoji replaces the status symbol; the pin's colour still tells the status.
+        const next = new Map();
+        for (const marker of markers) {
+            if (marker.category !== 'City') continue;
             const info = statusInfo(statusOf(marker));
-            pinElement.className = `pin pin-${info.id}${marker.emoji ? ' pin-emoji' : ''}`;
-            pinElement.title = marker.name;
-            pinElement.setAttribute('aria-label', `${marker.name}, ${info.label.toLowerCase()}`);
-            const body = document.createElement('span');
-            body.className = 'pin-body';
-            const symbol = document.createElement('span');
-            symbol.className = 'pin-symbol';
-            symbol.textContent = marker.emoji || info.pin;
-            body.append(symbol);
-            pinElement.append(body);
-            pinElement.addEventListener('click', event => {
-                event.stopPropagation();
-                onPinClick?.(marker);
-            });
-            return new Marker({ element: pinElement, anchor: 'bottom' }).setLngLat([marker.lng, marker.lat]).addTo(map);
+            const key = [marker.id, info.id, marker.emoji || '', marker.name, marker.lat, marker.lng].join('|');
+            if (pins.has(key)) {
+                next.set(key, pins.get(key));
+                pins.delete(key);
+            } else {
+                next.set(key, createPin(marker, info));
+            }
+        }
+        for (const pin of pins.values()) pin.marker.remove();
+        pins = next;
+    }
+
+    function createPin(marker, info) {
+        const pinElement = document.createElement('button');
+        pinElement.type = 'button';
+        // The traveler's emoji replaces the status symbol; the pin's colour still tells the status.
+        pinElement.className = `pin pin-${info.id}${marker.emoji ? ' pin-emoji' : ''}`;
+        pinElement.title = marker.name;
+        pinElement.setAttribute('aria-label', `${marker.name}, ${info.label.toLowerCase()}`);
+        const body = document.createElement('span');
+        body.className = 'pin-body';
+        const symbol = document.createElement('span');
+        symbol.className = 'pin-symbol';
+        symbol.textContent = marker.emoji || info.pin;
+        body.append(symbol);
+        pinElement.append(body);
+        pinElement.addEventListener('click', event => {
+            event.stopPropagation();
+            onPinClick?.(marker);
         });
+        const pin = new Marker({ element: pinElement, anchor: 'bottom' }).setLngLat([marker.lng, marker.lat]).addTo(map);
+        return { marker: pin, element: pinElement };
     }
 
     // ---- cards and camera
@@ -531,14 +603,19 @@ export function createTravelMap(element, { index, cities, onCountryClick, onCity
         const topbar = document.querySelector('.topbar');
         const panel = document.getElementById('panel');
         const legend = document.getElementById('legend');
+        const timeBar = document.getElementById('time-bar');
         const narrow = window.innerWidth <= 760;
         // On phones the legend sits under the top bar.
         const top = Math.max(topbar ? topbar.getBoundingClientRect().bottom : 74, narrow && legend ? legend.getBoundingClientRect().bottom : 0);
+        // The timeline sits over the bottom of the map.
+        const bottom = timeBar && !timeBar.hidden
+            ? Math.max(80, element.getBoundingClientRect().bottom - timeBar.getBoundingClientRect().top + 16)
+            : 80;
         return {
             top: top + 16,
             left: !panel || panel.hidden || narrow ? 40 : panel.getBoundingClientRect().right + 40,
             right: 40,
-            bottom: 80
+            bottom
         };
     }
 
@@ -600,8 +677,104 @@ export function createTravelMap(element, { index, cities, onCountryClick, onCity
         return moved;
     }
 
-    // Follow the colour scheme.
-    window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener?.('change', () => {
+    // ---- journey lines and their replay (ADR 0016)
+
+    let shownLines = [];
+    let replay = null;
+    function drawLines(lines) {
+        shownLines = lines;
+        ready.then(() => map.getSource('journeys')?.setData(lineFeatures(lines)));
+    }
+    function drawHead(point) {
+        ready.then(() => map.getSource('journey-head')?.setData(point
+            ? { type: 'Feature', geometry: { type: 'Point', coordinates: point }, properties: {} }
+            : EMPTY));
+    }
+
+    function stopReplay() {
+        if (!replay) return;
+        cancelAnimationFrame(replay.frame);
+        const { onDone } = replay;
+        replay = null;
+        drawHead(null);
+        onDone?.(false);
+    }
+
+    /** Draws journey lines, each a list of [lng, lat] points; an empty list hides them. */
+    function setJourneys(lines) {
+        stopReplay();
+        drawLines(lines);
+    }
+
+    // Frames the given [lng, lat] points, clear of the panel and bars.
+    function fitPoints(points, duration) {
+        const moved = afterMove();
+        const lngs = points.map(([lng]) => lng);
+        const lats = points.map(([, lat]) => lat);
+        map.fitBounds([[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
+            { maxZoom: toMapZoom(6), padding: safeArea(), duration });
+        return moved;
+    }
+
+    /**
+     * Replays journey lines one after another, after framing them. With reduced motion, the
+     * whole route is drawn at once. `onLeg(i)` tells which line is drawing; `onDone(finished)`
+     * tells the replay ended, or was stopped. Returns a function that stops it.
+     */
+    function replayJourneys(lines, { reduceMotion = false, onLeg, onDone } = {}) {
+        stopReplay();
+        if (!lines.length) {
+            onDone?.(true);
+            return () => {};
+        }
+        const framed = fitPoints(lines.flat(), reduceMotion ? 0 : 900);
+        if (reduceMotion) {
+            drawLines(lines);
+            onLeg?.(lines.length - 1);
+            onDone?.(true);
+            return () => {};
+        }
+        const current = { frame: 0, onDone };
+        replay = current;
+        drawLines([]);
+        const legTime = Math.max(400, Math.min(1000, 20_000 / lines.length));
+        framed.then(() => {
+            if (replay !== current) return;
+            let leg = 0;
+            let started = performance.now();
+            onLeg?.(0);
+            const frame = now => {
+                if (replay !== current) return;
+                const t = Math.min(Math.max((now - started) / legTime, 0), 1);
+                const line = lines[leg];
+                const partial = t > 0 ? line.slice(0, Math.max(2, Math.ceil(t * (line.length - 1)) + 1)) : null;
+                drawLines(partial ? [...lines.slice(0, leg), partial] : lines.slice(0, leg));
+                drawHead(partial ? partial[partial.length - 1] : line[0]);
+                if (t >= 1) {
+                    leg += 1;
+                    if (leg >= lines.length) {
+                        replay = null;
+                        drawHead(null);
+                        onDone?.(true);
+                        return;
+                    }
+                    // A short stop at each place before the next leg.
+                    started = now + 300;
+                    onLeg?.(leg);
+                }
+                current.frame = requestAnimationFrame(frame);
+            };
+            current.frame = requestAnimationFrame(frame);
+        });
+        return () => {
+            if (replay === current) stopReplay();
+        };
+    }
+
+    // ---- theme, palettes and printing
+
+    /** Redraws the map from the CSS tokens, after a change of colour scheme or palette. */
+    function refreshTheme() {
         theme = readTheme();
         ready.then(() => {
             map.setStyle(buildStyle(theme, countries, labels), { diff: true });
@@ -614,9 +787,51 @@ export function createTravelMap(element, { index, cities, onCountryClick, onCity
                 applyStatus();
                 applySelection();
                 updateCities();
+                drawLines(shownLines);
             });
         });
-    });
+    }
+    window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener?.('change', refreshTheme);
 
-    return { map, setPins, setCountryStatus, setSelection, flyToCountry, flyTo, flyToView, pulseCountry, openPopup, closePopup };
+    /**
+     * A picture of the map as shown, for printing: the ocean, everything MapLibre draws and the
+     * traveler's pins, which are page elements rather than part of the canvas.
+     */
+    function snapshot() {
+        // A synchronous render keeps the WebGL drawing buffer readable without preserving it.
+        map.redraw();
+        const source = map.getCanvas();
+        const canvas = document.createElement('canvas');
+        canvas.width = source.width;
+        canvas.height = source.height;
+        const context = canvas.getContext('2d');
+        context.fillStyle = theme.ocean;
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(source, 0, 0);
+        const ratio = source.width / (source.clientWidth || source.width);
+        context.scale(ratio, ratio);
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+        context.font = '900 12px system-ui, sans-serif';
+        for (const { marker, element: pin } of pins.values()) {
+            const { x, y } = map.project(marker.getLngLat());
+            const body = getComputedStyle(pin.querySelector('.pin-body'));
+            context.beginPath();
+            context.arc(x, y - 16, 11, 0, Math.PI * 2);
+            context.fillStyle = body.backgroundColor;
+            context.fill();
+            context.lineWidth = 2.5;
+            context.strokeStyle = theme.ink;
+            context.stroke();
+            const symbol = pin.querySelector('.pin-symbol');
+            context.fillStyle = getComputedStyle(symbol).color;
+            context.fillText(symbol.textContent, x, y - 15.5);
+        }
+        return canvas.toDataURL('image/png');
+    }
+
+    return {
+        map, setPins, setCountryStatus, setSelection, flyToCountry, flyTo, flyToView, pulseCountry, openPopup, closePopup,
+        setJourneys, replayJourneys, refreshTheme, snapshot
+    };
 }
