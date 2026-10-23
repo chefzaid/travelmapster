@@ -3,9 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="description" content="TravelMapster: color in the countries you've visited, pin the cities you love, and plan your next adventure.">
+    <meta name="description" content="A playful travel map and day ledger: color in the countries you've visited, pin cities, plan trips and count your Schengen and tax-residency days.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="TravelMapster">
+    <meta property="og:title" content="TravelMapster: your travel map and day ledger">
+    <meta property="og:description" content="Color in the countries you've visited, plan trips and count your Schengen and tax-residency days.">
     <meta name="theme-color" content="#7cc6e8">
-    <title>TravelMapster</title>
+    <title>TravelMapster: travel map and Schengen day ledger</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <!-- The server rewrites /__assets__/ to this release's cacheable /a/<fingerprint>/ path. -->
     <link rel="preload" href="/__assets__/vendor/fonts/fredoka-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
@@ -61,21 +65,64 @@
         <aside id="panel" class="panel" aria-label="TravelMapster panel" tabindex="-1">
             <button class="panel-handle" id="panel-handle" type="button" aria-label="Expand or collapse panel" aria-expanded="true"></button>
 
-            <!-- Signed out -->
-            <section id="welcome-view" class="view" hidden>
+            <!-- Signed out: the landing page, over a demo map of a sample traveler -->
+            <section id="welcome-view" class="view landing" aria-labelledby="landing-title" hidden>
                 <div class="hero">
                     <p class="eyebrow">Your world, colored in</p>
-                    <h1>Where have you <span class="scribble">been?</span></h1>
-                    <p>Paint every country you've visited, pin the cities you love, keep a wishlist of dream trips, and plan day-by-day itineraries.</p>
-                    <ul class="hero-points">
-                        <li><span aria-hidden="true">🎨</span> Color in countries and cities</li>
-                        <li><span aria-hidden="true">🛂</span> Collect stamps and badges</li>
-                        <li><span aria-hidden="true">🗓️</span> Plan trips with guide ideas</li>
-                        <li><span aria-hidden="true">📒</span> Count days for Schengen and taxes</li>
-                    </ul>
+                    <h1 id="landing-title">Where have you <span class="scribble">been?</span></h1>
+                    <p>TravelMapster is a playful travel atlas with a day ledger you can rely on. Color in the
+                        countries you've visited, record every trip with its dates, and always know how many days
+                        you have left in the Schengen area or before a tax-residency limit.</p>
+                    <div class="hero-actions">
+                        <button class="btn btn-primary" type="button" data-auth-mode="register">Sign up free</button>
+                        <button class="btn btn-ghost" type="button" data-auth-mode="login">Log in</button>
+                    </div>
+                    <p class="demo-note"><span aria-hidden="true">👀</span> The map shows a sample traveler. Click a
+                        country, press <strong>Been there</strong> and watch it color in. Nothing is saved.</p>
                 </div>
 
-                <div class="auth-card">
+                <section class="story" aria-labelledby="story-title">
+                    <h2 id="story-title">Your travels, kept three ways</h2>
+                    <article class="story-card story-atlas">
+                        <h3><span aria-hidden="true">🎨</span> The atlas</h3>
+                        <p>Color in countries, pin the cities you loved, keep a wishlist and plan day-by-day
+                            itineraries. Collect stamps, badges and traveler ranks as the map fills up.</p>
+                    </article>
+                    <article class="story-card story-ledger">
+                        <h3><span aria-hidden="true">📒</span> The day ledger</h3>
+                        <p>Every visit has dates, so TravelMapster counts your days in each country: Schengen
+                            90/180, your own visa limits and the 183-day tax rule, with alerts before a limit and a
+                            printable evidence report.</p>
+                        <p id="demo-ledger" class="demo-ledger"></p>
+                        <a class="story-link" href="/schengen-calculator">Try the free Schengen calculator, no account needed <span aria-hidden="true">→</span></a>
+                    </article>
+                    <article class="story-card story-keepsakes">
+                        <h3><span aria-hidden="true">🖼️</span> Keepsakes <span class="chip chip-soon">Coming soon</span></h3>
+                        <p>Turn your map into a printed poster, and your places, notes and photos into a travel book.</p>
+                    </article>
+                </section>
+
+                <section class="plans" aria-labelledby="plans-title">
+                    <h2 id="plans-title">Plans</h2>
+                    <div class="plan-card plan-free">
+                        <h3>Free</h3>
+                        <p class="plan-tag">Available now · no card needed</p>
+                        <ul class="plan-points">
+                            <li>The atlas: countries, cities, wishlist, trips and passport</li>
+                            <li>The day ledger: Schengen, visa and tax-residency counting with evidence reports</li>
+                            <li>Import, export and a public map to share</li>
+                        </ul>
+                        <button class="btn btn-primary btn-block" type="button" data-auth-mode="register">Start my free map</button>
+                    </div>
+                    <div class="plan-card plan-soon">
+                        <h3>Keepsakes</h3>
+                        <p class="plan-tag">Coming soon</p>
+                        <p>Posters and travel books printed from your map. Prices will be announced before they launch.</p>
+                    </div>
+                </section>
+
+                <section id="account-start" class="auth-card" aria-labelledby="account-title">
+                    <h2 id="account-title">Start your own map</h2>
                     <div class="segmented" role="tablist" aria-label="Account">
                         <button id="tab-login" role="tab" aria-selected="true" aria-controls="auth-form" type="button">Log in</button>
                         <button id="tab-register" role="tab" aria-selected="false" aria-controls="auth-form" type="button">Sign up</button>
@@ -93,7 +140,7 @@
                         <p id="auth-error" class="form-error" role="alert" hidden></p>
                         <button id="auth-submit" class="btn btn-primary btn-block" type="submit">Log in</button>
                     </form>
-                </div>
+                </section>
                 <p class="muted small">Just looking? Explore the map: hover countries, zoom in for cities, and try 🎲 Surprise me.</p>
             </section>
 

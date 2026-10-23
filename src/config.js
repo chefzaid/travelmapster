@@ -20,6 +20,21 @@ function readTrustProxy(raw) {
     return raw.split(',').map(value => value.trim()).filter(Boolean);
 }
 
+// The site's public origin for absolute links such as the sitemap, e.g. https://example.org.
+function readPublicUrl(raw) {
+    if (!raw) return null;
+    let url;
+    try {
+        url = new URL(raw);
+    } catch {
+        throw new Error(`PUBLIC_URL must be an absolute http(s) URL, got "${raw}".`);
+    }
+    if (!['http:', 'https:'].includes(url.protocol)) {
+        throw new Error(`PUBLIC_URL must be an absolute http(s) URL, got "${raw}".`);
+    }
+    return url.origin;
+}
+
 /**
  * Builds validated runtime configuration from environment variables.
  * Production refuses to start without an explicit, strong session secret.
@@ -40,6 +55,7 @@ function loadConfig(env = process.env) {
         metricsPort: readInteger(env, 'METRICS_PORT', 9464),
         logLevel: env.LOG_LEVEL || (nodeEnv === 'test' ? 'silent' : 'info'),
         trustProxy: readTrustProxy(env.TRUST_PROXY),
+        publicUrl: readPublicUrl(env.PUBLIC_URL),
         session: {
             secret: sessionSecret || DEV_SESSION_SECRET,
             cookieName: env.SESSION_COOKIE_NAME || 'travelmapster.sid',

@@ -22,7 +22,9 @@ PostgreSQL, including sessions, so any replica can serve any request.
 | Module | Responsibility |
 |---|---|
 | `src/server.js` | Startup: config, migrations with retry, HTTP and metrics servers, graceful shutdown |
-| `src/app.js` | Express wiring: probes, logging, metrics, security headers, static files, sessions, rate limits, CSRF, routers, error handling |
+| `src/app.js` | Express wiring: probes, logging, metrics, security headers, pages and static files, sessions, rate limits, CSRF, routers, error handling |
+| `src/assets.js` | Release fingerprint and the HTML pages with their asset links rewritten |
+| `src/seo.js` | `robots.txt` and the sitemap of public pages ([ADR 0011](adr/0011-public-pages.md)) |
 | `src/config.js` | Validated configuration from environment variables ([reference](development.md#configuration)) |
 | `src/routes/` | `auth`, `markers` (places and their visits), `visits`, `ledger` (day-ledger settings and date history), `trips`, `profile` (incl. public maps), `places` and `geocode` routers |
 | `src/validation.js` | Every request-body rule and limit |
@@ -33,6 +35,14 @@ PostgreSQL, including sessions, so any replica can serve any request.
 | `src/services/places.js` | In-memory search over every town in the map data |
 | `src/db/` | Connection pool, transactions and [migrations](data-model.md#migrations) |
 | `src/middleware/csrf.js` | Synchronizer-token CSRF protection |
+
+## Pages
+
+| Path | Page |
+|---|---|
+| `/` | The app (`index.html`): the landing page with a demo map when signed out, the user's map when signed in, or a read-only shared map at `/?u=<username>` (sent with `X-Robots-Tag: noindex`) |
+| `/schengen-calculator` | The free Schengen 90/180 calculator (`schengen-calculator.html`); `/schengen-calculator.html` redirects here |
+| `/robots.txt`, `/sitemap.xml` | Crawler rules and the public pages, with absolute URLs from `PUBLIC_URL` or the request |
 
 ## API
 
@@ -65,7 +75,9 @@ JSON under `/api`; errors are `{ "error": "…" }` with a matching status. All r
 
 | Module | Responsibility |
 |---|---|
-| `public/js/app.js` | App shell: auth, map cards, search, tabs, public view |
+| `public/js/app.js` | App shell: auth, landing page and demo map, map cards, search, tabs, public view |
+| `public/js/demo.js` | The landing page's sample traveler, with dates relative to today (pure, unit tested) |
+| `public/js/schengen.js`, `calculator.js` | Free Schengen calculator: stay checks and results over `days.js` (pure, unit and property tested), and the page that draws them |
 | `public/js/map.js` | MapLibre GL map ([ADR 0008](adr/0008-maplibre-gl.md)): cartoon style from the CSS tokens, country states, towns and tile loading, pins, cards and camera |
 | `public/js/geo.js` | Country index, city search, stats, ranks and badges (pure, unit tested) |
 | `public/js/places.js`, `io.js` | Places tab, import and export (pure `io.js` is unit tested) |
@@ -147,5 +159,6 @@ number (`NNNN-short-title.md`) and the template below. Statuses: **Proposed**, *
 - [ADR 0008: Render the map with MapLibre GL](adr/0008-maplibre-gl.md)
 - [ADR 0009: Split saved places into places and dated visits](adr/0009-places-and-visits.md)
 - [ADR 0010: Count travel days in the browser from dated visits](adr/0010-day-ledger.md)
+- [ADR 0011: Public pages for visitors without an account](adr/0011-public-pages.md)
 
 Superseded: [ADR 0007: Draw towns on a canvas layer](adr/0007-canvas-towns.md).

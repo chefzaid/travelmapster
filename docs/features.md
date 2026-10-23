@@ -64,6 +64,23 @@ counting rules are in [ADR 0010](adr/0010-day-ledger.md).
 - **Date history**: every visit date added, changed or removed is kept, with when, even after the
   visit or place is gone.
 
+## Public Pages
+
+Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
+
+- **Landing page**: signed-out visitors see the atlas, day ledger and keepsakes story, the plans
+  (free today; keepsakes coming soon) and the sign-up form, over a live demo map of a sample
+  traveler. They can color places in on it, and the ledger story counts the sample traveler's
+  Schengen days live; nothing is saved. Signed-in visitors land on their own map, and shared
+  maps open read-only as before.
+- **Free Schengen 90/180 calculator** at `/schengen-calculator`, without an account: past and
+  planned stays (or "still there"), days used and left on any day, overstays with the stays
+  that cause them, and the latest day you can stay. It counts with the same rules as the Ledger
+  tab, and the dates never leave the browser tab. The page explains the rule, lists the members
+  and links to sign-up.
+- Search-friendly: real titles, descriptions and headings, `robots.txt` and a sitemap of the
+  public pages. Shared maps are kept out of search results.
+
 ## Trips
 
 - Itineraries of up to 30 days with morning, afternoon and evening slots.
@@ -88,6 +105,7 @@ counting rules are in [ADR 0010](adr/0010-day-ledger.md).
 ## Current Boundaries
 
 - No social login yet; a place or visit holds one photo link, not an album ([roadmap](../TODO.md)).
+- No paid plans or prices yet; the landing page shows keepsakes as coming soon.
 - Photos are links to images hosted elsewhere; the app stores no files.
 - Ledger alerts are in-app only: there is no email yet. Overseas territories drawn as part of a
   country on the map (such as French Guiana within France) count as that country, including for

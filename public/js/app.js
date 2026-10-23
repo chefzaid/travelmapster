@@ -8,7 +8,8 @@ import { renderPlaces } from './places.js';
 import { renderTrips, openNewTrip } from './trips.js';
 import { renderPassport, renderPublicStats } from './passport.js';
 import { renderLedger } from './ledger.js';
-import { ledgerOverview, localToday } from './days.js';
+import { SCHENGEN_RULE, ledgerOverview, localToday } from './days.js';
+import { demoMarkers } from './demo.js';
 import { celebrate } from './confetti.js';
 
 const state = {
@@ -19,6 +20,8 @@ const state = {
     index: null,
     cities: [],
     publicUser: null,
+    // Signed out, the map shows a sample traveler that visitors can try; nothing is saved.
+    demo: false,
     filters: { visited: true, wishlist: true },
     activeTab: 'explore',
     ideas: null,
@@ -87,6 +90,7 @@ function refresh({ celebrateNew = true } = {}) {
     state.ledger.changes = null;
     updateLedgerBadge();
     renderActiveTab();
+    if (state.demo) renderDemoLedger();
 }
 
 // ---------------------------------------------------------------- day ledger
@@ -153,26 +157,32 @@ async function reloadMarkers() {
 
 // ---------------------------------------------------------------- saving places
 
+// Demo places live only in the page, with negative ids like the sample traveler's.
+let demoIds = -1000;
+
 async function savePlace(place, { quiet = false } = {}) {
-    const marker = await api.addMarker(place);
+    const marker = state.demo
+        ? { notes: '', photoUrl: '', visits: [], ...place, id: demoIds-- }
+        : await api.addMarker(place);
     state.markers.push(marker);
     refresh();
     if (!quiet) {
-        toast(`${place.type === 'visited' ? 'Stamped' : 'Wishlisted'} ${place.name}!`, { tone: 'success' });
+        const verb = place.type === 'visited' ? 'Stamped' : 'Wishlisted';
+        toast(state.demo ? `${verb} ${place.name} on the demo map.` : `${verb} ${place.name}!`, { tone: 'success' });
     }
     return marker;
 }
 
 async function updatePlace(marker, changes) {
     const next = { ...marker, ...changes };
-    await api.updateMarker(marker.id, next);
+    if (!state.demo) await api.updateMarker(marker.id, next);
     Object.assign(marker, changes);
     refresh();
     return marker;
 }
 
 async function removePlace(marker) {
-    await api.deleteMarker(marker.id);
+    if (!state.demo) await api.deleteMarker(marker.id);
     state.markers = state.markers.filter(item => item.id !== marker.id);
     refresh();
     toast(`Removed ${marker.name}.`, {
@@ -325,9 +335,8 @@ function statusChip(type) {
 }
 
 function statusButtons(existing, place) {
-    if (!state.user) {
-        return state.publicUser ? null : h('p', { class: 'card-note' }, 'Log in to color this in on your map.');
-    }
+    if (state.publicUser) return null;
+    if (!state.user && !state.demo) return h('p', { class: 'card-note' }, 'Log in to color this in on your map.');
     const button = (type, label) => h('button', {
         type: 'button',
         class: `btn btn-sm ${type === 'visited' ? 'btn-visited' : 'btn-wishlist'}${existing?.type === type ? ' is-active' : ''}`,
@@ -337,10 +346,13 @@ function statusButtons(existing, place) {
             reopenCard();
         }
     }, label);
-    return h('div', { class: 'card-actions' },
-        button('visited', '✓ Been there'),
-        button('wishlist', '♥ Wishlist')
-    );
+    return [
+        h('div', { class: 'card-actions' },
+            button('visited', '✓ Been there'),
+            button('wishlist', '♥ Wishlist')
+        ),
+        state.demo ? h('p', { class: 'card-note' }, 'Demo map: nothing is saved. Sign up to keep your own.') : null
+    ];
 }
 
 function visitItem(marker, visit) {
@@ -851,6 +863,37 @@ function setupTabs() {
     });
 }
 
+// ---------------------------------------------------------------- landing
+
+// The ledger story counts the sample traveler's Schengen days live, as the Ledger tab would.
+function renderDemoLedger() {
+    const schengen = currentLedger().stays.find(item => item.rule.id === SCHENGEN_RULE.id);
+    fill($('#demo-ledger'),
+        h('span', { 'aria-hidden': 'true' }, '🧮 '),
+        'The sample traveler is in Lisbon and has used ',
+        h('strong', {}, `${schengen.used} of 90`),
+        ' Schengen days, so ',
+        h('strong', {}, `${schengen.remaining} days`),
+        ' are left today.'
+    );
+}
+
+// "Sign up" and "Log in" on the landing page, and links from other pages to /#sign-up or
+// /#log-in, open the account form in that mode.
+function openAuth(mode) {
+    setAuthMode(mode);
+    $('#account-start').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    $('#auth-username').focus({ preventScroll: true });
+}
+
+function setupLanding() {
+    for (const button of $all('[data-auth-mode]')) {
+        button.addEventListener('click', () => openAuth(button.dataset.authMode));
+    }
+}
+
+const AUTH_HASHES = { '#sign-up': 'register', '#log-in': 'login' };
+
 // ---------------------------------------------------------------- auth
 
 let authMode = 'login';
@@ -889,6 +932,7 @@ function setupAuth() {
             }
             await api.login(username, password);
             $('#auth-password').value = '';
+            if (AUTH_HASHES[location.hash]) history.replaceState(null, '', location.pathname + location.search);
             await startSession();
             toast(authMode === 'register' ? 'Welcome aboard! Your map is ready. 🗺️' : `Welcome back, ${username}!`, { tone: 'success' });
         } catch (error) {
@@ -1013,7 +1057,8 @@ function setView(name) {
 
 function showSignedOut() {
     state.user = null;
-    state.markers = [];
+    state.demo = true;
+    state.markers = demoMarkers(localToday());
     state.trips = [];
     state.unlocked = null;
     state.ideas = null;
@@ -1022,11 +1067,14 @@ function showSignedOut() {
     travelMap.closePopup();
     refresh({ celebrateNew: false });
     setView('welcome');
+    if (AUTH_HASHES[location.hash]) openAuth(AUTH_HASHES[location.hash]);
 }
 
 async function startSession() {
     const user = await api.currentUser();
     state.user = user;
+    state.demo = false;
+    travelMap.closePopup();
     $('#account').hidden = false;
     $('#account-name').textContent = user.username;
     $('#avatar-initial').textContent = user.username.slice(0, 1).toUpperCase();
@@ -1155,6 +1203,7 @@ async function init() {
     setupAccountMenu();
     setupPanel();
     setupLegend();
+    setupLanding();
     $('#surprise-btn').addEventListener('click', surprise);
     await boot();
 }

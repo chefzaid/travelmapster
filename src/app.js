@@ -10,6 +10,7 @@ const { rateLimit } = require('express-rate-limit');
 
 const { csrfProtection, csrfTokenRoute } = require('./middleware/csrf');
 const { createAssets } = require('./assets');
+const { robotsTxt, sitemapXml, siteOrigin } = require('./seo');
 const { PgRateLimitStore } = require('./rate-limit-store');
 const {
     createUserRepository, createMarkerRepository, createVisitRepository, createLedgerRepository, createTripRepository
@@ -102,11 +103,22 @@ function createApp({ config, pool, logger, metrics, geocoder, places, state = { 
         crossOriginEmbedderPolicy: false
     }));
 
-    // The page is never cached and links every asset under /a/<fingerprint>/, which is
-    // cached for a year: a release changes the fingerprint, so browsers and the CDN never
-    // mix old and new scripts, styles or map data.
+    // Pages are never cached and link every asset under /a/<fingerprint>/, which is cached
+    // for a year: a release changes the fingerprint, so browsers and the CDN never mix old
+    // and new scripts, styles or map data.
+    const sendPage = (res, file) => res.set('Cache-Control', 'no-cache').type('html').send(assets.pages[file]);
     app.get(['/', '/index.html'], (req, res) => {
-        res.set('Cache-Control', 'no-cache').type('html').send(assets.indexHtml);
+        // Shared maps stay out of search results until their owners can opt in.
+        if (req.query.u !== undefined) res.set('X-Robots-Tag', 'noindex');
+        sendPage(res, 'index.html');
+    });
+    app.get('/schengen-calculator', (req, res) => sendPage(res, 'schengen-calculator.html'));
+    app.get('/schengen-calculator.html', (req, res) => res.redirect(301, '/schengen-calculator'));
+    app.get('/robots.txt', (req, res) => {
+        res.set('Cache-Control', 'no-cache').type('text/plain').send(robotsTxt(siteOrigin(config, req)));
+    });
+    app.get('/sitemap.xml', (req, res) => {
+        res.set('Cache-Control', 'no-cache').type('application/xml').send(sitemapXml(siteOrigin(config, req)));
     });
     app.use('/a/:version', express.static(PUBLIC_DIR, {
         index: false,

@@ -235,3 +235,35 @@ test('Wikivoyage listings become itinerary ideas', async () => {
     assert.equal(plan[1].evening, '');
     assert.equal(stripWikiMarkup('[[Foo|Bar]] {{tmpl}} <b>x</b>'), 'Bar x');
 });
+
+test('the demo traveler lies on the map and counts Schengen days like a real one', async () => {
+    const { createCountryIndex, computeStats } = await load('geo.js');
+    const { demoMarkers } = await load('demo.js');
+    const { ledgerOverview, SCHENGEN_RULE } = await load('days.js');
+    const index = createCountryIndex(countries);
+    const today = '2026-10-23';
+    const markers = demoMarkers(today);
+    const stats = computeStats(markers, index);
+    assert.ok(markers.every(marker => stats.markerCountry.get(marker.id)), 'every sample place resolves to a country');
+    assert.ok(markers.every(marker => marker.id < 0 && marker.visits.every(visit => visit.id < 0)), 'sample ids never clash with saved ones');
+    assert.equal(stats.visitedCountries, 9);
+    assert.equal(stats.wishlistCountries, 3);
+
+    const overview = ledgerOverview({ markers, countryOf: marker => stats.markerCountry.get(marker.id), settings: null, today });
+    const schengen = overview.stays.find(item => item.rule.id === SCHENGEN_RULE.id);
+    // Lisbon 10, Porto 5, Barcelona 8, France 13 and Rome 5; Greece is older than 180 days.
+    assert.equal(schengen.used, 41);
+    assert.equal(schengen.inside, true);
+    assert.deepEqual(demoMarkers('2027-01-01')[0].visits[0].startDate, '2026-12-23', 'dates follow today');
+});
+
+test('the calculator page lists every Schengen member by its map name', async () => {
+    const { createCountryIndex } = await load('geo.js');
+    const { SCHENGEN_MEMBERS, SCHENGEN_OPEN_BORDERS } = await load('days.js');
+    const index = createCountryIndex(countries);
+    const html = fs.readFileSync(path.join(publicDir, 'schengen-calculator.html'), 'utf8');
+    const listed = [...html.match(/<ul class="member-list">([\s\S]*?)<\/ul>/)[1].matchAll(/<li>([^<]+)<\/li>/g)].map(match => match[1]);
+    assert.deepEqual(listed, SCHENGEN_MEMBERS.map(id => index.byId.get(id).name).sort());
+    assert.match(html, new RegExp(`has ${SCHENGEN_MEMBERS.length} members`));
+    for (const id of SCHENGEN_OPEN_BORDERS) assert.match(html, new RegExp(index.byId.get(id).name));
+});
