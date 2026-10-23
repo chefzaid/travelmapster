@@ -118,4 +118,3 @@ Everyday features that make the free atlas worth opening again; the paid work ab
 ### Sharing
 
 - [ ] Embeddable public map for blogs and personal sites, read-only and without notes.
-- [ ] Choose per place whether it appears on the public map, so a public profile can hide sensitive trips.

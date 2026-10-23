@@ -302,20 +302,22 @@ test('place details are checked like the API and filter the list and map', async
     assert.equal(details.describeDetailFilter({ rating: 'none' }), 'not rated');
 });
 
-test('import and export round-trip ratings, tags and emoji, and read older files', async () => {
+test('import and export round-trip ratings, tags, emoji and hidden places, and read older files', async () => {
     const { buildCsv, buildJson, parseImportContent, validatePlace, mergePlaces } = await load('io.js');
     const markers = [{
         id: 1, lat: 41.9, lng: 12.5, type: 'visited', name: 'Rome, Italy', category: 'City', photoUrl: '', notes: '',
-        rating: 5, tags: ['food', 'street art'], emoji: '🍝', visits: [{ startDate: '2022-02-02' }, { startDate: '2023-03-03' }]
+        rating: 5, tags: ['food', 'street art'], emoji: '🍝', hideFromPublic: true,
+        visits: [{ startDate: '2022-02-02' }, { startDate: '2023-03-03' }]
     }];
     for (const [file, content] of [['places.json', buildJson(markers)], ['places.csv', buildCsv(markers)]]) {
         const [place] = mergePlaces(parseImportContent(file, content).map(validatePlace));
-        assert.deepEqual([place.rating, place.tags, place.emoji, place.visits.length], [5, ['food', 'street art'], '🍝', 2], file);
+        assert.deepEqual([place.rating, place.tags, place.emoji, place.hideFromPublic, place.visits.length],
+            [5, ['food', 'street art'], '🍝', true, 2], file);
     }
     assert.match(buildCsv(markers), /"food; street art"/);
     const old = 'lat,lng,type,name,category,notes,travelDate\n41.9,12.5,visited,Rome,City,,2020-01-01';
     const [place] = parseImportContent('old.csv', old).map(validatePlace);
-    assert.deepEqual([place.rating, place.tags, place.emoji], [null, [], '']);
+    assert.deepEqual([place.rating, place.tags, place.emoji, place.hideFromPublic], [null, [], '', false]);
     assert.equal(validatePlace({ ...JSON.parse(buildJson(markers))[0], emoji: 'pizza' }), null, 'an invalid detail skips the row');
 });
 

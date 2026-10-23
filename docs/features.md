@@ -106,6 +106,9 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   account menu.
 - Private by default; a public map is shared read-only at `/?u=<username>` with visit dates,
   without notes, photo links, ratings, tags or emoji.
+- Any place can be hidden from the public map, with its visits, so a public profile keeps
+  sensitive trips to itself; the owner's map, passport and ledger still count it
+  ([ADR 0013](adr/0013-hidden-places.md)).
 - Responsive layout with a bottom sheet on phones, `/` to search, screen-reader labels, and light and dark themes that follow the system.
 
 ## Current Boundaries

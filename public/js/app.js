@@ -265,7 +265,9 @@ function placeFormFields(draft) {
         { name: 'otherTags', label: 'Other tags', value: draft.otherTags || '', maxlength: 200, placeholder: 'street art, road trip',
             hint: 'Separate tags with commas; at most 8 per place.' },
         { name: 'notes', label: 'Notes about this place', type: 'textarea', value: draft.notes || '', maxlength: 2000, placeholder: 'Why you love it, tips, what to try…' },
-        { name: 'photoUrl', label: 'Photo link', type: 'url', value: draft.photoUrl || '', placeholder: 'https://…', hint: 'Link to a photo hosted anywhere (HTTP or HTTPS). Dates go on each visit.' }
+        { name: 'photoUrl', label: 'Photo link', type: 'url', value: draft.photoUrl || '', placeholder: 'https://…', hint: 'Link to a photo hosted anywhere (HTTP or HTTPS). Dates go on each visit.' },
+        { name: 'hideFromPublic', label: 'Hide from my public map', type: 'checkbox', value: draft.hideFromPublic,
+            hint: 'Visitors of your shared map will not see this place or its visits.' }
     ];
 }
 
@@ -278,7 +280,7 @@ async function editPlace(marker) {
         const { details, error } = checkDetails({ rating: values.rating, tags: [...values.tags, ...splitTags(values.otherTags)], emoji: values.emoji });
         if (error) {
             toast(error, { tone: 'error' });
-            draft = { ...draft, ...values, rating: parseRating(values.rating) ?? null };
+            draft = { ...draft, ...values, rating: parseRating(values.rating) ?? null, hideFromPublic: values.hideFromPublic === 'on' };
             continue;
         }
         try {
@@ -287,6 +289,7 @@ async function editPlace(marker) {
                 type: values.type,
                 notes: values.notes.trim(),
                 photoUrl: values.photoUrl.trim(),
+                hideFromPublic: values.hideFromPublic === 'on',
                 ...details
             });
             toast(`Saved ${marker.name}.`, { tone: 'success' });
@@ -465,6 +468,7 @@ function savedDetails(marker) {
         marker.photoUrl ? h('a', { href: marker.photoUrl, target: '_blank', rel: 'noopener noreferrer', class: 'card-photo' },
             h('img', { src: marker.photoUrl, alt: `Photo of ${marker.name}`, loading: 'lazy', referrerpolicy: 'no-referrer', onerror: event => event.target.replaceWith('📷 View photo') })
         ) : null,
+        state.user && marker.hideFromPublic ? h('p', { class: 'card-note' }, h('span', { 'aria-hidden': 'true' }, '🔒 '), 'Hidden from your public map') : null,
         state.user ? h('div', { class: 'card-links' },
             h('button', { type: 'button', class: 'link-btn', onclick: () => editPlace(marker) }, '✏️ Edit details'),
             h('button', { type: 'button', class: 'link-btn danger', onclick: () => { travelMap.closePopup(); removePlace(marker).catch(handleError); } }, '🗑️ Remove')

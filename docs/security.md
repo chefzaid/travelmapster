@@ -50,7 +50,10 @@ their owner chose `public`; private and missing profiles return the same 404.
 ## Privacy
 
 - Notes and photo links, of places and of visits, and ratings, tags and emoji of places are
-  never included in public maps; only visit dates are ([ADR 0012](adr/0012-place-details.md)). Shared maps are sent with `X-Robots-Tag: noindex` and left out of the
+  never included in public maps; only visit dates are ([ADR 0012](adr/0012-place-details.md)).
+  Places the traveler hid from the public map are left out by the query itself, with their
+  visits; a replica of a release before that change would list them, so rollbacks below it
+  are avoided ([ADR 0013](adr/0013-hidden-places.md)). Shared maps are sent with `X-Robots-Tag: noindex` and left out of the
   sitemap, so search engines do not list them. Whether a stay is still going on is never shared either, as it would tell
   where the traveler is now, and neither are ledger settings or the date history.
 - Day counts, alerts and evidence reports are computed in the browser and only when the

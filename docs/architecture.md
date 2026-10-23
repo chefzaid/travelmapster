@@ -59,7 +59,7 @@ JSON under `/api`; errors are `{ "error": "…" }` with a matching status. All r
 | DELETE | `/api/auth/account` | Delete the account and all its data (`password`); signs out everywhere |
 | GET, POST | `/api/markers` | List saved places, each with its visits newest first, or create one (optionally with `visits`, `rating`, `tags` and `emoji`) |
 | POST | `/api/markers/import` | Import up to 1,000 places with their visits |
-| PATCH, DELETE | `/api/markers/:id` | Update or remove a place; an update leaves visits alone unless an old client sends `travelDate` ([ADR 0009](adr/0009-places-and-visits.md)), and keeps `rating`, `tags` and `emoji` unless it sends them ([ADR 0012](adr/0012-place-details.md)) |
+| PATCH, DELETE | `/api/markers/:id` | Update or remove a place; an update leaves visits alone unless an old client sends `travelDate` ([ADR 0009](adr/0009-places-and-visits.md)), and keeps `rating`, `tags`, `emoji` and `hideFromPublic` unless it sends them ([ADR 0012](adr/0012-place-details.md)) |
 | GET, POST | `/api/markers/:id/visits` | List or add visits of a place (`startDate`, `endDate`, `ongoing`, `notes`, `photoUrl`) |
 | PATCH, DELETE | `/api/visits/:id` | Replace or remove a visit |
 | GET, PUT | `/api/ledger` | Day-ledger settings: `dayRule`, `rules` (stay rules and thresholds) and `planned` stays, replaced as a whole ([ADR 0010](adr/0010-day-ledger.md)) |
@@ -67,7 +67,7 @@ JSON under `/api`; errors are `{ "error": "…" }` with a matching status. All r
 | GET, POST | `/api/trips` | List or create itineraries |
 | PUT, DELETE | `/api/trips/:id` | Replace or remove an itinerary |
 | PATCH | `/api/profile` | Set `profileVisibility` to `private` or `public` |
-| GET | `/api/public/:username` | Read-only public map with visit dates, without notes, photo links, ratings, tags or emoji |
+| GET | `/api/public/:username` | Read-only public map with visit dates, without notes, photo links, ratings, tags or emoji, and without places hidden from it ([ADR 0013](adr/0013-hidden-places.md)) |
 | GET | `/api/places?q=&limit=` | Search every town in the map data (public, 1–20 results) |
 | GET | `/api/geocode?q=&kind=city\|country&limit=` | World place search (1–10 results) |
 
@@ -162,5 +162,6 @@ number (`NNNN-short-title.md`) and the template below. Statuses: **Proposed**, *
 - [ADR 0010: Count travel days in the browser from dated visits](adr/0010-day-ledger.md)
 - [ADR 0011: Public pages for visitors without an account](adr/0011-public-pages.md)
 - [ADR 0012: Optional details on saved places](adr/0012-place-details.md)
+- [ADR 0013: Hide single places from a public map](adr/0013-hidden-places.md)
 
 Superseded: [ADR 0007: Draw towns on a canvas layer](adr/0007-canvas-towns.md).
