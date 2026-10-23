@@ -2,7 +2,7 @@
 
 const express = require('express');
 const { withTransaction } = require('../db/pool');
-const { IMPORT_MAX_MARKERS, parseMarkerId, parseMarkerPayload, parseVisitPayload } = require('../validation');
+const { IMPORT_MAX_MARKERS, parseBulkChanges, parseMarkerId, parseMarkerPayload, parseVisitPayload } = require('../validation');
 
 function createMarkerRouter({ pool, markers, visits }) {
     const router = express.Router();
@@ -50,6 +50,20 @@ function createMarkerRouter({ pool, markers, visits }) {
             errors: rejected.slice(0, 20),
             markers: created
         });
+    });
+
+    // Several places marked, changed or removed in one transaction, such as a whole continent
+    // marked at once and its undo.
+    router.post('/bulk', async (req, res) => {
+        const { changes, error } = parseBulkChanges(req.body);
+        if (error) return res.status(400).json({ error });
+        try {
+            const result = await withTransaction(pool, client => markers.applyBulk(req.user.id, changes, client));
+            return res.json(result);
+        } catch (err) {
+            if (err.code === 'NOT_FOUND') return res.status(404).json({ error: err.message });
+            throw err;
+        }
     });
 
     router.patch('/:id', async (req, res) => {

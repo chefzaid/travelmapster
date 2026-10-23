@@ -170,6 +170,38 @@ function createMarkerRepository(db) {
                 [markerId, userId]
             );
             return rowCount > 0;
+        },
+
+        /**
+         * Applies a bulk change inside the caller's transaction. Throws a NOT_FOUND error when
+         * any place to change or remove is missing or someone else's, so nothing is kept.
+         */
+        async applyBulk(userId, { create, update, remove }, client) {
+            const notFound = () => Object.assign(new Error('Some places were not found.'), { code: 'NOT_FOUND' });
+            if (update.length) {
+                const { rowCount } = await client.query(
+                    `UPDATE markers m SET type = u.type, updated_at = now()
+                     FROM unnest($1::bigint[], $2::text[]) AS u(id, type)
+                     WHERE m.id = u.id AND m.user_id = $3`,
+                    [update.map(item => item.id), update.map(item => item.type), userId]
+                );
+                if (rowCount !== update.length) throw notFound();
+            }
+            if (remove.length) {
+                const { rowCount } = await client.query(
+                    'DELETE FROM markers WHERE id = ANY($1::bigint[]) AND user_id = $2',
+                    [remove, userId]
+                );
+                if (rowCount !== remove.length) throw notFound();
+            }
+            const created = [];
+            for (const marker of create) created.push(await this.create(userId, marker, client));
+            const { rows: updated } = update.length
+                ? await client.query(
+                    `SELECT ${MARKER_COLUMNS} FROM markers m WHERE m.user_id = $1 AND m.id = ANY($2::bigint[]) ORDER BY m.id`,
+                    [userId, update.map(item => item.id)])
+                : { rows: [] };
+            return { created, updated, removed: remove };
         }
     };
 }

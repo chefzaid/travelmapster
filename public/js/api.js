@@ -87,6 +87,11 @@ export const api = {
     getMarkers: async () => (await request('GET', '/markers')).map(toClientMarker),
     addMarker: async marker => toClientMarker(await request('POST', '/markers', marker)),
     importMarkers: markers => request('POST', '/markers/import', { markers }),
+    // Creates, changes the status of and removes places all at once, or not at all.
+    bulkMarkers: async changes => {
+        const result = await request('POST', '/markers/bulk', changes);
+        return { ...result, created: result.created.map(toClientMarker), updated: result.updated.map(toClientMarker) };
+    },
     updateMarker: async (id, marker) => toClientMarker(await request('PATCH', `/markers/${Number(id)}`, placeFields(marker))),
     deleteMarker: id => request('DELETE', `/markers/${Number(id)}`),
 

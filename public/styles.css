@@ -1006,10 +1006,14 @@ button.chip { cursor: pointer; }
 
 .empty-emoji { font-size: 2.6rem; margin: 0; }
 
-.data-section {
+.data-section,
+.bulk-section {
     padding-top: 14px;
     border-top: 2px dashed var(--line);
 }
+
+.bulk-section .row { margin-bottom: 8px; }
+.bulk-section p { margin: 8px 0 0; }
 
 /* ------------------------------------------------------------ trips */
 
@@ -1382,6 +1386,31 @@ button.legend-filter:hover { background: var(--wishlist); }
     text-anchor: middle;
     fill: #fff;
 }
+
+/* Picking countries on the map to mark them at once. */
+.select-bar {
+    position: absolute;
+    z-index: 850;
+    left: calc(var(--panel-width) + 40px);
+    right: 96px;
+    bottom: 76px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 12px;
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 10px 14px;
+    background: var(--paper);
+    border: 3px solid var(--ink);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.select-bar[hidden] { display: none; }
+.select-count { margin: 0; font-weight: 800; }
+.select-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 
 /* ------------------------------------------------------------ the map */
 
@@ -2277,6 +2306,8 @@ input[aria-invalid='true'] { border-color: var(--danger); }
         padding: 4px;
         border-width: 2px;
     }
+
+    .select-bar { top: 104px; left: 10px; right: 10px; bottom: auto; }
 
     .legend-static { display: none; }
     .legend-item { padding: 2px 8px; font-size: 0.72rem; }

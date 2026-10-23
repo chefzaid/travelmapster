@@ -1,5 +1,5 @@
 import { h, fill, toast, downloadFile, formatDate } from './ui.js';
-import { CONTINENTS } from './geo.js';
+import { CONTINENTS, CONTINENT_EMOJI } from './geo.js';
 import { buildCsv, buildJson, parseImportContent, validatePlace, placeKey, mergePlaces } from './io.js';
 import { lastVisitDate, lastVisitYears, matchesLastVisit, visitCount } from './visits.js';
 import { groupByNextMonth, matchesDetails, monthsLabel, priorityLabel, ratingLabel, stars, usedTags } from './details.js';
@@ -177,6 +177,23 @@ function dataSection(ctx) {
     );
 }
 
+// A whole continent in one step, or countries picked on the map; both can be undone.
+function bulkSection(ctx) {
+    const continent = h('select', { id: 'bulk-continent' },
+        CONTINENTS.map(name => h('option', { value: name }, `${CONTINENT_EMOJI[name]} ${name}`)));
+    const mark = type => () => ctx.markContinent(continent.value, type);
+    return h('section', { class: 'bulk-section', 'aria-labelledby': 'bulk-title' },
+        h('h3', { class: 'section-title', id: 'bulk-title' }, 'Mark many at once'),
+        h('div', { class: 'row' },
+            h('label', { class: 'sort' }, 'Whole continent ', continent),
+            h('button', { type: 'button', class: 'btn btn-sm btn-visited', onclick: mark('visited') }, '✓ Been there'),
+            h('button', { type: 'button', class: 'btn btn-sm btn-wishlist', onclick: mark('wishlist') }, '♥ Wishlist')
+        ),
+        h('button', { type: 'button', id: 'bulk-pick', class: 'btn btn-ghost btn-sm', onclick: () => ctx.startSelecting() }, '☑️ Pick countries on the map'),
+        h('p', { class: 'muted small' }, 'A wishlist never replaces a country you have been to.')
+    );
+}
+
 function lastVisitOptions(markers) {
     const years = lastVisitYears(markers);
     // Keep a chosen year selectable even after its last place is gone.
@@ -244,6 +261,7 @@ export function renderPlaces(container, ctx) {
             detailFilters(ctx)
         ),
         list,
+        bulkSection(ctx),
         dataSection(ctx)
     );
     update();

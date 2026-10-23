@@ -120,6 +120,11 @@ function buildStyle(theme, countries, labels) {
             },
             { id: 'land', type: 'fill', source: 'countries', paint: { 'fill-color': countryFill(theme) } },
             {
+                // Countries picked for marking several at once: a tint over their status color.
+                id: 'selected-fill', type: 'fill', source: 'countries',
+                paint: { 'fill-color': theme.capital, 'fill-opacity': ['case', state('selected'), 0.4, 0] }
+            },
+            {
                 id: 'borders', type: 'line', source: 'countries', layout: { 'line-join': 'round' },
                 paint: { 'line-color': theme.border, 'line-width': ['interpolate', ['linear'], ['zoom'], 1, 1.2, 6, 1.8, 10, 2.4] }
             },
@@ -134,6 +139,10 @@ function buildStyle(theme, countries, labels) {
             {
                 id: 'borders-hover', type: 'line', source: 'countries', layout: { 'line-join': 'round' },
                 paint: { 'line-color': theme.ink, 'line-width': 2.5, 'line-opacity': ['case', state('hover'), 1, 0] }
+            },
+            {
+                id: 'borders-selected', type: 'line', source: 'countries', layout: { 'line-join': 'round' },
+                paint: { 'line-color': theme.capital, 'line-width': 3.5, 'line-opacity': ['case', state('selected'), 1, 0] }
             },
             {
                 id: 'borders-pulse', type: 'line', source: 'countries', layout: { 'line-join': 'round' },
@@ -331,6 +340,20 @@ export function createTravelMap(element, { index, cities, onCountryClick, onCity
         ready.then(applyStatus);
     }
 
+    // Countries picked for a bulk change.
+    let selectedIds = new Set();
+    function applySelection(previous = new Set()) {
+        for (const id of previous) {
+            if (!selectedIds.has(id)) map.setFeatureState({ source: 'countries', id }, { selected: false });
+        }
+        for (const id of selectedIds) map.setFeatureState({ source: 'countries', id }, { selected: true });
+    }
+    function setSelection(ids) {
+        const previous = selectedIds;
+        selectedIds = new Set(ids);
+        ready.then(() => applySelection(previous));
+    }
+
     function pulseCountry(countryId) {
         ready.then(() => {
             const started = performance.now();
@@ -496,10 +519,11 @@ export function createTravelMap(element, { index, cities, onCountryClick, onCity
                     else map.addImage(name, dotImage(theme, capital), { pixelRatio: 2 });
                 }
                 applyStatus();
+                applySelection();
                 updateCities();
             });
         });
     });
 
-    return { map, setPins, setCountryStatus, flyToCountry, flyTo, flyToView, pulseCountry, openPopup, closePopup };
+    return { map, setPins, setCountryStatus, setSelection, flyToCountry, flyTo, flyToView, pulseCountry, openPopup, closePopup };
 }

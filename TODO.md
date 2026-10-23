@@ -95,7 +95,6 @@ Everyday features that make the free atlas worth opening again; the paid work ab
 
 ### Places
 
-- [ ] Bulk marking: select several countries on the map or a whole continent from the list in one step.
 - [ ] Import from other travel map apps (Been, Visited, Polarsteps exports) with a preview before saving.
 
 ### Trips
