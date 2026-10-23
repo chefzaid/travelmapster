@@ -50,6 +50,17 @@
     --visited-soft: #9be5dc;
     --wishlist: #ffbe0b;
     --wishlist-ink: #b97a00;
+    /* Lived there, home and transit only (ADR 0014): each also has its own outline and, on
+       the map, a pattern, so no status depends on colour alone. */
+    --lived: #c4b5fd;
+    --lived-ink: #5b3fc4;
+    --lived-soft: #e4dcff;
+    --home: #ffab91;
+    --home-ink: #a63a17;
+    --home-soft: #ffe0d4;
+    --transit: #dde4ec;
+    --transit-ink: #4d6175;
+    --transit-soft: #e9eef3;
     --danger: #e5484d;
     --danger-strong: #c62f33;
     --danger-text: #c62f33;
@@ -99,6 +110,9 @@
         --land-7: #d7bd90;
         --border-ink: rgba(13, 27, 42, 0.8);
         --visited-soft: #5fb7ad;
+        --lived-soft: #b7a6f5;
+        --home-soft: #f0a487;
+        --transit-soft: #a9b8c8;
         --star: #ffd166;
         color-scheme: dark;
     }
@@ -597,6 +611,10 @@ textarea:focus {
 .btn-visited.is-active { color: var(--ink-dark); background: var(--visited); }
 .btn-wishlist { background: #fff1c2; }
 .btn-wishlist.is-active { color: var(--ink-dark); background: var(--wishlist); }
+.btn-lived { color: var(--ink-dark); background: var(--lived-soft); }
+.btn-lived.is-active { color: var(--ink-dark); background: var(--lived); }
+.btn-transit { color: var(--ink-dark); background: var(--transit-soft); border-style: dotted; }
+.btn-transit.is-active { color: var(--ink-dark); background: var(--transit); }
 .btn-sm { padding: 6px 12px; font-size: 0.85rem; }
 .btn-block { width: 100%; }
 
@@ -741,6 +759,9 @@ textarea:focus {
 button.chip { cursor: pointer; }
 .chip-visited { color: var(--ink-dark); background: var(--visited-soft); }
 .chip-wishlist { background: #fff1c2; }
+.chip-lived { color: var(--ink-dark); background: var(--lived-soft); }
+.chip-home { color: var(--ink-dark); background: var(--home-soft); border-width: 3px; }
+.chip-transit { color: var(--ink-dark); background: var(--transit-soft); border-style: dotted; }
 
 .chip-row {
     display: flex;
@@ -866,12 +887,14 @@ button.chip { cursor: pointer; }
 
 .chip-group {
     display: flex;
+    flex-wrap: wrap;
     gap: 6px;
 }
 
 .filter-chip {
     flex: 1;
     padding: 5px 8px;
+    white-space: nowrap;
     font-size: 0.8rem;
     font-weight: 800;
     background: var(--paper);
@@ -922,6 +945,8 @@ button.chip { cursor: pointer; }
 
 .place-visited { border-left-color: var(--visited); }
 .place-wishlist { border-left-color: var(--wishlist); }
+.place-lived { border-left-color: var(--lived-ink); }
+.place-transit { border-left-color: var(--transit-ink); border-left-style: dotted; }
 
 .place-main {
     display: flex;
@@ -1153,6 +1178,12 @@ button.chip { cursor: pointer; }
 .stat.tone-visited small { color: var(--ink-dark); }
 .stat.tone-visited { background: var(--visited-soft); }
 .stat.tone-wishlist { background: #fff1c2; }
+.stat.tone-lived,
+.stat.tone-lived small { color: var(--ink-dark); }
+.stat.tone-lived { background: var(--lived-soft); }
+.stat.tone-transit,
+.stat.tone-transit small { color: var(--ink-dark); }
+.stat.tone-transit { background: var(--transit-soft); border-style: dotted; }
 
 @media (prefers-color-scheme: dark) {
     .stat.tone-wishlist { background: #5a4712; }
@@ -1227,6 +1258,19 @@ button.chip { cursor: pointer; }
 .stamp-c6 { background: var(--land-6); }
 .stamp-c7 { background: var(--land-7); }
 .stamp-flag { font-size: 1.7rem; line-height: 1.2; }
+
+.stamp-ribbon {
+    margin-top: 4px;
+    padding: 0 6px;
+    font-size: 0.66rem;
+    text-transform: none;
+    color: var(--text);
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+}
+
+.passport-home { margin: 0 0 6px; font-weight: 800; }
 
 .stamp-name {
     max-width: 100%;
@@ -1361,6 +1405,9 @@ button.legend-filter:hover { background: var(--wishlist); }
 }
 
 .swatch-visited { background: var(--visited); }
+.swatch-lived { background: repeating-linear-gradient(45deg, var(--lived), var(--lived) 3px, var(--lived-ink) 3px, var(--lived-ink) 4px); border-color: var(--lived-ink); }
+.swatch-home { background: radial-gradient(var(--home-ink) 1.5px, var(--home) 2px) 0 0 / 6px 6px; border-color: var(--home-ink); border-width: 3px; }
+.swatch-transit { background: var(--transit); border-style: dotted; border-color: var(--transit-ink); }
 .swatch-wishlist { background: repeating-linear-gradient(45deg, var(--wishlist), var(--wishlist) 3px, #ffe08a 3px, #ffe08a 6px); }
 .swatch-capital { border: 0; font-size: 0.9rem; }
 
@@ -1446,6 +1493,9 @@ button.legend-filter:hover { background: var(--wishlist); }
 }
 
 .pin-wishlist .pin-body { background: var(--wishlist); }
+.pin-lived .pin-body { background: var(--lived-ink); }
+.pin-transit .pin-body { background: var(--transit); border-style: dotted; }
+.pin-transit .pin-symbol { color: var(--ink-dark); text-shadow: none; }
 
 .pin-symbol {
     font-size: 14px;

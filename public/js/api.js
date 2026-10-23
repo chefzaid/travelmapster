@@ -60,6 +60,7 @@ function toClientMarker(marker) {
         hideFromPublic: Boolean(marker.hideFromPublic),
         priority: marker.priority || '',
         bestMonths: marker.bestMonths || [],
+        stay: marker.stay || 'visit',
         visits: (marker.visits || []).map(toClientVisit)
     };
 }
@@ -67,11 +68,13 @@ function toClientMarker(marker) {
 // Place edits leave the visits alone: they have their own routes, and a travel date sent
 // along would be read the legacy way (migration 004).
 function placeFields(marker) {
-    const { lat, lng, type, name, category, photoUrl, notes, rating, tags, emoji, hideFromPublic, priority, bestMonths } = marker;
+    const { lat, lng, type, name, category, photoUrl, notes, rating, tags, emoji, hideFromPublic, priority, bestMonths, stay } = marker;
     return {
         lat, lng, type, name, category, photoUrl, notes,
         rating: rating || null, tags: tags || [], emoji: emoji || '', hideFromPublic: Boolean(hideFromPublic),
-        priority: priority || null, bestMonths: bestMonths || []
+        priority: priority || null, bestMonths: bestMonths || [],
+        // A wish is never lived in or passed through.
+        stay: type === 'wishlist' ? 'visit' : stay || 'visit'
     };
 }
 
@@ -80,7 +83,8 @@ export const api = {
     login: async (username, password) => (await request('POST', '/auth/login', { username, password })).user,
     register: async (username, password) => (await request('POST', '/auth/register', { username, password })).user,
     logout: () => request('POST', '/auth/logout', {}),
-    saveProfile: profileVisibility => request('PATCH', '/profile', { profileVisibility }),
+    // Sends only the settings that change: profileVisibility, homeCountry.
+    saveProfile: changes => request('PATCH', '/profile', changes),
     changePassword: (currentPassword, newPassword) => request('POST', '/auth/password', { currentPassword, newPassword }),
     deleteAccount: password => request('DELETE', '/auth/account', { password }),
 

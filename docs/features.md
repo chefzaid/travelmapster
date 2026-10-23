@@ -15,16 +15,22 @@ Everything below is implemented. Planned work lives in [TODO.md](../TODO.md).
 - Every town and village of 500+ people (about 225,000 places) appears as you zoom in, more at every half zoom step down to street-level zoom 11, where places without room for a name still show as a dot. Capitals carry a star and show first; names never overlap and keep their place as you zoom further in. See [map data](data-model.md#map-data).
 - Smooth, continuous zooming like a web map app: everything is drawn on the GPU, and names fade in and out as room opens up; hovering a town or country shows its name.
 - Visited countries turn teal, wishlist countries sunny yellow with a dashed border; countries where you only visited a city get a lighter teal.
-- The legend doubles as a visited/wishlist filter.
+- Your home country is coral with dots and a thick outline, countries you lived in are violet
+  with stripes, and airport layovers ("transit only") are pale with a dotted outline, so every
+  status differs by pattern or outline as well as color ([ADR 0014](adr/0014-home-lived-and-transit.md)).
+- The legend doubles as a filter for each status.
 - No third-party map services: map data, fonts and MapLibre GL are served by the app.
 
 ## Places
 
 - Click a country or city for a card with flag, capital, population and your saved details.
-- One tap marks a place "Been there" or "Wishlist"; tapping again undoes it.
+- One tap marks a place "Been there", "Lived there", "Transit only" or "Wishlist"; tapping
+  again undoes it. A layover is shown but never counted as a visit.
+- A home country, set in Settings or from its card; it is never shown on a public map.
 - Mark many countries at once: pick them on the map (or through search), or choose a whole
   continent in the Places tab, then mark them "Been there" or "Wishlist" in one step, with undo.
-  Countries you have been to never become wishlist ones.
+  Countries you have been to never become wishlist ones; marking "Been there" turns layovers
+  into visits and leaves your home and countries you lived in as they are.
 - Instant search over countries and every town, with a world search for anything smaller ([place search](architecture.md#place-search)).
 - Notes and a photo link on every place.
 - A rating from one to five stars, tags (suggested ones such as food, hiking, family and work,
@@ -34,7 +40,8 @@ Everything below is implemented. Planned work lives in [TODO.md](../TODO.md).
   and a photo link; the card lists visits newest first, says how many times you have been
   ("Visited 3 times") and lets you add, edit or remove a visit, with undo. Dates are plain
   calendar days.
-- Places list grouped by continent, with filters (including the year of the last visit), text
+- Places list grouped by continent, with filters (status, including lived there and transit
+  only, and the year of the last visit), text
   search over places, tags and visit notes, and sorting by continent, name, last visit or when
   to go.
 - Wishlist plans: a priority (must go, would love to, someday) and the best months to go; the
@@ -44,8 +51,8 @@ Everything below is implemented. Planned work lives in [TODO.md](../TODO.md).
   the active filter and clears it in one tap.
 - Undo after removing a place, which brings its visits back too.
 - Import and export as JSON (visits nested in each place) or CSV (one row per visit), with
-  ratings, tags, emoji and wishlist plans; import also reads files from before visits or tags
-  existed, and
+  ratings, tags, emoji, wishlist plans and whether a place was lived in or a layover; import
+  also reads files from before visits or tags existed, and
   skips invalid rows and duplicates.
 - "Surprise me" flies to a country you have not visited yet.
 
@@ -57,6 +64,9 @@ counting rules are in [ADR 0010](adr/0010-day-ledger.md).
 - **Counting rule** chosen by the traveler: *any part of a day* (arrival and departure days count,
   the default) or the *midnight rule* (the day counts where you sleep, so the departure day and
   day trips do not). A city visit counts for its country, once per day.
+- **Every dated day counts**, whatever the place's status: days where you lived are presence
+  days, and a dated layover counts as a day there (under the midnight rule, only a night spent
+  there) ([ADR 0014](adr/0014-home-lived-and-transit.md)).
 - **Open-ended stays**: a visit can be marked "I'm still there" and counts through today; a visit
   without a last day otherwise counts its first day only and is flagged so it can be completed.
 - **Schengen 90/180 calculator**: days left today, days used in the last 180, overstays, and how
@@ -104,16 +114,21 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
 ## Passport
 
 - Six traveler ranks, from "Armchair traveler" to "Legend of the map", with progress to the next.
-- Countries visited, share of the world, continents, cities and trips; per-continent progress bars.
-- A stamp for every visited country, 12 badges with a confetti celebration, and a visits-by-year chart counting every visit.
+- Countries been to (your home country, countries you lived in and those you visited), share of
+  the world, continents, cities and trips; countries lived in and layovers counted on their own;
+  per-continent progress bars.
+- A stamp for every country been to, marked "Home" or "Lived" where it applies, 13 badges with
+  a confetti celebration, and a visits-by-year chart counting every visit (stays where you lived
+  and layovers are not visits).
 
 ## Accounts And Sharing
 
 - Username and password accounts ([security](security.md#authentication-and-sessions)); change
   the password (signing out other devices) or delete the account and all its data from the
   account menu.
-- Private by default; a public map is shared read-only at `/?u=<username>` with visit dates,
-  without notes, photo links, ratings, tags, emoji or wishlist plans.
+- Private by default; a public map is shared read-only at `/?u=<username>` with visit dates and
+  whether a place was lived in or a layover, without notes, photo links, ratings, tags, emoji,
+  wishlist plans or the home country.
 - Any place can be hidden from the public map, with its visits, so a public profile keeps
   sensitive trips to itself; the owner's map, passport and ledger still count it
   ([ADR 0013](adr/0013-hidden-places.md)).

@@ -5,6 +5,8 @@
 const MARKER_COLUMNS = `m.id, m.lat, m.lng, m.type, m.name, m.category,
     m.photo_url AS "photoUrl", m.notes, m.rating, m.tags, m.emoji, m.hide_from_public AS "hideFromPublic",
     m.priority, m.best_months AS "bestMonths",
+    -- The previous release can move a lived-in place to the wishlist without resetting it (ADR 0014).
+    CASE WHEN m.type = 'visited' THEN m.stay ELSE 'visit' END AS stay,
     (SELECT max(v.start_date) FROM visits v WHERE v.marker_id = m.id) AS "travelDate",
     COALESCE((SELECT json_agg(json_build_object(
         'id', v.id, 'startDate', v.start_date, 'endDate', v.end_date, 'ongoing', v.ongoing,
@@ -14,11 +16,14 @@ const MARKER_COLUMNS = `m.id, m.lat, m.lng, m.type, m.name, m.category,
 const VISIT_COLUMNS = `v.id, v.start_date AS "startDate", v.end_date AS "endDate", v.ongoing,
     v.notes, v.photo_url AS "photoUrl"`;
 
+// Account settings by API field and column.
+const PROFILE_COLUMNS = [['profileVisibility', 'profile_visibility'], ['homeCountry', 'home_country']];
+
 function createUserRepository(db) {
     return {
         async findByUsername(username) {
             const { rows } = await db.query(
-                'SELECT id, username, password_hash, profile_visibility FROM users WHERE lower(username) = lower($1)',
+                'SELECT id, username, password_hash, profile_visibility, home_country FROM users WHERE lower(username) = lower($1)',
                 [username]
             );
             return rows[0] || null;
@@ -26,7 +31,7 @@ function createUserRepository(db) {
 
         async findById(id) {
             const { rows } = await db.query(
-                'SELECT id, username, profile_visibility FROM users WHERE id = $1',
+                'SELECT id, username, profile_visibility, home_country FROM users WHERE id = $1',
                 [id]
             );
             return rows[0] || null;
@@ -37,17 +42,27 @@ function createUserRepository(db) {
             const { rows } = await db.query(
                 `INSERT INTO users (username, password_hash) VALUES ($1, $2)
                  ON CONFLICT DO NOTHING
-                 RETURNING id, username, profile_visibility`,
+                 RETURNING id, username, profile_visibility, home_country`,
                 [username, passwordHash]
             );
             return rows[0] || null;
         },
 
-        async setProfileVisibility(id, visibility) {
-            await db.query(
-                'UPDATE users SET profile_visibility = $1, updated_at = now() WHERE id = $2',
-                [visibility, id]
+        /** Writes only the settings given, and returns them all. */
+        async updateProfile(id, profile) {
+            const values = [id];
+            let set = '';
+            for (const [field, column] of PROFILE_COLUMNS) {
+                if (profile[field] === undefined) continue;
+                values.push(profile[field]);
+                set += `${column} = $${values.length}, `;
+            }
+            const { rows } = await db.query(
+                `UPDATE users SET ${set}updated_at = now() WHERE id = $1
+                 RETURNING profile_visibility AS "profileVisibility", home_country AS "homeCountry"`,
+                values
             );
+            return rows[0] || null;
         },
 
         async findPasswordHash(id) {
@@ -82,7 +97,7 @@ function markerValues(marker) {
 // only the fields it was sent, so older clients that do not know them keep what is stored.
 const DETAIL_COLUMNS = [
     ['rating', 'rating', null], ['tags', 'tags', []], ['emoji', 'emoji', null], ['hideFromPublic', 'hide_from_public', false],
-    ['priority', 'priority', null], ['bestMonths', 'best_months', []]
+    ['priority', 'priority', null], ['bestMonths', 'best_months', []], ['stay', 'stay', 'visit']
 ];
 
 function visitValues(visit) {
@@ -179,11 +194,12 @@ function createMarkerRepository(db) {
         async applyBulk(userId, { create, update, remove }, client) {
             const notFound = () => Object.assign(new Error('Some places were not found.'), { code: 'NOT_FOUND' });
             if (update.length) {
+                // A stay left out (null) keeps the stored one.
                 const { rowCount } = await client.query(
-                    `UPDATE markers m SET type = u.type, updated_at = now()
-                     FROM unnest($1::bigint[], $2::text[]) AS u(id, type)
-                     WHERE m.id = u.id AND m.user_id = $3`,
-                    [update.map(item => item.id), update.map(item => item.type), userId]
+                    `UPDATE markers m SET type = u.type, stay = COALESCE(u.stay, m.stay), updated_at = now()
+                     FROM unnest($1::bigint[], $2::text[], $3::text[]) AS u(id, type, stay)
+                     WHERE m.id = u.id AND m.user_id = $4`,
+                    [update.map(item => item.id), update.map(item => item.type), update.map(item => item.stay ?? null), userId]
                 );
                 if (rowCount !== update.length) throw notFound();
             }

@@ -3,7 +3,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const {
-    isSingleEmoji, isValidTravelDate, normalizeTag, parseCredentials, parseLedgerSettings, parseMarkerId, parseMarkerPayload, parseProfileVisibility,
+    isSingleEmoji, isValidTravelDate, normalizeTag, parseCredentials, parseLedgerSettings, parseMarkerId, parseMarkerPayload, parseProfile,
+    parseBulkChanges,
     parseVisitPayload
 } = require('../../src/validation');
 
@@ -81,9 +82,27 @@ test('parseMarkerId accepts positive integers only', () => {
     }
 });
 
-test('parseProfileVisibility accepts only private or public', () => {
-    assert.deepEqual(parseProfileVisibility({ profileVisibility: 'public' }), { profileVisibility: 'public' });
-    assert.ok(parseProfileVisibility({ profileVisibility: 'friends' }).error);
+test('parseProfile changes only the settings it is sent', () => {
+    assert.deepEqual(parseProfile({ profileVisibility: 'public' }), { profile: { profileVisibility: 'public' } });
+    assert.ok(parseProfile({ profileVisibility: 'friends' }).error);
+    assert.deepEqual(parseProfile({ homeCountry: 'PRT' }), { profile: { homeCountry: 'PRT' } });
+    assert.deepEqual(parseProfile({ homeCountry: null }), { profile: { homeCountry: null } });
+    assert.deepEqual(parseProfile({ homeCountry: '' }), { profile: { homeCountry: null } });
+    for (const homeCountry of ['prt', 'PT', 'PORT', 7, ['PRT']]) assert.ok(parseProfile({ homeCountry }).error, String(homeCountry));
+    for (const body of [{}, null, [], 'public']) assert.ok(parseProfile(body).error, JSON.stringify(body));
+});
+
+test('a place lived in or passed through is one the traveler has been to', () => {
+    assert.equal(parseMarkerPayload({ ...valid, stay: 'lived' }).marker.stay, 'lived');
+    assert.equal(parseMarkerPayload({ ...valid, stay: '' }).marker.stay, 'visit');
+    assert.equal(parseMarkerPayload(valid).marker.stay, undefined, 'left out, an update keeps it');
+    assert.equal(parseMarkerPayload({ ...valid, type: 'wishlist' }).marker.stay, 'visit', 'a wish resets it');
+    assert.ok(parseMarkerPayload({ ...valid, type: 'wishlist', stay: 'transit' }).error);
+    assert.ok(parseMarkerPayload({ ...valid, stay: 'moved' }).error);
+    assert.deepEqual(parseBulkChanges({ update: [{ id: 1, type: 'visited' }, { id: 2, type: 'visited', stay: 'transit' }, { id: 3, type: 'wishlist' }] })
+        .changes.update.map(item => item.stay), [null, 'transit', 'visit']);
+    assert.ok(parseBulkChanges({ update: [{ id: 1, type: 'wishlist', stay: 'lived' }] }).error);
+    assert.ok(parseBulkChanges({ update: [{ id: 1, type: 'visited', stay: 'home' }] }).error);
 });
 
 test('parseVisitPayload keeps a stay still going on only without an end date', () => {

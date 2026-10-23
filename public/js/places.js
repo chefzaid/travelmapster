@@ -3,11 +3,12 @@ import { CONTINENTS, CONTINENT_EMOJI } from './geo.js';
 import { buildCsv, buildJson, parseImportContent, validatePlace, placeKey, mergePlaces } from './io.js';
 import { lastVisitDate, lastVisitYears, matchesLastVisit, visitCount } from './visits.js';
 import { groupByNextMonth, matchesDetails, monthsLabel, priorityLabel, ratingLabel, stars, usedTags } from './details.js';
+import { STATUSES, statusLabel, statusOf } from './status.js';
 
 const view = { query: '', type: 'all', category: 'all', lastVisit: 'all', sort: 'continent' };
 
 function matches(marker, country, filters) {
-    if (view.type !== 'all' && marker.type !== view.type) return false;
+    if (view.type !== 'all' && statusOf(marker) !== view.type) return false;
     if (view.category !== 'all' && marker.category !== view.category) return false;
     if (!matchesLastVisit(marker, view.lastVisit)) return false;
     if (!matchesDetails(marker, filters)) return false;
@@ -42,14 +43,15 @@ function chipGroup(label, key, options, onChange) {
 
 function placeItem(marker, country, ctx) {
     const tags = marker.tags || [];
-    return h('li', { class: `place place-${marker.type}` },
+    const status = statusOf(marker);
+    return h('li', { class: `place place-${status}` },
         h('button', { type: 'button', class: 'place-main', onclick: () => ctx.showMarker(marker), title: 'Show on map' },
             // The traveler's emoji stands in for the flag or city pin.
             h('span', { class: 'place-flag', 'aria-hidden': 'true' }, marker.emoji || (marker.category === 'City' ? '📍' : country?.flag || '🏳️')),
             h('span', { class: 'place-text' },
                 h('strong', {}, marker.name),
                 h('small', {},
-                    marker.type === 'visited' ? '✓ Been there' : '♥ Wishlist',
+                    statusLabel(status),
                     visitSummary(marker),
                     marker.photoUrl || marker.visits?.some(visit => visit.photoUrl) ? ' · 📷' : '',
                     marker.hideFromPublic ? ' · 🔒 Not on public map' : ''
@@ -244,7 +246,7 @@ export function renderPlaces(container, ctx) {
         h('div', { class: 'section-head' }, h('h2', {}, 'Your places'), summary),
         h('div', { class: 'filters' },
             searchInput,
-            chipGroup('Status', 'type', [['all', 'All'], ['visited', '✓ Been'], ['wishlist', '♥ Wish']], rerender),
+            chipGroup('Status', 'type', [['all', 'All'], ...STATUSES.map(({ id, filter }) => [id, filter])], rerender),
             chipGroup('Kind', 'category', [['all', 'All'], ['Country', 'Countries'], ['City', 'Cities']], rerender),
             h('div', { class: 'row sort-row' },
                 h('label', { class: 'sort' }, 'Sort by ',

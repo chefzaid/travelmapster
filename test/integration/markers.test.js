@@ -25,7 +25,8 @@ test('create, list, update and delete a marker', async () => {
     assert.equal(typeof created.body.id, 'number');
     const { visits, ...place } = created.body;
     assert.deepEqual({ ...place, id: undefined }, {
-        ...sampleMarker, id: undefined, rating: null, tags: [], emoji: null, hideFromPublic: false, priority: null, bestMonths: []
+        ...sampleMarker, id: undefined, rating: null, tags: [], emoji: null, hideFromPublic: false, priority: null, bestMonths: [],
+        stay: 'visit'
     });
     assert.equal(visits.length, 1, 'the travel date becomes the first visit');
     assert.equal(visits[0].startDate, sampleMarker.travelDate);
@@ -323,4 +324,61 @@ test('bulk changes are scoped to the owner and protected like every write', asyn
     const forged = await owner.agent.post('/api/markers/bulk').set('X-CSRF-Token', 'forged').send({ remove: [place.id] });
     assert.equal(forged.status, 403);
     assert.equal((await owner.get('/api/markers')).body.length, 1);
+});
+
+test('places lived in or passed through keep how the traveler was there (ADR 0014)', async () => {
+    const client = createClient(ctx.server);
+    await client.register('resident', 'resident password');
+    const berlin = { ...sampleMarker, name: 'Berlin, Germany', lat: 52.52, lng: 13.4, travelDate: undefined };
+    const lived = await client.post('/api/markers', {
+        ...berlin, stay: 'lived', visits: [{ startDate: '2015-09-01', endDate: '2019-06-30' }]
+    });
+    assert.equal(lived.status, 201);
+    assert.equal(lived.body.stay, 'lived');
+    const { body: layover } = await client.post('/api/markers', { ...sampleMarker, name: 'Dubai, United Arab Emirates', stay: 'transit' });
+    assert.equal(layover.stay, 'transit');
+    const { body: plain } = await client.post('/api/markers', { ...sampleMarker, name: 'Rome, Italy' });
+    assert.equal(plain.stay, 'visit', 'a place is a plain visit unless told otherwise');
+
+    // Older clients leave it alone; moving a place to the wishlist resets it.
+    const renamed = await client.patch(`/api/markers/${lived.body.id}`, { ...berlin, name: 'Berlin!' });
+    assert.equal(renamed.body.stay, 'lived');
+    const wished = await client.patch(`/api/markers/${lived.body.id}`, { ...berlin, type: 'wishlist' });
+    assert.equal(wished.body.stay, 'visit');
+    const back = await client.patch(`/api/markers/${lived.body.id}`, { ...berlin, type: 'visited' });
+    assert.equal(back.body.stay, 'visit', 'a wish forgot that the traveler lived there');
+    const visited = await client.patch(`/api/markers/${layover.id}`, { ...sampleMarker, name: 'Dubai, United Arab Emirates', stay: 'visit' });
+    assert.equal(visited.body.stay, 'visit');
+
+    for (const override of [{ stay: 'home' }, { stay: 1 }, { stay: ['lived'] }, { type: 'wishlist', stay: 'lived' }, { type: 'wishlist', stay: 'transit' }]) {
+        assert.equal((await client.post('/api/markers', { ...sampleMarker, ...override })).status, 400, JSON.stringify(override));
+        assert.equal((await client.patch(`/api/markers/${plain.id}`, { ...sampleMarker, ...override })).status, 400);
+    }
+    await assert.rejects(ctx.pool.query("UPDATE markers SET stay = 'home' WHERE id = $1", [plain.id]));
+
+    // Imports and bulk changes carry it too; a bulk change without it keeps it.
+    const imported = await client.post('/api/markers/import', { markers: [{ ...sampleMarker, name: 'Doha, Qatar', stay: 'transit' }] });
+    assert.equal(imported.body.markers[0].stay, 'transit');
+    const bulk = await client.post('/api/markers/bulk', {
+        update: [{ id: imported.body.markers[0].id, type: 'visited', stay: 'visit' }, { id: back.body.id, type: 'visited' }]
+    });
+    assert.deepEqual(bulk.body.updated.map(marker => marker.stay), ['visit', 'visit']);
+    await client.post('/api/markers/bulk', { update: [{ id: back.body.id, type: 'visited', stay: 'lived' }] });
+    const intruder = createClient(ctx.server);
+    await intruder.register('stay_intruder', 'stay intruder password');
+    assert.equal((await intruder.patch(`/api/markers/${back.body.id}`, { ...berlin, stay: 'transit' })).status, 404);
+    assert.equal((await intruder.post('/api/markers/bulk', { update: [{ id: back.body.id, type: 'visited', stay: 'transit' }] })).status, 404);
+
+    // The previous release moves a place to the wishlist without knowing the column.
+    await ctx.pool.query("UPDATE markers SET type = 'wishlist' WHERE id = $1", [back.body.id]);
+    const listed = (await client.get('/api/markers')).body.find(marker => marker.id === back.body.id);
+    assert.equal(listed.stay, 'visit', 'a wishlist place is never lived in');
+
+    // A public map shows how the traveler was there, never the home country.
+    await ctx.pool.query("UPDATE markers SET type = 'visited' WHERE id = $1", [back.body.id]);
+    await client.patch('/api/profile', { profileVisibility: 'public', homeCountry: 'DEU' });
+    const shared = (await createClient(ctx.server).get('/api/public/resident')).body;
+    assert.deepEqual(shared.markers.map(marker => [marker.name, marker.stay]),
+        [['Berlin, Germany', 'lived'], ['Dubai, United Arab Emirates', 'visit'], ['Rome, Italy', 'visit'], ['Doha, Qatar', 'visit']]);
+    assert.doesNotMatch(JSON.stringify(shared), /DEU|homeCountry/);
 });

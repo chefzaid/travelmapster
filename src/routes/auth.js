@@ -13,7 +13,8 @@ function publicUser(user) {
     return {
         id: user.id,
         username: user.username,
-        profileVisibility: user.profile_visibility || 'private'
+        profileVisibility: user.profile_visibility || 'private',
+        homeCountry: user.home_country || null
     };
 }
 

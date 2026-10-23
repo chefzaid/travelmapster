@@ -57,18 +57,18 @@ JSON under `/api`; errors are `{ "error": "…" }` with a matching status. All r
 | GET | `/api/auth/me` | Current user, or 401 |
 | POST | `/api/auth/password` | Change password (`currentPassword`, `newPassword`); signs out other sessions |
 | DELETE | `/api/auth/account` | Delete the account and all its data (`password`); signs out everywhere |
-| GET, POST | `/api/markers` | List saved places, each with its visits newest first, or create one (optionally with `visits`, `rating`, `tags`, `emoji`, `hideFromPublic`, `priority` and `bestMonths`) |
+| GET, POST | `/api/markers` | List saved places, each with its visits newest first, or create one (optionally with `visits`, `rating`, `tags`, `emoji`, `hideFromPublic`, `priority`, `bestMonths` and `stay`: `visit`, `lived` or `transit` for places been to, [ADR 0014](adr/0014-home-lived-and-transit.md)) |
 | POST | `/api/markers/import` | Import up to 1,000 places with their visits |
-| POST | `/api/markers/bulk` | Apply up to 300 changes all or nothing: places to `create`, status changes to `update` (`{ id, type }`) and ids to `remove`; marking several countries at once and its undo are one call each. Returns `created`, `updated` and `removed`; any id not the caller's is a 404 and nothing is kept |
-| PATCH, DELETE | `/api/markers/:id` | Update or remove a place; an update leaves visits alone unless an old client sends `travelDate` ([ADR 0009](adr/0009-places-and-visits.md)), and keeps `rating`, `tags`, `emoji`, `hideFromPublic`, `priority` and `bestMonths` unless it sends them ([ADR 0012](adr/0012-place-details.md)) |
+| POST | `/api/markers/bulk` | Apply up to 300 changes all or nothing: places to `create`, status changes to `update` (`{ id, type }`, with an optional `stay`) and ids to `remove`; marking several countries at once and its undo are one call each. Returns `created`, `updated` and `removed`; any id not the caller's is a 404 and nothing is kept |
+| PATCH, DELETE | `/api/markers/:id` | Update or remove a place; an update leaves visits alone unless an old client sends `travelDate` ([ADR 0009](adr/0009-places-and-visits.md)), and keeps `rating`, `tags`, `emoji`, `hideFromPublic`, `priority`, `bestMonths` and `stay` unless it sends them ([ADR 0012](adr/0012-place-details.md)); moving a place to the wishlist resets `stay` |
 | GET, POST | `/api/markers/:id/visits` | List or add visits of a place (`startDate`, `endDate`, `ongoing`, `notes`, `photoUrl`) |
 | PATCH, DELETE | `/api/visits/:id` | Replace or remove a visit |
 | GET, PUT | `/api/ledger` | Day-ledger settings: `dayRule`, `rules` (stay rules and thresholds) and `planned` stays, replaced as a whole ([ADR 0010](adr/0010-day-ledger.md)) |
 | GET | `/api/ledger/changes` | History of visit dates, newest first (latest 5,000) |
 | GET, POST | `/api/trips` | List or create itineraries |
 | PUT, DELETE | `/api/trips/:id` | Replace or remove an itinerary |
-| PATCH | `/api/profile` | Set `profileVisibility` to `private` or `public` |
-| GET | `/api/public/:username` | Read-only public map with visit dates, without notes, photo links, ratings, tags, emoji or wishlist plans, and without places hidden from it ([ADR 0013](adr/0013-hidden-places.md)) |
+| PATCH | `/api/profile` | Change account settings, each optional: `profileVisibility` (`private` or `public`) and `homeCountry` (a map code or `null`); returns them all |
+| GET | `/api/public/:username` | Read-only public map with visit dates and each place's `stay`, without notes, photo links, ratings, tags, emoji, wishlist plans or the home country, and without places hidden from it ([ADR 0013](adr/0013-hidden-places.md)) |
 | GET | `/api/places?q=&limit=` | Search every town in the map data (public, 1–20 results) |
 | GET | `/api/geocode?q=&kind=city\|country&limit=` | World place search (1–10 results) |
 
@@ -80,7 +80,8 @@ JSON under `/api`; errors are `{ "error": "…" }` with a matching status. All r
 | `public/js/demo.js` | The landing page's sample traveler, with dates relative to today (pure, unit tested) |
 | `public/js/schengen.js`, `calculator.js` | Free Schengen calculator: stay checks and results over `days.js` (pure, unit and property tested), and the page that draws them |
 | `public/js/map.js` | MapLibre GL map ([ADR 0008](adr/0008-maplibre-gl.md)): cartoon style from the CSS tokens, country states, towns and tile loading, pins, cards and camera |
-| `public/js/geo.js` | Country index, city search, stats, ranks and badges (pure, unit tested) |
+| `public/js/geo.js` | Country index, city search, country statuses and how the map draws them, stats, ranks and badges (pure, unit tested) |
+| `public/js/status.js` | Place statuses: been there, lived there, transit only and wishlist, and their API fields ([ADR 0014](adr/0014-home-lived-and-transit.md)) (pure, unit tested) |
 | `public/js/places.js`, `io.js` | Places tab, import and export (pure `io.js` is unit tested) |
 | `public/js/bulk.js` | Marking several countries at once: the bulk change, its undo and the updated places (pure, unit tested) |
 | `public/js/details.js` | Ratings, tags, emoji and wishlist plans of a place, the tag and rating filter shared by the list and the map, and the wishlist by next good month (pure, unit tested) |
@@ -165,5 +166,6 @@ number (`NNNN-short-title.md`) and the template below. Statuses: **Proposed**, *
 - [ADR 0011: Public pages for visitors without an account](adr/0011-public-pages.md)
 - [ADR 0012: Optional details on saved places](adr/0012-place-details.md)
 - [ADR 0013: Hide single places from a public map](adr/0013-hidden-places.md)
+- [ADR 0014: Home country, lived-there and transit-only places](adr/0014-home-lived-and-transit.md)
 
 Superseded: [ADR 0007: Draw towns on a canvas layer](adr/0007-canvas-towns.md).

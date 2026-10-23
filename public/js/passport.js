@@ -1,4 +1,5 @@
 import { h, $, fill } from './ui.js';
+import { HOME } from './status.js';
 
 function statTile(value, label, tone = '') {
     return h('div', { class: `stat ${tone}` }, h('strong', {}, value), h('small', {}, label));
@@ -20,24 +21,42 @@ function tilt(id) {
     return (hash % 17) - 8;
 }
 
+// The home country and countries lived in carry a ribbon on their stamp (ADR 0014).
+function stampRibbon(stats, id) {
+    if (id === stats.homeId) return `${HOME.icon} Home`;
+    return stats.livedIds.has(id) ? '🔑 Lived' : '';
+}
+
 function stamps(stats, index, onPick) {
     const visited = [...stats.visitedIds].map(id => index.byId.get(id)).filter(Boolean)
         .sort((a, b) => a.name.localeCompare(b.name));
     if (!visited.length) {
         return h('p', { class: 'muted small' }, 'Your passport is empty. Every country you visit earns a stamp.');
     }
-    return h('ul', { class: 'stamps' }, visited.map(country => h('li', {},
-        h('button', {
-            type: 'button',
-            class: `stamp stamp-c${country.color || 1}`,
-            style: `--tilt:${tilt(country.id)}deg`,
-            title: country.name,
-            onclick: () => onPick?.(country)
-        },
-            h('span', { class: 'stamp-flag', 'aria-hidden': 'true' }, country.flag),
-            h('span', { class: 'stamp-name' }, country.name)
-        )
-    )));
+    return h('ul', { class: 'stamps' }, visited.map(country => {
+        const ribbon = stampRibbon(stats, country.id);
+        return h('li', {},
+            h('button', {
+                type: 'button',
+                class: `stamp stamp-c${country.color || 1}`,
+                style: `--tilt:${tilt(country.id)}deg`,
+                title: ribbon ? `${country.name} (${ribbon.slice(ribbon.indexOf(' ') + 1).toLowerCase()})` : country.name,
+                onclick: () => onPick?.(country)
+            },
+                h('span', { class: 'stamp-flag', 'aria-hidden': 'true' }, country.flag),
+                h('span', { class: 'stamp-name' }, country.name),
+                ribbon ? h('span', { class: 'stamp-ribbon' }, ribbon) : null
+            )
+        );
+    }));
+}
+
+// Layovers are listed but never stamped: they are not visits.
+function transitNote(stats, index) {
+    const names = [...stats.transitIds].map(id => index.byId.get(id)?.name).filter(Boolean).sort();
+    if (!names.length) return null;
+    return h('p', { class: 'muted small' }, h('span', { 'aria-hidden': 'true' }, '🛫 '),
+        `Transit only, not counted: ${names.join(', ')}.`);
 }
 
 function yearChart(stats) {
@@ -59,6 +78,7 @@ export function renderPublicStats(container, stats) {
             statTile(stats.visitedCountries, 'countries', 'tone-visited'),
             statTile(stats.visitedContinents, 'continents'),
             statTile(stats.visitedCities, 'cities'),
+            stats.livedCountries ? statTile(stats.livedCountries, 'lived in', 'tone-lived') : null,
             statTile(stats.wishlistCountries, 'on wishlist', 'tone-wishlist')
         ),
         continentBars(stats)
@@ -71,12 +91,14 @@ export function renderPassport(container, ctx) {
     const progress = next ? Math.round((stats.visitedCountries / next.min) * 100) : 100;
     const unlocked = stats.achievements.filter(a => a.unlocked).length;
     const isPublic = user.profileVisibility === 'public';
+    const home = index.byId.get(stats.homeId);
 
     fill(container,
         h('section', { class: 'passport-cover' },
             h('p', { class: 'eyebrow' }, 'Passport of'),
             h('h2', {}, user.username),
             h('p', { class: 'rank' }, `🏆 ${stats.rank.title}`),
+            home ? h('p', { class: 'passport-home' }, `${HOME.icon} Home: ${home.flag} ${home.name}`) : null,
             next ? h('div', { class: 'rank-progress' },
                 h('span', { class: 'progress' }, h('span', { style: `width:${progress}%` })),
                 h('small', {}, `${next.min - stats.visitedCountries} more ${next.min - stats.visitedCountries === 1 ? 'country' : 'countries'} to ${next.title}`)
@@ -87,6 +109,9 @@ export function renderPassport(container, ctx) {
             statTile(`${stats.worldPercent}%`, 'of the world'),
             statTile(`${stats.visitedContinents}/6`, 'continents'),
             statTile(stats.visitedCities, 'cities'),
+            // Lived in and transit only are counted on their own, when there are any.
+            stats.livedCountries ? statTile(stats.livedCountries, 'lived in', 'tone-lived') : null,
+            stats.transitCountries ? statTile(stats.transitCountries, 'transit only', 'tone-transit') : null,
             statTile(stats.wishlistCountries, 'dream countries', 'tone-wishlist'),
             statTile(ctx.state.trips.length, 'trips planned')
         ),
@@ -95,7 +120,8 @@ export function renderPassport(container, ctx) {
             h('h3', { class: 'section-title' }, 'Stamps', h('span', { class: 'count' }, stats.visitedCountries)),
             stamps(stats, index, country => {
                 ctx.map.flyToCountry(country);
-            })
+            }),
+            transitNote(stats, index)
         ),
         h('section', {},
             h('h3', { class: 'section-title' }, 'Badges', h('span', { class: 'count' }, `${unlocked}/${stats.achievements.length}`)),

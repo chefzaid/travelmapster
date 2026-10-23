@@ -1,6 +1,8 @@
 'use strict';
 
 const MARKER_TYPES = new Set(['visited', 'wishlist']);
+// How the traveler was at a place they have been to (ADR 0014); wishlist places are always 'visit'.
+const STAYS = new Set(['visit', 'lived', 'transit']);
 const MARKER_CATEGORIES = new Set(['Country', 'City']);
 const PROFILE_VISIBILITIES = new Set(['private', 'public']);
 const USERNAME_PATTERN = /^[A-Za-z0-9_.-]{3,32}$/;
@@ -218,7 +220,23 @@ function parsePlaceDetails(body) {
         }
         details.bestMonths = [...new Set(months)].sort((a, b) => a - b);
     }
+    if (body.stay !== undefined) {
+        if (body.stay !== null && body.stay !== '' && !STAYS.has(body.stay)) {
+            return { error: 'Stay must be visit, lived or transit.' };
+        }
+        details.stay = body.stay || 'visit';
+    }
     return { details };
+}
+
+/**
+ * Only places the traveler has been to are lived in or passed through. A wishlist place is
+ * always a plain visit, so changing a place to the wishlist resets how they were there.
+ */
+function stayForType(type, stay) {
+    if (type !== 'wishlist') return { stay };
+    if (stay && stay !== 'visit') return { error: 'Only places you have been to can be lived in or transit only.' };
+    return { stay: 'visit' };
 }
 
 /**
@@ -268,6 +286,8 @@ function parseMarkerPayload(body, { withVisits = false } = {}) {
     if (error) return { error };
     const { details, error: detailsError } = parsePlaceDetails(body);
     if (detailsError) return { error: detailsError };
+    const { stay, error: stayError } = stayForType(type, details.stay);
+    if (stayError) return { error: stayError };
 
     const marker = {
         lat,
@@ -278,7 +298,8 @@ function parseMarkerPayload(body, { withVisits = false } = {}) {
         photoUrl: photoUrl || null,
         notes: notes || null,
         travelDate: body.travelDate === undefined ? undefined : travelDate || null,
-        ...details
+        ...details,
+        ...(stay && { stay })
     };
     if (withVisits && body.visits !== undefined && body.visits !== null) {
         const { visits, error: visitError } = parseVisitList(body.visits);
@@ -290,7 +311,7 @@ function parseMarkerPayload(body, { withVisits = false } = {}) {
 
 /**
  * A bulk change of places, applied all or nothing: places to create, status changes
- * (`{ id, type }`) and ids to remove. Marking several countries at once and undoing it are
+ * (`{ id, type }`, with an optional `stay`) and ids to remove. Marking several countries at once and undoing it are
  * each one bulk change.
  */
 function parseBulkChanges(body) {
@@ -316,8 +337,12 @@ function parseBulkChanges(body) {
         const id = parseMarkerId(item?.id);
         if (!id) return { error: 'Each status change needs a place id.' };
         if (!MARKER_TYPES.has(item.type)) return { error: 'Marker type must be visited or wishlist.' };
+        if (item.stay !== undefined && !STAYS.has(item.stay)) return { error: 'Stay must be visit, lived or transit.' };
+        const { stay, error } = stayForType(item.type, item.stay);
+        if (error) return { error };
         ids.add(id);
-        changes.update.push({ id, type: item.type });
+        // A stay left out keeps the stored one (previous-release tabs never send it).
+        changes.update.push({ id, type: item.type, stay: stay ?? null });
     }
     for (const value of remove) {
         const id = parseMarkerId(value);
@@ -490,12 +515,29 @@ function parseMarkerId(value) {
     return id >= 1 ? id : null;
 }
 
-function parseProfileVisibility(body) {
-    const profileVisibility = normalizeText(body?.profileVisibility);
-    if (!PROFILE_VISIBILITIES.has(profileVisibility)) {
-        return { error: 'Profile visibility must be private or public.' };
+/**
+ * Account settings, each optional so a client changes only what it sends: who can see the
+ * map, and the home country (a map code, or null or empty to clear it).
+ */
+function parseProfile(body) {
+    if (!plainObject(body)) return { error: 'Profile changes must be a JSON object.' };
+    const profile = {};
+    if (body.profileVisibility !== undefined) {
+        const profileVisibility = normalizeText(body.profileVisibility);
+        if (!PROFILE_VISIBILITIES.has(profileVisibility)) {
+            return { error: 'Profile visibility must be private or public.' };
+        }
+        profile.profileVisibility = profileVisibility;
     }
-    return { profileVisibility };
+    if (body.homeCountry !== undefined) {
+        const homeCountry = body.homeCountry ?? '';
+        if (typeof homeCountry !== 'string' || (homeCountry && !COUNTRY_ID_PATTERN.test(homeCountry))) {
+            return { error: 'Home country must be a three-letter map code such as FRA.' };
+        }
+        profile.homeCountry = homeCountry || null;
+    }
+    if (!Object.keys(profile).length) return { error: 'Send profileVisibility or homeCountry.' };
+    return { profile };
 }
 
 module.exports = {
@@ -514,7 +556,7 @@ module.exports = {
     readPassword,
     parseMarkerId,
     parseMarkerPayload,
-    parseProfileVisibility,
+    parseProfile,
     parseTripPayload,
     parseVisitPayload
 };

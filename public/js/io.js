@@ -5,9 +5,11 @@ import { checkDetails } from './details.js';
 export { isHttpUrl, isValidDate };
 
 // `travelDate` is the start of the latest visit, kept so older files and releases still read it.
-// Files without the later fields (rating to bestMonths) still import with them empty.
+// Files without the later fields (rating to stay) still import with them empty; `stay` says
+// whether a place been to was a visit, a home or a layover (ADR 0014).
 export const EXPORT_FIELDS = ['id', 'lat', 'lng', 'type', 'name', 'category', 'photoUrl', 'notes', 'travelDate',
-    'rating', 'tags', 'emoji', 'hideFromPublic', 'priority', 'bestMonths'];
+    'rating', 'tags', 'emoji', 'hideFromPublic', 'priority', 'bestMonths', 'stay'];
+const STAYS = ['visit', 'lived', 'transit'];
 // CSV has one row per visit; JSON nests the visits in each place.
 export const VISIT_FIELDS = ['visitStartDate', 'visitEndDate', 'visitNotes', 'visitPhotoUrl', 'visitOngoing'];
 const CSV_FIELDS = [...EXPORT_FIELDS, ...VISIT_FIELDS];
@@ -27,6 +29,7 @@ export function buildJson(markers) {
         tags: marker.tags || [],
         hideFromPublic: Boolean(marker.hideFromPublic),
         bestMonths: marker.bestMonths || [],
+        stay: marker.stay || 'visit',
         visits: sortVisits(marker.visits).map(exportVisit)
     }));
     return JSON.stringify(records, null, 2);
@@ -39,6 +42,7 @@ function csvValue(marker, field) {
     if (field === 'tags') return (marker.tags || []).join('; ');
     if (field === 'bestMonths') return (marker.bestMonths || []).join(';');
     if (field === 'hideFromPublic') return marker.hideFromPublic ? 'yes' : '';
+    if (field === 'stay') return marker.stay || 'visit';
     return marker[field];
 }
 
@@ -166,6 +170,9 @@ export function validatePlace(record) {
     if (!Number.isFinite(lat) || lat < -90 || lat > 90) return null;
     if (!Number.isFinite(lng) || lng < -180 || lng > 180) return null;
     if (!['visited', 'wishlist'].includes(place.type)) return null;
+    // Only places been to are lived in or passed through, as the API checks.
+    place.stay = text(record?.stay).toLowerCase() || 'visit';
+    if (!STAYS.includes(place.stay) || (place.type === 'wishlist' && place.stay !== 'visit')) return null;
     if (!['Country', 'City'].includes(place.category) || !place.name) return null;
     if (place.notes.length > 2000) return null;
     if (place.photoUrl && !isHttpUrl(place.photoUrl)) return null;
