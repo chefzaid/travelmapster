@@ -84,6 +84,13 @@ export function formDialog({ title, message, fields, submitLabel = 'Save', dange
         const form = h('form', { method: 'dialog', class: 'dialog-body' }, h('h3', {}, title), message ? h('p', {}, message) : null);
         for (const field of fields) {
             const id = `dialog-${field.name}`;
+            if (field.type === 'checkbox') {
+                form.append(h('label', { class: 'field field-check', for: id },
+                    h('input', { id, name: field.name, type: 'checkbox', checked: Boolean(field.value) }),
+                    h('span', {}, field.label),
+                    field.hint ? h('small', {}, field.hint) : null));
+                continue;
+            }
             let control;
             if (field.type === 'select') {
                 control = h('select', { id, name: field.name },

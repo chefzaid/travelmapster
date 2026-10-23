@@ -11,10 +11,13 @@ const { rateLimit } = require('express-rate-limit');
 const { csrfProtection, csrfTokenRoute } = require('./middleware/csrf');
 const { createAssets } = require('./assets');
 const { PgRateLimitStore } = require('./rate-limit-store');
-const { createUserRepository, createMarkerRepository, createVisitRepository, createTripRepository } = require('./repositories');
+const {
+    createUserRepository, createMarkerRepository, createVisitRepository, createLedgerRepository, createTripRepository
+} = require('./repositories');
 const { createAuthRouter, createPassport, requireAuth } = require('./routes/auth');
 const { createMarkerRouter } = require('./routes/markers');
 const { createVisitRouter } = require('./routes/visits');
+const { createLedgerRouter } = require('./routes/ledger');
 const { createProfileRouter, createPublicProfileRouter } = require('./routes/profile');
 const { createGeocodeRouter } = require('./routes/geocode');
 const { createTripRouter } = require('./routes/trips');
@@ -43,6 +46,7 @@ function createApp({ config, pool, logger, metrics, geocoder, places, state = { 
     const users = createUserRepository(pool);
     const markers = createMarkerRepository(pool);
     const visits = createVisitRepository(pool);
+    const ledger = createLedgerRepository(pool);
     const trips = createTripRepository(pool);
     const passport = createPassport(users);
     const assets = createAssets(PUBLIC_DIR);
@@ -154,6 +158,7 @@ function createApp({ config, pool, logger, metrics, geocoder, places, state = { 
     api.use('/profile', requireAuth, createProfileRouter({ users }));
     api.use('/markers', requireAuth, createMarkerRouter({ pool, markers, visits }));
     api.use('/visits', requireAuth, createVisitRouter({ visits }));
+    api.use('/ledger', requireAuth, createLedgerRouter({ ledger }));
     api.use('/trips', requireAuth, createTripRouter({ trips }));
     api.use((req, res) => res.status(404).json({ error: 'Not found.' }));
     app.use('/api', api);

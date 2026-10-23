@@ -25,8 +25,9 @@
 
 ## Authorization
 
-Every place, visit, trip and profile route requires a session, and every query is scoped to the
-signed-in user (visits through the place they belong to), so another user's IDs return 404. Public maps are read-only and exist only when
+Every place, visit, ledger, trip and profile route requires a session, and every query is scoped
+to the signed-in user (visits through the place they belong to), so another user's IDs return
+404 and ledger settings and date history are only ever the caller's own. Public maps are read-only and exist only when
 their owner chose `public`; private and missing profiles return the same 404.
 
 ## Request Protection
@@ -34,7 +35,8 @@ their owner chose `public`; private and missing profiles return the same 404.
 - **CSRF**: unsafe methods need `X-CSRF-Token`, a per-session random token compared in constant
   time.
 - **Validation**: every body is checked in `src/validation.js` (lengths, types, calendar dates,
-  visit end dates on or after the start, HTTP(S)-only photo links, trip size, visits per place); bodies are limited to 100 KB, or 3 MB for imports.
+  visit end dates on or after the start, HTTP(S)-only photo links, trip size, visits per place,
+  ledger rule and planned-stay limits); bodies are limited to 100 KB, or 3 MB for imports.
 - **Rate limits** per client IP on sign-in and sign-up, the API and place search
   ([defaults](development.md#configuration)), with standard `RateLimit` headers; counters live
   in PostgreSQL, so the limit holds across replicas.
@@ -45,7 +47,13 @@ their owner chose `public`; private and missing profiles return the same 404.
 ## Privacy
 
 - Notes and photo links, of places and of visits, are never included in public maps; only
-  visit dates are.
+  visit dates are. Whether a stay is still going on is never shared either, as it would tell
+  where the traveler is now, and neither are ledger settings or the date history.
+- Day counts, alerts and evidence reports are computed in the browser and only when the
+  traveler opens the Ledger tab or asks for a report ([ADR 0010](adr/0010-day-ledger.md)).
+  Evidence CSV files defuse cells that a spreadsheet would run as formulas.
+- The history of visit dates is append-only through the API: it is written by database
+  triggers and deleted only with the account.
 - The browser loads photo links from their hosts and sends destination names to Wikivoyage for
   ideas; both are visible to those third parties.
 - Logs carry user IDs, never passwords, cookies or tokens.

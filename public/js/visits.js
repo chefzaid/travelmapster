@@ -1,5 +1,6 @@
 // Visits of a saved place: each one is a span of plain calendar dates (YYYY-MM-DD, no
-// time zone) with optional notes and a photo link. Pure functions, unit tested in Node.
+// time zone) with optional notes and a photo link. Without an end date a visit is either
+// still going on (`ongoing`) or its end was not recorded. Pure functions, unit tested in Node.
 
 const NOTES_MAX_LENGTH = 2000;
 const PHOTO_URL_MAX_LENGTH = 2048;
@@ -46,7 +47,7 @@ export function visitCountLabel(count) {
     return `Visited ${count} times`;
 }
 
-/** Inclusive calendar days of a visit, or null when its end was not recorded. */
+/** Inclusive calendar days of a visit, or null when it has no end date. */
 export function visitDays(visit) {
     if (!visit?.endDate) return null;
     const toDay = value => {
@@ -57,6 +58,7 @@ export function visitDays(visit) {
 }
 
 export function formatVisitDates(visit, formatDate) {
+    if (!visit.endDate && visit.ongoing) return `${formatDate(visit.startDate)} – still there`;
     if (!visit.endDate || visit.endDate === visit.startDate) return formatDate(visit.startDate);
     return `${formatDate(visit.startDate)} – ${formatDate(visit.endDate)}`;
 }
@@ -67,10 +69,13 @@ export function checkVisit(record) {
         startDate: text(record?.startDate),
         endDate: text(record?.endDate),
         notes: text(record?.notes),
-        photoUrl: text(record?.photoUrl)
+        photoUrl: text(record?.photoUrl),
+        // A form checkbox sends "on"; CSV files say "yes".
+        ongoing: record?.ongoing === true || /^(on|true|yes|1)$/i.test(text(record?.ongoing))
     };
     if (!isValidDate(visit.startDate)) return { error: 'Choose the day the visit started.' };
     if (visit.endDate && !isValidDate(visit.endDate)) return { error: 'The end date is not a real date.' };
+    if (visit.endDate && visit.ongoing) return { error: 'A visit you are still on has no last day yet.' };
     if (visit.endDate && visit.endDate < visit.startDate) return { error: 'The visit must end on or after the day it started.' };
     if (visit.notes.length > NOTES_MAX_LENGTH) return { error: `Notes must be ${NOTES_MAX_LENGTH} characters or fewer.` };
     if (visit.photoUrl && (visit.photoUrl.length > PHOTO_URL_MAX_LENGTH || !isHttpUrl(visit.photoUrl))) {

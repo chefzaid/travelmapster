@@ -3,7 +3,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const {
-    isValidTravelDate, parseCredentials, parseMarkerId, parseMarkerPayload, parseProfileVisibility, parseVisitPayload
+    isValidTravelDate, parseCredentials, parseLedgerSettings, parseMarkerId, parseMarkerPayload, parseProfileVisibility,
+    parseVisitPayload
 } = require('../../src/validation');
 
 const valid = { lat: '10.5', lng: -20, type: 'visited', name: ' Rome ', category: 'City' };
@@ -22,7 +23,7 @@ test('parseMarkerPayload reads visits only when asked to', () => {
     const body = { ...valid, visits: [{ startDate: '2024-01-01', endDate: '2024-01-02' }] };
     assert.equal(parseMarkerPayload(body).marker.visits, undefined);
     assert.deepEqual(parseMarkerPayload(body, { withVisits: true }).marker.visits, [
-        { startDate: '2024-01-01', endDate: '2024-01-02', notes: null, photoUrl: null }
+        { startDate: '2024-01-01', endDate: '2024-01-02', ongoing: false, notes: null, photoUrl: null }
     ]);
     assert.equal(parseMarkerPayload({ ...valid, visits: null }, { withVisits: true }).marker.visits, undefined);
     assert.match(parseMarkerPayload({ ...valid, visits: [{}] }, { withVisits: true }).error, /^Visit 1: /);
@@ -30,7 +31,7 @@ test('parseMarkerPayload reads visits only when asked to', () => {
 
 test('parseVisitPayload keeps plain calendar dates in order', () => {
     assert.deepEqual(parseVisitPayload({ startDate: ' 2024-02-29 ', notes: ' Leap day ', photoUrl: 'http://e.com/x.jpg' }).visit, {
-        startDate: '2024-02-29', endDate: null, notes: 'Leap day', photoUrl: 'http://e.com/x.jpg'
+        startDate: '2024-02-29', endDate: null, ongoing: false, notes: 'Leap day', photoUrl: 'http://e.com/x.jpg'
     });
     assert.equal(parseVisitPayload({ startDate: '2024-03-01', endDate: '2024-03-01' }).visit.endDate, '2024-03-01', 'a one-day visit');
     for (const bad of [null, [], { startDate: '2023-02-29' }, { startDate: '2024-03-02', endDate: '2024-03-01' }]) {
@@ -70,4 +71,25 @@ test('parseMarkerId accepts positive integers only', () => {
 test('parseProfileVisibility accepts only private or public', () => {
     assert.deepEqual(parseProfileVisibility({ profileVisibility: 'public' }), { profileVisibility: 'public' });
     assert.ok(parseProfileVisibility({ profileVisibility: 'friends' }).error);
+});
+
+test('parseVisitPayload keeps a stay still going on only without an end date', () => {
+    assert.equal(parseVisitPayload({ startDate: '2026-10-01', ongoing: true }).visit.ongoing, true);
+    assert.ok(parseVisitPayload({ startDate: '2026-10-01', endDate: '2026-10-02', ongoing: true }).error);
+    assert.ok(parseVisitPayload({ startDate: '2026-10-01', ongoing: 'true' }).error);
+    assert.equal(parseVisitPayload({ startDate: '2026-10-01', ongoing: null }).visit.ongoing, false);
+});
+
+test('parseLedgerSettings keeps only known rule fields and defaults missing lists', () => {
+    const { settings } = parseLedgerSettings({
+        dayRule: 'midnight',
+        rules: [{ id: 'a', kind: 'threshold', name: ' Rolling ', countries: ['ESP', 'ESP'], maxDays: 10, period: 'rolling', windowDays: 30, warnDays: 2, yearStart: '01-01' }]
+    });
+    assert.deepEqual(settings, {
+        dayRule: 'midnight',
+        rules: [{ id: 'a', kind: 'threshold', name: 'Rolling', countries: ['ESP'], maxDays: 10, period: 'rolling', windowDays: 30, warnDays: 2 }],
+        planned: []
+    });
+    assert.ok(parseLedgerSettings(null).error);
+    assert.ok(parseLedgerSettings({ dayRule: 'presence', planned: [{ id: 'p', countryId: 'FRA', startDate: '2026-01-01' }] }).error);
 });

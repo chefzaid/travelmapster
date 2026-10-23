@@ -57,11 +57,23 @@ for (const colorScheme of ['light', 'dark']) {
         await expectAccessible(page, 'place card with a visit');
         await page.keyboard.press('Escape');
 
-        for (const tab of ['explore', 'places', 'trips', 'passport']) {
+        for (const tab of ['explore', 'places', 'ledger', 'trips', 'passport']) {
             await page.click(`#tab-${tab}`);
             await expect(page.locator(`#${tab}-tab`)).toBeVisible();
             await expectAccessible(page, `${tab} tab`);
         }
+
+        // Day ledger: a rule dialog and the printable evidence report.
+        await page.click('#tab-ledger');
+        await page.getByRole('button', { name: '＋ Add a threshold' }).click();
+        await expect(page.locator('dialog.dialog')).toBeVisible();
+        await expectAccessible(page, 'threshold dialog');
+        await page.getByRole('button', { name: 'Cancel' }).click();
+        await page.fill('#report-from', '2024-01-01');
+        await page.getByRole('button', { name: /View report/ }).click();
+        await expect(page.locator('#report-view tbody tr').nth(3)).toBeVisible();
+        await expectAccessible(page, 'evidence report');
+        await page.locator('#report-view').getByRole('button', { name: 'Close' }).click();
 
         await page.click('#account-btn');
         await expectAccessible(page, 'account menu');
