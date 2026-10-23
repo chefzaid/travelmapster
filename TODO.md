@@ -87,7 +87,41 @@ The field splits into scratch-map atlases (Been, Visited, Skratch), travel journ
 - [ ] Service level objectives and alerts for availability and API latency, plus business metrics (places saved, imports, exports, reports generated).
 - [ ] Mobile apps (Capacitor wrapper of the PWA) only once the ledger ships, for store discovery and optional background location that records the current country on the device, never raw coordinates on the server.
 
-## Atlas improvements (added 2026-10-23)
+## Product features (added 2026-10-23)
+
+Everyday features that make the free atlas worth opening again; the paid work above builds on them.
+
+### Map
+
+- [ ] Year slider: replay the map as it was at the end of any year, and filter places by year.
+- [ ] Home country and "lived there" status, shown distinctly and counted separately from visits; a "transit only" status for airport layovers that do not count as a visit.
+- [ ] Journey lines between consecutive visits, drawn as cartoon arcs, with an animated replay of a trip or a year.
+- [ ] Color-blind safe and print-friendly map palettes, chosen in settings.
+
+### Places
+
+- [ ] Ratings, tags (food, hiking, family, work) and a custom emoji per pin, usable as list and map filters.
+- [ ] Bulk marking: select several countries on the map or a whole continent from the list in one step.
+- [ ] Import from other travel map apps (Been, Visited, Polarsteps exports) with a preview before saving.
+- [ ] Wishlist priority and a "when to go" month, with a list of wishlist places sorted by next suitable month.
+
+### Trips
 
 - [ ] Plan a trip from a wishlist place, and let planned trip dates feed the ledger simulation.
+- [ ] Itinerary map: pins and a route per day, and drag-and-drop to reorder slots and days.
+- [ ] Multi-destination trips spanning several countries and cities, each with its own dates.
+- [ ] Completing a trip turns its destinations into visits with the trip's dates, after the user confirms.
+- [ ] Packing list and budget per trip, with expenses in any currency and a total in the home currency.
+- [ ] Export an itinerary to a calendar (`.ics`) and as a printable PDF; duplicate a trip as a template.
+
+### Passport and goals
+
 - [ ] Richer passport stats: days abroad per year, longest trip, approximate distance travelled and a countries-per-year timeline.
+- [ ] Yearly goals ("three new countries in 2027") with progress on the passport and a celebration when reached.
+- [ ] Collections to complete: every capital, every EU country, UNESCO World Heritage sites from open data, with their own badges.
+- [ ] "On this day" memories of past visits, shown in the app and, once email exists, in an optional digest.
+
+### Sharing
+
+- [ ] Embeddable public map for blogs and personal sites, read-only and without notes.
+- [ ] Choose per place whether it appears on the public map, so a public profile can hide sensitive trips.
