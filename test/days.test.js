@@ -499,3 +499,21 @@ test('rules and planned stays are checked the way the API checks them', async ()
     assert.match(id, /^[a-z0-9]{8,}$/);
     assert.notEqual(newId(), newId(() => 0.123));
 });
+
+test('days lived in a country and layovers count as presence days (ADR 0014)', async () => {
+    const { buildLedger, daysIn, dayNumber } = await load();
+    const country = { lived: { id: 'DEU' }, transit: { id: 'ARE' }, overnight: { id: 'QAT' } };
+    const markers = [
+        { id: 1, type: 'visited', stay: 'lived', name: 'Berlin', key: 'lived', visits: [{ id: 1, startDate: '2024-01-01', endDate: '2024-01-10' }] },
+        { id: 2, type: 'visited', stay: 'transit', name: 'Dubai', key: 'transit', visits: [{ id: 2, startDate: '2024-02-01', endDate: '2024-02-01' }] },
+        { id: 3, type: 'visited', stay: 'transit', name: 'Doha', key: 'overnight', visits: [{ id: 3, startDate: '2024-03-01', endDate: '2024-03-02' }] }
+    ];
+    const count = dayRule => {
+        const ledger = buildLedger(markers, marker => country[marker.key], { dayRule, today: '2024-12-31' });
+        return ['DEU', 'ARE', 'QAT'].map(id => daysIn(ledger, [id]).length);
+    };
+    assert.deepEqual(count('presence'), [10, 1, 2], 'any part of a day: every day lived there, and a layover day');
+    assert.deepEqual(count('midnight'), [9, 0, 1], 'midnight rule: a layover counts only a night spent there');
+    const ledger = buildLedger(markers, marker => country[marker.key], { today: '2024-12-31' });
+    assert.equal(daysIn(ledger, ['ARE'])[0], dayNumber('2024-02-01'));
+});

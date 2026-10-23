@@ -1,4 +1,5 @@
 // Pure geography and statistics helpers. No DOM or map access, so they can be unit tested in Node.
+import { statusOf } from './status.js';
 
 export const CONTINENTS = ['Africa', 'Asia', 'Europe', 'North America', 'Oceania', 'South America'];
 
@@ -222,7 +223,8 @@ export const ACHIEVEMENTS = [
     { id: 'dreamer', icon: '💭', title: 'Dreamer', description: 'Add 10 places to your wishlist', test: s => s.wishlistPlaces >= 10 },
     { id: 'storyteller', icon: '📝', title: 'Storyteller', description: 'Write notes on 5 places', test: s => s.placesWithNotes >= 5 },
     { id: 'shutterbug', icon: '📸', title: 'Shutterbug', description: 'Add photos to 5 places', test: s => s.placesWithPhotos >= 5 },
-    { id: 'planner', icon: '🗓️', title: 'Planner', description: 'Plan your first trip', test: s => s.trips >= 1 }
+    { id: 'planner', icon: '🗓️', title: 'Planner', description: 'Plan your first trip', test: s => s.trips >= 1 },
+    { id: 'expat', icon: '🔑', title: 'Expat', description: 'Live in two countries', test: s => s.livedCountries >= 2 }
 ];
 
 const RANKS = [
@@ -243,32 +245,50 @@ export function nextRankFor(visitedCountries) {
 }
 
 /**
- * Which countries the map colors in for these places: visited (some only through a city)
- * and wishlist, where a visit wins over a wish.
+ * Which countries the map colors in for these places (ADR 0014). Countries been to
+ * (`visitedIds`) are the home country and those lived in or visited, as a country or
+ * through a city. A layover alone (`transitIds`) is not a visit, and a wish only shows where
+ * the traveler has not been: a visit wins over a layover and a layover over a wish.
  */
-export function countryStatus(markers, countryOf) {
-    const visitedIds = new Set();
-    const wishlistIds = new Set();
-    const cityOnlyIds = new Set();
+export function countryStatus(markers, countryOf, { homeId = null } = {}) {
+    const sets = { visited: new Set(), lived: new Set(), transit: new Set(), wishlist: new Set() };
+    const countryVisitIds = new Set();
     for (const marker of markers) {
         const country = countryOf(marker);
         if (!country) continue;
-        if (marker.type === 'visited') {
-            visitedIds.add(country.id);
-            if (marker.category === 'City') cityOnlyIds.add(country.id);
-        } else {
-            wishlistIds.add(country.id);
-        }
+        const status = statusOf(marker);
+        sets[status].add(country.id);
+        if (status === 'visited' && marker.category === 'Country') countryVisitIds.add(country.id);
     }
-    for (const id of visitedIds) wishlistIds.delete(id);
-    return { visitedIds, wishlistIds, cityOnlyIds };
+    const livedIds = new Set([...sets.lived, ...(homeId ? [homeId] : [])]);
+    const visitedIds = new Set([...sets.visited, ...livedIds]);
+    const transitIds = new Set([...sets.transit].filter(id => !visitedIds.has(id)));
+    const wishlistIds = new Set([...sets.wishlist].filter(id => !visitedIds.has(id) && !transitIds.has(id)));
+    // Countries visited only through a city get a lighter color.
+    const cityOnlyIds = new Set([...sets.visited].filter(id => !countryVisitIds.has(id)));
+    return { visitedIds, visitIds: sets.visited, livedIds, transitIds, wishlistIds, cityOnlyIds, homeId };
 }
 
-export function computeStats(markers, index, { trips = 0 } = {}) {
+export const ALL_STATUSES_SHOWN = Object.freeze({ visited: true, lived: true, transit: true, wishlist: true });
+
+/**
+ * How the map draws a country: `home`, `lived`, `visited`, `cityOnly`, `transit`, `wishlist`
+ * or null, by that precedence, skipping statuses the legend hides. The home country always shows.
+ */
+export function countryLook(id, status, shown = ALL_STATUSES_SHOWN) {
+    if (id === status.homeId) return 'home';
+    if (shown.lived && status.livedIds.has(id)) return 'lived';
+    if (shown.visited && status.visitIds.has(id)) return status.cityOnlyIds.has(id) ? 'cityOnly' : 'visited';
+    if (shown.transit && status.transitIds.has(id)) return 'transit';
+    if (shown.wishlist && status.wishlistIds.has(id)) return 'wishlist';
+    return null;
+}
+
+export function computeStats(markers, index, { trips = 0, homeId = null } = {}) {
     const markerCountry = new Map();
     for (const marker of markers) markerCountry.set(marker.id, resolveMarkerCountry(index, marker));
-    const { visitedIds: visited, wishlistIds: wishlist, cityOnlyIds: cityCountries } =
-        countryStatus(markers, marker => markerCountry.get(marker.id));
+    const status = countryStatus(markers, marker => markerCountry.get(marker.id), { homeId: index.byId.has(homeId) ? homeId : null });
+    const visited = status.visitedIds;
 
     const continents = CONTINENTS.map(name => {
         const total = index.countries.filter(country => country.continent === name).length;
@@ -276,10 +296,11 @@ export function computeStats(markers, index, { trips = 0 } = {}) {
         return { name, emoji: CONTINENT_EMOJI[name], total, visited: count, percent: total ? Math.round((count / total) * 100) : 0 };
     });
 
-    // Every visit counts in the year it started; data without visits falls back to the travel date.
+    // Every visit counts in the year it started; data without visits falls back to the travel
+    // date. Stays where the traveler lived and layovers are not visits.
     const years = new Map();
     for (const marker of markers) {
-        if (marker.type !== 'visited') continue;
+        if (statusOf(marker) !== 'visited') continue;
         const dates = marker.visits ? marker.visits.map(visit => visit.startDate) : [marker.travelDate].filter(Boolean);
         for (const date of dates) {
             const year = date.slice(0, 4);
@@ -287,11 +308,14 @@ export function computeStats(markers, index, { trips = 0 } = {}) {
         }
     }
     const hasVisitWith = (marker, field) => (marker.visits || []).some(visit => visit[field]);
+    const beenCities = markers.filter(m => m.category === 'City' && ['visited', 'lived'].includes(statusOf(m)));
 
     const stats = {
         visitedCountries: visited.size,
-        wishlistCountries: wishlist.size,
-        visitedCities: new Set(markers.filter(m => m.type === 'visited' && m.category === 'City').map(m => m.name)).size,
+        livedCountries: status.livedIds.size,
+        transitCountries: status.transitIds.size,
+        wishlistCountries: status.wishlistIds.size,
+        visitedCities: new Set(beenCities.map(m => m.name)).size,
         wishlistPlaces: markers.filter(m => m.type === 'wishlist').length,
         totalPlaces: markers.length,
         placesWithNotes: markers.filter(m => m.notes || hasVisitWith(m, 'notes')).length,
@@ -302,9 +326,7 @@ export function computeStats(markers, index, { trips = 0 } = {}) {
         trips,
         continents,
         years: [...years.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([year, count]) => ({ year, count })),
-        visitedIds: visited,
-        wishlistIds: wishlist,
-        cityOnlyIds: cityCountries,
+        ...status,
         markerCountry
     };
     stats.rank = rankFor(stats.visitedCountries);

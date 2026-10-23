@@ -2,8 +2,12 @@
 // today, so the ledger figures always look current. Nothing here is ever saved. Pure, unit
 // tested in Node.
 import { addDays } from './days.js';
+import { statusFields } from './status.js';
 
-// [type, category, name, lat, lng, visits as [first, last] day offsets from today, or 'now'].
+// The sample traveler's home country: Canadian, once lived in London, now in Lisbon.
+export const DEMO_HOME = 'CAN';
+
+// [status, category, name, lat, lng, visits as [first, last] day offsets from today, or 'now'].
 const SAMPLE = [
     ['visited', 'City', 'Lisbon, Portugal', 38.725, -9.15, [[-9, 'now']]],
     ['visited', 'City', 'Porto, Portugal', 41.149, -8.611, [[-30, -26]]],
@@ -15,8 +19,9 @@ const SAMPLE = [
     ['visited', 'Country', 'Morocco', 31.634, -8, [[-63, -55]]],
     ['visited', 'City', 'Kyoto, Japan', 35.021, 135.754, [[-695, -691]]],
     ['visited', 'City', 'Tokyo, Japan', 35.69, 139.692, [[-700, -696], [-690, -688]]],
+    ['transit', 'City', 'Dubai, United Arab Emirates', 25.205, 55.271, [[-701, -701]]],
     ['visited', 'Country', 'Mexico', 19.428, -99.128, [[-400, -389]]],
-    ['visited', 'Country', 'Canada', 56.5, -98, [[-900, -893]]],
+    ['lived', 'City', 'London, United Kingdom', 51.509, -0.126, [[-2400, -1310]]],
     ['wishlist', 'Country', 'Peru', -9.2, -75, []],
     ['wishlist', 'City', 'Cusco, Peru', -13.532, -71.967, []],
     ['wishlist', 'Country', 'New Zealand', -41.8, 172.8, []],
@@ -27,11 +32,11 @@ const SAMPLE = [
 /** The sample traveler's places as the API would return them, with negative ids. */
 export function demoMarkers(today) {
     let id = 0;
-    return SAMPLE.map(([type, category, name, lat, lng, visits]) => {
+    return SAMPLE.map(([status, category, name, lat, lng, visits]) => {
         const markerId = --id;
         return {
             id: markerId,
-            type,
+            ...statusFields(status),
             category,
             name,
             lat,

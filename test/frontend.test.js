@@ -238,15 +238,17 @@ test('Wikivoyage listings become itinerary ideas', async () => {
 
 test('the demo traveler lies on the map and counts Schengen days like a real one', async () => {
     const { createCountryIndex, computeStats } = await load('geo.js');
-    const { demoMarkers } = await load('demo.js');
+    const { DEMO_HOME, demoMarkers } = await load('demo.js');
     const { ledgerOverview, SCHENGEN_RULE } = await load('days.js');
     const index = createCountryIndex(countries);
     const today = '2026-10-23';
     const markers = demoMarkers(today);
-    const stats = computeStats(markers, index);
+    const stats = computeStats(markers, index, { homeId: DEMO_HOME });
     assert.ok(markers.every(marker => stats.markerCountry.get(marker.id)), 'every sample place resolves to a country');
     assert.ok(markers.every(marker => marker.id < 0 && marker.visits.every(visit => visit.id < 0)), 'sample ids never clash with saved ones');
-    assert.equal(stats.visitedCountries, 9);
+    assert.equal(stats.visitedCountries, 10, 'home, a country lived in and eight visited');
+    assert.deepEqual([...stats.livedIds].sort(), ['CAN', 'GBR']);
+    assert.deepEqual([...stats.transitIds], ['ARE'], 'a layover is shown but not counted');
     assert.equal(stats.wishlistCountries, 3);
 
     const overview = ledgerOverview({ markers, countryOf: marker => stats.markerCountry.get(marker.id), settings: null, today });
@@ -388,9 +390,9 @@ test('bulk marking plans one change for many countries and its undo', async () =
     assert.deepEqual(visited.create.map(place => place.name), ['France', 'Portugal', 'Germany'],
         'a country visited only through a city gets its own place');
     assert.deepEqual(visited.create[0], { lat: 10, lng: 20, name: 'France', category: 'Country', type: 'visited' });
-    assert.deepEqual(visited.update, [{ id: 7, type: 'visited', previous: 'wishlist' }]);
+    assert.deepEqual(visited.update, [{ id: 7, type: 'visited', stay: 'visit', previous: { type: 'wishlist', stay: 'visit' } }]);
     assert.equal(visited.unchanged, 1);
-    assert.deepEqual(bulk.bulkRequest(visited).update, [{ id: 7, type: 'visited' }]);
+    assert.deepEqual(bulk.bulkRequest(visited).update, [{ id: 7, type: 'visited', stay: 'visit' }]);
     assert.equal(bulk.bulkSummary(visited, 'visited'), 'Marked 4 countries as been there (1 already colored in).');
 
     const wishlist = bulk.planBulkMark({ countries, type: 'wishlist', countryMarkerOf, visitedIds: new Set(['ITA', 'PRT']) });
@@ -400,11 +402,82 @@ test('bulk marking plans one change for many countries and its undo', async () =
     assert.equal(bulk.bulkSummary({ create: [{}], update: [], unchanged: 0 }, 'wishlist'), 'Marked 1 country as wishlist.');
 
     const result = { created: [{ id: 20, name: 'France' }, { id: 21, name: 'Portugal' }, { id: 22, name: 'Germany' }], updated: [{ id: 7, type: 'visited' }], removed: [] };
-    assert.deepEqual(bulk.undoRequest(visited, result), { remove: [20, 21, 22], update: [{ id: 7, type: 'wishlist' }] });
+    assert.deepEqual(bulk.undoRequest(visited, result), { remove: [20, 21, 22], update: [{ id: 7, type: 'wishlist', stay: 'visit' }] });
     const markers = [{ id: 7, type: 'wishlist' }, { id: 8, type: 'visited' }];
     const after = bulk.applyBulkResult(markers, result);
     assert.deepEqual(after.map(marker => [marker.id, marker.type]), [[7, 'visited'], [8, 'visited'], [20, undefined], [21, undefined], [22, undefined]]);
     const undone = bulk.applyBulkResult(after, { created: [], updated: [{ id: 7, type: 'wishlist' }], removed: [20, 21, 22] });
     assert.deepEqual(undone, markers);
     assert.deepEqual(bulk.applyBulkResult(markers, {}), markers);
+});
+
+test('home, lived-there and transit-only places are drawn and counted apart (ADR 0014)', async () => {
+    const { createCountryIndex, computeStats, countryLook, countryStatus } = await load('geo.js');
+    const status = await load('status.js');
+    const { visitCountLabel } = await load('visits.js');
+    const bulk = await load('bulk.js');
+    const index = createCountryIndex(countries);
+    const markers = [
+        { id: 1, lat: 52.52, lng: 13.4, type: 'visited', stay: 'lived', name: 'Berlin, Germany', category: 'City', visits: [{ startDate: '2015-09-01' }] },
+        { id: 2, lat: 25.2, lng: 55.27, type: 'visited', stay: 'transit', name: 'Dubai, United Arab Emirates', category: 'City', visits: [{ startDate: '2019-01-01' }] },
+        { id: 3, lat: 46, lng: 2, type: 'visited', name: 'France', category: 'Country', visits: [{ startDate: '2020-01-01' }] },
+        { id: 4, lat: 48.85, lng: 2.35, type: 'visited', name: 'Paris, France', category: 'City' },
+        { id: 5, lat: 41.9, lng: 12.5, type: 'visited', name: 'Rome, Italy', category: 'City' },
+        { id: 6, lat: 25.3, lng: 51.5, type: 'visited', stay: 'transit', name: 'Doha, Qatar', category: 'City' },
+        { id: 7, lat: 25.3, lng: 51.2, type: 'wishlist', name: 'Qatar', category: 'Country' },
+        { id: 8, lat: 25.2, lng: 55.3, type: 'wishlist', stay: 'lived', name: 'United Arab Emirates', category: 'Country' }
+    ];
+    const stats = computeStats(markers, index, { homeId: 'PRT' });
+    assert.deepEqual([...stats.visitedIds].sort(), ['DEU', 'FRA', 'ITA', 'PRT'], 'home and lived count as been to; layovers do not');
+    assert.deepEqual([stats.visitedCountries, stats.livedCountries, stats.transitCountries], [4, 2, 2]);
+    assert.equal(stats.wishlistCountries, 0, 'a layover wins over a wish');
+    assert.equal(stats.visitedCities, 3, 'cities lived in count, layovers do not');
+    assert.deepEqual(stats.years, [{ year: '2020', count: 1 }], 'stays lived in and layovers are not visits');
+    assert.deepEqual(['PRT', 'DEU', 'FRA', 'ITA', 'ARE', 'QAT', 'ESP'].map(id => countryLook(id, stats)),
+        ['home', 'lived', 'visited', 'cityOnly', 'transit', 'transit', null]);
+    const hidden = { visited: false, lived: false, transit: true, wishlist: true };
+    assert.deepEqual(['PRT', 'DEU', 'FRA', 'QAT'].map(id => countryLook(id, stats, hidden)), ['home', null, null, 'transit'],
+        'the legend hides statuses but never the home country');
+    assert.equal(computeStats(markers, index, { homeId: 'XXX' }).homeId, null, 'an unknown home country is ignored');
+    const expat = computeStats(markers, index, { homeId: 'PRT' }).achievements.find(badge => badge.id === 'expat');
+    assert.equal(expat.unlocked, true);
+    const onlyWishes = countryStatus([markers[6]], marker => stats.markerCountry.get(marker.id), { homeId: 'QAT' });
+    assert.deepEqual([[...onlyWishes.wishlistIds], [...onlyWishes.livedIds]], [[], ['QAT']], 'home is never a wish');
+
+    assert.deepEqual(markers.map(status.statusOf), ['lived', 'transit', 'visited', 'visited', 'visited', 'transit', 'wishlist', 'wishlist']);
+    assert.deepEqual(status.statusFields('transit'), { type: 'visited', stay: 'transit' });
+    assert.deepEqual(status.statusFields('wishlist'), { type: 'wishlist', stay: 'visit' });
+    assert.equal(status.statusLabel('lived'), '🔑 Lived there');
+    assert.equal(status.countsAsBeen(markers[1]), false);
+    assert.equal(visitCountLabel(2, 'lived'), 'Lived here 2 times');
+    assert.equal(visitCountLabel(1, 'transit'), 'Passed through once');
+    assert.equal(visitCountLabel(0, 'transit'), 'No layovers recorded yet');
+
+    // Marking countries "been there" turns a layover into a visit but leaves homes alone.
+    const list = [{ id: 'ARE', name: 'UAE', label: [1, 2] }, { id: 'DEU', name: 'Germany', label: [1, 2] }, { id: 'PRT', name: 'Portugal', label: [1, 2] }];
+    const saved = { ARE: { id: 2, type: 'visited', stay: 'transit' }, DEU: { id: 9, type: 'visited', stay: 'lived' } };
+    const plan = bulk.planBulkMark({ countries: list, type: 'visited', countryMarkerOf: country => saved[country.id], homeId: 'PRT' });
+    assert.deepEqual(plan.update, [{ id: 2, type: 'visited', stay: 'visit', previous: { type: 'visited', stay: 'transit' } }]);
+    assert.equal(plan.unchanged, 2);
+    assert.deepEqual(bulk.undoRequest(plan, { created: [] }).update, [{ id: 2, type: 'visited', stay: 'transit' }]);
+    const wishes = bulk.planBulkMark({ countries: [...list, { id: 'QAT', name: 'Qatar', label: [1, 2] }], type: 'wishlist',
+        countryMarkerOf: () => undefined, visitedIds: stats.visitedIds, transitIds: stats.transitIds });
+    assert.deepEqual(wishes.create.map(place => place.name), [], 'a wish never replaces a layover, a home or a visit');
+});
+
+test('import and export keep whether a place was lived in or passed through', async () => {
+    const io = await load('io.js');
+    const markers = [
+        { id: 1, lat: 52.52, lng: 13.4, type: 'visited', stay: 'lived', name: 'Berlin, Germany', category: 'City', visits: [{ startDate: '2015-09-01', endDate: '2019-06-30' }] },
+        { id: 2, lat: 25.2, lng: 55.27, type: 'visited', stay: 'transit', name: 'Dubai, United Arab Emirates', category: 'City', visits: [] },
+        { id: 3, lat: 46, lng: 2, type: 'wishlist', name: 'France', category: 'Country', visits: [] }
+    ];
+    const fromJson = JSON.parse(io.buildJson(markers)).map(io.validatePlace);
+    assert.deepEqual(fromJson.map(place => place.stay), ['lived', 'transit', 'visit']);
+    const fromCsv = io.mergePlaces(io.parseCsv(io.buildCsv(markers)).map(io.validatePlace));
+    assert.deepEqual(fromCsv.map(place => [place.name, place.stay]), markers.map(marker => [marker.name, marker.stay || 'visit']));
+    assert.equal(io.validatePlace({ ...markers[0], stay: 'LIVED' }).stay, 'lived');
+    assert.equal(io.validatePlace({ ...markers[0], stay: undefined }).stay, 'visit', 'older files are plain visits');
+    assert.equal(io.validatePlace({ ...markers[0], stay: 'home' }), null);
+    assert.equal(io.validatePlace({ ...markers[2], stay: 'transit' }), null, 'a wish is never a layover');
 });

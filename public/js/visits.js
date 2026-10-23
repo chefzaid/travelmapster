@@ -41,10 +41,18 @@ export function visitCount(marker) {
     return marker?.visits?.length || 0;
 }
 
-export function visitCountLabel(count) {
-    if (!count) return 'No visits recorded yet';
-    if (count === 1) return 'Visited once';
-    return `Visited ${count} times`;
+// How often the traveler has been, in the words of the place's status (ADR 0014).
+const COUNT_WORDS = {
+    visited: ['No visits recorded yet', 'Visited'],
+    lived: ['No dates recorded yet', 'Lived here'],
+    transit: ['No layovers recorded yet', 'Passed through']
+};
+
+export function visitCountLabel(count, status = 'visited') {
+    const [none, verb] = COUNT_WORDS[status] || COUNT_WORDS.visited;
+    if (!count) return none;
+    if (count === 1) return `${verb} once`;
+    return `${verb} ${count} times`;
 }
 
 /** Inclusive calendar days of a visit, or null when it has no end date. */

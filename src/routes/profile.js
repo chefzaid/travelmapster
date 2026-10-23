@@ -1,16 +1,16 @@
 'use strict';
 
 const express = require('express');
-const { USERNAME_PATTERN, parseProfileVisibility } = require('../validation');
+const { USERNAME_PATTERN, parseProfile } = require('../validation');
 
 function createProfileRouter({ users }) {
     const router = express.Router();
 
+    // Each setting is optional: the previous release's tabs send only profileVisibility.
     router.patch('/', async (req, res) => {
-        const { profileVisibility, error } = parseProfileVisibility(req.body);
+        const { profile, error } = parseProfile(req.body);
         if (error) return res.status(400).json({ error });
-        await users.setProfileVisibility(req.user.id, profileVisibility);
-        return res.json({ profileVisibility });
+        return res.json(await users.updateProfile(req.user.id, profile));
     });
 
     return router;
@@ -31,11 +31,12 @@ function createPublicProfileRouter({ users, markers }) {
         res.set('Cache-Control', 'no-store');
         return res.json({
             username: user.username,
-            markers: places.map(({ id, lat, lng, type, name, category, travelDate, visits }) => ({
+            // The home country stays private: it says where the traveler lives now (ADR 0014).
+            markers: places.map(({ id, lat, lng, type, stay, name, category, travelDate, visits }) => ({
                 // Personal notes and photo links, of places and visits, and ratings, tags and
                 // emoji stay private even on public profiles: only the visit dates are shared.
                 // Places the traveler hid are not listed at all (ADR 0013).
-                id, lat, lng, type, name, category, travelDate,
+                id, lat, lng, type, stay, name, category, travelDate,
                 visits: visits.map(({ startDate, endDate }) => ({ startDate, endDate }))
             }))
         });

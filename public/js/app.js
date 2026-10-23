@@ -1,5 +1,5 @@
 import { api } from './api.js';
-import { createCountryIndex, computeStats, countryStatus, searchCities, formatPopulation, CONTINENTS, CONTINENT_EMOJI, flagEmoji } from './geo.js';
+import { createCountryIndex, computeStats, countryLook, countryStatus, searchCities, formatPopulation, CONTINENTS, CONTINENT_EMOJI, flagEmoji } from './geo.js';
 import { createTravelMap } from './map.js';
 import { h, $, $all, fill, toast, confirmDialog, formDialog, formatDate } from './ui.js';
 import { checkVisit, formatVisitDates, sortVisits, lastVisitDate, visitCountLabel, visitDays } from './visits.js';
@@ -13,7 +13,8 @@ import { renderTrips, openNewTrip } from './trips.js';
 import { renderPassport, renderPublicStats } from './passport.js';
 import { renderLedger } from './ledger.js';
 import { SCHENGEN_RULE, ledgerOverview, localToday } from './days.js';
-import { demoMarkers } from './demo.js';
+import { DEMO_HOME, demoMarkers } from './demo.js';
+import { HOME, STATUSES, statusFields, statusInfo, statusLabel, statusOf } from './status.js';
 import { applyBulkResult, bulkRequest, bulkSummary, planBulkMark, undoRequest } from './bulk.js';
 import { celebrate } from './confetti.js';
 
@@ -28,7 +29,7 @@ const state = {
     // Signed out, the map shows a sample traveler that visitors can try; nothing is saved.
     demo: false,
     // The legend's status toggles, and the tag and rating filter shared by the map and the Places tab.
-    filters: { visited: true, wishlist: true, tag: 'all', rating: 'all' },
+    filters: { visited: true, lived: true, transit: true, wishlist: true, tag: 'all', rating: 'all' },
     activeTab: 'explore',
     // Countries picked on the map to mark at once, or null when not picking.
     selection: null,
@@ -74,18 +75,25 @@ function cityMarkerFor(city) {
 }
 
 function visibleMarkers() {
-    return state.markers.filter(marker => state.filters[marker.type] && matchesDetails(marker, state.filters));
+    return state.markers.filter(marker => state.filters[statusOf(marker)] && matchesDetails(marker, state.filters));
+}
+
+// The traveler's home country (ADR 0014); the demo traveler has one too. Public maps never share it.
+function homeCountryId() {
+    if (state.user) return state.user.homeCountry || null;
+    return state.demo ? DEMO_HOME : null;
 }
 
 // Colors countries and draws pins for the places that pass the legend and the tag and
 // rating filter; the legend counts and the passport always count every place.
 function applyFilters() {
-    const filter = state.filters.visited && state.filters.wishlist ? 'all' : state.filters.visited ? 'visited' : state.filters.wishlist ? 'wishlist' : 'none';
+    const shown = Object.fromEntries(STATUSES.map(({ id }) => [id, state.filters[id]]));
     const filtered = detailFilterActive(state.filters);
     const status = filtered
-        ? countryStatus(state.markers.filter(marker => matchesDetails(marker, state.filters)), marker => state.stats.markerCountry.get(marker.id))
+        ? countryStatus(state.markers.filter(marker => matchesDetails(marker, state.filters)), marker => state.stats.markerCountry.get(marker.id),
+            { homeId: state.stats.homeId })
         : state.stats;
-    travelMap.setCountryStatus(status, filter);
+    travelMap.setCountryStatus(status, shown);
     travelMap.setPins(visibleMarkers());
     const clear = $('#legend-detail-filter');
     clear.hidden = !filtered;
@@ -103,10 +111,18 @@ function setDetailFilter(changes) {
 }
 
 function refresh({ celebrateNew = true } = {}) {
-    state.stats = computeStats(state.markers, state.index, { trips: state.trips.length });
+    state.stats = computeStats(state.markers, state.index, { trips: state.trips.length, homeId: homeCountryId() });
     applyFilters();
     $('#legend-visited').textContent = state.stats.visitedCountries;
+    $('#legend-lived').textContent = state.stats.livedCountries;
+    $('#legend-transit').textContent = state.stats.transitCountries;
     $('#legend-wishlist').textContent = state.stats.wishlistCountries;
+    // Statuses nobody uses stay out of the legend, which has little room on phones.
+    $('#legend-lived-item').hidden = !state.stats.livedCountries && state.filters.lived;
+    $('#legend-transit-item').hidden = !state.stats.transitCountries && state.filters.transit;
+    const home = state.index.byId.get(state.stats.homeId);
+    $('#legend-home').hidden = !home;
+    if (home) $('#legend-home-name').textContent = home.name;
 
     const unlocked = new Set(state.stats.achievements.filter(a => a.unlocked).map(a => a.id));
     if (state.unlocked && celebrateNew) {
@@ -198,7 +214,7 @@ async function savePlace(place, { quiet = false } = {}) {
     state.markers.push(marker);
     refresh();
     if (!quiet) {
-        const verb = place.type === 'visited' ? 'Stamped' : 'Wishlisted';
+        const verb = statusInfo(statusOf(place)).saved;
         toast(state.demo ? `${verb} ${place.name} on the demo map.` : `${verb} ${place.name}!`, { tone: 'success' });
     }
     return marker;
@@ -227,16 +243,23 @@ async function removePlace(marker) {
     });
 }
 
-// Marks a country or city as visited or wishlist, toggling off when it already has that status.
-async function setStatus(existing, place, type) {
+const STATUS_TOASTS = {
+    visited: name => `${name}: been there! 🎉`,
+    lived: name => `${name}: lived there! 🔑`,
+    transit: name => `${name}: transit only, not counted as a visit.`,
+    wishlist: name => `${name} moved to your wishlist.`
+};
+
+// Marks a country or city with a status (ADR 0014), toggling off when it already has it.
+async function setStatus(existing, place, status) {
     try {
-        if (existing && existing.type === type) {
+        if (existing && statusOf(existing) === status) {
             await removePlace(existing);
         } else if (existing) {
-            await updatePlace(existing, { type });
-            toast(type === 'visited' ? `${existing.name}: been there! 🎉` : `${existing.name} moved to your wishlist.`, { tone: 'success' });
+            await updatePlace(existing, statusFields(status));
+            toast(STATUS_TOASTS[status](existing.name), { tone: 'success' });
         } else {
-            await savePlace({ ...place, type });
+            await savePlace({ ...place, ...statusFields(status) });
         }
     } catch (error) {
         handleError(error);
@@ -257,10 +280,9 @@ function placeFormFields(draft) {
     const tagOptions = [...new Set([...knownTags(state.markers).slice(0, 16), ...draft.tags])];
     return [
         { name: 'name', label: 'Name', value: draft.name, required: true, maxlength: 160 },
-        { name: 'type', label: 'Status', type: 'select', value: draft.type, options: [
-            { value: 'visited', label: '✓ Been there' },
-            { value: 'wishlist', label: '♥ Wishlist' }
-        ] },
+        { name: 'status', label: 'Status', type: 'select', value: draft.status || statusOf(draft),
+            options: STATUSES.map(({ id }) => ({ value: id, label: statusLabel(id) })),
+            hint: 'Transit only is for layovers: the country is not counted as visited, but dated days still count in the ledger.' },
         { name: 'priority', label: 'Wishlist priority', type: 'select', value: draft.priority || '',
             options: [{ value: '', label: 'No priority' }, ...PRIORITIES] },
         { name: 'bestMonths', label: 'Best months to go', type: 'choices', value: (draft.bestMonths || []).map(String),
@@ -299,7 +321,7 @@ async function editPlace(marker) {
         try {
             await updatePlace(marker, {
                 name: values.name.trim(),
-                type: values.type,
+                ...statusFields(values.status),
                 notes: values.notes.trim(),
                 photoUrl: values.photoUrl.trim(),
                 hideFromPublic: values.hideFromPublic === 'on',
@@ -319,7 +341,8 @@ async function editPlace(marker) {
 // Marks every country at once in one transactional request, with an undo that is one
 // request too.
 async function bulkMark(countries, type) {
-    const plan = planBulkMark({ countries, type, countryMarkerOf: countryMarker, visitedIds: state.stats.visitedIds });
+    const { visitedIds, transitIds, homeId } = state.stats;
+    const plan = planBulkMark({ countries, type, countryMarkerOf: countryMarker, visitedIds, transitIds, homeId });
     if (!plan.create.length && !plan.update.length) {
         toast(type === 'visited' ? 'Those countries are already colored in.' : 'Those countries are already on your wishlist or visited.');
         return false;
@@ -440,7 +463,7 @@ async function addVisit(marker) {
     try {
         const visit = await api.addVisit(marker.id, values);
         setVisits(marker, [...marker.visits, visit]);
-        toast(`${visitCountLabel(marker.visits.length)}: ${marker.name}!`, { tone: 'success' });
+        toast(`${visitCountLabel(marker.visits.length, statusOf(marker))}: ${marker.name}!`, { tone: 'success' });
     } catch (error) {
         handleError(error);
     }
@@ -489,29 +512,27 @@ function handleError(error) {
 
 // ---------------------------------------------------------------- map cards
 
-function statusChip(type) {
-    if (type === 'visited') return h('span', { class: 'chip chip-visited' }, '✓ Been there');
-    if (type === 'wishlist') return h('span', { class: 'chip chip-wishlist' }, '♥ Wishlist');
-    return h('span', { class: 'chip' }, 'Not yet');
+function statusChip(status) {
+    if (status === 'home') return h('span', { class: 'chip chip-home' }, `${HOME.icon} ${HOME.label}`);
+    if (!status) return h('span', { class: 'chip' }, 'Not yet');
+    return h('span', { class: `chip chip-${status}` }, statusLabel(status));
 }
 
 function statusButtons(existing, place) {
     if (state.publicUser) return null;
     if (!state.user && !state.demo) return h('p', { class: 'card-note' }, 'Log in to color this in on your map.');
-    const button = (type, label) => h('button', {
+    const current = existing ? statusOf(existing) : null;
+    const button = ({ id }) => h('button', {
         type: 'button',
-        class: `btn btn-sm ${type === 'visited' ? 'btn-visited' : 'btn-wishlist'}${existing?.type === type ? ' is-active' : ''}`,
-        'aria-pressed': String(existing?.type === type),
+        class: `btn btn-sm btn-${id}${current === id ? ' is-active' : ''}`,
+        'aria-pressed': String(current === id),
         onclick: async () => {
-            await setStatus(existing, place, type);
+            await setStatus(existing, place, id);
             reopenCard();
         }
-    }, label);
+    }, statusLabel(id));
     return [
-        h('div', { class: 'card-actions' },
-            button('visited', '✓ Been there'),
-            button('wishlist', '♥ Wishlist')
-        ),
+        h('div', { class: 'card-actions' }, STATUSES.map(button)),
         state.demo ? h('p', { class: 'card-note' }, 'Demo map: nothing is saved. Sign up to keep your own.') : null
     ];
 }
@@ -534,16 +555,21 @@ function visitItem(marker, visit) {
     );
 }
 
+const ADD_VISIT_LABELS = { lived: '＋ Add the dates you lived here', transit: '＋ Add a layover' };
+
 // Visits newest first, with how many times you have been; wishlist places show them
-// only once they have one.
+// only once they have one. Dates where the traveler lived or changed planes are visits too,
+// so the day ledger counts them (ADR 0014).
 function visitsSection(marker) {
     const visits = sortVisits(marker.visits);
-    if (marker.type !== 'visited' && !visits.length) return null;
+    const status = statusOf(marker);
+    if (status === 'wishlist' && !visits.length) return null;
     const headingId = `visits-heading-${marker.id}`;
     return h('section', { class: 'card-visits', 'aria-labelledby': headingId },
-        h('h4', { id: headingId, class: 'visits-title' }, visitCountLabel(visits.length)),
+        h('h4', { id: headingId, class: 'visits-title' }, visitCountLabel(visits.length, status)),
         visits.length ? h('ol', { class: 'visit-list' }, visits.map(visit => visitItem(marker, visit))) : null,
-        state.user ? h('button', { type: 'button', class: 'btn btn-sm btn-ghost visit-add', onclick: () => addVisit(marker) }, '＋ Add a visit') : null
+        state.user ? h('button', { type: 'button', class: 'btn btn-sm btn-ghost visit-add', onclick: () => addVisit(marker) },
+            ADD_VISIT_LABELS[status] || '＋ Add a visit') : null
     );
 }
 
@@ -594,10 +620,51 @@ function reopenCard() {
     if (lastCard) lastCard();
 }
 
+// A country saved through a city takes the city's status; the note says so.
+const DERIVED_NOTES = { visited: 'via a city you visited', lived: 'via a city you lived in', transit: 'via a city you passed through' };
+const LOOK_STATUS = { cityOnly: 'visited', visited: 'visited', lived: 'lived', transit: 'transit' };
+
+function countryStatusRow(country, existing) {
+    const isHome = state.stats?.homeId === country.id;
+    const cities = existing ? [] : markersForCountry(country);
+    const derived = cities.length
+        ? LOOK_STATUS[countryLook(country.id, countryStatus(cities, marker => state.stats.markerCountry.get(marker.id)))]
+        : null;
+    return h('div', { class: 'card-status' },
+        isHome ? statusChip('home') : null,
+        existing || derived || !isHome ? statusChip(existing ? statusOf(existing) : derived) : null,
+        derived ? h('small', { class: 'muted' }, DERIVED_NOTES[derived]) : null);
+}
+
+async function setHomeCountry(country) {
+    const homeCountry = country?.id || null;
+    try {
+        const profile = await api.saveProfile({ homeCountry });
+        state.user.homeCountry = profile.homeCountry;
+        refresh();
+        toast(country ? `${country.name} is your home country. 🏠` : 'Home country cleared.', { tone: 'success' });
+    } catch (error) {
+        handleError(error);
+    }
+}
+
+// Signed-in travelers set their home country from its card, or in the settings.
+function homeButton(country) {
+    if (!state.user) return null;
+    const isHome = state.user.homeCountry === country.id;
+    return h('div', { class: 'card-links' }, h('button', {
+        type: 'button',
+        class: 'link-btn',
+        onclick: async () => {
+            await setHomeCountry(isHome ? null : country);
+            reopenCard();
+        }
+    }, isHome ? '🏠 Not my home country any more' : '🏠 Make this my home country'));
+}
+
 function showCountryCard(country, latlng) {
     lastCard = () => showCountryCard(country, latlng);
     const existing = countryMarker(country);
-    const derivedVisited = state.stats?.visitedIds.has(country.id);
     const capital = capitalOf(country);
     const cities = markersForCountry(country).filter(marker => marker.category === 'City');
     const place = { lat: country.label[0], lng: country.label[1], name: country.name, category: 'Country' };
@@ -610,8 +677,7 @@ function showCountryCard(country, latlng) {
                 h('p', { class: 'card-sub' }, `${CONTINENT_EMOJI[country.continent] || ''} ${country.subregion || country.continent}`)
             )
         ),
-        h('div', { class: 'card-status' }, statusChip(existing?.type || (derivedVisited ? 'visited' : null)),
-            !existing && derivedVisited ? h('small', { class: 'muted' }, 'via a city you visited') : null),
+        countryStatusRow(country, existing),
         h('dl', { class: 'card-facts' },
             capital ? [h('dt', {}, 'Capital'), h('dd', {}, h('button', { type: 'button', class: 'link-btn', onclick: () => showCityCard(capital) }, `★ ${capital.name}`))] : null,
             h('dt', {}, 'Population'), h('dd', {}, formatPopulation(country.population))
@@ -620,12 +686,13 @@ function showCountryCard(country, latlng) {
             h('p', { class: 'muted small' }, 'Your cities here'),
             h('div', { class: 'chip-row' }, cities.map(marker => h('button', {
                 type: 'button',
-                class: `chip chip-${marker.type}`,
+                class: `chip chip-${statusOf(marker)}`,
                 onclick: () => showSavedCityCard(marker)
             }, marker.name.split(',')[0])))
         ) : null,
         statusButtons(existing, place),
         savedDetails(existing),
+        homeButton(country),
         ideaButtons(country.name)
     );
     travelMap.openPopup(latlng || country.label, card);
@@ -647,7 +714,7 @@ function showCityCard(city) {
                     city.capital ? ' · ★ Capital' : '')
             )
         ),
-        h('div', { class: 'card-status' }, statusChip(existing?.type)),
+        h('div', { class: 'card-status' }, statusChip(existing ? statusOf(existing) : null)),
         h('dl', { class: 'card-facts' }, h('dt', {}, 'Population'), h('dd', {}, formatPopulation(city.population))),
         statusButtons(existing, place),
         savedDetails(existing),
@@ -675,7 +742,7 @@ function showSavedCityCard(marker) {
                     : marker.name)
             )
         ),
-        h('div', { class: 'card-status' }, statusChip(marker.type)),
+        h('div', { class: 'card-status' }, statusChip(statusOf(marker))),
         statusButtons(marker, place),
         savedDetails(marker),
         ideaButtons(cityName)
@@ -985,7 +1052,7 @@ function renderExplore(container) {
                 return h('li', {}, h('button', { type: 'button', onclick: () => showMarker(marker) },
                     h('span', { 'aria-hidden': 'true' }, country?.flag || '📍'),
                     h('span', {}, marker.name),
-                    statusChip(marker.type)
+                    statusChip(statusOf(marker))
                 ));
             }))
         ) : null,
@@ -1149,6 +1216,24 @@ function setupAuth() {
     });
 }
 
+// Account settings that change how the map and passport count (ADR 0014).
+async function openSettings() {
+    const countries = [...state.index.countries].sort((a, b) => a.name.localeCompare(b.name));
+    const values = await formDialog({
+        title: 'Settings',
+        submitLabel: 'Save settings',
+        fields: [
+            { name: 'homeCountry', label: 'Home country', type: 'select', value: state.user.homeCountry || '',
+                options: [{ value: '', label: 'No home country' }, ...countries.map(country => ({ value: country.id, label: `${country.flag} ${country.name}` }))],
+                hint: 'Shown with its own color and counted as a country you have been to and lived in. It is never shown on your public map.' }
+        ]
+    });
+    if (!values) return;
+    const homeCountry = values.homeCountry || null;
+    if (homeCountry === (state.user.homeCountry || null)) return;
+    await setHomeCountry(state.index.byId.get(homeCountry) || null);
+}
+
 function shareUrl() {
     return `${location.origin}/?u=${encodeURIComponent(state.user.username)}`;
 }
@@ -1178,7 +1263,7 @@ function setupAccountMenu() {
     $('#public-toggle').addEventListener('change', async event => {
         const visibility = event.target.checked ? 'public' : 'private';
         try {
-            await api.saveProfile(visibility);
+            await api.saveProfile({ profileVisibility: visibility });
             state.user.profileVisibility = visibility;
             $('#copy-share-btn').disabled = visibility !== 'public';
             toast(visibility === 'public' ? 'Your map is public. Share the link!' : 'Your map is private again.', { tone: 'success' });
@@ -1186,6 +1271,11 @@ function setupAccountMenu() {
             event.target.checked = !event.target.checked;
             handleError(error);
         }
+    });
+
+    $('#settings-btn').addEventListener('click', async () => {
+        closeAccountMenu();
+        await openSettings();
     });
 
     $('#password-btn').addEventListener('click', async () => {

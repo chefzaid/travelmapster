@@ -1,6 +1,8 @@
 // Cartoon world map drawn on the GPU with MapLibre GL: country shapes and every town,
 // with smooth, continuous zooming. See docs/adr/0008-maplibre-gl.md.
 import { Map as MapLibreMap, Marker, Popup } from '../vendor/maplibre/maplibre-gl.mjs';
+import { ALL_STATUSES_SHOWN, countryLook } from './geo.js';
+import { statusInfo, statusOf } from './status.js';
 
 // The app and its data use Leaflet-scale zooms; MapLibre's are one lower for the same scale.
 const ZOOM_OFFSET = 1;
@@ -29,6 +31,12 @@ function readTheme() {
         visitedSoft: token('--visited-soft'),
         wishlist: token('--wishlist'),
         wishlistInk: token('--wishlist-ink'),
+        lived: token('--lived'),
+        livedInk: token('--lived-ink'),
+        home: token('--home'),
+        homeInk: token('--home-ink'),
+        transit: token('--transit'),
+        transitInk: token('--transit-ink'),
         capital: token('--primary-strong'),
         graticule: token('--graticule'),
         shadow: token('--shadow-color')
@@ -61,22 +69,78 @@ function dotImage(theme, capital) {
     return context.getImageData(0, 0, canvas.width, canvas.height);
 }
 
+// Patterns over lived-in countries (stripes) and the home country (dots), so the statuses
+// differ by more than colour (ADR 0014).
+function patternImage(colour, kind) {
+    const ratio = 2;
+    const size = 10;
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = size * ratio;
+    const context = canvas.getContext('2d');
+    context.scale(ratio, ratio);
+    context.fillStyle = colour;
+    context.strokeStyle = colour;
+    if (kind === 'dots') {
+        context.beginPath();
+        context.arc(size / 2, size / 2, 1.8, 0, Math.PI * 2);
+        context.fill();
+    } else {
+        context.lineWidth = 1.6;
+        context.lineCap = 'square';
+        context.beginPath();
+        // A diagonal that tiles seamlessly, with its corners.
+        for (const offset of [-size, 0, size]) {
+            context.moveTo(offset, size);
+            context.lineTo(offset + size, 0);
+        }
+        context.stroke();
+    }
+    return context.getImageData(0, 0, canvas.width, canvas.height);
+}
+
+const PATTERNS = [['pattern-lived', 'livedInk', 'stripes'], ['pattern-home', 'homeInk', 'dots']];
+
 const state = name => ['boolean', ['feature-state', name], false];
+// A country's status (see countryLook in geo.js), or '' when it has none.
+const look = ['to-string', ['feature-state', 'status']];
+const lookIs = (...names) => ['in', look, ['literal', names]];
 
 function countryFill(theme) {
     const land = ['match', ['get', 'color'], ...theme.land.flatMap((colour, i) => [i + 1, colour]), theme.land[0]];
-    const status = ['case',
-        ['all', state('visited'), state('cityOnly'), ['!', state('wishlist')]], theme.visitedSoft,
-        state('visited'), theme.visited,
-        state('wishlist'), theme.wishlist,
+    const status = ['match', look,
+        'home', theme.home,
+        'lived', theme.lived,
+        'visited', theme.visited,
+        'cityOnly', theme.visitedSoft,
+        'transit', theme.transit,
+        'wishlist', theme.wishlist,
         land];
     const hovered = ['case',
         ['!', state('hover')], status,
-        state('visited'), '#5ad8cc',
-        state('wishlist'), '#ffd452',
+        lookIs('visited', 'cityOnly'), '#5ad8cc',
+        lookIs('wishlist'), '#ffd452',
+        lookIs('home', 'lived', 'transit'), status,
         '#fff'];
     return ['step', ['zoom'], hovered, toMapZoom(HOVER_FILL_MAX_ZOOM), status];
 }
+
+// Layers drawn only for countries with some statuses. Their filters list those countries, so
+// the GPU never draws an outline or pattern for the rest (see applyStatus).
+const STATUS_LAYERS = {
+    'lived-pattern': ['lived'],
+    'home-pattern': ['home'],
+    'borders-visited': ['visited', 'cityOnly'],
+    'borders-lived': ['lived'],
+    'borders-home': ['home'],
+    'borders-transit': ['transit'],
+    'borders-wishlist': ['wishlist']
+};
+const onlyCountries = ids => ['in', ['get', 'id'], ['literal', ids]];
+
+const statusBorder = (id, colour, width, extra = {}) => ({
+    id, type: 'line', source: 'countries', filter: onlyCountries([]), layout: { 'line-join': 'round', ...extra.layout },
+    paint: { 'line-color': colour, 'line-width': width, ...extra.paint }
+});
 
 function buildStyle(theme, countries, labels) {
     const atlasLines = [
@@ -120,6 +184,14 @@ function buildStyle(theme, countries, labels) {
             },
             { id: 'land', type: 'fill', source: 'countries', paint: { 'fill-color': countryFill(theme) } },
             {
+                id: 'lived-pattern', type: 'fill', source: 'countries', filter: onlyCountries([]),
+                paint: { 'fill-pattern': 'pattern-lived', 'fill-opacity': 0.55 }
+            },
+            {
+                id: 'home-pattern', type: 'fill', source: 'countries', filter: onlyCountries([]),
+                paint: { 'fill-pattern': 'pattern-home', 'fill-opacity': 0.6 }
+            },
+            {
                 // Countries picked for marking several at once: a tint over their status color.
                 id: 'selected-fill', type: 'fill', source: 'countries',
                 paint: { 'fill-color': theme.capital, 'fill-opacity': ['case', state('selected'), 0.4, 0] }
@@ -128,14 +200,12 @@ function buildStyle(theme, countries, labels) {
                 id: 'borders', type: 'line', source: 'countries', layout: { 'line-join': 'round' },
                 paint: { 'line-color': theme.border, 'line-width': ['interpolate', ['linear'], ['zoom'], 1, 1.2, 6, 1.8, 10, 2.4] }
             },
-            {
-                id: 'borders-visited', type: 'line', source: 'countries', layout: { 'line-join': 'round' },
-                paint: { 'line-color': theme.visitedInk, 'line-width': 2, 'line-opacity': ['case', ['all', state('visited'), ['!', state('wishlist')]], 1, 0] }
-            },
-            {
-                id: 'borders-wishlist', type: 'line', source: 'countries', layout: { 'line-join': 'round' },
-                paint: { 'line-color': theme.wishlistInk, 'line-width': 2, 'line-dasharray': [2.5, 2], 'line-opacity': ['case', state('wishlist'), 1, 0] }
-            },
+            // Each status has its own outline: solid, thick, dashed or dotted.
+            statusBorder('borders-visited', theme.visitedInk, 2),
+            statusBorder('borders-lived', theme.livedInk, 2.5),
+            statusBorder('borders-home', theme.homeInk, 3.5),
+            statusBorder('borders-transit', theme.transitInk, 2.5, { layout: { 'line-cap': 'round' }, paint: { 'line-dasharray': [0.1, 2] } }),
+            statusBorder('borders-wishlist', theme.wishlistInk, 2, { paint: { 'line-dasharray': [2.5, 2] } }),
             {
                 id: 'borders-hover', type: 'line', source: 'countries', layout: { 'line-join': 'round' },
                 paint: { 'line-color': theme.ink, 'line-width': 2.5, 'line-opacity': ['case', state('hover'), 1, 0] }
@@ -241,9 +311,16 @@ export function createTravelMap(element, { index, cities, onCountryClick, onCity
     element.travelMap = map;
 
     const ready = new Promise(resolve => map.once('load', resolve));
+    // Town dots and status patterns, drawn from the theme and redrawn when it changes.
+    function images() {
+        return [
+            ['dot', dotImage(theme, false)],
+            ['dot-capital', dotImage(theme, true)],
+            ...PATTERNS.map(([name, colour, kind]) => [name, patternImage(theme[colour], kind)])
+        ];
+    }
     ready.then(() => {
-        map.addImage('dot', dotImage(theme, false), { pixelRatio: 2 });
-        map.addImage('dot-capital', dotImage(theme, true), { pixelRatio: 2 });
+        for (const [name, image] of images()) map.addImage(name, image, { pixelRatio: 2 });
     });
 
     // Zoom buttons styled like the rest of the app.
@@ -323,20 +400,31 @@ export function createTravelMap(element, { index, cities, onCountryClick, onCity
 
     // ---- country status, hover and pulse
 
-    let status = { visitedIds: new Set(), wishlistIds: new Set(), cityOnlyIds: new Set(), filter: 'all' };
+    const empty = new Set();
+    let status = { visitIds: empty, livedIds: empty, transitIds: empty, wishlistIds: empty, cityOnlyIds: empty, homeId: null };
+    let shown = ALL_STATUSES_SHOWN;
+    let filterKeys = new Map();
     function applyStatus() {
-        const { visitedIds, wishlistIds, cityOnlyIds, filter } = status;
+        const byLook = new Map();
         for (const country of index.countries) {
-            const visited = visitedIds.has(country.id) && filter !== 'wishlist' && filter !== 'none';
-            map.setFeatureState({ source: 'countries', id: country.id }, {
-                visited,
-                wishlist: wishlistIds.has(country.id) && filter !== 'visited' && filter !== 'none',
-                cityOnly: visited && cityOnlyIds.has(country.id)
-            });
+            const value = countryLook(country.id, status, shown) || '';
+            map.setFeatureState({ source: 'countries', id: country.id }, { status: value });
+            if (!byLook.has(value)) byLook.set(value, []);
+            byLook.get(value).push(country.id);
+        }
+        // A new filter re-tiles its layer, so only changed ones are set.
+        for (const [layer, looks] of Object.entries(STATUS_LAYERS)) {
+            const ids = looks.flatMap(name => byLook.get(name) || []);
+            const key = ids.join();
+            if (filterKeys.get(layer) === key) continue;
+            filterKeys.set(layer, key);
+            map.setFilter(layer, onlyCountries(ids));
         }
     }
-    function setCountryStatus({ visitedIds, wishlistIds, cityOnlyIds }, filter = 'all') {
-        status = { visitedIds, wishlistIds, cityOnlyIds, filter };
+    /** Colors countries by status (see countryStatus in geo.js), showing only the statuses in `visible`. */
+    function setCountryStatus(next, visible = ALL_STATUSES_SHOWN) {
+        status = next;
+        shown = visible;
         ready.then(applyStatus);
     }
 
@@ -417,14 +505,15 @@ export function createTravelMap(element, { index, cities, onCountryClick, onCity
             const pinElement = document.createElement('button');
             pinElement.type = 'button';
             // The traveler's emoji replaces the status symbol; the pin's colour still tells the status.
-            pinElement.className = `pin pin-${marker.type}${marker.emoji ? ' pin-emoji' : ''}`;
+            const info = statusInfo(statusOf(marker));
+            pinElement.className = `pin pin-${info.id}${marker.emoji ? ' pin-emoji' : ''}`;
             pinElement.title = marker.name;
-            pinElement.setAttribute('aria-label', `${marker.name}, ${marker.type === 'visited' ? 'been there' : 'wishlist'}`);
+            pinElement.setAttribute('aria-label', `${marker.name}, ${info.label.toLowerCase()}`);
             const body = document.createElement('span');
             body.className = 'pin-body';
             const symbol = document.createElement('span');
             symbol.className = 'pin-symbol';
-            symbol.textContent = marker.emoji || (marker.type === 'visited' ? '✓' : '♥');
+            symbol.textContent = marker.emoji || info.pin;
             body.append(symbol);
             pinElement.append(body);
             pinElement.addEventListener('click', event => {
@@ -514,10 +603,11 @@ export function createTravelMap(element, { index, cities, onCountryClick, onCity
         ready.then(() => {
             map.setStyle(buildStyle(theme, countries, labels), { diff: true });
             map.once('styledata', () => {
-                for (const [name, capital] of [['dot', false], ['dot-capital', true]]) {
-                    if (map.hasImage(name)) map.updateImage(name, dotImage(theme, capital));
-                    else map.addImage(name, dotImage(theme, capital), { pixelRatio: 2 });
+                for (const [name, image] of images()) {
+                    if (map.hasImage(name)) map.updateImage(name, image);
+                    else map.addImage(name, image, { pixelRatio: 2 });
                 }
+                filterKeys = new Map();
                 applyStatus();
                 applySelection();
                 updateCities();

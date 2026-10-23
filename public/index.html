@@ -55,6 +55,7 @@
                         <span>Public travel map</span>
                     </label>
                     <button id="copy-share-btn" class="menu-item" type="button" disabled>🔗 Copy share link</button>
+                    <button id="settings-btn" class="menu-item" type="button">⚙️ Settings</button>
                     <button id="password-btn" class="menu-item" type="button">🔑 Change password</button>
                     <button id="logout-btn" class="menu-item" type="button">👋 Log out</button>
                     <button id="delete-account-btn" class="menu-item menu-item-danger" type="button">🗑️ Delete account</button>
@@ -179,9 +180,16 @@
             <button type="button" class="legend-item" data-filter="visited" aria-pressed="true">
                 <span class="swatch swatch-visited" aria-hidden="true"></span>Been there <strong id="legend-visited">0</strong>
             </button>
+            <button type="button" class="legend-item" data-filter="lived" aria-pressed="true" id="legend-lived-item" hidden>
+                <span class="swatch swatch-lived" aria-hidden="true"></span>Lived <strong id="legend-lived">0</strong>
+            </button>
+            <button type="button" class="legend-item" data-filter="transit" aria-pressed="true" id="legend-transit-item" hidden>
+                <span class="swatch swatch-transit" aria-hidden="true"></span>Transit <strong id="legend-transit">0</strong>
+            </button>
             <button type="button" class="legend-item" data-filter="wishlist" aria-pressed="true">
                 <span class="swatch swatch-wishlist" aria-hidden="true"></span>Wishlist <strong id="legend-wishlist">0</strong>
             </button>
+            <span class="legend-item legend-static" id="legend-home" hidden><span class="swatch swatch-home" aria-hidden="true"></span>Home<span class="visually-hidden">: <span id="legend-home-name"></span></span></span>
             <span class="legend-item legend-static"><span class="swatch swatch-capital" aria-hidden="true">★</span>Capital</span>
             <button type="button" class="legend-item legend-filter" id="legend-detail-filter" hidden>
                 <span aria-hidden="true">🏷️</span><span class="legend-filter-text"></span><span aria-hidden="true">✕</span>

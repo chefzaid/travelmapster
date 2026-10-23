@@ -92,7 +92,7 @@ test('profile visibility controls the public map', async () => {
 
     assert.equal((await owner.patch('/api/profile', { profileVisibility: 'sideways' })).status, 400);
     const changed = await owner.patch('/api/profile', { profileVisibility: 'public' });
-    assert.deepEqual(changed.body, { profileVisibility: 'public' });
+    assert.deepEqual(changed.body, { profileVisibility: 'public', homeCountry: null });
     assert.equal((await owner.get('/api/auth/me')).body.user.profileVisibility, 'public');
 
     const profile = await visitor.get('/api/public/Explorer');
@@ -104,6 +104,32 @@ test('profile visibility controls the public map', async () => {
 
     assert.equal((await visitor.get('/api/public/nobody-here')).status, 404);
     assert.equal((await visitor.get('/api/public/bad%20name')).status, 404);
+});
+
+test('a traveler sets a home country that only they can see (ADR 0014)', async () => {
+    const owner = createClient(ctx.server);
+    await owner.register('homebody', 'homebody password');
+    assert.equal((await owner.get('/api/auth/me')).body.user.homeCountry, null);
+
+    const set = await owner.patch('/api/profile', { homeCountry: 'PRT' });
+    assert.equal(set.status, 200);
+    assert.deepEqual(set.body, { profileVisibility: 'private', homeCountry: 'PRT' });
+    assert.equal((await owner.get('/api/auth/me')).body.user.homeCountry, 'PRT');
+    // The previous release's tabs send only the visibility: the home country stays.
+    await owner.patch('/api/profile', { profileVisibility: 'public' });
+    assert.equal((await owner.get('/api/auth/me')).body.user.homeCountry, 'PRT');
+    assert.doesNotMatch(JSON.stringify((await createClient(ctx.server).get('/api/public/homebody')).body), /PRT/);
+
+    for (const body of [{}, { homeCountry: 'portugal' }, { homeCountry: 351 }, { homeCountry: 'PRT', profileVisibility: 'friends' }]) {
+        assert.equal((await owner.patch('/api/profile', body)).status, 400, JSON.stringify(body));
+    }
+    await assert.rejects(ctx.pool.query("UPDATE users SET home_country = 'pt' WHERE username = 'homebody'"));
+    assert.equal((await owner.patch('/api/profile', { homeCountry: null })).body.homeCountry, null);
+
+    assert.equal((await createClient(ctx.server).patch('/api/profile', { homeCountry: 'PRT' })).status, 401);
+    const forged = await owner.agent.patch('/api/profile').set('X-CSRF-Token', 'forged').send({ homeCountry: 'ESP' });
+    assert.equal(forged.status, 403);
+    assert.equal((await owner.get('/api/auth/me')).body.user.homeCountry, null);
 });
 
 test('geocode proxy requires login, validates input and hides upstream failures', async () => {

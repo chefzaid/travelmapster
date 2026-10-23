@@ -55,7 +55,9 @@ their owner chose `public`; private and missing profiles return the same 404.
   visits; a replica of a release before that change would list them, so rollbacks below it
   are avoided ([ADR 0013](adr/0013-hidden-places.md)). Shared maps are sent with `X-Robots-Tag: noindex` and left out of the
   sitemap, so search engines do not list them. Whether a stay is still going on is never shared either, as it would tell
-  where the traveler is now, and neither are ledger settings or the date history.
+  where the traveler is now, and neither are the home country ([ADR 0014](adr/0014-home-lived-and-transit.md)),
+  ledger settings or the date history. Whether a shared place was lived in or a layover is shown,
+  like its status.
 - Day counts, alerts and evidence reports are computed in the browser and only when the
   traveler opens the Ledger tab or asks for a report ([ADR 0010](adr/0010-day-ledger.md)).
   Evidence CSV files defuse cells that a spreadsheet would run as formulas.

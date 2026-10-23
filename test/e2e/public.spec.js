@@ -86,14 +86,14 @@ test('a visitor tries the demo map on the landing page, then signs up to an empt
     await page.goto('/');
     await expect(page.locator('#welcome-view')).toBeVisible();
     await expect(page.locator('#demo-ledger')).toContainText('Schengen days');
-    await expect(page.locator('#legend-visited')).toHaveText('9');
+    await expect(page.locator('#legend-visited')).toHaveText('10');
     await expect(page.locator('.story-keepsakes')).toContainText('Coming soon');
     await expect(page.getByRole('link', { name: /Schengen calculator/ })).toHaveAttribute('href', '/schengen-calculator');
 
     await page.fill('#global-search', 'Brazil');
     await page.locator('#search-results [role="option"]').filter({ hasText: 'Brazil' }).first().click();
     await page.locator('.card-actions button', { hasText: 'Been there' }).last().click();
-    await expect(page.locator('#legend-visited')).toHaveText('10');
+    await expect(page.locator('#legend-visited')).toHaveText('11');
     await expect(page.locator('.toast')).toContainText('on the demo map');
     expect(writes).toEqual([]);
 

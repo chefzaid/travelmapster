@@ -1,25 +1,32 @@
 // Marking several countries at once, and undoing it, as one bulk change of places
 // (POST /api/markers/bulk). Pure functions, unit tested in Node.
+import { statusOf } from './status.js';
 
 /**
  * The changes that give every chosen country the status `type`. A country already saved
- * with another status changes it; one with that status is left alone. Marking a wishlist
- * never takes away a visit: countries visited, as a country or through a city, are skipped.
+ * with another status changes it; one with that status is left alone. Marking countries
+ * "been there" turns a layover into a visit but leaves places lived in and the home country
+ * alone (ADR 0014). Marking a wishlist never takes away a visit or a layover: countries been
+ * to, as a country or through a city, are skipped.
  *
- * `countryMarkerOf(country)` finds the saved country place, and `visitedIds` holds the
- * countries the map colors in as visited.
+ * `countryMarkerOf(country)` finds the saved country place; `visitedIds` and `transitIds`
+ * hold the countries the map colors in as been to (home included) and as layovers only.
  */
-export function planBulkMark({ countries, type, countryMarkerOf, visitedIds = new Set() }) {
+export function planBulkMark({ countries, type, countryMarkerOf, visitedIds = new Set(), transitIds = new Set(), homeId = null }) {
     const create = [];
     const update = [];
     let unchanged = 0;
     for (const country of countries) {
         const existing = countryMarkerOf(country);
-        const visited = existing ? existing.type === 'visited' : visitedIds.has(country.id);
-        if (existing?.type === type || (type === 'wishlist' && visited)) {
+        const status = existing ? statusOf(existing) : null;
+        // A saved country is already a wish or been to, which a wish never replaces.
+        const keep = type === 'visited'
+            ? status === 'visited' || status === 'lived' || (!existing && country.id === homeId)
+            : Boolean(existing) || visitedIds.has(country.id) || transitIds.has(country.id);
+        if (keep) {
             unchanged += 1;
         } else if (existing) {
-            update.push({ id: existing.id, type, previous: existing.type });
+            update.push({ id: existing.id, type, stay: 'visit', previous: { type: existing.type, stay: existing.stay || 'visit' } });
         } else {
             create.push({ lat: country.label[0], lng: country.label[1], name: country.name, category: 'Country', type });
         }
@@ -27,16 +34,16 @@ export function planBulkMark({ countries, type, countryMarkerOf, visitedIds = ne
     return { create, update, unchanged };
 }
 
-/** The request body for a plan: status changes carry only the id and the new status. */
+/** The request body for a plan: status changes carry only the id, the status and the stay. */
 export function bulkRequest(plan) {
-    return { create: plan.create, update: plan.update.map(({ id, type }) => ({ id, type })) };
+    return { create: plan.create, update: plan.update.map(({ id, type, stay }) => ({ id, type, stay })) };
 }
 
 /** The bulk change that undoes an applied plan: remove what it created and restore statuses. */
 export function undoRequest(plan, result) {
     return {
         remove: result.created.map(marker => marker.id),
-        update: plan.update.map(({ id, previous }) => ({ id, type: previous }))
+        update: plan.update.map(({ id, previous }) => ({ id, ...previous }))
     };
 }
 

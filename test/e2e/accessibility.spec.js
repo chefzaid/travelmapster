@@ -67,6 +67,22 @@ for (const colorScheme of ['light', 'dark']) {
         await expect(page.locator('dialog.dialog')).toHaveCount(0);
         await page.keyboard.press('Escape');
 
+        // A layover and a home country, drawn and listed apart (ADR 0014).
+        await page.fill('#global-search', 'Dubai');
+        await page.locator('#search-results [role="option"]').filter({ hasText: 'Dubai' }).first().click();
+        await page.locator('.card-actions button', { hasText: 'Transit only' }).click();
+        await expect(page.locator('.maplibregl-popup.card-popup .card-status .chip-transit')).toBeVisible();
+        await page.waitForTimeout(500);
+        await expectAccessible(page, 'transit place card');
+        await page.keyboard.press('Escape');
+        await page.click('#account-btn');
+        await page.click('#settings-btn');
+        await expect(page.locator('dialog.dialog')).toBeVisible();
+        await page.selectOption('#dialog-homeCountry', 'PRT');
+        await expectAccessible(page, 'settings dialog');
+        await page.getByRole('button', { name: 'Save settings' }).click();
+        await expect(page.locator('dialog.dialog')).toHaveCount(0);
+
         for (const tab of ['explore', 'places', 'ledger', 'trips', 'passport']) {
             await page.click(`#tab-${tab}`);
             await expect(page.locator(`#${tab}-tab`)).toBeVisible();

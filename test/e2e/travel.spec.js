@@ -133,6 +133,8 @@ test('a traveler records several visits to the same city', async ({ page }) => {
 });
 
 test('a traveler marks several countries and a whole continent at once, with undo', async ({ page }) => {
+    // Recoloring a whole continent several times is slow on a busy runner without a GPU.
+    test.setTimeout(60_000);
     const errors = trackErrors(page);
     await signUp(page, `e2e_bulk_${Date.now()}`);
     let requests = 0;
@@ -165,6 +167,45 @@ test('a traveler marks several countries and a whole continent at once, with und
     await page.reload();
     await expect(page.locator('#main-view')).toBeVisible();
     await expect(page.locator('#legend-wishlist')).toHaveText('12');
+    expect(errors).toEqual([]);
+});
+
+test('a traveler sets a home country, a city lived in and a layover, and the passport counts them apart', async ({ page }) => {
+    test.setTimeout(60_000);
+    const errors = trackErrors(page);
+    await signUp(page, `e2e_home_${Date.now()}`);
+
+    await page.click('#account-btn');
+    await page.click('#settings-btn');
+    await page.selectOption('#dialog-homeCountry', 'CAN');
+    await page.getByRole('button', { name: 'Save settings' }).click();
+    await expect(page.locator('#legend-visited')).toHaveText('1');
+    await expect(page.locator('#legend-home')).toBeAttached();
+
+    for (const [name, status] of [['Berlin', 'Lived there'], ['Dubai', 'Transit only']]) {
+        await page.fill('#global-search', name);
+        await page.locator('#search-results [role="option"]').filter({ hasText: name }).first().click();
+        await page.locator('.card-actions button', { hasText: status }).click();
+        await expect(page.locator('.card-popup .card-actions button', { hasText: status })).toHaveAttribute('aria-pressed', 'true');
+    }
+    await expect(page.locator('.card-popup .visits-title')).toHaveText('No layovers recorded yet');
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#legend-visited')).toHaveText('2');
+    await expect(page.locator('#legend-lived')).toHaveText('2');
+    await expect(page.locator('#legend-transit')).toHaveText('1');
+
+    await page.reload();
+    await expect(page.locator('#main-view')).toBeVisible();
+    await expect(page.locator('#legend-transit')).toHaveText('1');
+    await page.click('#tab-passport');
+    await expect(page.locator('.passport-home')).toContainText('Canada');
+    await expect(page.locator('.stamp', { hasText: 'Germany' })).toContainText('Lived');
+    await expect(page.locator('.stamp')).toHaveCount(2);
+    await expect(page.locator('#passport-tab')).toContainText('Transit only, not counted: United Arab Emirates.');
+    await page.click('#tab-places');
+    await page.locator('.filter-chip', { hasText: 'Transit' }).click();
+    await expect(page.locator('#places-tab .place')).toHaveCount(1);
+    await expect(page.locator('#places-tab .place')).toContainText('Dubai');
     expect(errors).toEqual([]);
 });
 

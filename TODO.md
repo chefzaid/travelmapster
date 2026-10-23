@@ -89,7 +89,6 @@ Everyday features that make the free atlas worth opening again; the paid work ab
 ### Map
 
 - [ ] Year slider: replay the map as it was at the end of any year, and filter places by year.
-- [ ] Home country and "lived there" status, shown distinctly and counted separately from visits; a "transit only" status for airport layovers that do not count as a visit.
 - [ ] Journey lines between consecutive visits, drawn as cartoon arcs, with an animated replay of a trip or a year.
 - [ ] Color-blind safe and print-friendly map palettes, chosen in settings.
 
