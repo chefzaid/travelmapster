@@ -9,7 +9,7 @@ metadata:
     gethomepage.dev/enabled: "true"
     gethomepage.dev/group: Applications - PROD
     gethomepage.dev/href: https://travelmapster.swirlit.dev
-    gethomepage.dev/icon: mdi-map-marker-radius
+    gethomepage.dev/icon: /icons/travelmapster.svg
     gethomepage.dev/name: TravelMapster
     gethomepage.dev/weight: "50"
     gethomepage.dev/pod-selector: app=travelmapster
