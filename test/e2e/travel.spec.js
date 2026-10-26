@@ -251,6 +251,7 @@ test('a traveler counts Schengen days, tries a plan, gets an alert and prints ev
     await expect(ledger.locator('.days-left strong')).toHaveText('80');
     await expect(ledger.locator('.timeline-stay').first()).toContainText('Portugal');
     await expect(ledger.locator('.timeline-stay').first()).toContainText('10 days');
+    await expect(ledger.locator('#ledger-advice')).toContainText('not legal or tax advice');
 
     // Eighty-five more days in Spain would break 90/180.
     await ledger.getByRole('button', { name: '＋ Plan a stay' }).click();
@@ -280,6 +281,7 @@ test('a traveler counts Schengen days, tries a plan, gets an alert and prints ev
     await expect(report).toBeVisible();
     await expect(report.locator('tbody tr')).toHaveCount(1 + 10 + 1);
     await expect(report).toContainText('Arrival day; still there');
+    await expect(report).toContainText('not legal or tax advice');
     const download = page.waitForEvent('download');
     await report.getByRole('button', { name: /CSV/ }).click();
     const csv = await (await download).createReadStream().then(stream => stream.toArray()).then(chunks => Buffer.concat(chunks).toString());

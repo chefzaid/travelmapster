@@ -90,7 +90,7 @@ JSON under `/api`; errors are `{ "error": "…" }` with a matching status. All r
 | `public/js/details.js` | Ratings, tags, emoji and wishlist plans of a place, the tag and rating filter shared by the list and the map, and the wishlist by next good month (pure, unit tested) |
 | `public/js/visits.js` | Visit dates, counts, last-visit filter and validation (pure, unit tested) |
 | `public/js/days.js` | Day ledger: day rules, days per country, Schengen 90/180 and stay rules, thresholds, planned stays, alerts and evidence reports (pure, unit and property tested) |
-| `public/js/ledger.js` | Ledger tab and the printable evidence report |
+| `public/js/ledger.js`, `ledger-report.js` | Ledger tab, and its date history and printable evidence report |
 | `public/js/trips.js`, `ideas.js` | Trip planner and Wikivoyage ideas |
 | `public/js/passport.js` | Passport tab |
 | `public/js/api.js`, `ui.js`, `confetti.js` | API client with CSRF handling, DOM helpers, celebration |
