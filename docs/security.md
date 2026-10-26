@@ -63,8 +63,13 @@ their owner chose `public`; private and missing profiles return the same 404.
   ledger settings or the date history. Whether a shared place was lived in or a layover is shown,
   like its status. Journey lines, which make the order of trips obvious, are drawn for visitors
   only when the owner turns them on ([ADR 0016](adr/0016-timeline-journeys-and-palettes.md)).
+- Places are stored at town or country level: the app saves the bundled map coordinates of a
+  town or a country label, and a place from the world search is rounded to two decimals (about
+  a kilometer). Only an import keeps the coordinates written in the file, as the traveler chose
+  them. The Ledger tab states this, with the rules below ([ADR 0017](adr/0017-product-principles.md)).
 - Day counts, alerts and evidence reports are computed in the browser and only when the
-  traveler opens the Ledger tab or asks for a report ([ADR 0010](adr/0010-day-ledger.md)).
+  traveler opens the Ledger tab or asks for a report ([ADR 0010](adr/0010-day-ledger.md)); reports
+  are never sent to the server.
   Evidence CSV files defuse cells that a spreadsheet would run as formulas.
 - The history of visit dates is append-only through the API: it is written by database
   triggers and deleted only with the account.
