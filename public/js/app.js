@@ -14,6 +14,7 @@ import { announceLedgerAlerts, currentLedger, emptyLedger, loadVisitChanges, upd
 import { DEMO_HOME, demoMarkers } from './demo.js';
 import { STATUSES, statusInfo, statusOf } from './status.js';
 import { celebrate } from './confetti.js';
+import { celebrateGoals } from './passport-goals.js';
 import { renderTimeline, setTimelineOpen, setupTimeline, timelineView, collapsePanelOnPhones } from './timeline-bar.js';
 import { applyPalette, setupPrinting, storedPalette } from './printing.js';
 import { markContinent, setupSelectBar, startSelecting, stopSelecting, toggleSelected } from './selection.js';
@@ -47,6 +48,8 @@ const state = {
     timeline: { open: false, year: null, mode: 'by', journeys: false, choices: new Map(), replaying: false, stopReplay: null },
     ideas: null,
     unlocked: null,
+    // Goals reached so far, so reaching one is celebrated once.
+    reachedGoals: null,
     // Day ledger: settings from the API, the history of visit dates (loaded when needed)
     // and the overview computed from both, cleared whenever places or visits change.
     ledger: emptyLedger()
@@ -135,6 +138,7 @@ function refresh({ celebrateNew = true } = {}) {
         }
     }
     state.unlocked = unlocked;
+    if (state.user) state.reachedGoals = celebrateGoals(context, celebrateNew ? state.reachedGoals : null);
     state.ledger.overview = null;
     state.ledger.changes = null;
     updateLedgerBadge(context);
@@ -282,6 +286,7 @@ function showSignedOut() {
     state.markers = demoMarkers(localToday());
     state.trips = [];
     state.unlocked = null;
+    state.reachedGoals = null;
     state.ideas = null;
     state.ledger = emptyLedger();
     $('#account').hidden = true;
@@ -317,6 +322,7 @@ async function startSession() {
     state.trips = trips;
     state.ledger = { ...emptyLedger(), settings: ledgerSettings };
     state.unlocked = null;
+    state.reachedGoals = null;
     state.ideas = null;
     setView('main');
     let savedTab = 'explore';

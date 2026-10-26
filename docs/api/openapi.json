@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "TravelMapster API",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "The JSON API the TravelMapster app uses. It is version 1 and changes only in backward-compatible ways ([ADR 0019](../adr/0019-api-description-and-versioning.md)). Errors are `{ \"error\": \"…\" }` with a matching status; every response is `Cache-Control: no-store` unless stated."
   },
   "servers": [
@@ -416,6 +416,14 @@
                     },
                     "publicJourneys": {
                       "type": "boolean"
+                    },
+                    "goals": {
+                      "type": "array",
+                      "maxItems": 12,
+                      "items": {
+                        "$ref": "#/components/schemas/Goal"
+                      },
+                      "description": "Yearly goals, sorted by year and kind; never on the public map."
                     }
                   }
                 }
@@ -1648,7 +1656,8 @@
           "homeCountry",
           "countryList",
           "mapPalette",
-          "publicJourneys"
+          "publicJourneys",
+          "goals"
         ],
         "properties": {
           "id": {
@@ -1688,6 +1697,14 @@
           },
           "publicJourneys": {
             "type": "boolean"
+          },
+          "goals": {
+            "type": "array",
+            "maxItems": 12,
+            "items": {
+              "$ref": "#/components/schemas/Goal"
+            },
+            "description": "Yearly goals, sorted by year and kind; never on the public map."
           }
         }
       },
@@ -1740,6 +1757,14 @@
           },
           "publicJourneys": {
             "type": "boolean"
+          },
+          "goals": {
+            "type": "array",
+            "maxItems": 12,
+            "items": {
+              "$ref": "#/components/schemas/Goal"
+            },
+            "description": "Replaces every goal; one per kind and year."
           }
         }
       },
@@ -2612,6 +2637,35 @@
                 }
               }
             }
+          }
+        }
+      },
+      "Goal": {
+        "type": "object",
+        "required": [
+          "year",
+          "kind",
+          "target"
+        ],
+        "properties": {
+          "year": {
+            "type": "integer",
+            "minimum": 2000,
+            "maximum": 2100
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "countries",
+              "cities",
+              "visits"
+            ],
+            "description": "New countries or cities first visited in the year, or visits begun in it."
+          },
+          "target": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 999
           }
         }
       }

@@ -4,6 +4,7 @@ import { h, $, fill, formatDate } from './ui.js';
 import { HOME } from './status.js';
 import { countryList, shareLabel } from './lists.js';
 import { localToday } from './days.js';
+import { goalsSection } from './passport-goals.js';
 import { EARTH_CIRCUMFERENCE_KM, countriesByYear, daysAwayByYear, distanceTraveled, longestTrip } from './travel-stats.js';
 
 function statTile(value, label, tone = '') {
@@ -166,6 +167,7 @@ export function renderPassport(container, ctx) {
             statTile(stats.wishlistCountries, 'dream countries', 'tone-wishlist'),
             statTile(ctx.state.trips.length, 'trips planned')
         ),
+        goalsSection(ctx),
         h('section', {}, h('h3', { class: 'section-title' }, 'Continents'), continentBars(stats)),
         h('section', {},
             h('h3', { class: 'section-title' }, 'Stamps', h('span', { class: 'count' }, stats.visitedCountries)),

@@ -18,11 +18,12 @@ const VISIT_COLUMNS = `v.id, v.start_date AS "startDate", v.end_date AS "endDate
     v.notes, v.photo_url AS "photoUrl"`;
 
 // Account settings by API field and column.
+// Goals are JSON, so they are written as text and cast.
 const PROFILE_COLUMNS = [
     ['profileVisibility', 'profile_visibility'], ['homeCountry', 'home_country'], ['countryList', 'country_list'],
-    ['mapPalette', 'map_palette'], ['publicJourneys', 'public_journeys']
+    ['mapPalette', 'map_palette'], ['publicJourneys', 'public_journeys'], ['goals', 'goals', 'jsonb']
 ];
-const USER_COLUMNS = 'id, username, profile_visibility, home_country, country_list, map_palette, public_journeys';
+const USER_COLUMNS = 'id, username, profile_visibility, home_country, country_list, map_palette, public_journeys, goals';
 
 function createUserRepository(db) {
     return {
@@ -76,15 +77,15 @@ function createUserRepository(db) {
         async updateProfile(id, profile) {
             const values = [id];
             let set = '';
-            for (const [field, column] of PROFILE_COLUMNS) {
+            for (const [field, column, cast] of PROFILE_COLUMNS) {
                 if (profile[field] === undefined) continue;
-                values.push(profile[field]);
-                set += `${column} = $${values.length}, `;
+                values.push(cast ? JSON.stringify(profile[field]) : profile[field]);
+                set += `${column} = $${values.length}${cast ? `::${cast}` : ''}, `;
             }
             const { rows } = await db.query(
                 `UPDATE users SET ${set}updated_at = now() WHERE id = $1
                  RETURNING profile_visibility AS "profileVisibility", home_country AS "homeCountry",
-                    country_list AS "countryList", map_palette AS "mapPalette", public_journeys AS "publicJourneys"`,
+                    country_list AS "countryList", map_palette AS "mapPalette", public_journeys AS "publicJourneys", goals`,
                 values
             );
             return rows[0] || null;

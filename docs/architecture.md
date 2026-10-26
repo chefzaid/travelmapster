@@ -69,7 +69,7 @@ JSON under `/api`, described in full in [OpenAPI](api/openapi.json) and kept bac
 | GET, POST | `/api/trips` | List or create itineraries |
 | PUT, DELETE | `/api/trips/:id` | Replace or remove an itinerary |
 | GET | `/api/export` | Everything the account holds, for the data archive: `profile` (with the last active day), `places` with their visits, `trips`, and `ledger` with its `settings` and the whole date history (`changes`); `format` and `version` describe the document |
-| PATCH | `/api/profile` | Change account settings, each optional: `profileVisibility` (`private` or `public`), `homeCountry` (a map code or `null`), `countryList` (`all` or `un`, [ADR 0015](adr/0015-country-lists.md)), `mapPalette` (`standard`, `colorblind` or `print`) and `publicJourneys` (a boolean, [ADR 0016](adr/0016-timeline-journeys-and-palettes.md)); returns them all |
+| PATCH | `/api/profile` | Change account settings, each optional: `profileVisibility` (`private` or `public`), `homeCountry` (a map code or `null`), `countryList` (`all` or `un`, [ADR 0015](adr/0015-country-lists.md)), `mapPalette` (`standard`, `colorblind` or `print`), `publicJourneys` (a boolean, [ADR 0016](adr/0016-timeline-journeys-and-palettes.md)) and `goals` (up to 12 yearly goals, one per kind and year); returns them all |
 | GET | `/api/public/:username` | Read-only public map with the owner's `countryList`, `showJourneys` (whether visitors see journey lines), visit dates and each place's `stay`, without notes, photo links, ratings, tags, emoji, wishlist plans, the palette or the home country, and without places hidden from it ([ADR 0013](adr/0013-hidden-places.md)) |
 | GET | `/api/places?q=&limit=` | Search every town in the map data (public, 1–20 results) |
 | GET | `/api/geocode?q=&kind=city\|country&limit=` | World place search (1–10 results) |
@@ -103,6 +103,7 @@ JSON under `/api`, described in full in [OpenAPI](api/openapi.json) and kept bac
 | `public/js/itinerary.js` | An itinerary as text, as an iCalendar file, as a template copy without dates, and as the day ledger's planned stay that follows the trip (pure, unit tested) |
 | `public/js/trip-visits.js` | Where a trip goes (a country or a town of the map data), and recording a trip as a visit to it |
 | `public/js/print-view.js` | The full page printed on its own, shared by the evidence report and printable itineraries |
+| `public/js/goals.js`, `passport-goals.js` | Yearly goals and the progress toward them (pure, unit tested), and their passport section and celebration |
 | `public/js/passport.js`, `travel-stats.js` | Passport tab, and its travel statistics: days abroad per year, the longest trip, the distance traveled and countries per year (pure, unit tested) |
 | `public/js/api.js`, `ui.js`, `confetti.js` | API client with CSRF handling, DOM helpers, celebration |
 | `public/css/` | Styles by area, loaded in order: `tokens.css` (fonts, design tokens and map palettes for light and dark themes), `layout.css` (layout, panel, buttons), `tabs.css` (tabs, Explore and Places), `trips-passport.css`, `map.css` (legend, timeline, map and its cards), `ledger.css` (dialogs, toasts, the day ledger and print styles for the map and the evidence report) and `pages.css` (landing and public pages, responsive rules) |

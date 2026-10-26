@@ -144,7 +144,7 @@ Everyday features that make the free atlas worth opening again; the paid work ab
 ### Passport and goals
 
 - [x] Richer passport stats: days abroad per year, longest trip, approximate distance travelled and a countries-per-year timeline.
-- [ ] Yearly goals ("three new countries in 2027") with progress on the passport and a celebration when reached.
+- [x] Yearly goals ("three new countries in 2027") with progress on the passport and a celebration when reached.
 - [ ] Collections to complete: every capital, every EU country, UNESCO World Heritage sites from open data, with their own badges.
 - [x] "On this day" memories of past visits, shown in the app.
 - [ ] "On this day" memories in an optional email digest, once email exists (see [Accounts and trust](#accounts-and-trust-added-2026-10-23)). *(waiting: see Needs Input › Transactional email provider)*
