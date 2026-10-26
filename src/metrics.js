@@ -37,6 +37,19 @@ function createMetrics({ users, logger } = {}) {
         registers: [registry]
     });
 
+    // Business activity: places saved by the way they were added, and account archives.
+    const placesSaved = new client.Counter({
+        name: 'travelmapster_places_saved_total',
+        help: 'Places saved, by source: single, import or bulk.',
+        labelNames: ['source'],
+        registers: [registry]
+    });
+    const exports = new client.Counter({
+        name: 'travelmapster_account_exports_total',
+        help: 'Account archives downloaded.',
+        registers: [registry]
+    });
+
     if (users) {
         new client.Gauge({
             name: 'travelmapster_users',
@@ -64,7 +77,7 @@ function createMetrics({ users, logger } = {}) {
         next();
     }
 
-    return { registry, httpMiddleware, authEvents, funnel };
+    return { registry, httpMiddleware, authEvents, funnel, placesSaved, exports };
 }
 
 module.exports = { createMetrics };
