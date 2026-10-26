@@ -171,7 +171,7 @@ changes compatible with the previous release while both may run during a rollout
 
 | File | Contents |
 |---|---|
-| `countries.geojson` | 1:50m country borders simplified to 0.02°, with name, aliases, continent, population and label placement; overseas parts outside the Schengen area come from the map subunits layer ([ADR 0024](adr/0024-overseas-territories.md)) |
+| `countries.geojson` | 1:50m country borders simplified to 0.02°, with name, aliases, continent (Natural Earth's, with open-ocean islands placed by their UN M49 region), population and label placement; overseas parts outside the Schengen area come from the map subunits layer ([ADR 0024](adr/0024-overseas-territories.md)) |
 | `cities.json` | The base list loaded with the page: about 4,900 places shown by zoom 6, as objects with name, country, capital flag, population, `minZoom` and coordinates |
 | `cities/index.json`, `cities/<tile>.json` | About 220,000 smaller places in region tiles of up to 4,000, as rows `[name, countryId, capital, population, minZoom, lat, lng]` |
 | `*.br` beside each file | The same file compressed with Brotli at the best quality (11.5 MB down to 3.1 MB), sent to browsers that accept it |

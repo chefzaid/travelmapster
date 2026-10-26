@@ -180,12 +180,12 @@ test('a traveler marks several countries and a whole continent at once, with und
     await page.locator('#bulk-continent').selectOption('South America');
     await page.locator('.bulk-section').getByRole('button', { name: 'Wishlist' }).click();
     await expect(page.locator('#legend-visited')).toHaveText('1');
-    // South America's 14 territories (French Guiana among them) but Peru.
-    await expect(page.locator('#legend-wishlist')).toHaveText('13');
+    // South America's 15 territories (French Guiana and South Georgia among them) but Peru.
+    await expect(page.locator('#legend-wishlist')).toHaveText('14');
     expect(requests).toBe(3);
     await page.reload();
     await expect(page.locator('#main-view')).toBeVisible();
-    await expect(page.locator('#legend-wishlist')).toHaveText('13');
+    await expect(page.locator('#legend-wishlist')).toHaveText('14');
 
     // A wishlist place starts a trip plan from the list.
     await page.click('#tab-places');
