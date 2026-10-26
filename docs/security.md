@@ -76,6 +76,9 @@ their owner chose `public`; private and missing profiles return the same 404.
 - The browser loads photo links from their hosts and sends destination names to Wikivoyage for
   ideas; both are visible to those third parties.
 - Logs carry user IDs, never passwords, cookies or tokens.
+- Product metrics are aggregate Prometheus counters and gauges with no user in their labels;
+  the only activity stored per account is the date it was last used
+  ([ADR 0018](adr/0018-product-metrics.md)). There is no third-party analytics.
 - Travelers can download everything their account holds as one archive (`GET /api/export`,
   only ever the caller's own data, never the password hash) and delete their account, which
   removes all their data at once ([data model](data-model.md#privacy)).

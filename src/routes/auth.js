@@ -22,7 +22,7 @@ function publicUser(user) {
 }
 
 /** Each app gets its own Passport instance so strategies never leak between apps. */
-function createPassport(users) {
+function createPassport(users, logger) {
     const passport = new Passport();
     // Compared against when the username is unknown, so response timing does
     // not reveal which usernames exist.
@@ -42,7 +42,12 @@ function createPassport(users) {
     passport.deserializeUser(async (id, done) => {
         try {
             // A deleted account yields false, which logs the stale session out.
-            done(null, (await users.findById(id)) || false);
+            const user = await users.findById(id);
+            // The first request of the day records the day; a failure never fails the request.
+            if (user && !user.seen_today) {
+                await users.markSeen(id).catch(err => logger?.warn({ err }, 'Could not record the active day'));
+            }
+            done(null, user || false);
         } catch (err) {
             done(err);
         }
@@ -86,6 +91,7 @@ function createAuthRouter({ passport, users, authLimiter, registerLimiter, metri
 
         await login(req, user);
         metrics.authEvents.inc({ event: 'register', outcome: 'success' });
+        metrics.funnel.inc({ step: 'sign_up' });
         logger.info({ userId: user.id }, 'User registered');
         return res.status(201).json({ user: publicUser(user), csrfToken: getOrCreateToken(req) });
     });

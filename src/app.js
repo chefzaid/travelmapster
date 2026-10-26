@@ -50,7 +50,7 @@ function createApp({ config, pool, logger, metrics, geocoder, places, state = { 
     const visits = createVisitRepository(pool);
     const ledger = createLedgerRepository(pool);
     const trips = createTripRepository(pool);
-    const passport = createPassport(users);
+    const passport = createPassport(users, logger);
     const assets = createAssets(PUBLIC_DIR);
 
     app.disable('x-powered-by');
@@ -171,9 +171,9 @@ function createApp({ config, pool, logger, metrics, geocoder, places, state = { 
         jsonLimiter(pool, 'geocode', config.rateLimit.geocodePerMinute, 60_000, 'Too many place searches, please slow down.'),
         createGeocodeRouter({ geocoder, logger }));
     api.use('/profile', requireAuth, createProfileRouter({ users }));
-    api.use('/markers', requireAuth, createMarkerRouter({ pool, markers, visits }));
+    api.use('/markers', requireAuth, createMarkerRouter({ pool, markers, visits, metrics }));
     api.use('/visits', requireAuth, createVisitRouter({ visits }));
-    api.use('/ledger', requireAuth, createLedgerRouter({ ledger }));
+    api.use('/ledger', requireAuth, createLedgerRouter({ ledger, metrics }));
     api.use('/trips', requireAuth, createTripRouter({ trips }));
     api.use('/export', requireAuth, createExportRouter({ markers, trips, ledger }));
     api.use((req, res) => res.status(404).json({ error: 'Not found.' }));

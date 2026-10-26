@@ -7,6 +7,7 @@ const { createLogger } = require('../src/logger');
 const { createPool } = require('../src/db/pool');
 const { migrate } = require('../src/db/migrate');
 const { createMetrics } = require('../src/metrics');
+const { createUserRepository } = require('../src/repositories');
 const { createApp } = require('../src/app');
 const { createPlaceIndex } = require('../src/services/places');
 
@@ -58,13 +59,15 @@ async function createTestContext(envOverrides = {}) {
     await migrate(pool, logger);
     const geocoder = fakeGeocoder();
     const state = { shuttingDown: false };
-    const app = createApp({ config, pool, logger, metrics: createMetrics(), geocoder, places, state });
+    const metrics = createMetrics({ users: createUserRepository(pool), logger });
+    const app = createApp({ config, pool, logger, metrics, geocoder, places, state });
     // One long-lived server keeps agent cookies on a stable address.
     const server = http.createServer(app);
     await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
     return {
         app,
         server,
+        metrics,
         pool,
         geocoder,
         state,
