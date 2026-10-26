@@ -1,7 +1,7 @@
 'use strict';
 
-// Importing from other travel apps: a pasted list of countries, and a Polarsteps data export,
-// each previewed before anything is saved.
+// Importing from other travel apps (a pasted list of countries, a Polarsteps data export) and
+// from photos and location history, each previewed before anything is saved.
 const path = require('node:path');
 const { test, expect } = require('@playwright/test');
 const { markCity, signUp, stubThirdParties, trackErrors } = require('./helpers');
@@ -53,5 +53,45 @@ test('a traveler imports countries from a list and trips from a Polarsteps expor
     // Not a Polarsteps file: nothing happens but a message.
     await page.setInputFiles('#polarsteps-file', { name: 'notes.json', mimeType: 'application/json', buffer: Buffer.from('not json') });
     await expect(page.locator('#places-tab')).toContainText('That file is not a Polarsteps trip.');
+    expect(errors).toEqual([]);
+});
+
+test('a traveler imports visits found in photos and location history, reviewing each visit', async ({ page }) => {
+    const errors = trackErrors(page);
+    const { jpeg } = require('../fixtures/photos');
+    await signUp(page, `e2e_photos_${Date.now()}`);
+    await markCity(page, 'Lisbon');
+    await page.keyboard.press('Escape');
+    await page.click('#tab-places');
+
+    // Photos are read in the browser and reduced to the nearest town.
+    await page.setInputFiles('#photos-file', [
+        { name: 'IMG_0001.jpg', mimeType: 'image/jpeg', buffer: jpeg({ date: '2024:05:12 18:03:00', lat: 38.7105, lng: -9.1366 }) },
+        { name: 'IMG_0002.jpg', mimeType: 'image/jpeg', buffer: jpeg({ date: '2024:05:13 10:00:00', lat: 38.7139, lng: -9.1334 }) },
+        { name: 'IMG_0003.jpg', mimeType: 'image/jpeg', buffer: jpeg({ date: '2024:05:15 12:00:00', lat: 41.1496, lng: -8.611 }) },
+        { name: 'IMG_0004.jpg', mimeType: 'image/jpeg', buffer: jpeg({ date: '2024:05:16 12:00:00' }) }
+    ]);
+    const dialog = page.locator('dialog.dialog');
+    await expect(dialog).toContainText('2 visits to 2 places');
+    await expect(dialog).toContainText('1 photo has no place or date');
+    await expect(dialog.locator('legend', { hasText: 'Lisbon, Portugal (on your map)' })).toBeVisible();
+    // Each visit is the traveler's to keep: Porto's is left out.
+    await dialog.locator('fieldset', { hasText: 'Porto, Portugal' }).locator('.choice-chip').click();
+    await dialog.getByRole('button', { name: 'Import', exact: true }).click();
+    await expect(page.locator('.toast-success', { hasText: 'Imported 1 visit to places you had.' })).toBeVisible();
+    await expect(page.locator('#places-tab .place', { hasText: 'Lisbon' })).toContainText('1 visit');
+    await expect(page.locator('#places-tab .place', { hasText: 'Porto' })).toHaveCount(0);
+
+    // A Timeline export from a phone: stays only, the trip between them is left out.
+    const timeline = { semanticSegments: [
+        { startTime: '2024-07-01T15:00:00.000+02:00', endTime: '2024-07-03T10:00:00.000+02:00', visit: { topCandidate: { placeLocation: { latLng: '41.3874°, 2.1686°' } } } },
+        { startTime: '2024-07-03T10:00:00.000+02:00', endTime: '2024-07-03T12:00:00.000+02:00', timelinePath: [{ point: '41.0°, 1.5°' }] }
+    ] };
+    await page.setInputFiles('#history-file', { name: 'Timeline.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(timeline)) });
+    await expect(dialog).toContainText('1 visit to 1 place');
+    await expect(dialog).toContainText('Barcelona, Spain');
+    await dialog.getByRole('button', { name: 'Import', exact: true }).click();
+    await expect(page.locator('.toast-success', { hasText: 'Imported 1 new place.' })).toBeVisible();
+    await expect(page.locator('#places-tab .place', { hasText: 'Barcelona' })).toContainText('1 visit');
     expect(errors).toEqual([]);
 });

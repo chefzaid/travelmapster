@@ -93,6 +93,12 @@ The reasoning and what each rule rules out are in [ADR 0017](adr/0017-product-pr
   where each step becomes a visit to its town until the next step; or a pasted list of
   countries from Been, Visited or anywhere. Places already on the map only get the visits they
   lack.
+- **Import from photos and location history**: choose photos (JPEG or HEIC) or a location
+  history file (Google Takeout's Semantic Location History, as JSON files or the Takeout ZIP,
+  or the Timeline export from Google Maps on Android or iOS). The page reads where and when
+  each photo was taken, or each stay in the history, reduces it to the nearest town and turns
+  days into visits; every visit is listed by place to untick before saving. The files never
+  leave the browser ([ADR 0025](adr/0025-imports-from-photos-and-location-history.md)).
 - Import and export as JSON (visits nested in each place) or CSV (one row per visit), with
   ratings, tags, emoji, wishlist plans and whether a place was lived in or a layover; import
   also reads files from before visits or tags existed, and
