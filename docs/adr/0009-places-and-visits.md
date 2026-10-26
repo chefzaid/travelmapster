@@ -37,7 +37,10 @@ calling the API with the old fields until they reload.
   `PATCH` and `DELETE /api/visits/:id`. Public maps share visit dates only.
 - **Contract step (a later release).** Once no running release or supported file format relies
   on it, drop the triggers and `markers.travel_date`, and keep `travelDate` only as an import
-  field that becomes a visit.
+  field that becomes a visit. It takes two releases, since the previous release writes the
+  column itself: from 1.10.0 the app never reads or writes it (a `travelDate` sent by an old tab
+  or a file becomes a visit in the app, with the triggers' rules), and the release after it
+  drops the triggers and the column. An integration test drops them and runs every place route.
 
 ## Consequences
 
