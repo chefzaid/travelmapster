@@ -425,6 +425,17 @@ function timelineSection(ctx, overview) {
 
 // ---------------------------------------------------------------- tab
 
+// The ledger's privacy statement (ADR 0017): what is stored, at what precision, and where the
+// counting happens.
+function privacyNote() {
+    return h('details', { class: 'small', id: 'ledger-privacy' },
+        h('summary', {}, 'How your ledger data is kept'),
+        h('p', {}, 'Places are saved as a town or a country with the map\'s coordinates for it, never your precise location. A place found through the world search is rounded to about a kilometer; only coordinates you import yourself are kept as they are in the file.'),
+        h('p', {}, 'Days, rules, thresholds and alerts are counted on this device. Evidence reports are made here only when you ask, and are never sent to the server or stored there.'),
+        h('p', {}, 'The server keeps your visits, your ledger settings and the history of visit dates, so reports can show every change. None of it is ever on your public map, and deleting your account deletes all of it.')
+    );
+}
+
 export function renderLedger(container, ctx) {
     const overview = ctx.currentLedger();
     const counted = overview.ledger.countries.size;
@@ -437,6 +448,7 @@ export function renderLedger(container, ctx) {
         ),
         h('p', { class: 'muted small' }, 'Every dated visit turns into days in a country; a city counts for its country. Add visits from any place card.'),
         h('p', { class: 'muted small', id: 'ledger-advice' }, ADVICE_NOTE),
+        privacyNote(),
         alertsSection(overview),
         dataNotes(overview),
         schengenSection(ctx, overview),

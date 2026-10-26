@@ -252,6 +252,8 @@ test('a traveler counts Schengen days, tries a plan, gets an alert and prints ev
     await expect(ledger.locator('.timeline-stay').first()).toContainText('Portugal');
     await expect(ledger.locator('.timeline-stay').first()).toContainText('10 days');
     await expect(ledger.locator('#ledger-advice')).toContainText('not legal or tax advice');
+    await ledger.getByText('How your ledger data is kept').click();
+    await expect(ledger.locator('#ledger-privacy')).toContainText('never your precise location');
 
     // Eighty-five more days in Spain would break 90/180.
     await ledger.getByRole('button', { name: '＋ Plan a stay' }).click();
