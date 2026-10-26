@@ -3,6 +3,7 @@
 import { h, toast, formDialog, formatDate } from './ui.js';
 import { checkVisit, formatVisitDates, sortVisits, lastVisitDate, visitCountLabel, visitDays } from './visits.js';
 import { statusOf } from './status.js';
+import { purposeValue, readPurpose } from './org-data.js';
 
 function setVisits(ctx, marker, visits, reopenCard) {
     marker.visits = sortVisits(visits);
@@ -11,8 +12,20 @@ function setVisits(ctx, marker, visits, reopenCard) {
     reopenCard();
 }
 
+// A member of an organization says whether a visit was a business trip for it (ADR 0029);
+// without one, the form leaves the purpose alone.
+function purposeFields(ctx, draft) {
+    const orgs = ctx.state.orgs || [];
+    if (!orgs.length) return [];
+    return [{
+        name: 'purpose', label: 'Trip for', type: 'select', value: purposeValue(draft),
+        options: [{ value: 'personal', label: 'Personal' }, ...orgs.map(org => ({ value: `business:${org.id}`, label: `Business: ${org.name}` }))],
+        hint: 'Its managers see business days per country, never this place or its notes.'
+    }];
+}
+
 // Asks for a visit's dates and details; a mistake reopens the form with what was typed.
-async function visitDialog(marker, visit) {
+async function visitDialog(ctx, marker, visit) {
     let draft = visit;
     for (;;) {
         const values = await formDialog({
@@ -23,19 +36,21 @@ async function visitDialog(marker, visit) {
                 { name: 'endDate', label: 'Last day', type: 'date', value: draft?.endDate || '', hint: 'Optional. Without it, the day ledger counts the first day only.' },
                 { name: 'ongoing', label: 'I\'m still there', type: 'checkbox', value: draft?.ongoing, hint: 'Leave the last day empty: the day ledger counts every day up to today.' },
                 { name: 'notes', label: 'What happened', type: 'textarea', value: draft?.notes || '', maxlength: 2000, placeholder: 'Favorite memory, who you went with…' },
-                { name: 'photoUrl', label: 'Photo link', type: 'url', value: draft?.photoUrl || '', placeholder: 'https://…', hint: 'Link to a photo or album hosted anywhere (HTTP or HTTPS).' }
+                { name: 'photoUrl', label: 'Photo link', type: 'url', value: draft?.photoUrl || '', placeholder: 'https://…', hint: 'Link to a photo or album hosted anywhere (HTTP or HTTPS).' },
+                ...purposeFields(ctx, draft)
             ]
         });
         if (!values) return null;
+        const purpose = values.purpose === undefined ? {} : readPurpose(values.purpose);
         const { visit: checked, error } = checkVisit(values);
-        if (!error) return checked;
+        if (!error) return { ...checked, ...purpose };
         toast(error, { tone: 'error' });
-        draft = values;
+        draft = { ...values, ...purpose };
     }
 }
 
 async function addVisit(ctx, marker, reopenCard) {
-    const values = await visitDialog(marker);
+    const values = await visitDialog(ctx, marker);
     if (!values) return;
     try {
         const visit = await ctx.api.addVisit(marker.id, values);
@@ -47,7 +62,7 @@ async function addVisit(ctx, marker, reopenCard) {
 }
 
 async function editVisit(ctx, marker, visit, reopenCard) {
-    const values = await visitDialog(marker, visit);
+    const values = await visitDialog(ctx, marker, visit);
     if (!values) return;
     try {
         const updated = await ctx.api.updateVisit(visit.id, values);
@@ -81,11 +96,13 @@ async function removeVisit(ctx, marker, visit, reopenCard) {
 function visitItem(ctx, marker, visit, reopenCard) {
     const days = visitDays(visit);
     const dates = formatVisitDates(visit, formatDate);
+    const business = visit.purpose === 'business' ? (ctx.state.orgs || []).find(org => org.id === visit.organizationId) || {} : null;
     return h('li', { class: 'visit' },
         h('div', { class: 'visit-text' },
             h('strong', {}, h('span', { 'aria-hidden': 'true' }, '📅 '), dates),
             days ? h('small', { class: 'visit-days' }, days === 1 ? '1 day' : `${days} days`) : null,
             !visit.endDate && !visit.ongoing ? h('small', { class: 'visit-days' }, 'Last day not recorded') : null,
+            business ? h('small', { class: 'visit-days' }, `💼 Business${business.name ? `: ${business.name}` : ''}`) : null,
             visit.notes ? h('p', { class: 'visit-notes' }, visit.notes) : null,
             visit.photoUrl ? h('a', { href: visit.photoUrl, target: '_blank', rel: 'noopener noreferrer', class: 'visit-photo', 'aria-label': `Photo of the visit of ${dates} (opens in a new tab)` }, '📷 Photo') : null
         ),

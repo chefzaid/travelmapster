@@ -2,7 +2,8 @@
 // or downloaded as CSV. Built on the device from days.js, only when asked.
 import { h, downloadFile, formatDate } from './ui.js';
 import { openPrintView, printTable } from './print-view.js';
-import { DAY_RULES, buildEvidenceCsv, describeChange, evidenceReport, localToday } from './days.js';
+import { DAY_RULES, localToday } from './days.js';
+import { buildEvidenceCsv, describeChange, evidenceReport } from './ledger-evidence.js';
 
 const form = { country: 'all', from: '', to: '' };
 

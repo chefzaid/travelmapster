@@ -292,12 +292,21 @@ input[aria-invalid='true'] { border-color: var(--danger); }
 }
 
 /* Sign-in security (ADR 0027) */
-.security-section { margin: 12px 0; padding-top: 10px; border-top: 2px dashed var(--line); }
-.security-section h4 { margin: 0 0 4px; }
-.passkey-list { display: grid; gap: 6px; margin: 8px 0; padding: 0; list-style: none; }
-.passkey { display: flex; align-items: center; gap: 8px; }
-.passkey > span { display: grid; flex: 1; }
-.passkey small { color: var(--muted); font-weight: 700; }
+.dialog-section { margin: 12px 0; padding-top: 10px; border-top: 2px dashed var(--line); }
+.dialog-section h4 { margin: 0 0 4px; }
+.dialog-list { display: grid; gap: 6px; margin: 8px 0; padding: 0; list-style: none; }
+.dialog-item { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.dialog-item > span:first-child { display: grid; flex: 1; min-width: 10ch; }
+.dialog-item small { color: var(--muted); font-weight: 700; }
+.dialog-item select { width: auto; }
+.dialog-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+/* The employer's report: a row per member, scrolling sideways on phones */
+.org-report { max-width: 100%; overflow-x: auto; }
+.org-report table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.org-report th, .org-report td { padding: 4px 6px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.org-period { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; }
+.org-period .field { flex: 1 1 9rem; margin: 0; }
+.invitation-link { display: block; padding: 6px; border: 2px solid var(--ink); border-radius: var(--radius-sm); word-break: break-all; }
 .qr-code { display: block; width: 200px; height: 200px; margin: 8px auto; border: 2px solid var(--ink); border-radius: var(--radius-sm); }
 .two-step-key,
 .recovery-codes code { font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace; font-weight: 700; word-break: break-all; }

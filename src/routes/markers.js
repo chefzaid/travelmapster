@@ -3,12 +3,13 @@
 const express = require('express');
 const { withTransaction } = require('../db/pool');
 const { IMPORT_MAX_MARKERS, parseBulkChanges, parseMarkerId, parseMarkerPayload, parseVisitPayload } = require('../validation');
+const { checkVisitPurpose } = require('./orgs');
 
 // Funnel steps reached when a traveler's number of places first crosses them.
 /** @type {Array<[number, string]>} */
 const PLACE_STEPS = [[1, 'first_place'], [10, 'ten_places']];
 
-function createMarkerRouter({ pool, markers, visits, metrics }) {
+function createMarkerRouter({ pool, markers, visits, metrics, orgs }) {
     const router = express.Router();
 
     // Counts places saved by a route, and the funnel steps a traveler crossed with them.
@@ -117,6 +118,8 @@ function createMarkerRouter({ pool, markers, visits, metrics }) {
         if (!markerId) return res.status(400).json({ error: 'Invalid marker id.' });
         const { visit, error } = parseVisitPayload(req.body);
         if (error) return res.status(400).json({ error });
+        const refused = await checkVisitPurpose(orgs, req.user.id, visit);
+        if (refused) return res.status(400).json({ error: refused });
         const created = await visits.create(req.user.id, markerId, visit);
         if (!created) return res.status(404).json({ error: 'Marker not found.' });
         return res.status(201).json(created);

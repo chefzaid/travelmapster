@@ -1,6 +1,6 @@
 // Sign-in security (ADR 0027), from the account menu: passkeys to add and remove, and two-step
 // sign-in with an authenticator app, its QR code and recovery codes.
-import { h, toast, formDialog, formatDate, downloadFile } from './ui.js';
+import { h, toast, formDialog, formatDate, downloadFile, steppedDialog } from './ui.js';
 import { createPasskey, passkeysSupported } from './webauthn.js';
 import { qrSvg } from './qr.js';
 
@@ -80,7 +80,7 @@ async function turnOffTwoStep(ctx) {
 }
 
 function passkeyItem(ctx, passkey, step) {
-    return h('li', { class: 'passkey' },
+    return h('li', { class: 'dialog-item passkey' },
         h('span', {}, h('strong', {}, passkey.name),
             h('small', {}, `Added ${formatDate(passkey.createdAt.slice(0, 10))}`,
                 passkey.lastUsedAt ? ` · last used ${formatDate(passkey.lastUsedAt.slice(0, 10))}` : ' · not used yet')),
@@ -95,50 +95,30 @@ function passkeyItem(ctx, passkey, step) {
 }
 
 /** The sign-in security dialog: passkeys and two-step sign-in, redrawn after each change. */
-export async function openSecurity(ctx) {
-    const dialog = h('dialog', { class: 'dialog', 'aria-labelledby': 'security-title' });
-    const body = h('div', { class: 'dialog-body' });
-    dialog.append(body);
-    document.body.append(dialog);
-    dialog.addEventListener('close', () => dialog.remove());
-    // Each step's own dialog opens over this one, which waits closed meanwhile.
-    const step = async action => {
-        dialog.close();
-        try {
-            await action();
-        } catch (error) {
-            ctx.handleError(error);
-        }
-        openSecurity(ctx);
-    };
-    let status;
-    try {
-        status = await ctx.api.security();
-    } catch (error) {
-        dialog.remove();
-        ctx.handleError(error);
-        return;
-    }
-    const { passkeys, twoStep } = status;
-    body.append(
-        h('h3', { id: 'security-title' }, 'Sign-in security'),
-        h('section', { class: 'security-section' },
-            h('h4', {}, '🔑 Passkeys'),
-            h('p', { class: 'small' }, 'Log in with your fingerprint, face or screen lock instead of your password. Passkeys cannot be phished.'),
-            passkeys.length ? h('ul', { class: 'passkey-list' }, passkeys.map(passkey => passkeyItem(ctx, passkey, step))) : null,
-            passkeysSupported()
-                ? h('button', { type: 'button', class: 'btn btn-ghost btn-sm', disabled: passkeys.length >= MAX_PASSKEYS, onclick: () => step(() => addPasskey(ctx)) }, '＋ Add a passkey')
-                : h('p', { class: 'small muted' }, 'This browser cannot create passkeys.')),
-        h('section', { class: 'security-section' },
-            h('h4', {}, '📱 Two-step sign-in'),
-            twoStep.enabled
-                ? h('p', { class: 'small' }, `On: after your password, a code from your authenticator app. ${twoStep.recoveryCodesLeft} recovery ${twoStep.recoveryCodesLeft === 1 ? 'code' : 'codes'} left.`)
-                : h('p', { class: 'small' }, 'After your password, also ask for a code from an authenticator app on your phone.'),
-            h('button', {
-                type: 'button', class: twoStep.enabled ? 'btn btn-danger-ghost btn-sm' : 'btn btn-ghost btn-sm',
-                onclick: () => step(() => (twoStep.enabled ? turnOffTwoStep(ctx) : turnOnTwoStep(ctx)))
-            }, twoStep.enabled ? 'Turn off' : 'Turn on')),
-        h('div', { class: 'dialog-actions' }, h('button', { type: 'button', class: 'btn btn-primary', onclick: () => dialog.close() }, 'Done'))
-    );
-    dialog.showModal();
+export function openSecurity(ctx) {
+    return steppedDialog({
+        labelledBy: 'security-title',
+        load: () => ctx.api.security(),
+        onError: ctx.handleError,
+        draw: ({ passkeys, twoStep }, step, close) => [
+            h('h3', { id: 'security-title' }, 'Sign-in security'),
+            h('section', { class: 'dialog-section' },
+                h('h4', {}, '🔑 Passkeys'),
+                h('p', { class: 'small' }, 'Log in with your fingerprint, face or screen lock instead of your password. Passkeys cannot be phished.'),
+                passkeys.length ? h('ul', { class: 'dialog-list' }, passkeys.map(passkey => passkeyItem(ctx, passkey, step))) : null,
+                passkeysSupported()
+                    ? h('button', { type: 'button', class: 'btn btn-ghost btn-sm', disabled: passkeys.length >= MAX_PASSKEYS, onclick: () => step(() => addPasskey(ctx)) }, '＋ Add a passkey')
+                    : h('p', { class: 'small muted' }, 'This browser cannot create passkeys.')),
+            h('section', { class: 'dialog-section' },
+                h('h4', {}, '📱 Two-step sign-in'),
+                twoStep.enabled
+                    ? h('p', { class: 'small' }, `On: after your password, a code from your authenticator app. ${twoStep.recoveryCodesLeft} recovery ${twoStep.recoveryCodesLeft === 1 ? 'code' : 'codes'} left.`)
+                    : h('p', { class: 'small' }, 'After your password, also ask for a code from an authenticator app on your phone.'),
+                h('button', {
+                    type: 'button', class: twoStep.enabled ? 'btn btn-danger-ghost btn-sm' : 'btn btn-ghost btn-sm',
+                    onclick: () => step(() => (twoStep.enabled ? turnOffTwoStep(ctx) : turnOnTwoStep(ctx)))
+                }, twoStep.enabled ? 'Turn off' : 'Turn on')),
+            h('div', { class: 'dialog-actions' }, h('button', { type: 'button', class: 'btn btn-primary', onclick: close }, 'Done'))
+        ]
+    });
 }

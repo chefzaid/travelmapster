@@ -17,6 +17,12 @@ erDiagram
     users ||--o{ recovery_codes : "recovers with"
     users ||--o{ follows : follows
     trips ||--o{ trip_members : "shared with"
+    organizations ||--o{ memberships : "has members"
+    users ||--o{ memberships : "belongs to"
+    organizations ||--o{ invitations : invites
+    organizations ||--o| org_rules : "sets rules"
+    organizations ||--o{ audit_log : "looked at"
+    organizations |o--o{ visits : "business trips for"
     users {
         bigint id PK
         text username "unique, case-insensitive"
@@ -57,6 +63,8 @@ erDiagram
         boolean ongoing "still there; only without an end date"
         text notes
         text photo_url
+        text purpose "personal | business"
+        bigint organization_id FK "for a business trip"
     }
     ledger_settings {
         bigint user_id PK
@@ -85,6 +93,29 @@ erDiagram
         jsonb packing "packing list"
         jsonb budget "currency, rates, expenses"
     }
+    organizations {
+        bigint id PK
+        text name
+    }
+    memberships {
+        bigint organization_id PK
+        bigint user_id PK
+        text role "traveler | manager | admin"
+    }
+    invitations {
+        bigint id PK
+        text token_hash "SHA-256, single use"
+        text role
+        timestamptz expires_at
+        timestamptz used_at
+    }
+    audit_log {
+        bigint id PK
+        bigint actor_id FK "who looked"
+        bigint traveler_id FK "whose counts"
+        text action
+        timestamptz at
+    }
 ```
 
 ## Tables
@@ -93,7 +124,7 @@ erDiagram
 |---|---|
 | `users` | `username` is 3–32 of `A-Z a-z 0-9 _ . -`, unique regardless of case. Passwords are 8–72 bytes and stored only as bcrypt hashes (cost 12). `profile_visibility` defaults to `private`. `home_country` is an optional three-letter map code ([ADR 0014](adr/0014-home-lived-and-transit.md)); `country_list` is `all` (the default) or `un`, the countries the passport counts against ([ADR 0015](adr/0015-country-lists.md)). `map_palette` is `standard` (the default), `colorblind` or `print`, and `public_journeys` (default false) lets visitors of a public map see journey lines ([ADR 0016](adr/0016-timeline-journeys-and-palettes.md)). `public_indexing` (default false) lets search engines list the map while it is public ([ADR 0023](adr/0023-shared-map-previews-and-indexing.md)). `last_seen_on` is the last day the account was used, a date only, for aggregate activity metrics ([ADR 0018](adr/0018-product-metrics.md)). `goals` is a JSON list of at most 12 yearly goals (`year` 2000–2100, `kind` `countries`, `cities` or `visits`, `target` 1–999), one per kind and year. |
 | `markers` | A saved place ("marker" in the API). `name` 1–200 characters, `notes` up to 2,000, `photo_url` an HTTP(S) URL up to 2,048. Coordinates are range-checked. `rating` is 1–5 or empty; `tags` holds up to 8 lowercase tags of 1–24 letters or digits (with inner spaces, dashes, apostrophes or ampersands); `emoji` is a single emoji of at most 16 code points ([ADR 0012](adr/0012-place-details.md)). `hide_from_public` keeps the place and its visits off the owner's public map ([ADR 0013](adr/0013-hidden-places.md)). For wishlist plans, `priority` is `high`, `medium`, `low` or empty and `best_months` holds month numbers 1–12. `stay` says how the traveler was at a place they have been to: `visit` (the default), `lived` or `transit`; the API keeps it at `visit` for wishlist places and reads it only for visited ones. `travel_date` only mirrors the start of the latest visit for the previous release ([below](#places-and-visits)). |
-| `visits` | One stay at a place: `start_date` required, `end_date` optional and never before the start, `ongoing` true for a stay still going on (the API refuses it with an end date), `notes` up to 2,000, `photo_url` an HTTP(S) URL up to 2,048. At most 500 per place when created with it or imported. |
+| `visits` | One stay at a place: `start_date` required, `end_date` optional and never before the start, `ongoing` true for a stay still going on (the API refuses it with an end date), `notes` up to 2,000, `photo_url` an HTTP(S) URL up to 2,048. At most 500 per place when created with it or imported. `purpose` is `personal` (the default) or `business`, with `organization_id` one of the traveler's organizations; a trigger keeps a visit without an organization personal, so leaving or deleting the organization turns its business visits personal ([ADR 0029](adr/0029-organizations-and-business-days.md)). Visits created with a place or imported are personal. |
 | `ledger_settings` | One row per traveler once they save: `day_rule`, and JSON arrays `rules` (at most 20 stay rules and thresholds, each with an id, name, 1–80 three-letter country codes, day counts and a warning margin) and `planned` (at most 30 stays with a country and first and last day). Validated in `ledger-validation.js`. |
 | `visit_changes` | Append-only history of visit dates written by triggers: old and new `start_date`, `end_date` and `ongoing` of each added, changed or removed visit, with the place name and time. Kept after the visit or place is removed. |
 | `trips` | `title` 1–120 and `destination` 1–160 characters, optional `start_date`. `plan` is a JSON array of 1–30 days, each with `morning`, `afternoon` and `evening` text of up to 500 characters. `stops` is `[]` for a trip to its one destination, or a JSON list of 2–10 stops in order, each with a `destination` (1–160 characters) and its `days` (1–30); the first stop's destination is also the trip's. `packing` is a JSON list of at most 200 items (`item` 1–80 characters, `packed`). `budget` is `{}` or `{ currency, planned, rates, expenses }`: ISO 4217 codes, an optional planned amount, at most 30 exchange rates (units of `currency` for one unit of another) and 300 expenses (`label` 1–80 characters, `amount` 0–1,000,000,000, `currency`, `category` `transport`, `stay`, `food`, `activities` or `other`). An update that leaves out the stops, the packing list or the budget keeps the stored ones. |
@@ -102,13 +133,19 @@ erDiagram
 | `recovery_codes` | SHA-256 hashes of the ten recovery codes, with `used_at` once spent. |
 | `follows` | Public maps a traveler follows ([ADR 0028](adr/0028-friends-and-shared-trips.md)): `follower_id`, `followee_id` (never the same), `created_at`; at most 200 per traveler. Following a private map is refused; a map made private stays followed but hidden. |
 | `trip_members` | Accounts a trip is shared with: `trip_id`, `user_id`, `role` (`edit` or `view`), `added_at`; at most 20 per trip, gone with the trip or either account. |
+| `organizations` | A Teams organization ([ADR 0029](adr/0029-organizations-and-business-days.md)): `name` 1–80 characters. Deleting it removes its members, invitations, rules and audit log. |
+| `memberships` | `organization_id`, `user_id`, `role` (`traveler`, `manager` or `admin`), `joined_at`; at most 10 organizations per account, and each keeps an admin (checked by the API). |
+| `invitations` | Single-use invitation links: the SHA-256 `token_hash` (never the token), the `role` given, who made it, `expires_at` seven days on, and `used_at`/`used_by` once used. |
+| `org_rules` | The employer's rules: a JSON array in the ledger's rule format (at most 20, validated like `ledger_settings.rules`). |
+| `audit_log` | One row per member each time a manager or admin looks at the report: `actor_id` (null once that account is gone), `traveler_id`, `action`, `at`. Members read their own rows. |
 | `sessions` | Server-side sessions for `connect-pg-simple`; expired rows are pruned every 15 minutes. |
 | `rate_limits` | Unlogged rate-limit counters per limiter and client IP, shared by replicas; expired rows are swept every 10 minutes. |
 | `geocoder_throttle` | One row with the earliest start time of the next Nominatim request. |
 | `schema_migrations` | Applied migration versions. |
 
 All timestamps are `created_at`/`updated_at` (`timestamptz`). Deleting a user cascades to their
-markers, their visits, trips, ledger settings and date history; deleting a place removes its
+markers, their visits, trips, ledger settings, date history, memberships and the audit entries
+about them; deleting a place removes its
 visits and records them as removed in the history.
 
 ## Places And Visits
@@ -230,4 +267,6 @@ drawn between them, never the map palette, the home country, the notes or
 photo links of places or visits, ratings, tags, emoji or wishlist plans, nor anything of the places hidden from it, whether a stay is still going on, ledger settings or date history
 ([security](security.md#privacy)). Deleting an account removes the user, their
 places, visits, ledger settings, date history, trips (and their sharing), the maps they follow and
-who follows them, passkeys, two-step secrets, recovery codes and sessions at once.
+who follows them, passkeys, two-step secrets, recovery codes, memberships, the audit entries
+about them and sessions at once. An organization's report shows its managers only business days
+per country and rule statuses, never the places behind them ([ADR 0029](adr/0029-organizations-and-business-days.md)).

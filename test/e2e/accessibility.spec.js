@@ -2,6 +2,7 @@
 
 const { test, expect } = require('@playwright/test');
 const { default: AxeBuilder } = require('@axe-core/playwright');
+const { turnOnTwoStep } = require('./helpers');
 
 // WCAG 2.2 level A and AA rules, including colour contrast, in both themes.
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
@@ -97,6 +98,25 @@ for (const colorScheme of ['light', 'dark']) {
         await expect(page.locator('dialog.dialog img.qr-code')).toBeVisible();
         await expectAccessible(page, 'two-step setup dialog');
         await page.locator('dialog.dialog').getByRole('button', { name: 'Cancel' }).click();
+        await turnOnTwoStep(page);
+        await expect(page.locator('dialog.dialog')).toHaveCount(0);
+        // An organization with a rule, its report, and the rule in the Ledger tab (ADR 0029).
+        await page.click('#account-btn');
+        await page.click('#orgs-btn');
+        await page.getByRole('button', { name: '＋ Create an organization' }).click();
+        await page.fill('#dialog-name', 'Audit Co');
+        await page.getByRole('button', { name: 'Create', exact: true }).click();
+        await expect(page.locator('dialog.dialog .dialog-item', { hasText: 'Audit Co' })).toBeVisible();
+        await expectAccessible(page, 'organizations dialog');
+        await page.getByRole('button', { name: 'Manage Audit Co' }).click();
+        await page.getByRole('button', { name: '＋ Stay rule' }).click();
+        await page.fill('#dialog-name', 'Audit visa');
+        await page.fill('#dialog-countries', 'Japan');
+        await page.getByRole('button', { name: 'Add rule' }).click();
+        await page.getByRole('button', { name: 'Show business days' }).click();
+        await expect(page.locator('.org-report')).toBeVisible();
+        await expectAccessible(page, 'organization report');
+        await page.getByRole('button', { name: 'Back' }).click();
         await page.locator('dialog.dialog').getByRole('button', { name: 'Done' }).click();
         await expect(page.locator('dialog.dialog')).toHaveCount(0);
 

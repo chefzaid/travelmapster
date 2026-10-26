@@ -13,11 +13,12 @@ const MARKER_COLUMNS = `m.id, m.lat, m.lng, m.type, m.name, m.category,
     (SELECT max(v.start_date) FROM visits v WHERE v.marker_id = m.id) AS "travelDate",
     COALESCE((SELECT json_agg(json_build_object(
         'id', v.id, 'startDate', v.start_date, 'endDate', v.end_date, 'ongoing', v.ongoing,
-        'notes', v.notes, 'photoUrl', v.photo_url) ORDER BY v.start_date DESC, v.id DESC)
+        'notes', v.notes, 'photoUrl', v.photo_url, 'purpose', v.purpose, 'organizationId', v.organization_id)
+        ORDER BY v.start_date DESC, v.id DESC)
         FROM visits v WHERE v.marker_id = m.id), '[]'::json) AS visits`;
 
 const VISIT_COLUMNS = `v.id, v.start_date AS "startDate", v.end_date AS "endDate", v.ongoing,
-    v.notes, v.photo_url AS "photoUrl"`;
+    v.notes, v.photo_url AS "photoUrl", v.purpose, v.organization_id AS "organizationId"`;
 
 // Account settings by API field and column.
 // Goals are JSON, so they are written as text and cast.
@@ -294,22 +295,25 @@ function createVisitRepository(db) {
 
         async create(userId, markerId, visit) {
             const { rows } = await db.query(
-                `INSERT INTO visits AS v (marker_id, start_date, end_date, notes, photo_url, ongoing)
-                 SELECT m.id, $3, $4, $5, $6, $7 FROM markers m WHERE m.id = $1 AND m.user_id = $2
+                `INSERT INTO visits AS v (marker_id, start_date, end_date, notes, photo_url, ongoing, purpose, organization_id)
+                 SELECT m.id, $3, $4, $5, $6, $7, COALESCE($8, 'personal'), $9 FROM markers m WHERE m.id = $1 AND m.user_id = $2
                  RETURNING ${VISIT_COLUMNS}`,
-                [markerId, userId, ...visitValues(visit)]
+                [markerId, userId, ...visitValues(visit), visit.purpose ?? null, visit.organizationId ?? null]
             );
             return rows[0] || null;
         },
 
+        // A purpose left out keeps the stored one and its organization (ADR 0029).
         async update(userId, visitId, visit) {
             const { rows } = await db.query(
                 `UPDATE visits v SET start_date = $3, end_date = $4, notes = $5, photo_url = $6, ongoing = $7,
+                    purpose = COALESCE($8, v.purpose),
+                    organization_id = CASE WHEN $8::text IS NULL THEN v.organization_id ELSE $9::bigint END,
                     updated_at = now()
                  FROM markers m
                  WHERE v.id = $1 AND m.id = v.marker_id AND m.user_id = $2
                  RETURNING ${VISIT_COLUMNS}`,
-                [visitId, userId, ...visitValues(visit)]
+                [visitId, userId, ...visitValues(visit), visit.purpose ?? null, visit.organizationId ?? null]
             );
             return rows[0] || null;
         },

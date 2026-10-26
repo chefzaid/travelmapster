@@ -115,4 +115,10 @@ function parseLedgerSettings(body) {
     return { settings: { dayRule: body.dayRule, rules: rules.items, planned: planned.items } };
 }
 
-module.exports = { COUNTRY_ID_PATTERN, parseLedgerSettings, plainObject, wholeNumber };
+/** An employer's rules, in the ledger's own format (ADR 0029). */
+function parseLedgerRules(value) {
+    const rules = parseList(value ?? [], LEDGER_MAX_RULES, 'Rule', parseLedgerRule);
+    return rules.error ? { error: rules.error } : { rules: rules.items };
+}
+
+module.exports = { COUNTRY_ID_PATTERN, parseLedgerRules, parseLedgerSettings, plainObject, wholeNumber };

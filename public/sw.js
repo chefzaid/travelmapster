@@ -5,7 +5,7 @@ const ASSETS = 'travelmapster-assets';
 const PAGES = 'travelmapster-pages';
 const ACCOUNT = 'travelmapster-account';
 // Reads of the traveler's own data that may answer offline, as last loaded.
-const ACCOUNT_READS = ['/api/auth/me', '/api/markers', '/api/trips', '/api/ledger', '/api/ledger/changes', '/api/csrf-token'];
+const ACCOUNT_READS = ['/api/auth/me', '/api/markers', '/api/trips', '/api/ledger', '/api/ledger/changes', '/api/orgs', '/api/csrf-token'];
 // Signing in, out or deleting the account changes whose data this is: drop the copy.
 const SESSION_CHANGES = /^\/api\/auth\/(login|logout|register|account)$/;
 

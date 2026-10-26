@@ -56,7 +56,11 @@ async function request(method, path, body, retried = false) {
 
 // The API stores empty optional fields as null; the UI works with strings.
 export function toClientVisit(visit) {
-    return { ...visit, endDate: visit.endDate || '', notes: visit.notes || '', photoUrl: visit.photoUrl || '', ongoing: Boolean(visit.ongoing) };
+    return {
+        ...visit, endDate: visit.endDate || '', notes: visit.notes || '', photoUrl: visit.photoUrl || '', ongoing: Boolean(visit.ongoing),
+        // A replica of an older release sends no purpose: every visit was personal.
+        purpose: visit.purpose || 'personal', organizationId: visit.organizationId ?? null
+    };
 }
 
 export function toClientMarker(marker) {
@@ -137,6 +141,21 @@ export const api = {
     getTripMembers: id => request('GET', `/trips/${Number(id)}/members`),
     shareTrip: (id, username, role) => request('PUT', `/trips/${Number(id)}/members/${encodeURIComponent(username)}`, { role }),
     unshareTrip: (id, username) => request('DELETE', `/trips/${Number(id)}/members/${encodeURIComponent(username)}`),
+
+    getOrgs: () => request('GET', '/orgs'),
+    getOrgAudit: () => request('GET', '/orgs/audit'),
+    createOrg: name => request('POST', '/orgs', { name }),
+    joinOrg: token => request('POST', '/orgs/join', { token }),
+    renameOrg: (id, name) => request('PATCH', `/orgs/${Number(id)}`, { name }),
+    deleteOrg: id => request('DELETE', `/orgs/${Number(id)}`),
+    saveOrgRules: (id, rules) => request('PUT', `/orgs/${Number(id)}/rules`, { rules }),
+    getOrgMembers: id => request('GET', `/orgs/${Number(id)}/members`),
+    setOrgRole: (id, username, role) => request('PATCH', `/orgs/${Number(id)}/members/${encodeURIComponent(username)}`, { role }),
+    removeOrgMember: (id, username) => request('DELETE', `/orgs/${Number(id)}/members/${encodeURIComponent(username)}`),
+    getOrgInvitations: id => request('GET', `/orgs/${Number(id)}/invitations`),
+    inviteToOrg: (id, role) => request('POST', `/orgs/${Number(id)}/invitations`, { role }),
+    revokeOrgInvitation: (id, invitationId) => request('DELETE', `/orgs/${Number(id)}/invitations/${Number(invitationId)}`),
+    getOrgReport: (id, { from, to }) => request('GET', `/orgs/${Number(id)}/report?${new URLSearchParams({ from, to })}`),
 
     getFollows: () => request('GET', '/follows'),
     follow: username => request('POST', '/follows', { username }),

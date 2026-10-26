@@ -1,8 +1,9 @@
 // Signing up and in from the landing page (with a passkey or a second step, ADR 0027), the
 // account menu, settings, password change, account deletion and sharing.
-import { h, $, $all, fill, toast, formDialog, downloadFile } from './ui.js';
+import { h, $, $all, fill, toast, formDialog, downloadFile, copyText } from './ui.js';
 import { passkeysSupported, usePasskey } from './webauthn.js';
 import { openSecurity } from './security.js';
+import { openOrgs } from './orgs.js';
 import { accountArchive } from './archive.js';
 import { SCHENGEN_RULE } from './days.js';
 import { COUNTRY_LISTS, countedCountries } from './lists.js';
@@ -324,17 +325,11 @@ export function setupAccountMenu(ctx) {
     menuItem('#settings-btn', openSettings);
     menuItem('#password-btn', changePassword);
     menuItem('#security-btn', openSecurity);
+    menuItem('#orgs-btn', openOrgs);
     menuItem('#export-btn', downloadArchive);
     menuItem('#delete-account-btn', deleteAccount);
 
-    const copy = async (text, done, label) => {
-        try {
-            await navigator.clipboard.writeText(text);
-            toast(done, { tone: 'success' });
-        } catch {
-            toast(`${label}: ${text}`);
-        }
-    };
+    const copy = (text, done, label) => copyText(text, done, `${label}: ${text}`);
     $('#copy-share-btn').addEventListener('click', () =>
         copy(`${location.origin}/?u=${encodeURIComponent(ctx.state.user.username)}`, 'Share link copied!', 'Share link'));
     // A frame for blogs and personal sites, read-only and without notes (ADR 0020).

@@ -46,4 +46,5 @@ authenticator app.
   checks; `jsqr` is a development dependency that reads the QR codes back in tests.
 - Passkeys need a domain name: browsers refuse them on an IP address, so local runs use
   `localhost`.
-- Requiring these for Teams administrators follows with the Teams tier.
+- Managers and admins of an organization need one of these to run it
+  ([ADR 0029](0029-organizations-and-business-days.md)).

@@ -3,16 +3,15 @@
 import { api } from './api.js';
 import { computeStats, countryStatus } from './geo.js';
 import { loadMapData as loadData } from './map-data.js';
-import { h, $, $all, toast, confirmDialog } from './ui.js';
+import { h, $, toast, confirmDialog } from './ui.js';
 import { describeDetailFilter, detailFilterActive, matchesDetails } from './details.js';
-import { renderPlaces } from './places.js';
-import { renderTrips } from './trips.js';
-import { renderPassport, renderPublicStats } from './passport.js';
-import { renderLedger } from './ledger.js';
+import { renderPublicStats } from './passport.js';
+import { renderActiveTab, selectTab, setupTabs, storedTab } from './tabs.js';
+import { removePlace, savePlace, updatePlace } from './place-store.js';
 import { localToday } from './days.js';
 import { announceLedgerAlerts, currentLedger, emptyLedger, loadVisitChanges, updateLedgerBadge } from './ledger-store.js';
 import { DEMO_HOME, demoMarkers } from './demo.js';
-import { STATUSES, statusInfo, statusOf } from './status.js';
+import { STATUSES, statusOf } from './status.js';
 import { celebrate } from './confetti.js';
 import { celebrateGoals } from './passport-goals.js';
 import { setupOffline } from './offline.js';
@@ -23,10 +22,11 @@ import { markContinent, setupSelectBar, startSelecting, stopSelecting, toggleSel
 import { countryMarker, showCityCard, showCountryCard, showMarker, showSavedCityCard } from './cards.js';
 import { editPlace } from './place-form.js';
 import { setupSearch } from './search.js';
-import { renderExplore, showIdeas } from './explore.js';
+import { showIdeas } from './explore.js';
 import { AUTH_HASHES, closeAccountMenu, openAuth, renderDemoLedger, setupAccountMenu, setupAuth } from './account.js';
 import { hideHome, offerHome, rememberSignedIn, setupHome, wasSignedIn } from './home.js';
 import { followButton } from './friends.js';
+import { explainInvitation, joinPendingInvitation, setupInvitations, takeInvitation } from './orgs.js';
 import { enterGuestMode, guestActive, labelGuestButtons, leaveGuestMode, moveGuestMap, setupGuest, showGuestControls } from './guest.js';
 
 const state = {
@@ -57,6 +57,8 @@ const state = {
     unlocked: null,
     // Goals reached so far, so reaching one is celebrated once.
     reachedGoals: null,
+    // The traveler's organizations with their roles and rules (ADR 0029).
+    orgs: [],
     // Day ledger: settings from the API, the history of visit dates (loaded when needed)
     // and the overview computed from both, cleared whenever places or visits change.
     ledger: emptyLedger()
@@ -114,7 +116,7 @@ function applyFilters() {
 function setDetailFilter(changes) {
     Object.assign(state.filters, changes);
     applyFilters();
-    renderActiveTab();
+    renderActiveTab(context);
 }
 
 function refresh({ celebrateNew = true } = {}) {
@@ -146,7 +148,7 @@ function refresh({ celebrateNew = true } = {}) {
     state.ledger.overview = null;
     state.ledger.changes = null;
     updateLedgerBadge(context);
-    renderActiveTab();
+    renderActiveTab(context);
     if (state.demo) renderDemoLedger(context);
 }
 
@@ -160,47 +162,6 @@ async function saveLedger(settings) {
 async function reloadMarkers() {
     state.markers = await api.getMarkers();
     refresh();
-}
-
-// ---------------------------------------------------------------- saving places
-
-// Demo places live only in the page, with negative ids like the sample traveler's.
-let demoIds = -1000;
-
-async function savePlace(place, { quiet = false } = {}) {
-    const marker = state.demo
-        ? { notes: '', photoUrl: '', visits: [], ...place, id: demoIds-- }
-        : await api.addMarker(place);
-    state.markers.push(marker);
-    refresh();
-    if (!quiet) {
-        const verb = statusInfo(statusOf(place)).saved;
-        toast(state.demo ? `${verb} ${place.name} on the demo map.` : `${verb} ${place.name}!`, { tone: 'success' });
-    }
-    return marker;
-}
-
-async function updatePlace(marker, changes) {
-    const next = { ...marker, ...changes };
-    if (!state.demo) await api.updateMarker(marker.id, next);
-    Object.assign(marker, changes);
-    refresh();
-    return marker;
-}
-
-async function removePlace(marker) {
-    if (!state.demo) await api.deleteMarker(marker.id);
-    state.markers = state.markers.filter(item => item.id !== marker.id);
-    refresh();
-    toast(`Removed ${marker.name}.`, {
-        action: {
-            label: 'Undo',
-            run: () => {
-                const { id, ...place } = marker;
-                savePlace(place, { quiet: true }).catch(error => toast(error.message, { tone: 'error' }));
-            }
-        }
-    });
 }
 
 function handleError(error) {
@@ -225,58 +186,6 @@ async function saveSettings(changes, message) {
     }
 }
 
-// ---------------------------------------------------------------- tabs
-
-const TAB_RENDERERS = {
-    explore: container => renderExplore(container, context),
-    places: container => renderPlaces(container, context),
-    trips: container => renderTrips(container, context),
-    ledger: container => renderLedger(container, context),
-    passport: container => renderPassport(container, context)
-};
-
-function selectTab(name) {
-    state.activeTab = name;
-    // The open trip's route shows only on the Trips tab.
-    if (name !== 'trips') travelMap?.setItinerary([]);
-    for (const tab of $all('.tabs [role="tab"]')) {
-        const selected = tab.id === `tab-${name}`;
-        tab.setAttribute('aria-selected', String(selected));
-        tab.tabIndex = selected ? 0 : -1;
-        $(`#${tab.getAttribute('aria-controls')}`).hidden = !selected;
-    }
-    try {
-        localStorage.setItem('travelmapster.tab', name);
-    } catch {
-        // Storage can be unavailable (private mode); the tab just won't be remembered.
-    }
-    renderActiveTab();
-}
-
-function renderActiveTab() {
-    if (!state.user || !state.stats) return;
-    const container = $(`#${state.activeTab}-tab`);
-    const scroll = $('#panel').scrollTop;
-    // A filter that re-renders its own tab keeps the keyboard focus on it.
-    const focusedId = container.contains(document.activeElement) ? document.activeElement.id : '';
-    TAB_RENDERERS[state.activeTab](container);
-    if (focusedId) document.getElementById(focusedId)?.focus({ preventScroll: true });
-    $('#panel').scrollTop = scroll;
-}
-
-function setupTabs() {
-    const tabs = $all('.tabs [role="tab"]');
-    tabs.forEach((tab, i) => {
-        tab.addEventListener('click', () => selectTab(tab.id.replace('tab-', '')));
-        tab.addEventListener('keydown', event => {
-            if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
-            const next = tabs[(i + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length];
-            next.focus();
-            selectTab(next.id.replace('tab-', ''));
-        });
-    });
-}
-
 // ---------------------------------------------------------------- views
 
 function setView(name) {
@@ -299,6 +208,7 @@ function showSignedOut() {
     state.reachedGoals = null;
     state.ideas = null;
     state.ledger = emptyLedger();
+    state.orgs = [];
     $('#account').hidden = true;
     stopSelecting(context);
     setTimelineOpen(context, false);
@@ -307,6 +217,7 @@ function showSignedOut() {
     refresh({ celebrateNew: false });
     setView('welcome');
     if (AUTH_HASHES[location.hash]) openAuth(AUTH_HASHES[location.hash]);
+    else if (explainInvitation()) openAuth('login');
 }
 
 // Set once a session starts: the landing page shows before the map loads, so a traveler may
@@ -334,30 +245,29 @@ async function startSession(known) {
     for (const id of ['#copy-share-btn', '#embed-btn']) $(id).disabled = user.profileVisibility !== 'public';
 
     // A replica of the previous release has no ledger yet during a rollout: start with the defaults.
-    const [markers, trips, ledgerSettings] = await Promise.all([
+    const [markers, trips, ledgerSettings, orgs] = await Promise.all([
         api.getMarkers(),
         api.getTrips(),
-        api.getLedger().catch(() => emptyLedger().settings)
+        api.getLedger().catch(() => emptyLedger().settings),
+        api.getOrgs().catch(() => [])
     ]);
     state.markers = markers;
     state.trips = trips;
+    state.orgs = orgs;
     state.ledger = { ...emptyLedger(), settings: ledgerSettings };
     state.unlocked = null;
     state.reachedGoals = null;
     state.ideas = null;
     setView('main');
-    let savedTab = 'explore';
-    try {
-        savedTab = localStorage.getItem('travelmapster.tab') || 'explore';
-    } catch {
-        // Ignore unavailable storage.
-    }
-    state.activeTab = TAB_RENDERERS[savedTab] ? savedTab : 'explore';
+    state.activeTab = storedTab();
     refresh({ celebrateNew: false });
-    selectTab(state.activeTab);
+    selectTab(context, state.activeTab);
     announceLedgerAlerts(context);
     // An account opened in a browser used as a guest takes the guest map along.
-    if (!user.guest) await moveGuestMap(context);
+    if (user.guest) return;
+    await moveGuestMap(context);
+    // An invitation link opened before signing in asks to join now.
+    joinPendingInvitation(context);
 }
 
 /** Opens this browser's guest map, kept in its storage (ADR 0026). */
@@ -405,10 +315,10 @@ const context = {
     api,
     refresh,
     applyFilters,
-    renderActiveTab,
-    savePlace,
-    updatePlace,
-    removePlace,
+    renderActiveTab: () => renderActiveTab(context),
+    savePlace: (place, options) => savePlace(context, place, options),
+    updatePlace: (marker, changes) => updatePlace(context, marker, changes),
+    removePlace: marker => removePlace(context, marker),
     editPlace: marker => editPlace(context, marker),
     setDetailFilter,
     markContinent: (continent, type) => markContinent(context, continent, type),
@@ -421,7 +331,7 @@ const context = {
     showIdeas: destination => showIdeas(context, destination),
     handleError,
     confirmDialog,
-    selectTab,
+    selectTab: name => selectTab(context, name),
     reloadMarkers,
     currentLedger: () => currentLedger(context),
     saveLedger,
@@ -497,7 +407,8 @@ async function init() {
     const publicMap = new URLSearchParams(location.search).has('u');
     const signedIn = publicMap ? Promise.resolve(null) : api.currentUser().catch(() => null);
     // Visitors see the presentation first; a browser signed in recently waits for the session.
-    const presenting = !publicMap && !AUTH_HASHES[location.hash];
+    const invited = !publicMap && takeInvitation();
+    const presenting = !publicMap && !AUTH_HASHES[location.hash] && !invited;
     if (presenting && !wasSignedIn()) offerHome();
     // Tests and scripts can tell when the map is drawn: the landing page shows before it.
     mapReady = createMap().then(() => { $('#app').dataset.map = 'ready'; });
@@ -510,13 +421,14 @@ async function init() {
     }
     await mapReady;
     setupSearch(context);
-    setupTabs();
+    setupTabs(context);
     setupAccountMenu(context);
     setupPanel();
     setupLegend(context);
     setupSelectBar(context);
     setupTimeline(context);
     setupPrinting(context);
+    setupInvitations(context);
     await boot(signedIn);
 }
 

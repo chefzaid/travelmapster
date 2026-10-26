@@ -127,8 +127,20 @@ function parseVisitPayload(body) {
     }
     const error = photoUrlError(photoUrl);
     if (error) return { error };
+    // Personal by default, or business for one of the traveler's organizations (ADR 0029); left
+    // out, an update keeps the stored purpose (previous-release tabs never send it).
+    let purpose;
+    let organizationId = null;
+    if (body.purpose !== undefined) {
+        if (body.purpose !== 'personal' && body.purpose !== 'business') return { error: 'Visit purpose must be personal or business.' };
+        purpose = body.purpose;
+        if (purpose === 'business') {
+            organizationId = parseMarkerId(body.organizationId);
+            if (!organizationId) return { error: 'A business visit needs the organization it was for.' };
+        }
+    }
 
-    return { visit: { startDate, endDate: endDate || null, ongoing, notes: notes || null, photoUrl: photoUrl || null } };
+    return { visit: { startDate, endDate: endDate || null, ongoing, notes: notes || null, photoUrl: photoUrl || null, purpose, organizationId } };
 }
 
 function parseVisitList(value) {
@@ -140,7 +152,8 @@ function parseVisitList(value) {
     for (const [index, item] of value.entries()) {
         const { visit, error } = parseVisitPayload(item);
         if (error) return { error: `Visit ${index + 1}: ${error}` };
-        visits.push(visit);
+        // Places and imports make personal visits; a visit is marked business on its own (ADR 0029).
+        visits.push({ ...visit, purpose: 'personal', organizationId: null });
     }
     return { visits };
 }

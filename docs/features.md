@@ -274,12 +274,37 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   signing out removes the offline copy ([ADR 0021](adr/0021-installable-offline-app.md)).
 - Responsive layout with a bottom sheet on phones, `/` to search, screen-reader labels, and light and dark themes that follow the system.
 
+## Organizations
+
+Teams of business travelers and their employer ([ADR 0022](adr/0022-teams.md),
+[ADR 0029](adr/0029-organizations-and-business-days.md)), from **Organizations** in the account
+menu.
+
+- **Create** an organization and become its admin, or **join** one with an invitation link an
+  admin made: single use, valid for seven days, for the role of traveler, manager or admin.
+  Opening the link signed out asks to log in or sign up first; joining always asks first. An
+  account belongs to at most ten; anyone can leave, and an organization always keeps an admin.
+- Managers and admins need a passkey or two-step sign-in to run an organization; the app offers
+  to set one up.
+- **Business trips**: a member marks a visit as a business trip for one of their organizations
+  on the visit form (personal by default). Leaving the organization, or its deletion, turns those
+  visits personal again.
+- **Employer rules**: admins set stay rules and thresholds (such as social security or tax days)
+  in the ledger's own editor. Members see each one in their Ledger tab, counted on their
+  business trips for that organization, with its status.
+- **The report**: managers and admins see, for a period (this year by default), each member's
+  business days per country and how they stand against the rules, and download it as CSV for an
+  adviser. No place, city, date or note is in it.
+- **Audit log**: every look at the report is recorded for each member shown; members read who
+  looked and when under **Who looked at your days**, and in their data download.
+
 ## Current Boundaries
 
 - No social login yet; a place or visit holds one photo link, not an album ([roadmap](../TODO.md)).
 - No paid plans or prices yet; the presentation and the landing page show printed keepsakes as coming soon.
 - Photos are links to images hosted elsewhere; the app stores no files.
-- Ledger alerts are in-app only: there is no email yet. The date history starts with the day
+- Ledger and employer alerts are in-app only: there is no email yet, so invitation links are
+  passed on by hand, and organizations have no single sign-on or billing yet. The date history starts with the day
   ledger release. A rule for a country does not count its overseas territories that the map
   draws on their own (such as Réunion for France): add them to the rule to count them together.
 - The map has no towns yet in the overseas territories split from France, Norway and the

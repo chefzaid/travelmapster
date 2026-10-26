@@ -4,11 +4,13 @@
 import { h, fill, toast, formDialog, formatDate } from './ui.js';
 import {
     DAY_RULES, SCHENGEN_RULE, SCHENGEN_MEMBERS, SCHENGEN_OPEN_BORDERS, TAX_RESIDENCY_RULE,
-    addDays, checkPlannedStay, checkRule, countryCounters, dayNumber, daysIn,
-    isoDay, localToday, maxStayFrom, newId, parseCountryList
+    addDays, countryCounters, dayNumber, daysIn, isoDay, localToday, maxStayFrom
 } from './days.js';
+import { checkPlannedStay, checkRule, newId, parseCountryList } from './ledger-rules.js';
 import { ADVICE_NOTE, countryName, historySection, reportSection } from './ledger-report.js';
 import { isTripPlan } from './itinerary.js';
+import { meter, statusChip } from './ledger-parts.js';
+import { orgRulesSections } from './ledger-org.js';
 
 const view = { entry: '', period: '', showAllStays: false };
 const STAYS_SHOWN = 12;
@@ -22,24 +24,6 @@ function countryLabel(ctx, id) {
 
 function spanLabel(from, to) {
     return from === to ? formatDate(from) : `${formatDate(from)} – ${formatDate(to)}`;
-}
-
-function statusChip(status) {
-    const labels = { ok: ['chip-ok', '✓ On track'], warning: ['chip-warn', '⚠ Getting close'], reached: ['chip-over', '⛔ Reached'] };
-    const [tone, label] = labels[status];
-    return h('span', { class: `chip ${tone}` }, label);
-}
-
-function meter(value, max, label) {
-    const percent = Math.min(100, Math.round((value / max) * 100));
-    return h('span', {
-        class: `meter${value >= max ? ' is-full' : percent >= 80 ? ' is-high' : ''}`,
-        role: 'progressbar',
-        'aria-valuemin': '0',
-        'aria-valuemax': String(max),
-        'aria-valuenow': String(Math.min(value, max)),
-        'aria-label': label
-    }, h('span', { style: `width:${percent}%` }));
 }
 
 async function save(ctx, changes) {
@@ -229,7 +213,7 @@ function countryNames(ctx, ids) {
     return ids.map(id => countryName(ctx, id)).join(', ');
 }
 
-async function ruleDialog(ctx, kind, rule) {
+export async function ruleDialog(ctx, kind, rule) {
     const stay = kind === 'stay';
     let draft = rule ? { ...rule, countries: countryNames(ctx, rule.countries) } : {
         name: '', countries: '', maxDays: stay ? 90 : 183, windowDays: stay ? 180 : 365,
@@ -464,6 +448,7 @@ export function renderLedger(container, ctx) {
         plansSection(ctx, overview),
         staysSection(ctx, overview),
         thresholdsSection(ctx, overview),
+        orgRulesSections(ctx),
         countersSection(ctx, overview),
         timelineSection(ctx, overview),
         reportSection(ctx, overview),
