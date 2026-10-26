@@ -53,7 +53,7 @@ JSON under `/api`; errors are `{ "error": "…" }` with a matching status. All r
 | Method | Path | Purpose |
 |---|---|---|
 | GET | `/api/csrf-token` | CSRF token for the current session |
-| POST | `/api/auth/register`, `/api/auth/login`, `/api/auth/logout` | Account and session; responses include a fresh CSRF token |
+| POST | `/api/auth/register`, `/api/auth/login`, `/api/auth/logout` | Account and session; responses include a fresh CSRF token. Sign-ups have their own rate limit, and one with the honeypot field `website` filled in is refused |
 | GET | `/api/auth/me` | Current user, or 401 |
 | POST | `/api/auth/password` | Change password (`currentPassword`, `newPassword`); signs out other sessions |
 | DELETE | `/api/auth/account` | Delete the account and all its data (`password`); signs out everywhere |
@@ -76,7 +76,11 @@ JSON under `/api`; errors are `{ "error": "…" }` with a matching status. All r
 
 | Module | Responsibility |
 |---|---|
-| `public/js/app.js` | App shell: auth, landing page and demo map, map cards, search, tabs, public view, the timeline bar, palettes and printing |
+| `public/js/app.js` | App shell: state, saving places, map filters, tabs, the signed-in, signed-out (demo map) and public views, and the context every feature module receives |
+| `public/js/cards.js`, `card-visits.js`, `place-form.js` | Map cards for countries and cities, the visits on them, and the form that edits a saved place |
+| `public/js/search.js`, `explore.js`, `selection.js` | Place search and "Surprise me", the Explore tab and travel ideas, and picking several countries to mark at once |
+| `public/js/account.js` | Landing page sign-up and log-in (with the honeypot field), the account menu and settings |
+| `public/js/timeline-bar.js`, `printing.js`, `ledger-store.js` | The timeline bar and journey replay, map palettes and printing, and the day ledger's overview, alerts and date history in the app |
 | `public/js/demo.js` | The landing page's sample traveler, with dates relative to today (pure, unit tested) |
 | `public/js/schengen.js`, `calculator.js` | Free Schengen calculator: stay checks and results over `days.js` (pure, unit and property tested), and the page that draws them |
 | `public/js/map.js` | MapLibre GL map ([ADR 0008](adr/0008-maplibre-gl.md)): cartoon style from the CSS tokens (redrawn when the palette or theme changes), country states, towns and tile loading, pins, journey lines and their replay, cards, camera and the picture printed |

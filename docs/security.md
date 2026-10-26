@@ -39,7 +39,11 @@ their owner chose `public`; private and missing profiles return the same 404.
   ledger rule and planned-stay limits); bodies are limited to 100 KB, or 3 MB for imports.
 - **Rate limits** per client IP on sign-in and sign-up, the API and place search
   ([defaults](development.md#configuration)), with standard `RateLimit` headers; counters live
-  in PostgreSQL, so the limit holds across replicas.
+  in PostgreSQL, so the limit holds across replicas. Sign-ups have their own, tighter limit per
+  hour on top of the sign-in one.
+- **Sign-up bots**: the sign-up form carries a honeypot field that is hidden from people and
+  screen readers; a sign-up that fills it in is refused without creating an account. There is
+  no third-party captcha.
 - **Headers** (helmet): CSP allowing only same-origin scripts and styles (no inline), no framing,
   HSTS in production, no `X-Powered-By`. API responses are `Cache-Control: no-store`.
 - Only `public/` is served statically; source, configuration and dependencies are never reachable.

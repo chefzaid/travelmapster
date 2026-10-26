@@ -161,7 +161,9 @@ function createApp({ config, pool, logger, metrics, geocoder, places, state = { 
 
     const authLimiter = jsonLimiter(pool, 'auth', config.rateLimit.authPerWindow, 15 * 60_000,
         'Too many attempts, please try again later.');
-    api.use('/auth', createAuthRouter({ passport, users, authLimiter, metrics, logger }));
+    const registerLimiter = jsonLimiter(pool, 'register', config.rateLimit.registerPerHour, 60 * 60_000,
+        'Too many new accounts from this network, please try again later.');
+    api.use('/auth', createAuthRouter({ passport, users, authLimiter, registerLimiter, metrics, logger }));
     api.use('/public', createPublicProfileRouter({ users, markers }));
     api.use('/places', createPlacesRouter({ places }));
     api.use('/geocode', requireAuth,

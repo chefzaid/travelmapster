@@ -21,6 +21,19 @@ test('registration validates credentials', async () => {
     assert.equal(tooLong.status, 400);
 });
 
+test('a sign-up that fills in the honeypot field creates no account', async () => {
+    const client = createClient(ctx.server);
+    const bot = await client.post('/api/auth/register', { username: 'spambot', password: 'long enough pw', website: 'https://spam.example' });
+    assert.equal(bot.status, 400);
+    assert.match(bot.body.error, /could not be completed/);
+    const { rows } = await ctx.pool.query("SELECT 1 FROM users WHERE username = 'spambot'");
+    assert.equal(rows.length, 0);
+    assert.equal((await client.get('/api/auth/me')).status, 401);
+
+    const person = await client.post('/api/auth/register', { username: 'person', password: 'long enough pw', website: '' });
+    assert.equal(person.status, 201);
+});
+
 test('register logs the user in and rejects case-insensitive duplicates', async () => {
     const client = createClient(ctx.server);
     const res = await client.register('Alice', 'wonderland rabbit');
@@ -132,6 +145,24 @@ test('account changes require a session', async () => {
     const anonymous = createClient(ctx.server);
     assert.equal((await anonymous.post('/api/auth/password', { currentPassword: 'x', newPassword: 'long enough pw' })).status, 401);
     assert.equal((await anonymous.delete('/api/auth/account', { password: 'x' })).status, 401);
+});
+
+test('sign-ups are limited per network, apart from sign-in', async () => {
+    const limited = await createTestContext({ RATE_LIMIT_REGISTER: '2' });
+    try {
+        const client = createClient(limited.server);
+        assert.equal((await client.register('first_one', 'long enough pw')).status, 201);
+        // A failed sign-up counts too, so names cannot be probed without limit.
+        assert.equal((await createClient(limited.server).register('FIRST_ONE', 'long enough pw')).status, 409);
+        const blocked = await createClient(limited.server).register('third_one', 'long enough pw');
+        assert.equal(blocked.status, 429);
+        assert.match(blocked.body.error, /Too many new accounts/);
+        assert.ok(blocked.headers.ratelimit);
+        // Signing in is not affected by the sign-up limit.
+        assert.equal((await createClient(limited.server).post('/api/auth/login', { username: 'first_one', password: 'long enough pw' })).status, 200);
+    } finally {
+        await limited.close();
+    }
 });
 
 test('login is rate limited across replicas', async () => {

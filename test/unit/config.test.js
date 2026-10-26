@@ -25,6 +25,12 @@ test('trust proxy accepts booleans, hop counts and CIDR lists', () => {
     assert.deepEqual(loadConfig({ TRUST_PROXY: '10.42.0.0/16, 127.0.0.1' }).trustProxy, ['10.42.0.0/16', '127.0.0.1']);
 });
 
+test('sign-ups have their own hourly limit', () => {
+    assert.equal(loadConfig({}).rateLimit.registerPerHour, 5);
+    assert.equal(loadConfig({ RATE_LIMIT_REGISTER: '20' }).rateLimit.registerPerHour, 20);
+    assert.throws(() => loadConfig({ RATE_LIMIT_REGISTER: 'many' }), /RATE_LIMIT_REGISTER/);
+});
+
 test('invalid integers are rejected', () => {
     assert.throws(() => loadConfig({ PORT: 'eighty' }), /PORT/);
 });

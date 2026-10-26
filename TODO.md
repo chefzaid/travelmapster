@@ -85,7 +85,7 @@ The field splits into scratch-map atlases (Been, Visited, Skratch), travel journ
 - [ ] Passkeys (WebAuthn) and optional TOTP two-factor sign-in, required for Teams administrators.
 - [ ] Full account export as one archive (places, visits, trips, albums, ledger) plus GeoJSON and KML export of places; the "record you can keep" promise depends on it.
 - [ ] Terms of service, privacy policy and a GDPR access request flow, published before the first paid plan.
-- [ ] Sign-up abuse protection without third-party captchas (honeypot field and per-IP limits on registration).
+- [x] Sign-up abuse protection without third-party captchas (honeypot field and per-IP limits on registration).
 
 ## Technical foundation (added 2026-10-23)
 
