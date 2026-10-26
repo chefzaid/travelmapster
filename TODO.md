@@ -7,6 +7,12 @@ material design changes as an [ADR](docs/architecture.md#adr-process).
 - [ ] Google and Facebook login, linked to existing accounts ([ADR 0003](docs/adr/0003-sessions-and-csrf.md))
 - [ ] Travel albums: give each pinned place a description and a photo album instead of a single photo link
 
+## Bugs to fix
+
+Bugs, failing checks, security findings and code smells found while working on another task. Each entry names the file or area, what is wrong, and how to reproduce it.
+
+- [ ] Container image findings. The 2026-10-04 platform Trivy scan found 4 critical Debian bookworm findings in image `1.8.1` (Perl, zlib minizip). The runtime base is still `node:22.22.2-bookworm-slim` (`Dockerfile`, `NODE_IMAGE`), so `1.10.0` probably still carries them: rescan, and clear them with a base that drops those packages (for example an Alpine or distroless Node image) or record why they are not exploitable here. The database setup Job (`infra/k8s/database-setup-job.yaml`) renders the same PostgreSQL image as the other applications: `postgres:18.6-bookworm@sha256:b939b3851e2c…` is an amd64-only build from 2026-08-13; the tag now points to `sha256:bbf83594798e…` (rebuilt 2026-10-21) and the platform runs `sha256:3725f4e2499e…` (2026-09-19). The 2026-10-04 platform Trivy scan found critical Debian bookworm findings in this image (Perl, zlib minizip) with no Debian fix; the platform accepted them for its own PostgreSQL until 2026-11-04 ([swirl-cloud security](https://github.com/chefzaid/swirl-cloud/blob/main/docs/security.md#vulnerability-triage)), not for this repository. Recheck on the platform's Grafana **Trivy Security Reports** dashboard or with `trivy image --severity CRITICAL <image>`, then move to the current digest or a variant without the affected packages, or record an exception here. *(found by: Infra Agent, swirl-cloud TODO §21)*
+
 ## Product direction (added 2026-10-04)
 
 TravelMapster is a playful travel atlas; many apps already color visited countries. The niche to own is **the travel record you can rely on and keep**: the cartoon atlas stays, but every visit carries dates, so the app also counts days per country — Schengen 90/180, visa stay limits, tax-residency thresholds — for digital nomads, expats and frequent business travellers. It also turns travels into keepsakes: printed posters and travel books. A Teams tier lets companies track employees' business-travel days for tax and social-security obligations without seeing personal trips.
