@@ -15,7 +15,7 @@ test('the app opens offline with the places last loaded, and keeps nothing after
 
     const username = `e2e_offline_${Date.now()}`;
     await page.goto('/');
-    await expect(page.locator('#welcome-view')).toBeVisible();
+    await expect(page.locator('#app[data-map="ready"] #welcome-view')).toBeVisible();
     await page.click('#tab-register');
     await page.fill('#auth-username', username);
     await page.fill('#auth-password', 'offline password');
@@ -50,11 +50,11 @@ test('the app opens offline with the places last loaded, and keeps nothing after
     await page.keyboard.press('Escape');
     await page.click('#account-btn');
     await page.click('#logout-btn');
-    await expect(page.locator('#welcome-view')).toBeVisible();
+    await expect(page.locator('#app[data-map="ready"] #welcome-view')).toBeVisible();
     expect(await page.evaluate(async () => (await globalThis.caches.keys()).includes('travelmapster-account'))).toBe(false);
     await context.setOffline(true);
     await page.reload();
-    await expect(page.locator('#welcome-view')).toBeVisible();
+    await expect(page.locator('#app[data-map="ready"] #welcome-view')).toBeVisible();
     await expect(page.locator('#main-view')).toBeHidden();
     await context.setOffline(false);
 });

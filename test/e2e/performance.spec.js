@@ -28,7 +28,7 @@ test('the landing page stays within its performance budget on a mid-range phone'
     });
 
     await page.goto('/');
-    await expect(page.locator('#welcome-view')).toBeVisible({ timeout: 60_000 });
+    await expect(page.locator('#app[data-map="ready"] #welcome-view')).toBeVisible({ timeout: 60_000 });
     await expect(page.locator('#demo-ledger')).toContainText('Schengen days', { timeout: 30_000 });
     await page.waitForLoadState('networkidle');
 

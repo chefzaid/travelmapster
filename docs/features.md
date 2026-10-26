@@ -44,6 +44,10 @@ The reasoning and what each rule rules out are in [ADR 0017](adr/0017-product-pr
   that stay apart with every kind of color vision and in grayscale.
 - **Printing the map** ("Print my map", or the browser's print) gives a landscape page with
   the map as shown, a title and the legend, without the controls.
+- **Posters**: "Make a poster" in the account menu downloads the map as a vector file (SVG) in
+  A4, A3, A2, 50 × 70 cm or 18 × 24 in, cartoon, ink-on-paper or night style, with a title, the
+  number of countries and a legend; every country keeps its true size (Equal Earth projection).
+  Printing to order is not offered yet.
 - No third-party map services: map data, fonts and MapLibre GL are served by the app.
 
 ## Places
@@ -80,6 +84,11 @@ The reasoning and what each rule rules out are in [ADR 0017](adr/0017-product-pr
   the active filter and clears it in one tap.
 - Undo after removing a place, which brings its visits back too.
 - Export places as GeoJSON or KML for other map apps, GIS tools and Google Earth.
+- **Import from other travel apps**, with a preview to untick what to leave out: a Polarsteps
+  data export (its ZIP file, read without loading the photos, or the `trip.json` files in it),
+  where each step becomes a visit to its town until the next step; or a pasted list of
+  countries from Been, Visited or anywhere. Places already on the map only get the visits they
+  lack.
 - Import and export as JSON (visits nested in each place) or CSV (one row per visit), with
   ratings, tags, emoji, wishlist plans and whether a place was lived in or a layover; import
   also reads files from before visits or tags existed, and

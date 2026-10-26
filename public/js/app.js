@@ -15,6 +15,8 @@ import { DEMO_HOME, demoMarkers } from './demo.js';
 import { STATUSES, statusInfo, statusOf } from './status.js';
 import { celebrate } from './confetti.js';
 import { celebrateGoals } from './passport-goals.js';
+import { setupOffline } from './offline.js';
+import { setupLegend, setupPanel } from './panel.js';
 import { renderTimeline, setTimelineOpen, setupTimeline, timelineView, collapsePanelOnPhones } from './timeline-bar.js';
 import { applyPalette, setupPrinting, storedPalette } from './printing.js';
 import { markContinent, setupSelectBar, startSelecting, stopSelecting, toggleSelected } from './selection.js';
@@ -297,8 +299,13 @@ function showSignedOut() {
     if (AUTH_HASHES[location.hash]) openAuth(AUTH_HASHES[location.hash]);
 }
 
+// Set once a session starts: the landing page shows before the map loads, so a traveler may
+// sign in before the first look at the session (at page load) is acted on.
+let sessionStarted = false;
+
 // Starts the signed-in view, for `known` user or the session's; it waits for the map.
 async function startSession(known) {
+    sessionStarted = true;
     const user = known || await api.currentUser();
     await mapReady;
     state.user = user;
@@ -358,28 +365,6 @@ async function startPublicView(username) {
     }
 }
 
-// ---------------------------------------------------------------- panel & legend
-
-function setupPanel() {
-    const handle = $('#panel-handle');
-    handle.addEventListener('click', () => {
-        const collapsed = $('#panel').classList.toggle('is-collapsed');
-        handle.setAttribute('aria-expanded', String(!collapsed));
-    });
-}
-
-function setupLegend() {
-    $('#legend-detail-filter').addEventListener('click', () => setDetailFilter({ tag: 'all', rating: 'all' }));
-    for (const button of $all('.legend-item[data-filter]')) {
-        button.addEventListener('click', () => {
-            const key = button.dataset.filter;
-            state.filters[key] = !state.filters[key];
-            button.setAttribute('aria-pressed', String(state.filters[key]));
-            refresh({ celebrateNew: false });
-        });
-    }
-}
-
 // Shared context passed to the feature modules.
 const context = {
     state,
@@ -424,6 +409,8 @@ async function boot(signedIn = api.currentUser().catch(() => null)) {
         return;
     }
     const user = await signedIn;
+    // Signed in from the landing page meanwhile: that session wins over the stale answer.
+    if (sessionStarted) return;
     if (user) {
         try {
             await startSession(user);
@@ -458,13 +445,6 @@ async function createMap() {
     });
 }
 
-// The installable app works offline with what was last loaded (ADR 0021).
-function setupOffline() {
-    navigator.serviceWorker?.register('/sw.js').catch(error => console.warn('Offline mode is unavailable', error));
-    window.addEventListener('offline', () => toast('You are offline: your map shows as last loaded, and changes will not save until you are back online.', { duration: 8000 }));
-    window.addEventListener('online', () => toast('Back online.', { tone: 'success' }));
-}
-
 async function init() {
     // Start with this browser's palette; a signed-in traveler's own choice follows.
     applyPalette(context, storedPalette());
@@ -473,7 +453,8 @@ async function init() {
     setupAuth(context);
     const publicMap = new URLSearchParams(location.search).has('u');
     const signedIn = publicMap ? Promise.resolve(null) : api.currentUser().catch(() => null);
-    mapReady = createMap();
+    // Tests and scripts can tell when the map is drawn: the landing page shows before it.
+    mapReady = createMap().then(() => { $('#app').dataset.map = 'ready'; });
     // A signed-out visitor reads the landing page while the map is still loading.
     if (!publicMap) {
         signedIn.then(user => {
@@ -485,7 +466,7 @@ async function init() {
     setupTabs();
     setupAccountMenu(context);
     setupPanel();
-    setupLegend();
+    setupLegend(context);
     setupSelectBar(context);
     setupTimeline(context);
     setupPrinting(context);

@@ -85,6 +85,8 @@ JSON under `/api`, described in full in [OpenAPI](api/openapi.json) and kept bac
 | `public/js/cards.js`, `card-visits.js`, `place-form.js` | Map cards for countries and cities, the visits on them, and the form that edits a saved place |
 | `public/js/search.js`, `explore.js`, `selection.js` | Place search and "Surprise me", the Explore tab and travel ideas, and picking several countries to mark at once |
 | `public/js/account.js` | Landing page sign-up and log-in (with the honeypot field), the account menu and settings |
+| `public/js/panel.js`, `offline.js` | The side panel and the legend's filters, and registering the service worker |
+| `public/js/poster.js` | Map posters as vector SVG in print sizes and styles, in the Equal Earth projection (pure, unit tested) |
 | `public/js/timeline-bar.js`, `printing.js`, `ledger-store.js` | The timeline bar and journey replay, map palettes and printing, and the day ledger's overview, alerts and date history in the app |
 | `public/js/embed.js`, `map-data.js` | The embeddable map page, and loading the bundled map data, shared with the app |
 | `public/js/demo.js` | The landing page's sample traveler, with dates relative to today (pure, unit tested) |
@@ -96,6 +98,7 @@ JSON under `/api`, described in full in [OpenAPI](api/openapi.json) and kept bac
 | `public/js/lists.js` | The country lists the passport counts against: every territory on the map, or UN members and observer states ([ADR 0015](adr/0015-country-lists.md)) (pure, unit tested) |
 | `public/js/status.js` | Place statuses: been there, lived there, transit only and wishlist, and their API fields ([ADR 0014](adr/0014-home-lived-and-transit.md)) (pure, unit tested) |
 | `public/js/places.js`, `io.js` | Places tab, import and export (pure `io.js` is unit tested) |
+| `public/js/import-apps.js`, `imports.js`, `zip-read.js` | Importing from other travel apps with a preview: Polarsteps trips and pasted country lists (pure `imports.js`, unit tested), read from a ZIP one entry at a time |
 | `public/js/archive.js`, `zip.js` | Places as GeoJSON and KML, and the account archive: a ZIP file written without a dependency (pure, unit tested) |
 | `public/js/bulk.js` | Marking several countries at once: the bulk change, its undo and the updated places (pure, unit tested) |
 | `public/js/details.js` | Ratings, tags, emoji and wishlist plans of a place, the tag and rating filter shared by the list and the map, and the wishlist by next good month (pure, unit tested) |

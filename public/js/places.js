@@ -6,6 +6,7 @@ import { lastVisitDate, lastVisitYears, matchesLastVisit, visitCount } from './v
 import { groupByNextMonth, matchesDetails, monthsLabel, priorityLabel, ratingLabel, stars, usedTags } from './details.js';
 import { STATUSES, statusLabel, statusOf } from './status.js';
 import { openNewTrip } from './trips.js';
+import { importButtons } from './import-apps.js';
 
 const view = { query: '', type: 'all', category: 'all', lastVisit: 'all', sort: 'continent' };
 
@@ -194,6 +195,8 @@ function dataSection(ctx) {
             h('label', { class: 'btn btn-ghost btn-sm', for: 'import-file' }, '⬆️ Import'),
             fileInput
         ),
+        h('p', { class: 'muted small' }, 'Coming from another app? Bring your trips from a Polarsteps data export, or paste your countries from Been, Visited or any list.'),
+        h('div', { class: 'row' }, importButtons(ctx, status)),
         status
     );
 }
