@@ -17,6 +17,7 @@ Bugs, failing checks, security findings and code smells found while working on a
 - [x] Console errors while the map loads: hovering or clicking the map before its style had loaded queried the `cities` layer before it existed ("The layer 'cities' does not exist in the map's style"), seen in browser tests under load. `public/js/map.js` now queries only the layers that exist. *(found by: Coding Agent)*
 - [x] Intermittent browser test failures, from showing the landing page before the map loads: a sign-up made before the map was ready could be undone by the page's first, signed-out look at the session, and tests used the map before it existed. The page now lets a session started meanwhile win, marks `#app[data-map="ready"]`, and the journeys wait for it; three full runs in a row pass. *(found by: Coding Agent)*
 - [x] Slow first paint on phones: the landing page's Largest Contentful Paint on a mid-range phone was about 6.5 s; the landing panel now shows while MapLibre and the map data load (about 2.7 s), and the budget is 4 s. *(found by: Coding Agent)*
+- [x] Files over the 500-line limit: `public/js/app.js` (527 lines, grown by guest mode and friends), `public/js/days.js` (656), `test/days.test.js` (519) and `test/frontend.test.js` (521). Reproduce: `wc -l` on them. Fixed: tabs and place saving moved to `tabs.js` and `place-store.js`, the evidence and rule checks to `ledger-evidence.js` and `ledger-rules.js`, and their tests to `ledger-rules.test.js` and `io.test.js`. *(found by: Coding Agent)*
 
 ## Needs Input
 
@@ -85,9 +86,9 @@ Differentiators:
 ### Teams tier
 
 - [x] **ADR — Teams:** ([ADR 0022](docs/adr/0022-teams.md)) organization accounts where employees record business trips. Personal trips are never visible to the employer, which sees only business-travel day counts per country.
-- [ ] Threshold rules per destination for tax and social security, configured by the organization, with alerts to the traveller and the mobility or HR team and reports for their advisers.
+- [x] Threshold rules per destination for tax and social security, configured by the organization, with alerts to the traveller and the mobility or HR team and reports for their advisers. ([ADR 0029](docs/adr/0029-organizations-and-business-days.md): organizations with roles, invitation links, business trips, employer rules in the Ledger tab, the report with CSV and the audit log.)
 - [ ] Pre-trip checklist per destination configured by the organization (for example A1 certificate and posted-worker declaration reminders within the EU).
-- [ ] Organization single sign-on, roles, audit log, data export and deletion, and a data processing agreement. *(waiting: see Needs Input › Organization single sign-on)*
+- [ ] Organization single sign-on and a data processing agreement; roles, the audit log, data export and deletion came with [ADR 0029](docs/adr/0029-organizations-and-business-days.md). *(waiting: see Needs Input › Organization single sign-on)*
 
 ### Commercial foundation
 
@@ -116,7 +117,7 @@ The field splits into scratch-map atlases (Been, Visited, Skratch), travel journ
 
 - [x] Guest mode: visitors without an account can pin places and use every feature, with everything saved in the browser's local storage; signing in stays optional. Today a signed-out visitor's changes to the demo map are never saved ([ADR 0011](docs/adr/0011-public-pages.md)), so this needs an ADR.
 - [ ] Email address with verification and password reset; today a forgotten password locks the user out for good. Needs a transactional email provider ([ADR](docs/architecture.md#adr-process): new external dependency). *(waiting: see Needs Input › Transactional email provider)*
-- [x] Passkeys (WebAuthn) and optional TOTP two-factor sign-in, required for Teams administrators (requiring them follows with the Teams tier).
+- [x] Passkeys (WebAuthn) and optional TOTP two-factor sign-in, required for Teams administrators (required of organization managers and admins since [ADR 0029](docs/adr/0029-organizations-and-business-days.md)).
 - [x] Full account export as one archive (places, visits, trips, albums, ledger) plus GeoJSON and KML export of places; the "record you can keep" promise depends on it.
 - [ ] Terms of service, privacy policy and a GDPR access request flow, published before the first paid plan. *(waiting: see Needs Input › Legal texts)*
 - [x] Sign-up abuse protection without third-party captchas (honeypot field and per-IP limits on registration).

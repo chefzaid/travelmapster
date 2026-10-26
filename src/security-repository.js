@@ -95,6 +95,16 @@ function createSecurityRepository(db) {
             return rowCount > 0;
         },
 
+        /** Whether the account signs in with more than a password: a passkey or two-step sign-in. */
+        async hasSecondFactor(userId) {
+            const { rows } = await db.query(
+                `SELECT EXISTS (SELECT 1 FROM passkeys WHERE user_id = $1)
+                     OR EXISTS (SELECT 1 FROM totp_secrets WHERE user_id = $1 AND enabled_at IS NOT NULL) AS strong`,
+                [userId]
+            );
+            return rows[0].strong;
+        },
+
         async recoveryCodesLeft(userId) {
             const { rows } = await db.query('SELECT count(*)::int AS left FROM recovery_codes WHERE user_id = $1 AND used_at IS NULL', [userId]);
             return rows[0].left;

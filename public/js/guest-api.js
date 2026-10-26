@@ -199,6 +199,10 @@ export function createGuestApi(storage, now = () => new Date().toISOString()) {
         unfollow: needsAccount('Following friends\' maps'),
         getTripMembers: async () => [],
         shareTrip: needsAccount('Planning a trip together'),
-        unshareTrip: needsAccount('Planning a trip together')
+        unshareTrip: needsAccount('Planning a trip together'),
+        getOrgs: async () => [],
+        getOrgAudit: async () => [],
+        createOrg: needsAccount('An organization'),
+        joinOrg: needsAccount('Joining an organization')
     };
 }

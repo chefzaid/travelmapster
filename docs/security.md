@@ -41,6 +41,15 @@ to the signed-in user (visits through the place they belong to), so another user
 404 and ledger settings and date history are only ever the caller's own. Public maps are read-only and exist only when
 their owner chose `public`; private and missing profiles return the same 404.
 
+Organization routes check the caller's role in that organization on every request
+([ADR 0029](adr/0029-organizations-and-business-days.md)): non-members get 404, travelers see
+only their own organizations and rules, managers also the members and the report, and admins
+also change members, invitations, rules and the organization itself. Managers and admins need a
+passkey or two-step sign-in for any of that (403 `second_factor_required`), and so does
+creating an organization. A visit can be marked as a business trip only for one of the
+caller's own organizations. Invitation tokens are 24 random bytes, shown once and stored only as
+a SHA-256 hash; each works once, for seven days, and is revoked by the admin or by use.
+
 ## Request Protection
 
 - **CSRF**: unsafe methods need `X-CSRF-Token`, a per-session random token compared in constant
@@ -106,6 +115,11 @@ their owner chose `public`; private and missing profiles return the same 404.
   browser's Cache Storage for offline use, and deletes them when the session ends: on signing
   in, out or up, deleting the account, or an expired session. Public maps are never stored
   ([ADR 0021](adr/0021-installable-offline-app.md)).
+- An employer's report holds, per member, business days per country and rule statuses only:
+  it reads only the visits marked as business trips for that organization and never returns
+  place names, cities, dates or notes. Every report writes an audit entry per member shown,
+  which the member reads in the app and in their data download, and is sent with
+  `Cache-Control: no-store`. The report's CSV defuses formula cells like the evidence CSV.
 - Travelers can download everything their account holds as one archive (`GET /api/export`,
   only ever the caller's own data, never the password hash) and delete their account, which
   removes all their data at once ([data model](data-model.md#privacy)).

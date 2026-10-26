@@ -27,10 +27,14 @@ PostgreSQL, including sessions, so any replica can serve any request.
 | `src/precompressed.js` | Brotli for static text files: map data from its `.br` copies on disk, scripts and styles compressed once and kept in memory |
 | `src/seo.js` | `robots.txt` and the sitemap of public pages ([ADR 0011](adr/0011-public-pages.md)) |
 | `src/config.js` | Validated configuration from environment variables ([reference](development.md#configuration)) |
-| `src/routes/` | `auth`, `markers` (places and their visits), `visits`, `ledger` (day-ledger settings and date history), `trips`, `profile` (incl. public maps), `export` (the account archive), `places` and `geocode` routers |
+| `src/routes/` | `auth`, `security` (passkeys and two-step sign-in), `markers` (places and their visits), `visits`, `ledger` (day-ledger settings and date history), `trips` (and who they are shared with), `follows`, `orgs` (organizations, invitations, employer rules and the report), `profile` (incl. public maps), `export` (the account archive), `places` and `geocode` routers |
 | `src/validation.js`, `ledger-validation.js`, `validation-text.js` | Every request-body rule and limit; the day ledger's settings in their own module |
 | `src/rate-limit-store.js` | Rate-limit counters in PostgreSQL, shared by every replica |
 | `src/repositories.js` | SQL access, always scoped to the signed-in user (visits through their place) |
+| `src/trip-repository.js`, `trip-validation.js`, `follow-repository.js` | Trips with their members and roles, the trip body's rules, and followed maps ([ADR 0028](adr/0028-friends-and-shared-trips.md)) |
+| `src/security-repository.js`, `totp.js` | Passkeys, two-step secrets and recovery codes, and RFC 6238 codes ([ADR 0027](adr/0027-passkeys-and-two-step-sign-in.md)) |
+| `src/org-repository.js`, `org-report.js` | Organizations, memberships, invitations, employer rules and the audit log, and the employer's report counted with the browser's `days.js` over business visits only ([ADR 0029](adr/0029-organizations-and-business-days.md)) |
+| `src/browser-modules.js`, `public-map.js`, `map-image.js` | Browser modules (`geo.js`, `days.js`, `poster.js`) and the country borders loaded on the server, the link previews of shared maps and their PNG picture ([ADR 0023](adr/0023-shared-map-previews-and-indexing.md)) |
 | `src/db/migrations/005_day_ledger.sql` | Ledger tables and the triggers that record every change to visit dates ([ADR 0010](adr/0010-day-ledger.md)) |
 | `src/services/geocoder.js` | Nominatim client with throttling, timeout and LRU cache |
 | `src/services/places.js` | In-memory search over every town in the map data |
@@ -65,13 +69,21 @@ JSON under `/api`, described in full in [OpenAPI](api/openapi.json) and kept bac
 | POST | `/api/markers/import` | Import up to 1,000 places with their visits |
 | POST | `/api/markers/bulk` | Apply up to 300 changes all or nothing: places to `create`, status changes to `update` (`{ id, type }`, with an optional `stay`) and ids to `remove`; marking several countries at once and its undo are one call each. Returns `created`, `updated` and `removed`; any id not the caller's is a 404 and nothing is kept |
 | PATCH, DELETE | `/api/markers/:id` | Update or remove a place; an update leaves visits alone unless an old client sends `travelDate` ([ADR 0009](adr/0009-places-and-visits.md)), and keeps `rating`, `tags`, `emoji`, `hideFromPublic`, `priority`, `bestMonths` and `stay` unless it sends them ([ADR 0012](adr/0012-place-details.md)); moving a place to the wishlist resets `stay` |
-| GET, POST | `/api/markers/:id/visits` | List or add visits of a place (`startDate`, `endDate`, `ongoing`, `notes`, `photoUrl`) |
+| GET, POST | `/api/markers/:id/visits` | List or add visits of a place (`startDate`, `endDate`, `ongoing`, `notes`, `photoUrl`, and `purpose` with `organizationId` for a business trip) |
 | PATCH, DELETE | `/api/visits/:id` | Replace or remove a visit |
 | GET, PUT | `/api/ledger` | Day-ledger settings: `dayRule`, `rules` (stay rules and thresholds) and `planned` stays, replaced as a whole ([ADR 0010](adr/0010-day-ledger.md)) |
 | GET | `/api/ledger/changes` | History of visit dates, newest first (latest 5,000) |
-| GET, POST | `/api/trips` | List or create itineraries |
-| PUT, DELETE | `/api/trips/:id` | Replace or remove an itinerary |
-| GET | `/api/export` | Everything the account holds, for the data archive: `profile` (with the last active day), `places` with their visits, `trips`, and `ledger` with its `settings` and the whole date history (`changes`); `format` and `version` describe the document |
+| GET, POST | `/api/trips` | List or create itineraries, the caller's own and those shared with them |
+| PUT, DELETE | `/api/trips/:id` | Replace (owner or editor; 409 when changed meanwhile) or remove (owner) an itinerary |
+| GET, PUT, DELETE | `/api/trips/:id/members[/:username]` | Who a trip is shared with, to edit or view ([ADR 0028](adr/0028-friends-and-shared-trips.md)) |
+| GET, POST, DELETE | `/api/follows[/:username]` | Public maps the caller follows, with their country counts |
+| GET, POST, DELETE | `/api/security/…` | Passkeys and two-step sign-in, and signing in with a passkey ([ADR 0027](adr/0027-passkeys-and-two-step-sign-in.md)) |
+| GET, POST | `/api/orgs`, `/api/orgs/join`, `/api/orgs/audit` | The caller's organizations; create one (needs a second factor), join with an invitation token, and who looked at the caller's counts ([ADR 0029](adr/0029-organizations-and-business-days.md)) |
+| PATCH, DELETE, PUT | `/api/orgs/:id`, `/api/orgs/:id/rules` | Rename or delete it, and replace its rules (admins) |
+| GET, PATCH, DELETE | `/api/orgs/:id/members[/:username]` | Members and roles (managers see, admins change); anyone leaves, but the last admin |
+| GET, POST, DELETE | `/api/orgs/:id/invitations[/:invitationId]` | Single-use invitation links (admins) |
+| GET | `/api/orgs/:id/report?from=&to=` | Business days per country and rule status for each member (managers and admins), written to the members' audit log |
+| GET | `/api/export` | Everything the account holds, for the data archive: `profile` (with the last active day), `places` with their visits, `trips`, and `ledger` with its `settings` and the whole date history (`changes`), sign-in security, follows, `organizations` (name and role) and the `auditLog` about the caller; `format` and `version` describe the document |
 | PATCH | `/api/profile` | Change account settings, each optional: `profileVisibility` (`private` or `public`), `homeCountry` (a map code or `null`), `countryList` (`all` or `un`, [ADR 0015](adr/0015-country-lists.md)), `mapPalette` (`standard`, `colorblind` or `print`), `publicJourneys` (a boolean, [ADR 0016](adr/0016-timeline-journeys-and-palettes.md)) and `goals` (up to 12 yearly goals, one per kind and year); returns them all |
 | GET | `/api/public/:username` | Read-only public map with the owner's `countryList`, `showJourneys` (whether visitors see journey lines), visit dates and each place's `stay`, without notes, photo links, ratings, tags, emoji, wishlist plans, the palette or the home country, and without places hidden from it ([ADR 0013](adr/0013-hidden-places.md)) |
 | GET | `/api/places?q=&limit=` | Search every town in the map data (public, 1–20 results) |
@@ -81,7 +93,14 @@ JSON under `/api`, described in full in [OpenAPI](api/openapi.json) and kept bac
 
 | Module | Responsibility |
 |---|---|
-| `public/js/app.js` | App shell: state, saving places, map filters, tabs, the signed-in, signed-out (demo map) and public views, and the context every feature module receives. A signed-out visitor sees the landing panel while MapLibre (loaded on demand) and the map data arrive |
+| `public/js/app.js` | App shell: state, map filters, the signed-in, signed-out (demo map) and public views, and the context every feature module receives. A signed-out visitor sees the landing panel while MapLibre (loaded on demand) and the map data arrive |
+| `public/js/tabs.js`, `place-store.js` | The panel's tabs, and saving places through the API or, for the demo map, in the page |
+| `public/js/home.js` | The presentation page shown to visitors before the app ([ADR 0011](adr/0011-public-pages.md)) |
+| `public/js/guest.js`, `guest-api.js` | Guest mode: a map kept in the browser, with the API's answers from its storage (pure `guest-api.js`, unit tested), moved into an account on sign-up ([ADR 0026](adr/0026-guest-mode.md)) |
+| `public/js/security.js`, `webauthn.js`, `qr.js` | Sign-in security: passkeys with the browser's WebAuthn calls, and two-step sign-in with its QR code (pure `qr.js`, unit tested) ([ADR 0027](adr/0027-passkeys-and-two-step-sign-in.md)) |
+| `public/js/friends.js`, `compare.js`, `trip-share.js` | Followed maps and comparing countries (pure `compare.js`, unit tested), and sharing a trip ([ADR 0028](adr/0028-friends-and-shared-trips.md)) |
+| `public/js/orgs.js`, `org-manage.js`, `org-data.js` | Organizations: joining by link, creating, leaving and the audit log; running one (report, members, invitations, rules); and the pure parts, invitation links, a visit's purpose and the report's CSV (unit tested) ([ADR 0029](adr/0029-organizations-and-business-days.md)) |
+| `public/js/exif.js`, `towns.js`, `auto-import.js` | Imports from photos and location history: EXIF dates and positions, the nearest bundled town, and the visits found (pure, unit tested) ([ADR 0025](adr/0025-imports-from-photos-and-location-history.md)) |
 | `public/js/cards.js`, `card-visits.js`, `place-form.js` | Map cards for countries and cities, the visits on them, and the form that edits a saved place |
 | `public/js/search.js`, `explore.js`, `selection.js` | Place search and "Surprise me", the Explore tab and travel ideas, and picking several countries to mark at once |
 | `public/js/account.js` | Landing page sign-up and log-in (with the honeypot field), the account menu and settings |
@@ -105,15 +124,16 @@ JSON under `/api`, described in full in [OpenAPI](api/openapi.json) and kept bac
 | `public/js/details.js` | Ratings, tags, emoji and wishlist plans of a place, the tag and rating filter shared by the list and the map, and the wishlist by next good month (pure, unit tested) |
 | `public/js/visits.js` | Visit dates, counts, last-visit filter and validation (pure, unit tested) |
 | `public/js/memories.js` | "On this day": visits that began on today's date in earlier years (pure, unit tested) |
-| `public/js/days.js` | Day ledger: day rules, days per country, Schengen 90/180 and stay rules, thresholds, planned stays, alerts and evidence reports (pure, unit and property tested) |
-| `public/js/ledger.js`, `ledger-report.js` | Ledger tab, and its date history and printable evidence report |
+| `public/js/days.js`, `ledger-evidence.js`, `ledger-rules.js` | Day ledger: day rules, days per country, Schengen 90/180 and stay rules, thresholds, planned stays and alerts; the day-by-day evidence and its CSV; and checking edited rules like the API (pure, unit and property tested) |
+| `public/js/ledger.js`, `ledger-report.js`, `ledger-org.js`, `ledger-parts.js` | Ledger tab, its date history and printable evidence report, the employer rules counted on business trips, and the status chips and meters they share |
 | `public/js/trips.js`, `ideas.js` | Trip planner and Wikivoyage ideas |
+| `public/js/trip-days.js`, `trip-extras.js`, `trip-stops.js`, `trip-budget.js` | The trip editor's day cards, its stops, packing list and budget, and their pure rules (unit tested) |
 | `public/js/itinerary.js` | An itinerary as text, as an iCalendar file, as a template copy without dates, and as the day ledger's planned stay that follows the trip (pure, unit tested) |
 | `public/js/trip-visits.js` | Where a trip goes (a country or a town of the map data), and recording a trip as a visit to it |
 | `public/js/print-view.js` | The full page printed on its own, shared by the evidence report and printable itineraries |
 | `public/js/goals.js`, `passport-goals.js` | Yearly goals and the progress toward them (pure, unit tested), and their passport section and celebration |
 | `public/js/passport.js`, `travel-stats.js` | Passport tab, and its travel statistics: days abroad per year, the longest trip, the distance traveled and countries per year (pure, unit tested) |
-| `public/js/api.js`, `ui.js`, `confetti.js` | API client with CSRF handling, DOM helpers, celebration |
+| `public/js/api.js`, `ui.js`, `confetti.js` | API client with CSRF handling, DOM helpers (dialogs, toasts, the clipboard), celebration |
 | `public/css/` | Styles by area, loaded in order: `tokens.css` (fonts, design tokens and map palettes for light and dark themes), `layout.css` (layout, panel, buttons), `tabs.css` (tabs, Explore and Places), `trips-passport.css`, `map.css` (legend, timeline, map and its cards), `ledger.css` (dialogs, toasts, the day ledger and print styles for the map and the evidence report) and `pages.css` (landing and public pages, responsive rules) |
 
 ## Key Flows
@@ -204,5 +224,6 @@ number (`NNNN-short-title.md`) and the template below. Statuses: **Proposed**, *
 - [ADR 0026: Guest mode, a map kept in the browser](adr/0026-guest-mode.md)
 - [ADR 0027: Passkeys and two-step sign-in](adr/0027-passkeys-and-two-step-sign-in.md)
 - [ADR 0028: Friends follow public maps, and trips are planned together](adr/0028-friends-and-shared-trips.md)
+- [ADR 0029: Organizations, business visits and employer rules](adr/0029-organizations-and-business-days.md)
 
 Superseded: [ADR 0007: Draw towns on a canvas layer](adr/0007-canvas-towns.md).

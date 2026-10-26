@@ -12,7 +12,7 @@ export function h(tag, attributes = {}, ...children) {
         else if (value === true) element.setAttribute(key, '');
         else element.setAttribute(key, value);
     }
-    for (const child of children.flat()) {
+    for (const child of children.flat(Infinity)) {
         if (child === undefined || child === null || child === false) continue;
         element.append(child instanceof Node ? child : document.createTextNode(String(child)));
     }
@@ -181,6 +181,49 @@ export function formDialog({ title, message, content, fields, submitLabel = 'Sav
         document.body.append(dialog);
         dialog.showModal();
     });
+}
+
+/** Returned by a step of a stepped dialog that should not open it again. */
+export const STAY_CLOSED = Symbol('stay closed');
+
+/**
+ * A dialog drawn by `draw(data, step, close)` from what `load()` answers. `step(action)` closes
+ * it, runs the action, whose own dialogs open meanwhile, and opens it again freshly loaded,
+ * unless the action returns STAY_CLOSED. Errors go to `onError`, which may return it too.
+ */
+export async function steppedDialog({ labelledBy, load, draw, onError }) {
+    let data;
+    try {
+        data = await load();
+    } catch (error) {
+        onError(error);
+        return;
+    }
+    const dialog = h('dialog', { class: 'dialog', 'aria-labelledby': labelledBy });
+    const step = async action => {
+        dialog.close();
+        let outcome;
+        try {
+            outcome = await action();
+        } catch (error) {
+            outcome = await onError(error);
+        }
+        if (outcome !== STAY_CLOSED) await steppedDialog({ labelledBy, load, draw, onError });
+    };
+    dialog.append(h('div', { class: 'dialog-body' }, draw(data, step, () => dialog.close())));
+    document.body.append(dialog);
+    dialog.addEventListener('close', () => dialog.remove());
+    dialog.showModal();
+}
+
+/** Copies text to the clipboard; `fallback` shows instead when the browser does not allow it. */
+export async function copyText(text, done, fallback = 'Copying is not available in this browser.') {
+    try {
+        await navigator.clipboard.writeText(text);
+        toast(done, { tone: 'success' });
+    } catch {
+        toast(fallback);
+    }
 }
 
 export function downloadFile(fileName, content, mimeType) {

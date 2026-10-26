@@ -3,11 +3,9 @@
 // Shared maps as links (ADR 0023): the page title and link-preview tags of a public map, and its
 // preview picture. Counted with the browser's own modules (geo.js, poster.js) from the same
 // places the public map shows; the home country stays private, as on the map.
-const fs = require('node:fs/promises');
-const path = require('node:path');
 const crypto = require('node:crypto');
-const { pathToFileURL } = require('node:url');
 const { createMapImage } = require('./map-image');
+const { browserModule, countryData } = require('./browser-modules');
 const { USERNAME_PATTERN } = require('./validation');
 
 const IMAGE_CACHE_SIZE = 64;
@@ -20,12 +18,12 @@ function createPublicMaps({ users, markers, publicDir }) {
     // The country index and the map layout, loaded on the first shared map.
     function load() {
         loading ??= (async () => {
-            const modules = ['geo.js', 'poster.js'].map(file => import(pathToFileURL(path.join(publicDir, 'js', file)).href));
-            const [{ createCountryIndex, computeStats }, { POSTER_STYLES, equalEarth, mapStatusOf }] = await Promise.all(modules);
-            const geojson = JSON.parse(await fs.readFile(path.join(publicDir, 'data', 'countries.geojson'), 'utf8'));
+            const [{ computeStats }, { POSTER_STYLES, equalEarth, mapStatusOf }, { geojson, index }] = await Promise.all([
+                browserModule('geo.js', publicDir), browserModule('poster.js', publicDir), countryData(publicDir)
+            ]);
             const colors = POSTER_STYLES.cartoon;
             return {
-                index: createCountryIndex(geojson),
+                index,
                 computeStats,
                 mapStatusOf,
                 colors,

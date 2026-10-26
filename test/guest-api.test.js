@@ -28,7 +28,7 @@ test('a guest map keeps places and visits in the API\'s shapes', async () => {
     assert.equal(hasGuestMap(storage), true);
     assert.equal(place.id, 1);
     assert.deepEqual([place.photoUrl, place.emoji, place.tags, place.travelDate], ['', '', [], '2024-05-01']);
-    assert.deepEqual(place.visits, [{ id: 2, startDate: '2024-05-01', endDate: '2024-05-03', ongoing: false, notes: '', photoUrl: '' }]);
+    assert.deepEqual(place.visits, [{ id: 2, startDate: '2024-05-01', endDate: '2024-05-03', ongoing: false, notes: '', photoUrl: '', purpose: 'personal', organizationId: null }]);
     place.name = 'changed outside';
     assert.equal((await api.getMarkers())[0].name, 'Lisbon, Portugal', 'answers are copies');
 

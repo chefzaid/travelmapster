@@ -48,10 +48,10 @@ test('a place keeps every visit, newest first, and its latest date', async () =>
     });
     assert.equal(first.status, 201);
     assert.deepEqual(first.body, {
-        id: first.body.id, startDate: '2019-07-01', endDate: '2019-07-10', ongoing: false, notes: 'First time', photoUrl: 'https://example.com/a.jpg'
+        id: first.body.id, startDate: '2019-07-01', endDate: '2019-07-10', ongoing: false, notes: 'First time', photoUrl: 'https://example.com/a.jpg', purpose: 'personal', organizationId: null
     });
     const second = await client.post(`/api/markers/${marker.id}/visits`, { startDate: '2023-03-04' });
-    assert.deepEqual(second.body, { id: second.body.id, startDate: '2023-03-04', endDate: null, ongoing: false, notes: null, photoUrl: null });
+    assert.deepEqual(second.body, { id: second.body.id, startDate: '2023-03-04', endDate: null, ongoing: false, notes: null, photoUrl: null, purpose: 'personal', organizationId: null });
     await client.post(`/api/markers/${marker.id}/visits`, { startDate: '2021-12-31', endDate: '2022-01-02' });
 
     const list = await client.get(`/api/markers/${marker.id}/visits`);
@@ -65,7 +65,7 @@ test('a place keeps every visit, newest first, and its latest date', async () =>
 
     const edited = await client.patch(`/api/visits/${second.body.id}`, { startDate: '2018-01-01', endDate: '', notes: 'Earlier' });
     assert.equal(edited.status, 200);
-    assert.deepEqual(edited.body, { id: second.body.id, startDate: '2018-01-01', endDate: null, ongoing: false, notes: 'Earlier', photoUrl: null });
+    assert.deepEqual(edited.body, { id: second.body.id, startDate: '2018-01-01', endDate: null, ongoing: false, notes: 'Earlier', photoUrl: null, purpose: 'personal', organizationId: null });
     assert.equal(await legacyTravelDate(marker.id), '2021-12-31');
 
     assert.equal((await client.delete(`/api/visits/${second.body.id}`)).status, 204);

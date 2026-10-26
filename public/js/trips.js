@@ -1,7 +1,7 @@
 // Trips tab: day-by-day itineraries to one destination or several, with ideas from Wikivoyage,
 // copied as text, exported to a calendar, printed, duplicated as a template, or planned in the
 // day ledger; with a packing list and a budget.
-import { h, fill, toast, formDialog, formatDate, downloadFile } from './ui.js';
+import { h, fill, toast, formDialog, formatDate, downloadFile, copyText } from './ui.js';
 import { fetchIdeas, buildItinerary } from './ideas.js';
 import {
     SLOTS, dayDate, emptyDay, isTripPlan, stopOfDay, syncPlannedStays, tripAsText, tripCalendar, tripEndDate, tripFileName,
@@ -339,14 +339,7 @@ function renderEditor(container, ctx, trip) {
             h('button', {
                 type: 'button',
                 class: 'btn btn-ghost btn-sm',
-                onclick: async () => {
-                    try {
-                        await navigator.clipboard.writeText(tripAsText(draft));
-                        toast('Itinerary copied to your clipboard.', { tone: 'success' });
-                    } catch {
-                        toast('Copying is not available in this browser.', { tone: 'error' });
-                    }
-                }
+                onclick: () => copyText(tripAsText(draft), 'Itinerary copied to your clipboard.')
             }, '📋 Copy'),
             h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => ctx.showIdeas(draft.destination) }, '💡 Ideas'),
             h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => exportCalendar(draft) }, '📅 Calendar'),

@@ -11,12 +11,12 @@ const EXPORT_VERSION = 1;
  * their visits, trips, ledger settings and the whole history of visit dates. The browser packs
  * it into the downloadable archive (ADR 0017: a record you can keep).
  */
-function createExportRouter({ markers, trips, ledger, security, follows, metrics }) {
+function createExportRouter({ markers, trips, ledger, security, follows, orgs, metrics }) {
     const router = express.Router();
 
     router.get('/', async (req, res) => {
         const userId = req.user.id;
-        const [places, itineraries, settings, changes, passkeys, secret, followed] = await Promise.all([
+        const [places, itineraries, settings, changes, passkeys, secret, followed, memberships, audit] = await Promise.all([
             markers.listForUser(userId),
             // The traveler's own trips, never those others share with them (ADR 0028).
             trips.listOwned(userId),
@@ -24,7 +24,9 @@ function createExportRouter({ markers, trips, ledger, security, follows, metrics
             ledger.listChanges(userId, null),
             security.listPasskeys(userId),
             security.findTotp(userId),
-            follows.list(userId)
+            follows.list(userId),
+            orgs.listForUser(userId),
+            orgs.auditFor(userId, 10_000)
         ]);
         metrics.exports.inc();
         res.json({
@@ -36,6 +38,9 @@ function createExportRouter({ markers, trips, ledger, security, follows, metrics
             trips: itineraries,
             ledger: { settings, changes },
             follows: followed.map(({ username, since }) => ({ username, since })),
+            // Organizations and who looked at the traveler's business days (ADR 0022).
+            organizations: memberships.map(({ name, role }) => ({ name, role })),
+            auditLog: audit,
             // How the account signs in, never the keys or secrets themselves (ADR 0027).
             security: {
                 passkeys: passkeys.map(({ name, createdAt, lastUsedAt }) => ({ name, createdAt, lastUsedAt })),

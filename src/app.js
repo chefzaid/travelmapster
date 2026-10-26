@@ -30,6 +30,8 @@ const { createPlacesRouter } = require('./routes/places');
 const { createExportRouter } = require('./routes/export');
 const { createFollowRouter } = require('./routes/follows');
 const { createFollowRepository } = require('./follow-repository');
+const { createOrgRouter } = require('./routes/orgs');
+const { createOrgRepository } = require('./org-repository');
 
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 
@@ -58,6 +60,7 @@ function createApp({ config, pool, logger, metrics, geocoder, places, state = { 
     const trips = createTripRepository(pool);
     const security = createSecurityRepository(pool);
     const follows = createFollowRepository(pool);
+    const orgs = createOrgRepository(pool);
     const passport = createPassport(users, logger);
     const assets = createAssets(PUBLIC_DIR);
     const publicMaps = createPublicMaps({ users, markers, publicDir: PUBLIC_DIR });
@@ -209,12 +212,13 @@ function createApp({ config, pool, logger, metrics, geocoder, places, state = { 
         jsonLimiter(pool, 'geocode', config.rateLimit.geocodePerMinute, 60_000, 'Too many place searches, please slow down.'),
         createGeocodeRouter({ geocoder, logger }));
     api.use('/profile', requireAuth, createProfileRouter({ users }));
-    api.use('/markers', requireAuth, createMarkerRouter({ pool, markers, visits, metrics }));
-    api.use('/visits', requireAuth, createVisitRouter({ visits }));
+    api.use('/markers', requireAuth, createMarkerRouter({ pool, markers, visits, orgs, metrics }));
+    api.use('/visits', requireAuth, createVisitRouter({ visits, orgs }));
     api.use('/ledger', requireAuth, createLedgerRouter({ ledger, metrics }));
     api.use('/trips', requireAuth, createTripRouter({ trips, users }));
     api.use('/follows', requireAuth, createFollowRouter({ users, follows }));
-    api.use('/export', requireAuth, createExportRouter({ markers, trips, ledger, security, follows, metrics }));
+    api.use('/orgs', requireAuth, createOrgRouter({ orgs, users, security }));
+    api.use('/export', requireAuth, createExportRouter({ markers, trips, ledger, security, follows, orgs, metrics }));
     api.use((req, res) => res.status(404).json({ error: 'Not found.' }));
     app.use('/api', api);
 
