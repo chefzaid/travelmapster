@@ -114,6 +114,8 @@ counting rules are in [ADR 0010](adr/0010-day-ledger.md).
 - **Evidence report** for any country and period: every counted day with the visit it comes from,
   why it counts and the history of that visit's dates, as a printable page (print or save as PDF
   from the browser) or CSV. It is built on the device, only when asked.
+- The tab and the report say they are a guide, not legal or tax advice
+  ([ADR 0017](adr/0017-product-principles.md)).
 - **Date history**: every visit date added, changed or removed is kept, with when, even after the
   visit or place is gone.
 
