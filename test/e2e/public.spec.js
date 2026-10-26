@@ -70,7 +70,7 @@ test('a visitor counts Schengen days without an account, and nothing leaves the 
 
     // The call to action leads to the sign-up form of the travel map.
     await page.getByRole('link', { name: 'Create my free map' }).click();
-    await expect(page.locator('#welcome-view')).toBeVisible();
+    await expect(page.locator('#app[data-map="ready"] #welcome-view')).toBeVisible();
     await expect(page).toHaveURL(/\/#sign-up$/);
     await expect(page.locator('#tab-register')).toHaveAttribute('aria-selected', 'true');
     await expect(page.locator('#auth-username')).toBeFocused();
@@ -84,7 +84,7 @@ test('a visitor tries the demo map on the landing page, then signs up to an empt
         if (request.method() !== 'GET' && new URL(request.url()).pathname.startsWith('/api/markers')) writes.push(request.url());
     });
     await page.goto('/');
-    await expect(page.locator('#welcome-view')).toBeVisible();
+    await expect(page.locator('#app[data-map="ready"] #welcome-view')).toBeVisible();
     await expect(page.locator('#demo-ledger')).toContainText('Schengen days');
     await expect(page.locator('#legend-visited')).toHaveText('10');
     await expect(page.locator('.story-keepsakes')).toContainText('Coming soon');
