@@ -91,10 +91,13 @@ test('a traveler replays their map year by year with journey lines, picks map co
     await page.click('#account-btn');
     await page.click('#settings-btn');
     await page.check('#dialog-publicJourneys');
+    await page.check('#dialog-publicIndexing');
     const saved = page.waitForResponse(response => response.url().endsWith('/api/profile') && response.request().method() === 'PATCH');
     await page.getByRole('button', { name: 'Save settings' }).click();
     expect((await saved).ok()).toBe(true);
     await visitor.reload();
+    // Listed in search engines at the owner's choice.
+    await expect(visitor.locator('link[rel="canonical"]')).toHaveAttribute('href', new RegExp(`/\\?u=${username}$`));
     await visitor.click('#timeline-btn');
     await expect(visitor.locator('#time-journeys')).toBeVisible();
     await expect(visitor.locator('html')).not.toHaveAttribute('data-palette', /./);

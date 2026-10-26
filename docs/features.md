@@ -151,7 +151,12 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   tab, and the dates never leave the browser tab. The page explains the rule, lists the members
   and links to sign-up.
 - Search-friendly: real titles, descriptions and headings, `robots.txt` and a sitemap of the
-  public pages. Shared maps are kept out of search results.
+  public pages. Shared maps stay out of search results unless their owners turn on **Let search
+  engines list my public map** in Settings; the sitemap then lists them.
+- **Link previews of shared maps**: a shared map's link shows its own title, its counts and a
+  picture of the map with the countries colored in, when posted in a chat or on social media
+  ([ADR 0023](adr/0023-shared-map-previews-and-indexing.md)). The shared map invites visitors to
+  make their own.
 
 ## Trips
 

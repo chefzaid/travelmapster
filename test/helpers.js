@@ -51,6 +51,7 @@ async function createTestContext(envOverrides = {}) {
         RATE_LIMIT_REGISTER: '1000',
         RATE_LIMIT_API: '10000',
         RATE_LIMIT_GEOCODE: '1000',
+        RATE_LIMIT_PREVIEW: '1000',
         ...envOverrides
     });
     const logger = createLogger('silent');

@@ -56,9 +56,10 @@ startup. The compose database also creates `travelmapster_test` for the
 | `PORT`, `METRICS_PORT` | `3000`, `9464` | |
 | `NODE_ENV`, `LOG_LEVEL` | `development`, `info` | `test` silences logs |
 | `TRUST_PROXY` | `false` | `true`, a hop count or reverse-proxy CIDRs; needed for correct client IPs |
-| `PUBLIC_URL` | origin of each request | Public origin such as `https://travel.example.org`, used for absolute links in `robots.txt` and the sitemap |
+| `PUBLIC_URL` | origin of each request | Public origin such as `https://travel.example.org`, used for absolute links in `robots.txt`, the sitemap and shared maps' link previews |
 | `RATE_LIMIT_AUTH`, `RATE_LIMIT_API`, `RATE_LIMIT_GEOCODE` | `10`/15 min, `300`/min, `30`/min | Per client IP, shared by all replicas; auth covers sign-in, sign-up and account changes |
 | `RATE_LIMIT_REGISTER` | `5`/hour | Sign-ups per client IP, on top of the auth limit; failed sign-ups count too |
+| `RATE_LIMIT_PREVIEW` | `60`/min | Shared maps' link-preview pictures (`/og/<name>.png`) per client IP |
 | `GEOCODER_URL`, `GEOCODER_USER_AGENT` | Nominatim | Put a contact URL in the User-Agent |
 | `GEOCODER_MIN_INTERVAL_MS`, `GEOCODER_TIMEOUT_MS`, `GEOCODER_CACHE_SIZE` | `1100`, `8000`, `1000` | Nominatim usage policy |
 

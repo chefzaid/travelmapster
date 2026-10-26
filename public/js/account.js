@@ -123,7 +123,10 @@ async function openSettings(ctx) {
                 hint: 'Color-blind safe colors keep every status apart for all kinds of color vision; print-friendly colors '
                     + 'suit paper and grayscale printers. Patterns and outlines stay the same.' },
             { name: 'publicJourneys', label: 'Show journey lines on my public map', type: 'checkbox', value: user.publicJourneys,
-                hint: 'Visitors already see your visit dates; with this on, the timeline also draws the order you traveled in.' }
+                hint: 'Visitors already see your visit dates; with this on, the timeline also draws the order you traveled in.' },
+            { name: 'publicIndexing', label: 'Let search engines list my public map', type: 'checkbox', value: user.publicIndexing,
+                hint: 'Only while your map is public. Off, your shared link still works and shows a preview, but asks search '
+                    + 'engines not to list it. Search engines can take a few weeks to drop a page.' }
         ]
     });
     if (!values) return;
@@ -132,6 +135,7 @@ async function openSettings(ctx) {
     if (values.countryList !== (user.countryList || 'all')) changes.countryList = values.countryList;
     if (values.mapPalette !== paletteId(user.mapPalette)) changes.mapPalette = values.mapPalette;
     if ((values.publicJourneys === 'on') !== Boolean(user.publicJourneys)) changes.publicJourneys = values.publicJourneys === 'on';
+    if ((values.publicIndexing === 'on') !== Boolean(user.publicIndexing)) changes.publicIndexing = values.publicIndexing === 'on';
     if (!Object.keys(changes).length) return;
     await ctx.saveSettings(changes, 'Settings saved.');
 }

@@ -36,6 +36,12 @@ test('a traveler signs up, colors in a city, shares a public map without a hidde
     await expect(visitor.locator('#public-view')).toBeVisible();
     await expect(visitor.locator('#public-title')).toContainText(username);
     await expect(visitor.locator('#legend-visited')).toHaveText('1');
+    // A posted link shows the map's own preview; its picture is a PNG of the map.
+    await expect(visitor).toHaveTitle(`${username}'s travel map · TravelMapster`);
+    const preview = await visitor.locator('meta[property="og:image"]').getAttribute('content');
+    const picture = await visitor.request.get(preview);
+    expect(picture.headers()['content-type']).toBe('image/png');
+    await expect(visitor.getByRole('link', { name: 'Make your own map' })).toBeVisible();
 
     // The embeddable map shows in another site's frame, and nothing at all for a private map.
     await expect(page.locator('#embed-btn')).toBeEnabled();

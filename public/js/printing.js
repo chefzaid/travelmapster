@@ -1,6 +1,6 @@
 // Map palettes (ADR 0016), printing the map as it is on screen, and map posters to download.
 import { h, $, formDialog, downloadFile, toast } from './ui.js';
-import { POSTER_SIZES, POSTER_STYLES, posterSvg } from './poster.js';
+import { POSTER_SIZES, POSTER_STYLES, mapStatusOf, posterSvg } from './poster.js';
 import { PALETTES, paletteId } from './palettes.js';
 import { timelineView } from './timeline-bar.js';
 
@@ -58,17 +58,6 @@ async function printMap(ctx) {
     window.print();
 }
 
-// The status a poster colours a country in: home first, then lived, been, layover and wish.
-function posterStatus(stats) {
-    return id => {
-        if (id === stats.homeId) return 'home';
-        if (stats.livedIds.has(id)) return 'lived';
-        if (stats.visitedIds.has(id)) return 'visited';
-        if (stats.transitIds.has(id)) return 'transit';
-        return stats.wishlistIds.has(id) ? 'wishlist' : null;
-    };
-}
-
 /** Asks for a size, style and title, then downloads the traveler's map as a vector poster. */
 async function makePoster(ctx) {
     const { stats, index, markers, user } = ctx.state;
@@ -83,7 +72,7 @@ async function makePoster(ctx) {
         ]
     });
     if (!values) return;
-    const status = posterStatus(stats);
+    const status = mapStatusOf(stats);
     const ids = index.countries.map(country => country.id);
     const counts = {};
     for (const id of ids) {

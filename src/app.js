@@ -11,7 +11,8 @@ const { rateLimit } = require('express-rate-limit');
 const { csrfProtection, csrfTokenRoute } = require('./middleware/csrf');
 const { createAssets } = require('./assets');
 const { brotliStatic } = require('./precompressed');
-const { robotsTxt, sitemapXml, siteOrigin } = require('./seo');
+const { PUBLIC_PAGES, pageWithMeta, robotsTxt, sitemapXml, siteOrigin } = require('./seo');
+const { createPublicMaps } = require('./public-map');
 const { PgRateLimitStore } = require('./rate-limit-store');
 const {
     createUserRepository, createMarkerRepository, createVisitRepository, createLedgerRepository, createTripRepository
@@ -53,6 +54,7 @@ function createApp({ config, pool, logger, metrics, geocoder, places, state = { 
     const trips = createTripRepository(pool);
     const passport = createPassport(users, logger);
     const assets = createAssets(PUBLIC_DIR);
+    const publicMaps = createPublicMaps({ users, markers, publicDir: PUBLIC_DIR });
 
     app.disable('x-powered-by');
     app.set('trust proxy', config.trustProxy);
@@ -109,10 +111,26 @@ function createApp({ config, pool, logger, metrics, geocoder, places, state = { 
     // for a year: a release changes the fingerprint, so browsers and the CDN never mix old
     // and new scripts, styles or map data.
     const sendPage = (res, file) => res.set('Cache-Control', 'no-cache').type('html').send(assets.pages[file]);
-    app.get(['/', '/index.html'], (req, res) => {
-        // Shared maps stay out of search results until their owners can opt in.
-        if (req.query.u !== undefined) res.set('X-Robots-Tag', 'noindex');
-        sendPage(res, 'index.html');
+    app.get(['/', '/index.html'], async (req, res) => {
+        if (req.query.u === undefined) return sendPage(res, 'index.html');
+        // A shared map gets its own title and link preview; it stays out of search results
+        // unless its owner opted in (ADR 0023). Private and missing maps look the same.
+        const map = await publicMaps.find(req.query.u);
+        const meta = map && publicMaps.meta(map, siteOrigin(config, req));
+        if (!meta?.indexed) res.set('X-Robots-Tag', 'noindex');
+        if (!meta) return sendPage(res, 'index.html');
+        return res.set('Cache-Control', 'no-cache').type('html').send(pageWithMeta(assets.pages['index.html'], meta));
+    });
+    // The picture shown when a shared map's link is posted. Rendering costs CPU, so it has its
+    // own limit and is cached by its colours.
+    app.get('/og/:file', jsonLimiter(pool, 'og', config.rateLimit.previewPerMinute, 60_000, 'Too many requests, please slow down.'), async (req, res) => {
+        const [, username] = /^(.+)\.png$/.exec(req.params.file) || [];
+        const map = await publicMaps.find(username);
+        if (!map) return res.status(404).json({ error: 'Map not found.' });
+        const { png, etag } = await publicMaps.image(map);
+        res.set({ 'Cache-Control': 'public, max-age=3600', ETag: etag, 'X-Robots-Tag': 'noindex' });
+        if (req.fresh) return res.status(304).end();
+        return res.type('png').send(png);
     });
     app.get('/schengen-calculator', (req, res) => sendPage(res, 'schengen-calculator.html'));
     // A public map other websites may frame (ADR 0020): only this page relaxes framing, and it
@@ -127,8 +145,9 @@ function createApp({ config, pool, logger, metrics, geocoder, places, state = { 
     app.get('/robots.txt', (req, res) => {
         res.set('Cache-Control', 'no-cache').type('text/plain').send(robotsTxt(siteOrigin(config, req)));
     });
-    app.get('/sitemap.xml', (req, res) => {
-        res.set('Cache-Control', 'no-cache').type('application/xml').send(sitemapXml(siteOrigin(config, req)));
+    app.get('/sitemap.xml', async (req, res) => {
+        const maps = (await users.listIndexed()).map(name => `/?u=${encodeURIComponent(name)}`);
+        res.set('Cache-Control', 'no-cache').type('application/xml').send(sitemapXml(siteOrigin(config, req), [...PUBLIC_PAGES, ...maps]));
     });
     const immutable = 'public, max-age=31536000, immutable';
     // One cache of compressed files for every mount.

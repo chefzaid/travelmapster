@@ -21,9 +21,10 @@ const VISIT_COLUMNS = `v.id, v.start_date AS "startDate", v.end_date AS "endDate
 // Goals are JSON, so they are written as text and cast.
 const PROFILE_COLUMNS = [
     ['profileVisibility', 'profile_visibility'], ['homeCountry', 'home_country'], ['countryList', 'country_list'],
-    ['mapPalette', 'map_palette'], ['publicJourneys', 'public_journeys'], ['goals', 'goals', 'jsonb']
+    ['mapPalette', 'map_palette'], ['publicJourneys', 'public_journeys'], ['publicIndexing', 'public_indexing'],
+    ['goals', 'goals', 'jsonb']
 ];
-const USER_COLUMNS = 'id, username, profile_visibility, home_country, country_list, map_palette, public_journeys, goals';
+const USER_COLUMNS = 'id, username, profile_visibility, home_country, country_list, map_palette, public_journeys, public_indexing, goals';
 
 function createUserRepository(db) {
     return {
@@ -47,6 +48,16 @@ function createUserRepository(db) {
         /** Records today as the user's last active day (a date only, for activity metrics). */
         async markSeen(id) {
             await db.query('UPDATE users SET last_seen_on = current_date WHERE id = $1 AND last_seen_on IS DISTINCT FROM current_date', [id]);
+        },
+
+        /** Names of the public maps whose owners let search engines list them, for the sitemap. */
+        async listIndexed(limit = 10_000) {
+            const { rows } = await db.query(
+                `SELECT username FROM users WHERE profile_visibility = 'public' AND public_indexing
+                 ORDER BY lower(username) LIMIT $1`,
+                [limit]
+            );
+            return rows.map(row => row.username);
         },
 
         /** Accounts in total and by how recently they were used, for the metrics endpoint. */
@@ -85,7 +96,8 @@ function createUserRepository(db) {
             const { rows } = await db.query(
                 `UPDATE users SET ${set}updated_at = now() WHERE id = $1
                  RETURNING profile_visibility AS "profileVisibility", home_country AS "homeCountry",
-                    country_list AS "countryList", map_palette AS "mapPalette", public_journeys AS "publicJourneys", goals`,
+                    country_list AS "countryList", map_palette AS "mapPalette", public_journeys AS "publicJourneys",
+                    public_indexing AS "publicIndexing", goals`,
                 values
             );
             return rows[0] || null;

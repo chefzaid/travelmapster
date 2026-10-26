@@ -34,7 +34,7 @@ and the privacy promise of the day ledger ([ADR 0010](0010-day-ledger.md)).
 - **Crawler plumbing.** `robots.txt` keeps crawlers out of `/api/` and points to `sitemap.xml`,
   which lists the public pages only. Absolute URLs use `PUBLIC_URL`, or the origin of the
   request when it is not set. Shared maps are served with `X-Robots-Tag: noindex` until their
-  owners can opt in to indexing.
+  owners can opt in to indexing (they can since [ADR 0023](0023-shared-map-previews-and-indexing.md)).
 
 ## Consequences
 

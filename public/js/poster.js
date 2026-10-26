@@ -26,6 +26,20 @@ export const POSTER_STYLES = {
     }
 };
 
+/**
+ * The status a map colours each country in, from the passport's stats: home first, then
+ * lived, been, layover and wish; null for the rest.
+ */
+export function mapStatusOf(stats) {
+    return id => {
+        if (id === stats.homeId) return 'home';
+        if (stats.livedIds.has(id)) return 'lived';
+        if (stats.visitedIds.has(id)) return 'visited';
+        if (stats.transitIds.has(id)) return 'transit';
+        return stats.wishlistIds.has(id) ? 'wishlist' : null;
+    };
+}
+
 const LEGEND = [['home', 'Home'], ['lived', 'Lived there'], ['visited', 'Been there'], ['transit', 'Transit only'], ['wishlist', 'Wishlist']];
 
 const A1 = 1.340264;

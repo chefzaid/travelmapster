@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "TravelMapster API",
-    "version": "1.2.0",
+    "version": "1.3.0",
     "description": "The JSON API the TravelMapster app uses. It is version 1 and changes only in backward-compatible ways ([ADR 0019](../adr/0019-api-description-and-versioning.md)). Errors are `{ \"error\": \"…\" }` with a matching status; every response is `Cache-Control: no-store` unless stated."
   },
   "servers": [
@@ -416,6 +416,10 @@
                     },
                     "publicJourneys": {
                       "type": "boolean"
+                    },
+                    "publicIndexing": {
+                      "type": "boolean",
+                      "description": "Whether search engines may list the map while it is public (ADR 0023)."
                     },
                     "goals": {
                       "type": "array",
@@ -1698,6 +1702,10 @@
           "publicJourneys": {
             "type": "boolean"
           },
+          "publicIndexing": {
+            "type": "boolean",
+            "description": "Whether search engines may list the map while it is public (ADR 0023)."
+          },
           "goals": {
             "type": "array",
             "maxItems": 12,
@@ -1757,6 +1765,10 @@
           },
           "publicJourneys": {
             "type": "boolean"
+          },
+          "publicIndexing": {
+            "type": "boolean",
+            "description": "Whether search engines may list the map while it is public (ADR 0023)."
           },
           "goals": {
             "type": "array",

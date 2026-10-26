@@ -198,5 +198,6 @@ number (`NNNN-short-title.md`) and the template below. Statuses: **Proposed**, *
 - [ADR 0020: An embeddable public map](adr/0020-embeddable-map.md)
 - [ADR 0021: An installable app that works offline](adr/0021-installable-offline-app.md)
 - [ADR 0022: Teams, where employers see business days only](adr/0022-teams.md)
+- [ADR 0023: Link previews for shared maps, and indexing only by choice](adr/0023-shared-map-previews-and-indexing.md)
 
 Superseded: [ADR 0007: Draw towns on a canvas layer](adr/0007-canvas-towns.md).
