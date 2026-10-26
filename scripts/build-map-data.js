@@ -2,18 +2,22 @@
 // Builds the compact map data served from public/data.
 //
 // Usage:
-//   node scripts/build-map-data.js <source-dir>
+//   node scripts/build-map-data.js <source-dir> [--countries-only]
 //
 // The directory must contain, from Natural Earth (public domain,
 // https://github.com/nvkelso/natural-earth-vector/tree/master/geojson):
-//   ne_50m_admin_0_countries.geojson, ne_10m_populated_places_simple.geojson
+//   ne_50m_admin_0_countries.geojson, ne_50m_admin_0_map_subunits.geojson,
+//   ne_10m_populated_places_simple.geojson
 // and from GeoNames (CC BY 4.0, https://download.geonames.org/export/dump/):
 //   cities500.txt (unzipped)
+// With --countries-only, only the country borders are rebuilt (from the two Natural Earth
+// admin files) and the cities are left as they are.
 
 const fs = require('node:fs');
 const path = require('node:path');
 
-const sourceDir = process.argv[2];
+const [sourceDir, ...flags] = process.argv.slice(2);
+const countriesOnly = flags.includes('--countries-only');
 if (!sourceDir) {
     console.error('Usage: node scripts/build-map-data.js <source-dir>');
     process.exit(1);
@@ -31,6 +35,14 @@ const TILE_MAX_CITIES = 4000;
 const EXCLUDED_FEATURE_CODES = new Set(['PPLX', 'PPLH', 'PPLQ', 'PPLW', 'PPLCH']);
 // Natural Earth marks Taiwan as CN-TW; GeoNames uses TW.
 const ISO2_OVERRIDES = { TW: 'TWN' };
+// Overseas parts that Natural Earth draws within a country but that are outside the Schengen
+// area become territories of their own, from the map subunits layer (ADR 0024): the country
+// keeps the subunits in `keep` (by SU_A3) and each one in `split` becomes a territory.
+const TERRITORY_SPLITS = {
+    FRA: { keep: ['FXX', 'FXC'], split: ['GUF', 'GLP', 'MTQ', 'REU', 'MYT'] },
+    NOR: { keep: ['NOR', 'NJM'], split: ['NSV'] },
+    NLD: { keep: ['NLD'], split: ['NLY'] }
+};
 
 function readGeoJson(fileName) {
     return JSON.parse(fs.readFileSync(path.join(sourceDir, fileName), 'utf8'));
@@ -113,11 +125,53 @@ function uniqueNames(...names) {
     return [...new Set(names.filter(name => typeof name === 'string' && name.trim()))];
 }
 
+function mergeGeometries(geometries) {
+    const polygons = geometries.flatMap(g => (g.type === 'Polygon' ? [g.coordinates] : g.coordinates));
+    return polygons.length === 1 ? { type: 'Polygon', coordinates: polygons[0] } : { type: 'MultiPolygon', coordinates: polygons };
+}
+
+// The country's own part and its overseas territories, from the map subunits layer.
+function splitTerritories(feature, subunits) {
+    const rule = TERRITORY_SPLITS[feature.properties.ADM0_A3];
+    if (!rule) return [feature];
+    const part = code => {
+        const found = subunits.find(subunit => subunit.properties.SU_A3 === code);
+        if (!found) throw new Error(`Map subunit ${code} is missing`);
+        return found;
+    };
+    const kept = rule.keep.map(part);
+    const home = {
+        ...feature,
+        properties: { ...feature.properties, POP_EST: kept.reduce((sum, subunit) => sum + subunit.properties.POP_EST, 0) },
+        geometry: mergeGeometries(kept.map(subunit => subunit.geometry))
+    };
+    const territories = rule.split.map(part).map(subunit => {
+        const p = subunit.properties;
+        return {
+            ...subunit,
+            properties: {
+                ...p,
+                ADM0_A3: p.ISO_A3,
+                NAME: p.SUBUNIT,
+                ISO_A2: p.ISO_A2_EH,
+                // Natural Earth files Réunion under the open ocean; it is in Africa.
+                CONTINENT: p.CONTINENT === 'Seven seas (open ocean)' && p.SUBREGION.includes('Africa') ? 'Africa' : p.CONTINENT,
+                ADMIN: p.NAME,
+                NAME_SORT: null,
+                NAME_CIAWF: null
+            }
+        };
+    });
+    return [home, ...territories];
+}
+
 const countriesSource = readGeoJson('ne_50m_admin_0_countries.geojson');
+const subunits = readGeoJson('ne_50m_admin_0_map_subunits.geojson').features;
 const countries = {
     type: 'FeatureCollection',
     features: countriesSource.features
         .filter(feature => feature.properties.CONTINENT !== 'Antarctica')
+        .flatMap(feature => splitTerritories(feature, subunits))
         .map(feature => {
             const p = feature.properties;
             return {
@@ -140,6 +194,14 @@ const countries = {
         })
         .sort((first, second) => first.properties.name.localeCompare(second.properties.name))
 };
+
+fs.mkdirSync(outputDir, { recursive: true });
+fs.writeFileSync(path.join(outputDir, 'countries.geojson'), JSON.stringify(countries));
+if (countriesOnly) {
+    require('./compress-map-data').compressMapData();
+    console.log(`Wrote ${countries.features.length} countries to ${outputDir}; cities left as they are`);
+    process.exit(0);
+}
 
 // --- cities -------------------------------------------------------------------
 
@@ -279,8 +341,6 @@ function split(list, [south, west, north, east], id) {
 }
 split(cities.filter(c => c.minZoom > BASE_MAX_ZOOM), [-90, -180, 90, 180], 't');
 
-fs.mkdirSync(outputDir, { recursive: true });
-fs.writeFileSync(path.join(outputDir, 'countries.geojson'), JSON.stringify(countries));
 const base = cities.filter(c => c.minZoom <= BASE_MAX_ZOOM);
 fs.writeFileSync(path.join(outputDir, 'cities.json'), JSON.stringify(base));
 

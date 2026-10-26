@@ -84,12 +84,15 @@ Invalid integers stop startup with a clear error. Production values come from
 
 ## Rebuilding Map Data
 
-Download `ne_50m_admin_0_countries.geojson` and `ne_10m_populated_places_simple.geojson` from
+Download `ne_50m_admin_0_countries.geojson`, `ne_50m_admin_0_map_subunits.geojson` and
+`ne_10m_populated_places_simple.geojson` from
 [Natural Earth](https://github.com/nvkelso/natural-earth-vector/tree/master/geojson) and unzip
 [GeoNames `cities500.zip`](https://download.geonames.org/export/dump/) into one folder, then:
 
 ```bash
 node scripts/build-map-data.js path/to/folder
+# or only the borders, from the two Natural Earth admin files, leaving the cities as they are:
+node scripts/build-map-data.js path/to/folder --countries-only
 ```
 
 It takes about half a minute, the last part writing a Brotli copy (`.br`) beside every data

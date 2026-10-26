@@ -149,7 +149,7 @@ function schengenSection(ctx, overview) {
             h('p', {}, `Members: ${names(SCHENGEN_MEMBERS)}.`),
             h('p', {}, `Also counted, as they are only reached through the area: ${names(SCHENGEN_OPEN_BORDERS)}.`),
             h('p', {}, 'Not counted: Cyprus and Ireland (EU members outside the area) and Andorra. Entry and exit days both count.'),
-            h('p', {}, 'Overseas territories that the map draws as part of a member, such as French Guiana, count with it although they are outside the area.')
+            h('p', {}, 'Overseas territories outside the area, such as French Guiana, Réunion or Svalbard, are territories of their own on the map and do not count.')
         )
     );
 }

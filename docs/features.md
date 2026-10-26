@@ -56,10 +56,14 @@ The reasoning and what each rule rules out are in [ADR 0017](adr/0017-product-pr
 - One tap marks a place "Been there", "Lived there", "Transit only" or "Wishlist"; tapping
   again undoes it. A layover is shown but never counted as a visit.
 - A home country, set in Settings or from its card; it is never shown on a public map.
-- The list of countries to count, in Settings: every territory on the map (241, the default) or
+- The list of countries to count, in Settings: every territory on the map (248, the default) or
   UN members and observer states (195). Territories outside the list, such as Kosovo, Taiwan or
   Greenland on the UN list, are still colored in and named in the passport, but not counted; the
-  rule for disputed territories is in [ADR 0015](adr/0015-country-lists.md).
+  rule for disputed territories is in [ADR 0015](adr/0015-country-lists.md). Overseas parts of
+  France, Norway and the Netherlands that are outside the Schengen area (French Guiana,
+  Guadeloupe, Martinique, Réunion, Mayotte, Svalbard, the Caribbean Netherlands) are territories
+  of their own, and count as their member on the UN list
+  ([ADR 0024](adr/0024-overseas-territories.md)).
 - Mark many countries at once: pick them on the map (or through search), or choose a whole
   continent in the Places tab, then mark them "Been there" or "Wishlist" in one step, with undo.
   Countries you have been to never become wishlist ones; marking "Been there" turns layovers
@@ -242,6 +246,8 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
 - No social login yet; a place or visit holds one photo link, not an album ([roadmap](../TODO.md)).
 - No paid plans or prices yet; the landing page shows keepsakes as coming soon.
 - Photos are links to images hosted elsewhere; the app stores no files.
-- Ledger alerts are in-app only: there is no email yet. Overseas territories drawn as part of a
-  country on the map (such as French Guiana within France) count as that country, including for
-  Schengen. The date history starts with the day ledger release.
+- Ledger alerts are in-app only: there is no email yet. The date history starts with the day
+  ledger release. A rule for a country does not count its overseas territories that the map
+  draws on their own (such as Réunion for France): add them to the rule to count them together.
+- The map has no towns yet in the overseas territories split from France, Norway and the
+  Netherlands; they come with the next full map data rebuild.
