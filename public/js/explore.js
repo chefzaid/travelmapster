@@ -8,6 +8,8 @@ import { shareLabel } from './lists.js';
 import { fetchIdeas } from './ideas.js';
 import { openNewTrip } from './trips.js';
 import { showMarker, statusChip } from './cards.js';
+import { localToday } from './days.js';
+import { memoryLabel, onThisDay } from './memories.js';
 
 // ---------------------------------------------------------------- ideas
 
@@ -76,6 +78,23 @@ function renderIdeasInto(ctx, container) {
 
 // ---------------------------------------------------------------- explore tab
 
+// Visits that began on this day in earlier years, each a button that shows the place.
+function memoriesSection(ctx) {
+    const memories = onThisDay(ctx.state.markers, localToday());
+    if (!memories.length) return null;
+    return h('section', { 'aria-labelledby': 'memories-title' },
+        h('h3', { class: 'section-title', id: 'memories-title' }, h('span', { 'aria-hidden': 'true' }, '📸 '), 'On this day'),
+        h('ul', { class: 'mini-list', id: 'memories' }, memories.slice(0, 5).map(memory => {
+            const country = ctx.state.stats.markerCountry.get(memory.marker.id);
+            return h('li', {}, h('button', { type: 'button', onclick: () => showMarker(ctx, memory.marker) },
+                h('span', { 'aria-hidden': 'true' }, country?.flag || '📍'),
+                h('span', {}, memoryLabel(memory)),
+                h('small', { class: 'muted' }, memory.visit.startDate.slice(0, 4))
+            ));
+        }))
+    );
+}
+
 const CONTINENT_VIEWS = {
     Africa: [[2, 20], 3],
     Asia: [[34, 90], 2.5],
@@ -111,6 +130,7 @@ export function renderExplore(container, ctx) {
                 h('li', {}, 'Zoom in and pin the cities you loved.')
             )
         ) : null,
+        memoriesSection(ctx),
         nextDream ? h('section', { class: 'dream-card' },
             h('p', { class: 'eyebrow' }, 'Your next adventure?'),
             h('h3', {}, nextDream.emoji ? `${nextDream.emoji} ` : '', nextDream.name),

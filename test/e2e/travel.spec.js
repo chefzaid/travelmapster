@@ -131,6 +131,18 @@ test('a traveler records several visits to the same city', async ({ page }) => {
     await expect(page.locator('#places-tab')).toContainText('Nothing matches those filters.');
     await page.locator('#last-visit-filter').selectOption('2023');
     await expect(page.locator('#places-tab .place')).toHaveCount(1);
+
+    // A visit that began on this day four years ago (a leap year whenever today is one) comes
+    // back on the Explore tab and shows its place.
+    const today = await browserDay(page, 0);
+    await page.fill('#global-search', 'Lisbon');
+    await page.locator('#search-results [role="option"]').filter({ hasText: 'Lisbon' }).first().click();
+    await addVisit(page, `${Number(today.slice(0, 4)) - 4}${today.slice(4)}`);
+    await expect(card.locator('.visits-title')).toHaveText('Visited 3 times');
+    await page.click('#tab-explore');
+    await expect(page.locator('#memories')).toContainText('4 years ago today, you arrived in Lisbon');
+    await page.locator('#memories button').click();
+    await expect(card.locator('h3')).toHaveText('Lisbon');
     expect(errors).toEqual([]);
 });
 

@@ -84,6 +84,10 @@ The reasoning and what each rule rules out are in [ADR 0017](adr/0017-product-pr
   also reads files from before visits or tags existed, and
   skips invalid rows and duplicates.
 - "Surprise me" flies to a country you have not visited yet.
+- **On this day**: the Explore tab lists visits and moves that began on today's date in earlier
+  years ("2 years ago today, you arrived in Lisbon"), each showing its place on the map; a visit
+  that began on 29 February comes back on 28 February in other years. Layovers and wishes are
+  left out.
 
 ## Day Ledger
 
