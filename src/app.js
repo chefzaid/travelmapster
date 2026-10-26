@@ -23,6 +23,7 @@ const { createProfileRouter, createPublicProfileRouter } = require('./routes/pro
 const { createGeocodeRouter } = require('./routes/geocode');
 const { createTripRouter } = require('./routes/trips');
 const { createPlacesRouter } = require('./routes/places');
+const { createExportRouter } = require('./routes/export');
 
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 
@@ -174,6 +175,7 @@ function createApp({ config, pool, logger, metrics, geocoder, places, state = { 
     api.use('/visits', requireAuth, createVisitRouter({ visits }));
     api.use('/ledger', requireAuth, createLedgerRouter({ ledger }));
     api.use('/trips', requireAuth, createTripRouter({ trips }));
+    api.use('/export', requireAuth, createExportRouter({ markers, trips, ledger }));
     api.use((req, res) => res.status(404).json({ error: 'Not found.' }));
     app.use('/api', api);
 

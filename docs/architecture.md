@@ -26,7 +26,7 @@ PostgreSQL, including sessions, so any replica can serve any request.
 | `src/assets.js` | Release fingerprint and the HTML pages with their asset links rewritten |
 | `src/seo.js` | `robots.txt` and the sitemap of public pages ([ADR 0011](adr/0011-public-pages.md)) |
 | `src/config.js` | Validated configuration from environment variables ([reference](development.md#configuration)) |
-| `src/routes/` | `auth`, `markers` (places and their visits), `visits`, `ledger` (day-ledger settings and date history), `trips`, `profile` (incl. public maps), `places` and `geocode` routers |
+| `src/routes/` | `auth`, `markers` (places and their visits), `visits`, `ledger` (day-ledger settings and date history), `trips`, `profile` (incl. public maps), `export` (the account archive), `places` and `geocode` routers |
 | `src/validation.js` | Every request-body rule and limit |
 | `src/rate-limit-store.js` | Rate-limit counters in PostgreSQL, shared by every replica |
 | `src/repositories.js` | SQL access, always scoped to the signed-in user (visits through their place) |
@@ -67,6 +67,7 @@ JSON under `/api`; errors are `{ "error": "…" }` with a matching status. All r
 | GET | `/api/ledger/changes` | History of visit dates, newest first (latest 5,000) |
 | GET, POST | `/api/trips` | List or create itineraries |
 | PUT, DELETE | `/api/trips/:id` | Replace or remove an itinerary |
+| GET | `/api/export` | Everything the account holds, for the data archive: `profile`, `places` with their visits, `trips`, and `ledger` with its `settings` and the whole date history (`changes`); `format` and `version` describe the document |
 | PATCH | `/api/profile` | Change account settings, each optional: `profileVisibility` (`private` or `public`), `homeCountry` (a map code or `null`), `countryList` (`all` or `un`, [ADR 0015](adr/0015-country-lists.md)), `mapPalette` (`standard`, `colorblind` or `print`) and `publicJourneys` (a boolean, [ADR 0016](adr/0016-timeline-journeys-and-palettes.md)); returns them all |
 | GET | `/api/public/:username` | Read-only public map with the owner's `countryList`, `showJourneys` (whether visitors see journey lines), visit dates and each place's `stay`, without notes, photo links, ratings, tags, emoji, wishlist plans, the palette or the home country, and without places hidden from it ([ADR 0013](adr/0013-hidden-places.md)) |
 | GET | `/api/places?q=&limit=` | Search every town in the map data (public, 1–20 results) |
@@ -90,6 +91,7 @@ JSON under `/api`; errors are `{ "error": "…" }` with a matching status. All r
 | `public/js/lists.js` | The country lists the passport counts against: every territory on the map, or UN members and observer states ([ADR 0015](adr/0015-country-lists.md)) (pure, unit tested) |
 | `public/js/status.js` | Place statuses: been there, lived there, transit only and wishlist, and their API fields ([ADR 0014](adr/0014-home-lived-and-transit.md)) (pure, unit tested) |
 | `public/js/places.js`, `io.js` | Places tab, import and export (pure `io.js` is unit tested) |
+| `public/js/archive.js`, `zip.js` | Places as GeoJSON and KML, and the account archive: a ZIP file written without a dependency (pure, unit tested) |
 | `public/js/bulk.js` | Marking several countries at once: the bulk change, its undo and the updated places (pure, unit tested) |
 | `public/js/details.js` | Ratings, tags, emoji and wishlist plans of a place, the tag and rating filter shared by the list and the map, and the wishlist by next good month (pure, unit tested) |
 | `public/js/visits.js` | Visit dates, counts, last-visit filter and validation (pure, unit tested) |

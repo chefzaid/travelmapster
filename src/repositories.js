@@ -309,7 +309,7 @@ function createLedgerRepository(db) {
             return rows[0];
         },
 
-        /** Newest first; the history is written by triggers on visits and places (migration 005). */
+        /** Newest first, at most `limit` (null for all); written by triggers on visits and places (migration 005). */
         async listChanges(userId, limit) {
             const { rows } = await db.query(
                 `SELECT ${CHANGE_COLUMNS} FROM visit_changes WHERE user_id = $1

@@ -1,6 +1,7 @@
 // Signing up and in from the landing page, the account menu, settings, password change,
 // account deletion and sharing.
-import { h, $, $all, fill, toast, formDialog } from './ui.js';
+import { h, $, $all, fill, toast, formDialog, downloadFile } from './ui.js';
+import { accountArchive } from './archive.js';
 import { SCHENGEN_RULE } from './days.js';
 import { COUNTRY_LISTS, countedCountries } from './lists.js';
 import { PALETTES, paletteId } from './palettes.js';
@@ -159,10 +160,25 @@ async function changePassword(ctx) {
     }
 }
 
+// Everything in the account as one ZIP archive (ADR 0017: a record you can keep).
+async function downloadArchive(ctx) {
+    const closeToast = toast('Packing your data…', { duration: 15000 });
+    try {
+        const data = await ctx.api.exportAccount();
+        const date = data.exportedAt.slice(0, 10);
+        downloadFile(`travelmapster-${data.profile.username}-${date}.zip`, accountArchive(data), 'application/zip');
+        closeToast();
+        toast('Your data archive is downloaded.', { tone: 'success' });
+    } catch (error) {
+        closeToast();
+        ctx.handleError(error);
+    }
+}
+
 async function deleteAccount(ctx) {
     const values = await formDialog({
         title: 'Delete your account?',
-        message: 'Your places, trips, day ledger and passport are deleted for good. Export your places first if you want to keep them.',
+        message: 'Your places, trips, day ledger and passport are deleted for good. Download all your data from the account menu first if you want to keep it.',
         submitLabel: 'Delete account',
         danger: true,
         fields: [{ name: 'password', label: 'Password', type: 'password', required: true, autocomplete: 'current-password' }]
@@ -219,6 +235,7 @@ export function setupAccountMenu(ctx) {
     });
     menuItem('#settings-btn', openSettings);
     menuItem('#password-btn', changePassword);
+    menuItem('#export-btn', downloadArchive);
     menuItem('#delete-account-btn', deleteAccount);
 
     $('#copy-share-btn').addEventListener('click', async () => {

@@ -1,5 +1,6 @@
 'use strict';
 
+const fs = require('node:fs');
 const { test, expect } = require('@playwright/test');
 
 test.beforeEach(async ({ page }) => {
@@ -385,7 +386,7 @@ test('a traveler plans a trip that is saved to their account', async ({ page }) 
     expect(errors).toEqual([]);
 });
 
-test('a traveler changes their password, then deletes their account', async ({ page }) => {
+test('a traveler changes their password, downloads all their data, then deletes their account', async ({ page }) => {
     const errors = trackErrors(page);
     const username = `e2e_account_${Date.now()}`;
     await signUp(page, username);
@@ -405,6 +406,24 @@ test('a traveler changes their password, then deletes their account', async ({ p
     await page.fill('#auth-password', 'a brand new password');
     await page.click('#auth-submit');
     await expect(page.locator('#main-view')).toBeVisible();
+
+    // Before leaving, the whole account goes into one archive, and places into map formats.
+    await markCity(page, 'Lisbon');
+    await page.keyboard.press('Escape');
+    await page.click('#account-btn');
+    const archive = page.waitForEvent('download');
+    await page.click('#export-btn');
+    const download = await archive;
+    expect(download.suggestedFilename()).toMatch(new RegExp(`^travelmapster-${username}-\\d{4}-\\d{2}-\\d{2}\\.zip$`));
+    const zip = fs.readFileSync(await download.path());
+    expect(zip.subarray(0, 4).toString('hex')).toBe('504b0304');
+    expect(zip.toString('utf8')).toContain('"format": "travelmapster-account"');
+    expect(zip.toString('utf8')).toContain('<name>Lisbon, Portugal</name>');
+    await page.click('#tab-places');
+    const kml = page.waitForEvent('download');
+    await page.getByRole('button', { name: '⬇️ KML' }).click();
+    expect((await kml).suggestedFilename()).toMatch(/^travelmapster-places-.*\.kml$/);
+    await expect(page.locator('#places-tab')).toContainText('Exported 1 place as KML.');
 
     await page.click('#account-btn');
     await page.click('#delete-account-btn');
