@@ -10,6 +10,7 @@ const { rateLimit } = require('express-rate-limit');
 
 const { csrfProtection, csrfTokenRoute } = require('./middleware/csrf');
 const { createAssets } = require('./assets');
+const { brotliStatic } = require('./precompressed');
 const { robotsTxt, sitemapXml, siteOrigin } = require('./seo');
 const { PgRateLimitStore } = require('./rate-limit-store');
 const {
@@ -129,13 +130,16 @@ function createApp({ config, pool, logger, metrics, geocoder, places, state = { 
     app.get('/sitemap.xml', (req, res) => {
         res.set('Cache-Control', 'no-cache').type('application/xml').send(sitemapXml(siteOrigin(config, req)));
     });
-    app.use('/a/:version', express.static(PUBLIC_DIR, {
+    const immutable = 'public, max-age=31536000, immutable';
+    // One cache of compressed files for every mount.
+    const compressed = new Map();
+    app.use('/a/:version', brotliStatic(PUBLIC_DIR, immutable, compressed), express.static(PUBLIC_DIR, {
         index: false,
-        setHeaders: res => res.set('Cache-Control', 'public, max-age=31536000, immutable')
+        setHeaders: res => res.set('Cache-Control', immutable)
     }));
     // Unversioned paths (the favicon, older links) always revalidate.
     for (const mount of [assets.placeholder, '/']) {
-        app.use(mount, express.static(PUBLIC_DIR, { index: false, setHeaders: res => res.set('Cache-Control', 'no-cache') }));
+        app.use(mount, brotliStatic(PUBLIC_DIR, 'no-cache', compressed), express.static(PUBLIC_DIR, { index: false, setHeaders: res => res.set('Cache-Control', 'no-cache') }));
     }
 
     app.use('/api/markers/import', express.json({ limit: '3mb' }));

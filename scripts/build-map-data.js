@@ -299,3 +299,6 @@ fs.writeFileSync(path.join(tileDir, 'index.json'), JSON.stringify(tiles.map(tile
 
 console.log(`Wrote ${countries.features.length} countries, ${base.length} base cities and `
     + `${cities.length - base.length} more in ${tiles.length} tiles to ${outputDir}`);
+
+// Browsers that accept Brotli get these instead.
+require('./compress-map-data').compressMapData();

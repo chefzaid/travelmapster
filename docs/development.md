@@ -86,8 +86,10 @@ Download `ne_50m_admin_0_countries.geojson` and `ne_10m_populated_places_simple.
 node scripts/build-map-data.js path/to/folder
 ```
 
-It takes about ten seconds. Review the size and the [data format](data-model.md#map-data)
-before committing.
+It takes about half a minute, the last part writing a Brotli copy (`.br`) beside every data
+file, which the server sends to browsers that accept it. After editing a data file by hand, run
+`node scripts/compress-map-data.js`; a test fails while a copy is out of date. Review the size
+and the [data format](data-model.md#map-data) before committing.
 
 ## Troubleshooting
 
