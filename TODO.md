@@ -93,9 +93,11 @@ Differentiators:
 
 ## Market and growth (added 2026-10-23)
 
+- [ ] Refresh the [competitive review](docs/competitive-review.md) by 2027-04-26 (every six months). *(blocked: not due before 2027-04-01)*
+
 The field splits into scratch-map atlases (Been, Visited, Skratch), travel journals (Polarsteps, Journi), trip planners (Wanderlog, TripIt) and day-tracking tools for tax residency (Monaeo and similar). Atlases are free and crowded, journals depend on phone tracking, and day trackers are dry, costly and built for advisers. TravelMapster's opening is the overlap: the atlas wins the user for free, the ledger earns the subscription, and keepsakes pay one-off. Growth should come from things people share or search for, not from ads or third-party trackers.
 
-- [ ] Competitive review in `docs/`: features, pricing and privacy stance of the main atlas, journal, planner and day-tracking apps, refreshed every six months, with the gaps TravelMapster targets.
+- [x] Competitive review in `docs/`: features, pricing and privacy stance of the main atlas, journal, planner and day-tracking apps, refreshed every six months, with the gaps TravelMapster targets.
 - [ ] Presentation website: a full page that presents what TravelMapster does and each of its features (atlas, places and visits, journeys, trips, passport, day ledger, Schengen calculator, sharing), shown to visitors before the app instead of the sign-up panel over the demo map. Update [ADR 0011](docs/adr/0011-public-pages.md), where `/` stays the app.
 - [ ] Plan pricing on the landing page once paid plans exist: it shows the free plan and keepsakes as coming soon today, without prices ([ADR 0011](docs/adr/0011-public-pages.md)). *(waiting: see Needs Input › Paid plans and payments)*
 - [ ] Public maps worth sharing: opt-in indexing (shared maps are sent with `noindex` and left out of the sitemap until then), an Open Graph preview image of the user's map, and a "make your own map" call to action.

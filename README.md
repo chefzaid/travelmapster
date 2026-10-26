@@ -42,5 +42,6 @@ with the manual `00-image` job, then tags the version and deploys through Argo C
 - [Deployment](docs/deployment.md)
 - [Operations runbook](docs/operations.md)
 - [Security](docs/security.md)
+- [Competitive review](docs/competitive-review.md)
 
 Planned work is tracked in [TODO.md](TODO.md).
