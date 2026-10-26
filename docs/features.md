@@ -202,6 +202,9 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   photo links, ratings, tags, emoji, wishlist plans or the home country. Visitors can use the
   timeline, pick their own map colors and print the map; journey lines show only when the owner
   turns them on in Settings ([ADR 0016](adr/0016-timeline-journeys-and-palettes.md)).
+- **Embed** a public map in a blog or personal site: the account menu copies an `<iframe>` of
+  `/embed/<username>`, a read-only map with the owner's name, countries and cities and a link to
+  the full map; it shows nothing while the map is private ([ADR 0020](adr/0020-embeddable-map.md)).
 - Any place can be hidden from the public map, with its visits, so a public profile keeps
   sensitive trips to itself; the owner's map, passport and ledger still count it
   ([ADR 0013](adr/0013-hidden-places.md)).

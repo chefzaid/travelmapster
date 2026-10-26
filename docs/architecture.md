@@ -42,6 +42,7 @@ PostgreSQL, including sessions, so any replica can serve any request.
 |---|---|
 | `/` | The app (`index.html`): the landing page with a demo map when signed out, the user's map when signed in, or a read-only shared map at `/?u=<username>` (sent with `X-Robots-Tag: noindex`) |
 | `/schengen-calculator` | The free Schengen 90/180 calculator (`schengen-calculator.html`); `/schengen-calculator.html` redirects here |
+| `/embed/<username>` | A public map for other sites to frame (`embed.html`), the only page that may be framed, sent with `X-Robots-Tag: noindex` ([ADR 0020](adr/0020-embeddable-map.md)) |
 | `/robots.txt`, `/sitemap.xml` | Crawler rules and the public pages, with absolute URLs from `PUBLIC_URL` or the request |
 
 ## API
@@ -83,6 +84,7 @@ JSON under `/api`, described in full in [OpenAPI](api/openapi.json) and kept bac
 | `public/js/search.js`, `explore.js`, `selection.js` | Place search and "Surprise me", the Explore tab and travel ideas, and picking several countries to mark at once |
 | `public/js/account.js` | Landing page sign-up and log-in (with the honeypot field), the account menu and settings |
 | `public/js/timeline-bar.js`, `printing.js`, `ledger-store.js` | The timeline bar and journey replay, map palettes and printing, and the day ledger's overview, alerts and date history in the app |
+| `public/js/embed.js`, `map-data.js` | The embeddable map page, and loading the bundled map data, shared with the app |
 | `public/js/demo.js` | The landing page's sample traveler, with dates relative to today (pure, unit tested) |
 | `public/js/schengen.js`, `calculator.js` | Free Schengen calculator: stay checks and results over `days.js` (pure, unit and property tested), and the page that draws them |
 | `public/js/map.js`, `map-style.js`, `map-journeys.js` | MapLibre GL map ([ADR 0008](adr/0008-maplibre-gl.md)): country states, towns and tile loading, pins, cards, camera and the picture printed; its cartoon style from the CSS tokens (redrawn when the palette or theme changes); and journey lines with their replay |
@@ -187,5 +189,6 @@ number (`NNNN-short-title.md`) and the template below. Statuses: **Proposed**, *
 - [ADR 0017: Product principles for the ledger, keepsakes and paid tiers](adr/0017-product-principles.md)
 - [ADR 0018: Product metrics without third-party analytics](adr/0018-product-metrics.md)
 - [ADR 0019: Describe the API in OpenAPI and keep version 1 compatible](adr/0019-api-description-and-versioning.md)
+- [ADR 0020: An embeddable public map](adr/0020-embeddable-map.md)
 
 Superseded: [ADR 0007: Draw towns on a canvas layer](adr/0007-canvas-towns.md).

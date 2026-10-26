@@ -69,13 +69,23 @@ test('a traveler signs up, colors in a city, shares a public map without a hidde
     await expect(visitor.locator('#public-title')).toContainText(username);
     await expect(visitor.locator('#legend-visited')).toHaveText('1');
 
+    // The embeddable map shows in another site's frame, and nothing at all for a private map.
+    await expect(page.locator('#embed-btn')).toBeEnabled();
+    await visitor.setContent(`<iframe src="${new URL(`/embed/${username}`, page.url()).href}" title="map" width="640" height="420"></iframe>`);
+    const frame = visitor.frameLocator('iframe');
+    await expect(frame.locator('#embed-title')).toHaveText(`${username}'s travel map`);
+    await expect(frame.locator('#embed-stats')).toHaveText('1 country, 1 city');
+    await expect(frame.locator('#embed-link')).toHaveAttribute('href', `/?u=${username}`);
+    await visitor.goto('/embed/nobody_by_that_name');
+    await expect(visitor.locator('#embed-stats')).toHaveText('This map is private, or does not exist.');
+
     // A place hidden from the public map disappears for visitors, not for its owner.
     await page.keyboard.press('Escape');
     await page.locator('#places-tab').getByRole('button', { name: /Edit Lisbon/ }).click();
     await page.check('#dialog-hideFromPublic');
     await page.getByRole('button', { name: 'Save changes' }).click();
     await expect(page.locator('#places-tab .place')).toContainText('Not on public map');
-    await visitor.reload();
+    await visitor.goto(`/?u=${username}`);
     await expect(visitor.locator('#public-view')).toBeVisible();
     await expect(visitor.locator('#legend-visited')).toHaveText('0');
     await expect(page.locator('#legend-visited')).toHaveText('1');
