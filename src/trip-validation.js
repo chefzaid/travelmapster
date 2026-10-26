@@ -1,6 +1,6 @@
 'use strict';
 
-// Validation of trips: the day-by-day plan, the packing list and the budget.
+// Validation of trips: the day-by-day plan, the stops, the packing list and the budget.
 // src/validation.js re-exports parseTripPayload.
 const { isValidTravelDate, normalizeText } = require('./validation-text');
 const { plainObject } = require('./ledger-validation');
@@ -8,6 +8,8 @@ const { plainObject } = require('./ledger-validation');
 const TRIP_SLOTS = ['morning', 'afternoon', 'evening'];
 const TRIP_MAX_DAYS = 30;
 const TRIP_SLOT_MAX_LENGTH = 500;
+const TRIP_MAX_STOPS = 10;
+const DESTINATION_MAX_LENGTH = 160;
 const PACKING_MAX_ITEMS = 200;
 const EXPENSES_MAX = 300;
 const RATES_MAX = 30;
@@ -36,6 +38,28 @@ function parsePlan(value) {
         plan.push(cleanDay);
     }
     return { plan };
+}
+
+/**
+ * The destinations of a trip with several, in order, each with its number of days. An empty
+ * list is a trip to its one destination.
+ */
+function parseStops(value) {
+    if (!Array.isArray(value) || value.length === 1 || value.length > TRIP_MAX_STOPS) {
+        return { error: `A trip has no stops, or between 2 and ${TRIP_MAX_STOPS}.` };
+    }
+    const stops = [];
+    for (const stop of value) {
+        const destination = plainObject(stop) ? normalizeText(stop.destination) : '';
+        if (!destination || destination.length > DESTINATION_MAX_LENGTH) {
+            return { error: `Each stop needs a destination of ${DESTINATION_MAX_LENGTH} characters or fewer.` };
+        }
+        if (!Number.isInteger(stop.days) || stop.days < 1 || stop.days > TRIP_MAX_DAYS) {
+            return { error: `Each stop lasts between 1 and ${TRIP_MAX_DAYS} days.` };
+        }
+        stops.push({ destination, days: stop.days });
+    }
+    return { stops };
 }
 
 function label(value) {
@@ -120,8 +144,8 @@ function parseBudget(value) {
 }
 
 /**
- * A trip from the request body. A packing list or budget left out stays undefined, so an
- * update keeps the stored one (previous-release tabs never send them).
+ * A trip from the request body. Stops, a packing list or a budget left out stay undefined, so
+ * an update keeps the stored ones (previous-release tabs never send them).
  */
 function parseTripPayload(body) {
     if (!plainObject(body)) return { error: 'Trip payload must be a JSON object.' };
@@ -132,8 +156,8 @@ function parseTripPayload(body) {
     if (!title || title.length > 120) {
         return { error: 'Trip title is required and must be 120 characters or fewer.' };
     }
-    if (!destination || destination.length > 160) {
-        return { error: 'Trip destination is required and must be 160 characters or fewer.' };
+    if (!destination || destination.length > DESTINATION_MAX_LENGTH) {
+        return { error: `Trip destination is required and must be ${DESTINATION_MAX_LENGTH} characters or fewer.` };
     }
     if (startDate && !isValidTravelDate(startDate)) {
         return { error: 'Start date must be a valid YYYY-MM-DD date.' };
@@ -141,6 +165,11 @@ function parseTripPayload(body) {
     const { plan, error: planError } = parsePlan(body.plan);
     if (planError) return { error: planError };
     const trip = { title, destination, startDate: startDate || null, plan };
+    if (body.stops !== undefined) {
+        const { stops, error } = parseStops(body.stops);
+        if (error) return { error };
+        trip.stops = stops;
+    }
     if (body.packing !== undefined) {
         const { packing, error } = parsePacking(body.packing);
         if (error) return { error };

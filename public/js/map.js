@@ -210,7 +210,11 @@ export function createTravelMap(element, { index, cities, onCountryClick, onCity
         hoveredId = id;
         if (id) map.setFeatureState({ source: 'countries', id }, { hover: true });
     }
-    const featureAt = point => map.queryRenderedFeatures(point, { layers: ['cities', 'city-dots', 'land'] })[0];
+    // The pointer can move over the map before its style has these layers.
+    const featureAt = point => {
+        const layers = ['cities', 'city-dots', 'land'].filter(id => map.getLayer(id));
+        return layers.length ? map.queryRenderedFeatures(point, { layers })[0] : undefined;
+    };
     map.on('mousemove', event => {
         const feature = featureAt(event.point);
         const town = feature && feature.layer.id !== 'land' ? feature : null;

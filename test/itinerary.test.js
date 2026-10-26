@@ -71,7 +71,7 @@ test('a template copies the plans without dates and keeps the title in bounds', 
     const copy = tripTemplate({ ...trip, plan: [{ morning: 'A' }] });
     assert.deepEqual(copy, {
         title: 'Summer in Portugal; sun, sea (copy)', destination: 'Lisbon, Portugal', startDate: '',
-        plan: [{ morning: 'A', afternoon: '', evening: '' }], packing: [], budget: {}
+        plan: [{ morning: 'A', afternoon: '', evening: '' }], stops: [], packing: [], budget: {}
     });
     const budget = { currency: 'EUR', planned: 900, rates: { JPY: 0.006 }, expenses: [{ label: 'Taxi', amount: 30, currency: 'EUR', category: 'transport' }] };
     const packed = tripTemplate({ ...trip, packing: [{ item: 'Passport', packed: true }], budget });
@@ -97,7 +97,7 @@ test('trip text, end dates and file names', async () => {
 });
 
 test('a trip destination resolves to a country, then becomes a planned stay that follows the trip', async () => {
-    const { resolveDestination, tripPlannedStay, syncPlannedStays, tripPlanId } = await load();
+    const { resolveDestination, tripPlannedStays, syncPlannedStays, tripPlanId, isTripPlan } = await load();
     const countries = { portugal: { id: 'PRT' }, japan: { id: 'JPN' } };
     const towns = { kyoto: { name: 'Kyoto', countryId: 'JPN' }, 'lisbon, portugal': { name: 'Lisbon', countryId: 'PRT' } };
     const lookups = {
@@ -112,15 +112,28 @@ test('a trip destination resolves to a country, then becomes a planned stay that
     assert.equal(resolveDestination(' , ', lookups), null);
 
     assert.equal(tripPlanId(trip), 'trip-7');
-    const stay = tripPlannedStay(trip, 'PRT');
+    assert.ok(isTripPlan(trip, 'trip-7') && isTripPlan(trip, 'trip-7-2'));
+    assert.ok(!isTripPlan(trip, 'trip-70') && !isTripPlan(trip, 'abc'));
+    const countryOf = destination => (/portugal/i.test(destination) ? 'PRT' : /spain|madrid/i.test(destination) ? 'ESP' : null);
+    const { stays: [stay] } = tripPlannedStays(trip, countryOf);
     assert.deepEqual(stay, { id: 'trip-7', countryId: 'PRT', startDate: '2027-02-27', endDate: '2027-03-01' });
-    assert.equal(tripPlannedStay({ ...trip, startDate: '' }, 'PRT'), null);
-    assert.equal(tripPlannedStay(trip, null), null);
+    assert.deepEqual(tripPlannedStays({ ...trip, startDate: '' }, countryOf), { stays: [] });
+    assert.deepEqual(tripPlannedStays(trip, () => null), { unknown: 'Lisbon, Portugal' });
 
     const other = { id: 'abc', countryId: 'ESP', startDate: '2027-01-01', endDate: '2027-01-02' };
-    assert.equal(syncPlannedStays([other], trip, stay), null, 'a trip without a planned stay adds none');
-    assert.equal(syncPlannedStays([other, stay], trip, stay), null, 'nothing changed');
+    assert.equal(syncPlannedStays([other], trip, [stay]), null, 'a trip without a planned stay adds none');
+    assert.equal(syncPlannedStays([other, stay], trip, [stay]), null, 'nothing changed');
     const moved = { ...stay, startDate: '2027-03-01', endDate: '2027-03-03' };
-    assert.deepEqual(syncPlannedStays([other, stay], trip, moved), [other, moved]);
-    assert.deepEqual(syncPlannedStays([other, stay], trip, null), [other], 'a deleted or undated trip leaves the ledger');
+    assert.deepEqual(syncPlannedStays([other, stay], trip, [moved]), [other, moved]);
+    assert.deepEqual(syncPlannedStays([other, stay], trip, []), [other], 'a deleted or undated trip leaves the ledger');
+
+    // Stops in two countries: the travel day ends one stay and starts the next.
+    const tour = { ...trip, stops: [{ destination: 'Lisbon, Portugal', days: 2 }, { destination: 'Porto, Portugal', days: 1 }, { destination: 'Madrid, Spain', days: 2 }], plan: Array(5).fill({}) };
+    const { stays } = tripPlannedStays(tour, countryOf);
+    assert.deepEqual(stays, [
+        { id: 'trip-7', countryId: 'PRT', startDate: '2027-02-27', endDate: '2027-03-02' },
+        { id: 'trip-7-2', countryId: 'ESP', startDate: '2027-03-02', endDate: '2027-03-03' }
+    ]);
+    assert.deepEqual(syncPlannedStays([stay, other], tour, stays), [...stays, other], 'in the place of the old one');
+    assert.deepEqual(tripPlannedStays({ ...tour, stops: [...tour.stops.slice(0, 2), { destination: 'Atlantis', days: 2 }] }, countryOf), { unknown: 'Atlantis' });
 });

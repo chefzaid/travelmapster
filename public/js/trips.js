@@ -1,26 +1,23 @@
-// Trips tab: day-by-day itineraries with ideas from Wikivoyage, copied as text, exported to a
-// calendar, printed, duplicated as a template, or planned in the day ledger; with a packing
-// list and a budget.
+// Trips tab: day-by-day itineraries to one destination or several, with ideas from Wikivoyage,
+// copied as text, exported to a calendar, printed, duplicated as a template, or planned in the
+// day ledger; with a packing list and a budget.
 import { h, fill, toast, formDialog, formatDate, downloadFile } from './ui.js';
 import { fetchIdeas, buildItinerary } from './ideas.js';
 import {
-    SLOTS, dayDate, syncPlannedStays, tripAsText, tripCalendar, tripEndDate, tripFileName, tripPlanId,
-    tripPlannedStay, tripTemplate
+    SLOTS, dayDate, emptyDay, isTripPlan, stopOfDay, syncPlannedStays, tripAsText, tripCalendar, tripEndDate, tripFileName,
+    tripPlannedStays, tripRoute, tripStops, tripTemplate
 } from './itinerary.js';
-import { completeTrip, tripPlace, tripRecorded } from './trip-visits.js';
+import { completeTrip, destinationPlace, tripRecorded } from './trip-visits.js';
+import { addTripDay, removeTripDay } from './trip-stops.js';
 import { localToday } from './days.js';
 import { openPrintView, printTable } from './print-view.js';
-import { budgetSection, packingSection } from './trip-extras.js';
+import { budgetSection, packingSection, stopsSection } from './trip-extras.js';
 import { budgetTotals, formatMoney, tidyBudget } from './trip-budget.js';
 
 const MAX_DAYS = 30;
 
 let openTripId = null;
 let draft = null;
-
-function emptyDay() {
-    return { morning: '', afternoon: '', evening: '' };
-}
 
 async function ideasPlan(destination, days) {
     try {
@@ -76,7 +73,7 @@ export async function openNewTrip(ctx, destination = '') {
 }
 
 function tripCard(trip, ctx, container) {
-    const country = ctx.state.index.findByName(trip.destination);
+    const country = ctx.state.index.byId.get(destinationPlace(ctx, trip.destination)?.countryId);
     const filled = trip.plan.reduce((sum, day) => sum + SLOTS.filter(([slot]) => day[slot]).length, 0);
     return h('li', {},
         h('button', {
@@ -91,7 +88,7 @@ function tripCard(trip, ctx, container) {
             h('span', { class: 'trip-flag', 'aria-hidden': 'true' }, country?.flag || '✈️'),
             h('span', { class: 'trip-text' },
                 h('strong', {}, trip.title),
-                h('small', {}, `${trip.destination} · ${trip.plan.length} ${trip.plan.length === 1 ? 'day' : 'days'}`,
+                h('small', {}, `${tripRoute(trip)} · ${trip.plan.length} ${trip.plan.length === 1 ? 'day' : 'days'}`,
                     trip.startDate ? ` · ${formatDate(trip.startDate)}` : ''),
                 h('span', { class: 'progress', 'aria-label': `${filled} of ${trip.plan.length * 3} slots planned` },
                     h('span', { style: `width:${Math.round((filled / (trip.plan.length * 3)) * 100)}%` }))
@@ -134,13 +131,14 @@ function printTrip(trip, opener) {
         opener,
         content: [
             h('dl', { class: 'report-facts' },
-                h('dt', {}, 'Destination'), h('dd', {}, trip.destination),
+                h('dt', {}, trip.stops?.length ? 'Route' : 'Destination'), h('dd', {}, tripRoute(trip)),
                 h('dt', {}, 'When'), h('dd', {}, trip.startDate
                     ? `${formatDate(trip.startDate)} – ${formatDate(tripEndDate(trip))}`
                     : `${trip.plan.length} ${trip.plan.length === 1 ? 'day' : 'days'}, dates to choose`)
             ),
             printTable(['Day', ...SLOTS.map(([, , label]) => label)], trip.plan.map((day, i) => h('tr', {},
-                h('th', { scope: 'row' }, `Day ${i + 1}`, trip.startDate ? h('small', { class: 'report-edited' }, dayDate(trip.startDate, i)) : null),
+                h('th', { scope: 'row' }, `Day ${i + 1}`, trip.startDate ? h('small', { class: 'report-edited' }, dayDate(trip.startDate, i)) : null,
+                    trip.stops?.length ? h('small', { class: 'report-edited' }, stopOfDay(trip, i).destination) : null),
                 SLOTS.map(([slot]) => h('td', {}, day[slot]))
             ))),
             trip.packing?.length ? h('section', {},
@@ -179,7 +177,7 @@ function visitButton(ctx, trip, dirty) {
 }
 
 function ledgerButton(ctx, trip, dirty) {
-    const planned = ctx.state.ledger.settings.planned.some(item => item.id === tripPlanId(trip));
+    const planned = ctx.state.ledger.settings.planned.some(item => isTripPlan(trip, item.id));
     return h('button', {
         type: 'button',
         class: 'btn btn-ghost btn-sm',
@@ -192,34 +190,34 @@ function ledgerButton(ctx, trip, dirty) {
     }, planned ? '📒 In ledger plans' : '📒 Plan in ledger');
 }
 
-// The ledger's planned stay for a trip, from its dates and the country of its destination.
-function tripStay(ctx, trip) {
-    return tripPlannedStay(trip, tripPlace(ctx, trip)?.countryId);
+// The ledger's planned stays for a trip, from its dates and the countries of its stops.
+function tripStays(ctx, trip) {
+    return tripPlannedStays(trip, destination => destinationPlace(ctx, destination)?.countryId);
 }
 
-// A trip planned in the ledger keeps its planned stay in step when it is saved or deleted.
-async function followInLedger(ctx, trip, stay) {
+// A trip planned in the ledger keeps its planned stays in step when it is saved or deleted.
+async function followInLedger(ctx, trip, stays) {
     const { settings } = ctx.state.ledger;
-    const planned = syncPlannedStays(settings.planned, trip, stay);
+    const planned = stays && syncPlannedStays(settings.planned, trip, stays);
     if (planned) await ctx.saveLedger({ ...settings, planned });
 }
 
 async function toggleLedgerPlan(ctx, trip) {
     const { settings } = ctx.state.ledger;
     try {
-        if (settings.planned.some(item => item.id === tripPlanId(trip))) {
-            await ctx.saveLedger({ ...settings, planned: settings.planned.filter(item => item.id !== tripPlanId(trip)) });
+        if (settings.planned.some(item => isTripPlan(trip, item.id))) {
+            await ctx.saveLedger({ ...settings, planned: settings.planned.filter(item => !isTripPlan(trip, item.id)) });
             toast('Taken out of the ledger plans.');
             return;
         }
-        const stay = tripStay(ctx, trip);
-        if (!stay) {
-            toast(trip.startDate
-                ? `Which country is ${trip.destination} in? Name it in the destination, such as “Lisbon, Portugal”.`
+        const { stays, unknown } = tripStays(ctx, trip);
+        if (!stays?.length) {
+            toast(unknown !== undefined
+                ? `Which country is ${unknown} in? Name it in the destination, such as “Lisbon, Portugal”.`
                 : 'Choose a start date to plan this trip in the day ledger.', { tone: 'error' });
             return;
         }
-        await ctx.saveLedger({ ...settings, planned: [...settings.planned, stay] });
+        await ctx.saveLedger({ ...settings, planned: [...settings.planned, ...stays] });
         toast('Planned in the ledger: the Ledger tab checks it against your stay rules and thresholds.', { tone: 'success' });
     } catch (error) {
         ctx.handleError(error);
@@ -240,7 +238,8 @@ async function duplicateTrip(ctx, trip, container) {
 }
 
 function renderEditor(container, ctx, trip) {
-    // Trips cached by an earlier release have neither.
+    // Trips cached by an earlier release have none of these.
+    trip.stops ??= [];
     trip.packing ??= [];
     trip.budget ??= {};
     if (!draft || draft.id !== trip.id) {
@@ -257,7 +256,7 @@ function renderEditor(container, ctx, trip) {
             const saved = await ctx.api.updateTrip(trip.id, { ...draft, budget: tidyBudget(draft.budget) });
             Object.assign(trip, saved);
             draft = structuredClone(trip);
-            await followInLedger(ctx, trip, tripStay(ctx, trip));
+            await followInLedger(ctx, trip, tripStays(ctx, trip).stays);
             toast('Trip saved.', { tone: 'success' });
             rerender();
         } catch (error) {
@@ -270,7 +269,10 @@ function renderEditor(container, ctx, trip) {
     const fillIdeas = async event => {
         event.target.disabled = true;
         event.target.textContent = '✨ Thinking…';
-        const plan = await ideasPlan(draft.destination, draft.plan.length);
+        // Each stop gets ideas for its own destination.
+        const plans = await Promise.all(tripStops(draft).map(stop => (stop.destination
+            ? ideasPlan(stop.destination, stop.days) : Array.from({ length: stop.days }, emptyDay))));
+        const plan = plans.flat();
         let added = 0;
         draft.plan.forEach((day, i) => {
             for (const [slot] of SLOTS) {
@@ -288,13 +290,14 @@ function renderEditor(container, ctx, trip) {
         h('header', {},
             h('h3', {}, `Day ${i + 1}`),
             draft.startDate ? h('small', {}, dayDate(draft.startDate, i)) : null,
+            draft.stops?.length ? h('small', { class: 'day-stop' }, `📍 ${stopOfDay(draft, i).destination || 'New stop'}`) : null,
             draft.plan.length > 1 ? h('button', {
                 type: 'button',
                 class: 'icon-btn',
                 'aria-label': `Remove day ${i + 1}`,
                 title: 'Remove day',
                 onclick: () => {
-                    draft.plan.splice(i, 1);
+                    removeTripDay(draft, i);
                     rerender();
                 }
             }, '✕') : null
@@ -331,11 +334,13 @@ function renderEditor(container, ctx, trip) {
             h('label', { class: 'field' }, h('span', {}, 'Trip name'),
                 h('input', { value: draft.title, maxlength: 120, oninput: event => { draft.title = event.target.value; markDirty(); } })),
             h('div', { class: 'row' },
-                h('label', { class: 'field' }, h('span', {}, 'Destination'),
+                // A trip with stops names its destinations in the stops below.
+                draft.stops?.length ? null : h('label', { class: 'field' }, h('span', {}, 'Destination'),
                     h('input', { value: draft.destination, maxlength: 160, oninput: event => { draft.destination = event.target.value; markDirty(); } })),
                 h('label', { class: 'field' }, h('span', {}, 'Start date'),
                     h('input', { type: 'date', value: draft.startDate, onchange: event => { draft.startDate = event.target.value; rerender(); } }))
-            )
+            ),
+            stopsSection(draft, { rerender, markDirty })
         ),
         h('div', { class: 'row trip-tools' },
             h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: fillIdeas }, '✨ Fill empty slots'),
@@ -371,7 +376,7 @@ function renderEditor(container, ctx, trip) {
                 class: 'btn btn-ghost btn-sm',
                 disabled: draft.plan.length >= MAX_DAYS,
                 onclick: () => {
-                    draft.plan.push(emptyDay());
+                    addTripDay(draft);
                     rerender();
                 }
             }, '＋ Add a day'),
@@ -383,7 +388,7 @@ function renderEditor(container, ctx, trip) {
                     try {
                         await ctx.api.deleteTrip(trip.id);
                         ctx.state.trips = ctx.state.trips.filter(item => item.id !== trip.id);
-                        await followInLedger(ctx, trip, null);
+                        await followInLedger(ctx, trip, []);
                         openTripId = null;
                         draft = null;
                         toast('Trip deleted.');

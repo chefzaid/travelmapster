@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "TravelMapster API",
-    "version": "1.3.0",
+    "version": "1.4.0",
     "description": "The JSON API the TravelMapster app uses. It is version 1 and changes only in backward-compatible ways ([ADR 0019](../adr/0019-api-description-and-versioning.md)). Errors are `{ \"error\": \"…\" }` with a matching status; every response is `Cache-Control: no-store` unless stated."
   },
   "servers": [
@@ -2433,6 +2433,22 @@
               "$ref": "#/components/schemas/TripDay"
             }
           },
+          "stops": {
+            "type": "array",
+            "description": "The destinations of a trip with several, in order, each with its days; empty for a trip to its one destination. Left out on an update, the stored stops are kept.",
+            "oneOf": [
+              {
+                "maxItems": 0
+              },
+              {
+                "minItems": 2,
+                "maxItems": 10
+              }
+            ],
+            "items": {
+              "$ref": "#/components/schemas/TripStop"
+            }
+          },
           "packing": {
             "type": "array",
             "maxItems": 200,
@@ -2778,6 +2794,25 @@
             "items": {
               "$ref": "#/components/schemas/Expense"
             }
+          }
+        }
+      },
+      "TripStop": {
+        "type": "object",
+        "required": [
+          "destination",
+          "days"
+        ],
+        "properties": {
+          "destination": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          },
+          "days": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 30
           }
         }
       }

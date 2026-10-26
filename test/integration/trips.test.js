@@ -154,3 +154,27 @@ test('invalid packing lists and budgets are rejected', async () => {
         assert.equal(res.status, 400, JSON.stringify(override).slice(0, 80));
     }
 });
+
+test('a trip keeps its stops, and an update without them keeps them', async () => {
+    const client = createClient(ctx.server);
+    await client.register('wanderer', 'wanderer password');
+    const stops = [{ destination: ' Lisbon, Portugal ', days: 1 }, { destination: 'Madrid, Spain', days: 1 }];
+    const created = await client.post('/api/trips', { ...sampleTrip, stops });
+    assert.equal(created.status, 201);
+    assert.deepEqual(created.body.stops, [{ destination: 'Lisbon, Portugal', days: 1 }, { destination: 'Madrid, Spain', days: 1 }]);
+    const kept = await client.put(`/api/trips/${created.body.id}`, { ...sampleTrip, title: 'Iberia' });
+    assert.deepEqual(kept.body.stops, created.body.stops, 'a tab from the previous release sends none');
+    const single = await client.put(`/api/trips/${created.body.id}`, { ...sampleTrip, stops: [] });
+    assert.deepEqual(single.body.stops, []);
+    assert.deepEqual((await client.post('/api/trips', sampleTrip)).body.stops, []);
+
+    const stop = { destination: 'Porto', days: 2 };
+    for (const bad of [
+        'Porto', [stop], Array(11).fill(stop), [stop, 'Porto'], [stop, { destination: '', days: 1 }],
+        [stop, { destination: 'x'.repeat(161), days: 1 }], [stop, { destination: 'Faro', days: 0 }],
+        [stop, { destination: 'Faro', days: 31 }], [stop, { destination: 'Faro', days: 1.5 }]
+    ]) {
+        const res = await client.post('/api/trips', { ...sampleTrip, stops: bad });
+        assert.equal(res.status, 400, JSON.stringify(bad).slice(0, 80));
+    }
+});

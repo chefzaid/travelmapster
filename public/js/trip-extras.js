@@ -1,5 +1,7 @@
-// The trip editor's packing list and budget, edited in the trip's draft and saved with it.
+// The trip editor's stops, packing list and budget, edited in the trip's draft and saved with it.
 import { h, toast } from './ui.js';
+import { tripStops } from './itinerary.js';
+import { MAX_DAYS, MAX_STOPS, addStop, removeStop, renameStop, resizeStop } from './trip-stops.js';
 import {
     EXPENSE_CATEGORIES, EXPENSES_MAX, PACKING_MAX_ITEMS, budgetTotals, currencyOptions, emptyBudget,
     foreignCurrencies, formatMoney, homeCurrency, packingProgress, withStarterItems
@@ -51,6 +53,55 @@ function readAmount(input) {
     if (input.value.trim() === '') return null;
     const amount = Number(input.value);
     return Number.isFinite(amount) && amount >= 0 && amount <= 1e9 ? amount : undefined;
+}
+
+// ---------------------------------------------------------------- stops
+
+/** The stops of a trip with several destinations, each with its days, and a button to add one. */
+export function stopsSection(draft, { rerender, markDirty }) {
+    const stops = tripStops(draft);
+    const several = draft.stops?.length > 1;
+    const add = h('button', {
+        type: 'button', class: 'btn btn-ghost btn-sm',
+        disabled: draft.plan.length >= MAX_DAYS || stops.length >= MAX_STOPS,
+        onclick: () => {
+            addStop(draft);
+            rerender();
+        }
+    }, several ? '＋ Add a stop' : '＋ Add another destination');
+    if (!several) return h('div', { class: 'trip-stops' }, add);
+    return h('fieldset', { class: 'trip-stops' },
+        h('legend', {}, 'Stops'),
+        h('ol', { class: 'stop-list' }, stops.map((stop, i) => h('li', { class: 'stop' },
+            h('input', {
+                value: stop.destination, maxlength: 160, placeholder: 'Porto, Portugal', 'aria-label': `Stop ${i + 1}`, class: 'stop-destination',
+                oninput: event => {
+                    renameStop(draft, i, event.target.value);
+                    markDirty();
+                },
+                // The days show the stop's name once the field is left.
+                onchange: rerender
+            }),
+            h('label', { class: 'rate' },
+                h('input', {
+                    type: 'number', min: 1, max: stop.days + MAX_DAYS - draft.plan.length, value: stop.days,
+                    'aria-label': `Days in stop ${i + 1}`,
+                    onchange: event => {
+                        resizeStop(draft, i, Number(event.target.value));
+                        rerender();
+                    }
+                }),
+                h('span', {}, stop.days === 1 ? 'day' : 'days')),
+            h('button', {
+                type: 'button', class: 'icon-btn', 'aria-label': `Remove stop ${i + 1}`, title: 'Remove stop and its days',
+                onclick: () => {
+                    removeStop(draft, i);
+                    rerender();
+                }
+            }, '✕')
+        ))),
+        add
+    );
 }
 
 // ---------------------------------------------------------------- packing list

@@ -88,6 +88,17 @@
     margin-top: 14px;
 }
 
+/* Stops of a trip with several destinations */
+.trip-stops { margin: 4px 0 8px; }
+fieldset.trip-stops { padding: 8px 10px; border: 2px solid var(--ink); border-radius: var(--radius); }
+.trip-stops legend { font-size: 0.85rem; font-weight: 800; }
+.stop-list { display: grid; gap: 6px; margin: 0 0 8px; padding-left: 1.4em; }
+.stop { display: flex; align-items: center; gap: 6px; }
+.stop .stop-destination { flex: 1; min-width: 0; }
+.stop .rate { margin: 0; }
+.stop .rate input[type='number'] { flex: 0 0 4.5rem; }
+.day-card header .day-stop { font-weight: 800; }
+
 /* Packing list and budget */
 .trip-extra {
     margin-top: 12px;
