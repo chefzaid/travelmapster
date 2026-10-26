@@ -39,6 +39,16 @@ module.exports = [
         }
     },
     {
+        // The installable app's service worker, a classic script.
+        files: ['public/sw.js'],
+        languageOptions: {
+            ecmaVersion: 2024,
+            sourceType: 'script',
+            globals: globals.serviceworker
+        },
+        rules: { eqeqeq: ['error', 'always'], 'no-var': 'error', 'prefer-const': 'error' }
+    },
+    {
         files: ['scripts/**/*.js'],
         languageOptions: {
             ecmaVersion: 2024,

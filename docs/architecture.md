@@ -43,6 +43,7 @@ PostgreSQL, including sessions, so any replica can serve any request.
 |---|---|
 | `/` | The app (`index.html`): the landing page with a demo map when signed out, the user's map when signed in, or a read-only shared map at `/?u=<username>` (sent with `X-Robots-Tag: noindex`) |
 | `/schengen-calculator` | The free Schengen 90/180 calculator (`schengen-calculator.html`); `/schengen-calculator.html` redirects here |
+| `/manifest.webmanifest`, `/sw.js` | The installable app's manifest and its service worker, which keeps the app, the map data and the traveler's last loaded data for offline use ([ADR 0021](adr/0021-installable-offline-app.md)) |
 | `/embed/<username>` | A public map for other sites to frame (`embed.html`), the only page that may be framed, sent with `X-Robots-Tag: noindex` ([ADR 0020](adr/0020-embeddable-map.md)) |
 | `/robots.txt`, `/sitemap.xml` | Crawler rules and the public pages, with absolute URLs from `PUBLIC_URL` or the request |
 
@@ -191,5 +192,6 @@ number (`NNNN-short-title.md`) and the template below. Statuses: **Proposed**, *
 - [ADR 0018: Product metrics without third-party analytics](adr/0018-product-metrics.md)
 - [ADR 0019: Describe the API in OpenAPI and keep version 1 compatible](adr/0019-api-description-and-versioning.md)
 - [ADR 0020: An embeddable public map](adr/0020-embeddable-map.md)
+- [ADR 0021: An installable app that works offline](adr/0021-installable-offline-app.md)
 
 Superseded: [ADR 0007: Draw towns on a canvas layer](adr/0007-canvas-towns.md).

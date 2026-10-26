@@ -13,6 +13,9 @@ module.exports = defineConfig({
     use: {
         baseURL: `http://127.0.0.1:${port}`,
         trace: 'retain-on-failure',
+        // The offline journey allows the service worker; elsewhere it would answer requests
+        // that tests stub and make page loads warm.
+        serviceWorkers: 'block',
         launchOptions: process.env.PLAYWRIGHT_CHROMIUM_PATH
             ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH }
             : {}

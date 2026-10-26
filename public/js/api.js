@@ -2,8 +2,19 @@
 
 let csrfToken = null;
 
+// fetch, with a message for people when the network or the server is out of reach.
+async function reach(url, options) {
+    try {
+        return await fetch(url, options);
+    } catch {
+        throw new Error(navigator.onLine === false
+            ? 'You are offline: this change was not saved. Try again once you are back online.'
+            : 'TravelMapster cannot be reached right now. Please try again.');
+    }
+}
+
 async function refreshCsrfToken() {
-    const response = await fetch('/api/csrf-token', { credentials: 'same-origin' });
+    const response = await reach('/api/csrf-token', { credentials: 'same-origin' });
     if (!response.ok) throw new Error('Unable to reach TravelMapster right now.');
     csrfToken = (await response.json()).csrfToken;
     return csrfToken;
@@ -20,7 +31,7 @@ async function request(method, path, body, retried = false) {
         options.body = JSON.stringify(body);
     }
 
-    const response = await fetch(`/api${path}`, options);
+    const response = await reach(`/api${path}`, options);
     const text = await response.text();
     let data = null;
     if (text) {
