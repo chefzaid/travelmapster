@@ -1,11 +1,10 @@
-import { h, fill, toast, formDialog, formatDate } from './ui.js';
+// Trips tab: day-by-day itineraries with ideas from Wikivoyage, copied as text, exported to a
+// calendar, printed, or duplicated as a template.
+import { h, fill, toast, formDialog, formatDate, downloadFile } from './ui.js';
 import { fetchIdeas, buildItinerary } from './ideas.js';
+import { SLOTS, dayDate, tripAsText, tripCalendar, tripEndDate, tripFileName, tripTemplate } from './itinerary.js';
+import { openPrintView, printTable } from './print-view.js';
 
-const SLOTS = [
-    ['morning', '🌅', 'Morning'],
-    ['afternoon', '☀️', 'Afternoon'],
-    ['evening', '🌙', 'Evening']
-];
 const MAX_DAYS = 30;
 
 let openTripId = null;
@@ -13,19 +12,6 @@ let draft = null;
 
 function emptyDay() {
     return { morning: '', afternoon: '', evening: '' };
-}
-
-function dayDate(startDate, offset) {
-    if (!startDate) return '';
-    const [year, month, day] = startDate.split('-').map(Number);
-    const date = new Date(Date.UTC(year, month - 1, day + offset));
-    return date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
-}
-
-function endDate(trip) {
-    if (!trip.startDate) return '';
-    const [year, month, day] = trip.startDate.split('-').map(Number);
-    return new Date(Date.UTC(year, month - 1, day + trip.plan.length - 1)).toISOString().slice(0, 10);
 }
 
 async function ideasPlan(destination, days) {
@@ -110,8 +96,8 @@ function tripCard(trip, ctx, container) {
 function renderList(container, ctx) {
     const { trips } = ctx.state;
     const today = new Date().toISOString().slice(0, 10);
-    const upcoming = trips.filter(trip => !trip.startDate || endDate(trip) >= today);
-    const past = trips.filter(trip => trip.startDate && endDate(trip) < today);
+    const upcoming = trips.filter(trip => !trip.startDate || tripEndDate(trip) >= today);
+    const past = trips.filter(trip => trip.startDate && tripEndDate(trip) < today);
     const section = (title, items) => items.length ? h('section', {},
         h('h3', { class: 'section-title' }, title, h('span', { class: 'count' }, items.length)),
         h('ul', { class: 'trip-list' }, items.map(trip => tripCard(trip, ctx, container)))
@@ -132,17 +118,48 @@ function renderList(container, ctx) {
     );
 }
 
-function tripAsText(trip) {
-    const lines = [`${trip.title} (${trip.destination})`, ''];
-    trip.plan.forEach((day, i) => {
-        const date = dayDate(trip.startDate, i);
-        lines.push(`Day ${i + 1}${date ? `, ${date}` : ''}`);
-        for (const [slot, , label] of SLOTS) {
-            if (day[slot]) lines.push(`  ${label}: ${day[slot]}`);
-        }
-        lines.push('');
+// The itinerary as a page to print or save as PDF, one row per day.
+function printTrip(trip, opener) {
+    openPrintView({
+        eyebrow: 'TravelMapster itinerary',
+        title: trip.title,
+        opener,
+        content: [
+            h('dl', { class: 'report-facts' },
+                h('dt', {}, 'Destination'), h('dd', {}, trip.destination),
+                h('dt', {}, 'When'), h('dd', {}, trip.startDate
+                    ? `${formatDate(trip.startDate)} – ${formatDate(tripEndDate(trip))}`
+                    : `${trip.plan.length} ${trip.plan.length === 1 ? 'day' : 'days'}, dates to choose`)
+            ),
+            printTable(['Day', ...SLOTS.map(([, , label]) => label)], trip.plan.map((day, i) => h('tr', {},
+                h('th', { scope: 'row' }, `Day ${i + 1}`, trip.startDate ? h('small', { class: 'report-edited' }, dayDate(trip.startDate, i)) : null),
+                SLOTS.map(([slot]) => h('td', {}, day[slot]))
+            )))
+        ]
     });
-    return lines.join('\n').trim();
+}
+
+function exportCalendar(trip) {
+    const { calendar, error } = tripCalendar(trip);
+    if (error) {
+        toast(error, { tone: 'error' });
+        return;
+    }
+    downloadFile(tripFileName(trip, 'ics'), calendar, 'text/calendar');
+    toast('Calendar file downloaded: open it to add each day to your calendar.', { tone: 'success' });
+}
+
+async function duplicateTrip(ctx, trip, container) {
+    try {
+        const copy = await ctx.api.createTrip(tripTemplate(trip));
+        ctx.state.trips.unshift(copy);
+        openTripId = copy.id;
+        draft = null;
+        toast(`Copied as “${copy.title}”. Choose new dates when you go.`, { tone: 'success' });
+        renderTrips(container, ctx);
+    } catch (error) {
+        ctx.handleError(error);
+    }
 }
 
 function renderEditor(container, ctx, trip) {
@@ -253,7 +270,14 @@ function renderEditor(container, ctx, trip) {
                     }
                 }
             }, '📋 Copy'),
-            h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => ctx.showIdeas(draft.destination) }, '💡 Ideas')
+            h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => ctx.showIdeas(draft.destination) }, '💡 Ideas'),
+            h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => exportCalendar(draft) }, '📅 Calendar'),
+            h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: event => printTrip(draft, event.currentTarget) }, '🖨️ Print'),
+            h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => {
+                // The copy is made from the saved trip, so unsaved edits are not left behind unseen.
+                if (dirty()) toast('Save your changes before duplicating the trip.', { tone: 'error' });
+                else duplicateTrip(ctx, trip, container);
+            } }, '⧉ Duplicate')
         ),
         h('div', { class: 'days' }, days),
         h('div', { class: 'row trip-footer' },

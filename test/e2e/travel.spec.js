@@ -356,6 +356,32 @@ test('a traveler plans a trip that is saved to their account', async ({ page }) 
     await expect(page.locator('#main-view')).toBeVisible();
     await page.click('#tab-trips');
     await expect(page.locator('#trips-tab')).toContainText('Pastel de nata tour');
+
+    // Export to a calendar needs dates; printing and duplicating do not.
+    await page.locator('.trip-card', { hasText: 'Pastel de nata tour' }).click();
+    const trips = page.locator('#trips-tab');
+    await trips.getByRole('button', { name: '📅 Calendar' }).click();
+    await expect(page.locator('.toast-error')).toContainText('Choose a start date');
+    await trips.getByLabel('Start date').fill('2030-05-01');
+    await trips.getByLabel('Start date').dispatchEvent('change');
+    await trips.getByRole('button', { name: '💾 Save' }).click();
+    await expect(page.locator('.toast-success', { hasText: 'Trip saved.' })).toBeVisible();
+    const download = page.waitForEvent('download');
+    await trips.getByRole('button', { name: '📅 Calendar' }).click();
+    expect((await download).suggestedFilename()).toBe('pastel-de-nata-tour.ics');
+
+    await trips.getByRole('button', { name: '🖨️ Print' }).click();
+    const sheet = page.locator('#report-view');
+    await expect(sheet.locator('h1')).toHaveText('Pastel de nata tour');
+    await expect(sheet.locator('tbody tr')).toHaveCount(2);
+    await sheet.getByRole('button', { name: 'Close' }).click();
+    await expect(sheet).toBeHidden();
+
+    await trips.getByRole('button', { name: '⧉ Duplicate' }).click();
+    await expect(trips.getByLabel('Trip name')).toHaveValue('Pastel de nata tour (copy)');
+    await expect(trips.getByLabel('Start date')).toHaveValue('');
+    await trips.getByRole('button', { name: '‹ All trips' }).click();
+    await expect(page.locator('.trip-card')).toHaveCount(2);
     expect(errors).toEqual([]);
 });
 
