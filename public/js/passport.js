@@ -5,6 +5,7 @@ import { HOME } from './status.js';
 import { countryList, shareLabel } from './lists.js';
 import { localToday } from './days.js';
 import { goalsSection } from './passport-goals.js';
+import { shareCardsSection } from './passport-share.js';
 import { EARTH_CIRCUMFERENCE_KM, countriesByYear, daysAwayByYear, distanceTraveled, longestTrip } from './travel-stats.js';
 
 function statTile(value, label, tone = '') {
@@ -231,6 +232,7 @@ export function renderPassport(container, ctx) {
                     else $('#public-toggle').click();
                 }
             }, isPublic ? 'Copy share link' : 'Make my map public')
-        )
+        ),
+        shareCardsSection(ctx)
     );
 }

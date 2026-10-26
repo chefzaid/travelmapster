@@ -1,6 +1,7 @@
 'use strict';
 
 // Journeys of a traveler: signing up, places and visits, marking many countries, home and stays, sharing.
+const fs = require('node:fs');
 const { test, expect } = require('@playwright/test');
 const { addVisit, browserDay, markCity, signUp, stubThirdParties, trackErrors } = require('./helpers');
 
@@ -133,6 +134,13 @@ test('a traveler records several visits to the same city', async ({ page }) => {
     await expect(page.locator('#goals')).toContainText('Reached: 1 of 1');
     await page.getByRole('button', { name: 'Remove the goal 1 new city in 2019' }).click();
     await expect(page.locator('#goals .ledger-item')).toHaveCount(0);
+
+    // A picture of the year's recap, as a square PNG.
+    const picture = page.waitForEvent('download');
+    await page.locator('#share-pictures').getByRole('button', { name: /recap/ }).click();
+    const png = fs.readFileSync(await (await picture).path());
+    expect(png.subarray(1, 4).toString()).toBe('PNG');
+    expect([png.readUInt32BE(16), png.readUInt32BE(20)]).toEqual([1080, 1080]);
     expect(errors).toEqual([]);
 });
 

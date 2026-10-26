@@ -190,6 +190,9 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   list) or new cities first visited that year, or trips begun in it, with a progress bar each
   and a confetti celebration when one is reached. One goal per kind and year; goals are never
   on the public map.
+- **Share a picture**: square cards (1080 × 1080) of the country count, the passport stamps or
+  this year's recap, shared through the phone's share sheet or downloaded as PNG. They show
+  counts, country names and flags only: never notes, photos, places or dates.
 - **On the road**, from dated visits: days abroad this year and per year (days outside the home
   country, counted by the ledger's day rule; every recorded day when no home country is set), the
   longest trip (stays away from home no more than three days apart, layovers included, places
