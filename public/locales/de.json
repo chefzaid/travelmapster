@@ -108,6 +108,10 @@
     "one": "Noch {count} Land bis {title}",
     "other": "Noch {count} Länder bis {title}"
   },
+  "{count} more stretches: choose a shorter period to see them.": {
+    "one": "{count} weiterer Abschnitt: Wähle einen kürzeren Zeitraum, um ihn zu sehen.",
+    "other": "{count} weitere Abschnitte: Wähle einen kürzeren Zeitraum, um sie zu sehen."
+  },
   "{count} new": {
     "one": "{count} neu",
     "other": "{count} neu"
@@ -351,6 +355,7 @@
   "📷 Photo": "📷 Foto",
   "📷 Photos": "📷 Fotos",
   "📷 View photo": "📷 Foto ansehen",
+  "🔎 Where was I?": "🔎 Wo war ich?",
   "🔐 Sign-in security": "🔐 Anmeldesicherheit",
   "🔑 Change password": "🔑 Passwort ändern",
   "🔑 Lived": "🔑 Gelebt",
@@ -1032,6 +1037,7 @@
   "No rules yet.": "Noch keine Regeln.",
   "No saved places to export yet.": "Noch keine gespeicherten Orte zum Exportieren.",
   "No visit on this map has dates yet.": "Noch kein Besuch auf dieser Karte hat Daten.",
+  "No visit recorded": "Kein Besuch erfasst",
   "No visits recorded yet": "Noch keine Besuche erfasst",
   "Nobody has looked at your business days yet.": "Bisher hat niemand deine Geschäftsreisetage angesehen.",
   "None": "Keine",
@@ -1148,6 +1154,7 @@
   "Planned": "Geplant",
   "Planned budget": "Geplantes Budget",
   "Planned in the ledger: the Ledger tab checks it against your stay rules and thresholds.": "Im Tage-Konto geplant: Der Tab Tage-Konto prüft ihn gegen deine Aufenthaltsregeln und Schwellen.",
+  "planned stay": "geplanter Aufenthalt",
   "Planned stay": "Geplanter Aufenthalt",
   "Planned stay added.": "Geplanter Aufenthalt hinzugefügt.",
   "Planner": "Planer",
@@ -1397,6 +1404,7 @@
   "The basics are already on your list.": "Die Basics stehen schon auf deiner Liste.",
   "The calculator needs JavaScript. The rules below explain how to count by hand.": "Der Rechner braucht JavaScript. Die Regeln unten erklären, wie du von Hand zählst.",
   "The card could not be drawn.": "Die Karte konnte nicht gezeichnet werden.",
+  "The countries and towns of each day, from your dated visits. Travel days show both countries.": "Die Länder und Orte jedes Tages aus deinen datierten Besuchen. An Reisetagen stehen beide Länder.",
   "The date history could not be loaded.": "Der Datumsverlauf konnte nicht geladen werden.",
   "The day ledger": "Das Tage-Konto",
   "The day ledger: Schengen, visa and tax-residency counting with evidence reports": "Das Tage-Konto: Schengen-, Visa- und Steueransässigkeitstage zählen, mit Nachweisberichten",

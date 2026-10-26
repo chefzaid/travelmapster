@@ -184,6 +184,14 @@
     "many": "{count} دولة أخرى للوصول إلى {title}",
     "other": "{count} دولة أخرى للوصول إلى {title}"
   },
+  "{count} more stretches: choose a shorter period to see them.": {
+    "zero": "لا توجد فترات أخرى.",
+    "one": "فترة أخرى واحدة: اختر مدة أقصر لرؤيتها.",
+    "two": "فترتان أخريان: اختر مدة أقصر لرؤيتهما.",
+    "few": "{count} فترات أخرى: اختر مدة أقصر لرؤيتها.",
+    "many": "{count} فترة أخرى: اختر مدة أقصر لرؤيتها.",
+    "other": "{count} فترة أخرى: اختر مدة أقصر لرؤيتها."
+  },
   "{count} new": {
     "zero": "لا جديد",
     "one": "واحدة جديدة",
@@ -515,6 +523,7 @@
   "📷 Photo": "📷 صورة",
   "📷 Photos": "📷 الصور",
   "📷 View photo": "📷 عرض الصورة",
+  "🔎 Where was I?": "🔎 أين كنت؟",
   "🔐 Sign-in security": "🔐 أمان تسجيل الدخول",
   "🔑 Change password": "🔑 تغيير كلمة المرور",
   "🔑 Lived": "🔑 عشت فيها",
@@ -1264,6 +1273,7 @@
   "No rules yet.": "لا قواعد بعد.",
   "No saved places to export yet.": "لا توجد أماكن محفوظة للتصدير بعد.",
   "No visit on this map has dates yet.": "لا توجد زيارة على هذه الخريطة لها تواريخ بعد.",
+  "No visit recorded": "لا توجد زيارة مسجلة",
   "No visits recorded yet": "لم تُسجَّل أي زيارات بعد",
   "Nobody has looked at your business days yet.": "لم يطّلع أحد على أيام عملك بعد.",
   "None": "لا شيء",
@@ -1388,6 +1398,7 @@
   "Planned": "مخطط",
   "Planned budget": "الميزانية المخططة",
   "Planned in the ledger: the Ledger tab checks it against your stay rules and thresholds.": "مخططة في سجل الأيام: يتحقق تبويب «سجل الأيام» منها وفق قواعد الإقامة والحدود الخاصة بك.",
+  "planned stay": "إقامة مخططة",
   "Planned stay": "إقامة مخططة",
   "Planned stay added.": "تمت إضافة الإقامة المخططة.",
   "Planner": "المخطِّط",
@@ -1653,6 +1664,7 @@
   "The basics are already on your list.": "الأساسيات موجودة في قائمتك بالفعل.",
   "The calculator needs JavaScript. The rules below explain how to count by hand.": "تحتاج الحاسبة إلى JavaScript. توضح القواعد أدناه كيفية الاحتساب يدويًا.",
   "The card could not be drawn.": "تعذّر رسم البطاقة.",
+  "The countries and towns of each day, from your dated visits. Travel days show both countries.": "الدول والمدن في كل يوم، من زياراتك المؤرخة. تظهر أيام السفر كلا البلدين.",
   "The date history could not be loaded.": "تعذّر تحميل سجل التواريخ.",
   "The day ledger": "سجل الأيام",
   "The day ledger: Schengen, visa and tax-residency counting with evidence reports": "سجل الأيام: احتساب أيام شنغن والتأشيرات والإقامة الضريبية مع تقارير الإثبات",

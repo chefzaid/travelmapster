@@ -9,19 +9,15 @@ import {
 import { checkPlannedStay, checkRule, newId, parseCountryList } from './ledger-rules.js';
 import { adviceNote, countryName, historySection, reportSection } from './ledger-report.js';
 import { isTripPlan } from './itinerary.js';
-import { meter, statusChip } from './ledger-parts.js';
+import { meter, statusChip, countryLabel } from './ledger-parts.js';
 import { orgRulesSections } from './ledger-org.js';
 import { t, tn } from './i18n.js';
+import { whereSection } from './ledger-where.js';
 
 const view = { entry: '', period: '', showAllStays: false };
 const STAYS_SHOWN = 12;
 
 const dayCount = count => tn(count, '{count} day', '{count} days');
-
-function countryLabel(ctx, id) {
-    const country = ctx.state.index.byId.get(id);
-    return country ? `${country.flag} ${country.name}` : id;
-}
 
 function spanLabel(from, to) {
     return from === to ? formatDate(from) : `${formatDate(from)} – ${formatDate(to)}`;
@@ -458,6 +454,7 @@ export function renderLedger(container, ctx) {
         orgRulesSections(ctx),
         countersSection(ctx, overview),
         timelineSection(ctx, overview),
+        whereSection(ctx, overview),
         reportSection(ctx, overview),
         history,
         dayRuleSection(ctx)

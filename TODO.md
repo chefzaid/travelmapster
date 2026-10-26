@@ -18,6 +18,7 @@ Bugs, failing checks, security findings and code smells found while working on a
 - [x] Intermittent browser test failures, from showing the landing page before the map loads: a sign-up made before the map was ready could be undone by the page's first, signed-out look at the session, and tests used the map before it existed. The page now lets a session started meanwhile win, marks `#app[data-map="ready"]`, and the journeys wait for it; three full runs in a row pass. *(found by: Coding Agent)*
 - [x] Slow first paint on phones: the landing page's Largest Contentful Paint on a mid-range phone was about 6.5 s; the landing panel now shows while MapLibre and the map data load (about 2.7 s), and the budget is 4 s. *(found by: Coding Agent)*
 - [x] Files over the 500-line limit: `public/js/app.js` (527 lines, grown by guest mode and friends), `public/js/days.js` (656), `test/days.test.js` (519) and `test/frontend.test.js` (521). Reproduce: `wc -l` on them. Fixed: tabs and place saving moved to `tabs.js` and `place-store.js`, the evidence and rule checks to `ledger-evidence.js` and `ledger-rules.js`, and their tests to `ledger-rules.test.js` and `io.test.js`. *(found by: Coding Agent)*
+- [ ] Untranslated labels passed to helper functions: `public/js/ledger-report.js` builds the evidence report's date fields with `input('from', 'From', 'date')` and `input('to', 'To', 'date')`, so "From" and "To" stay English in every language (`scripts/i18n.js strings` only flags literals of two words or more). Reproduce: choose Français in Settings, open the Ledger tab; the evidence report's dates are labelled "From" and "To". Fix: wrap them in `t()`, and look for other one-word labels handed to helpers the same way. *(found by: Coding Agent)*
 
 ## Needs Input
 
@@ -175,7 +176,7 @@ Ideas that follow the product direction: a travel record people rely on for visa
 ### Day ledger
 
 - [ ] Travel history for visa forms: every trip abroad in the last 5 or 10 years (country, entry and exit dates, purpose), as UK, US, Canadian and Australian visa applications ask, printable and as CSV, from the ledger's stays.
-- [ ] "Where was I on…?": pick any date or range and see the country and town for each day, with the visit behind it; also a quick answer on the Ledger tab.
+- [x] "Where was I on…?": pick any date or range and see the country and town for each day, with the visit behind it; also a quick answer on the Ledger tab.
 - [ ] Days that do not count: periods under a residence permit or long-stay visa of a country, excluded from that country's stay rules (the Schengen calculator page already says such days do not count, but the ledger counts them).
 - [ ] Travel documents: passports, visas and residence permits with their validity dates, warnings before they expire, and a check of planned trips against the common "valid six months after your stay" rule; numbers are never stored, only names and dates.
 - [ ] Rule templates: ready-made stay rules and thresholds people commonly need (UK Statutory Residence Test day counts, Schengen-style limits of other countries, 183-day rules), each with its source and the "a guide, not tax advice" note.
