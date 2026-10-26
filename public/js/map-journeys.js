@@ -1,6 +1,18 @@
 // Journey lines on the map (ADR 0016): cartoon arcs between visits, and their animated replay,
-// leg by leg, after framing them. The arcs themselves are computed in journeys.js.
+// leg by leg, after framing them; and the open trip's itinerary, its stops numbered along a
+// route. The arcs themselves are computed in journeys.js.
 import { EMPTY, lineFeatures, toMapZoom } from './map-style.js';
+import { journeyArc } from './journeys.js';
+
+// Frames the given [lng, lat] points, clear of the panel and bars.
+function fitPoints({ map, afterMove, safeArea }, points, duration) {
+    const moved = afterMove();
+    const lngs = points.map(([lng]) => lng);
+    const lats = points.map(([, lat]) => lat);
+    map.fitBounds([[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
+        { maxZoom: toMapZoom(6), padding: safeArea(), duration });
+    return moved;
+}
 
 /**
  * Draws journey lines on `map` once `ready`, framing them with `afterMove` and `safeArea`
@@ -35,16 +47,6 @@ export function createJourneyLines({ map, ready, afterMove, safeArea }) {
         drawLines(lines);
     }
 
-    // Frames the given [lng, lat] points, clear of the panel and bars.
-    function fitPoints(points, duration) {
-        const moved = afterMove();
-        const lngs = points.map(([lng]) => lng);
-        const lats = points.map(([, lat]) => lat);
-        map.fitBounds([[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
-            { maxZoom: toMapZoom(6), padding: safeArea(), duration });
-        return moved;
-    }
-
     /**
      * Replays journey lines one after another, after framing them. With reduced motion, the
      * whole route is drawn at once. `onLeg(i)` tells which line is drawing; `onDone(finished)`
@@ -58,7 +60,7 @@ export function createJourneyLines({ map, ready, afterMove, safeArea }) {
             onDone?.(true);
             return () => {};
         }
-        const framed = fitPoints(lines.flat(), reduceMotion ? 0 : 900);
+        const framed = fitPoints({ map, afterMove, safeArea }, lines.flat(), reduceMotion ? 0 : 900);
         if (reduceMotion) {
             drawLines(lines);
             onLeg?.(lines.length - 1);
@@ -103,4 +105,37 @@ export function createJourneyLines({ map, ready, afterMove, safeArea }) {
     }
 
     return { setJourneys, replayJourneys, redraw: () => drawLines(shownLines) };
+}
+
+/**
+ * The open trip's stops on `map` once `ready`: numbered dots along a route, framed when the
+ * stops change. `setItinerary(stops, focus)` takes `{ lat, lng }` stops (none hides it) and the
+ * index of the stop to show bigger.
+ * @param {{ map: any, ready: Promise<unknown>, afterMove: () => Promise<void>, safeArea: () => object }} options
+ */
+export function createItinerary(options) {
+    const { map, ready } = options;
+    let shown = [];
+    let focused = -1;
+    let framed = '';
+    function draw() {
+        map.getSource('itinerary')?.setData(lineFeatures(shown.slice(1).map((stop, i) => journeyArc(shown[i], stop))));
+        map.getSource('itinerary-stops')?.setData({
+            type: 'FeatureCollection',
+            features: shown.map((stop, i) => ({
+                type: 'Feature', geometry: { type: 'Point', coordinates: [stop.lng, stop.lat] }, properties: { n: String(i + 1), focus: i === focused }
+            }))
+        });
+    }
+    function setItinerary(stops, focus = -1) {
+        shown = stops;
+        focused = focus;
+        const key = JSON.stringify(stops.map(stop => [stop.lng, stop.lat]));
+        ready.then(() => {
+            draw();
+            if (stops.length && key !== framed) fitPoints(options, stops.map(stop => [stop.lng, stop.lat]), 700);
+            framed = stops.length ? key : '';
+        });
+    }
+    return { setItinerary, redraw: () => ready.then(draw) };
 }

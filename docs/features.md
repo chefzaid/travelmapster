@@ -175,6 +175,10 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   two, each with its own days and dates. Each day shows its stop; ideas, the calendar, the
   printed itinerary and the text copy follow the stops. In the ledger the trip plans a stay per
   country, the travel day counting in both, and recording it adds a visit to each stop.
+- **Itinerary map**: the open trip shows on the map as numbered stops along a route, framed
+  when the stops change; a day's 📍 button flies to its stop and shows it bigger. Days move by
+  dragging their handle or with the ↑ ↓ buttons (the stops keep their days, so a day's plans can
+  move to another stop), and a slot's plans swap with another slot's when dragged onto it.
 - New itineraries are pre-filled with sights, activities and food ideas from Wikivoyage, fetched by the browser.
 - A travel-ideas panel for any country or city, and copying an itinerary as text.
 - Exporting an itinerary to a calendar: an `.ics` file with an all-day event per day holding
