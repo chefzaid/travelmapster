@@ -51,6 +51,8 @@ Parts of tasks that cannot advance without the owner's decision or information. 
   - Answer:
 - [ ] **Organization single sign-on.** Teams single sign-on: OIDC only, or SAML as well? Is a hosted broker (for example WorkOS) acceptable, or must it stay in the app? A data processing agreement needs the legal entity from Legal texts. *(task: Teams tier › Organization single sign-on; asked by: Coding Agent)*
   - Answer:
+- [ ] **Public holidays and climate data.** Showing public holidays and typical weather at a destination during a trip needs data the app does not bundle. Holidays: Nager.Date's data (MIT, about 120 countries; fetched by the server and cached, or bundled per release)? Climate normals: a bundled monthly table per country from an open source such as NASA POWER (public domain), coarse but private, or no weather at all? *(task: New ideas › Trips › Holidays and weather; asked by: Coding Agent)*
+  - Answer:
 
 ## Product direction (added 2026-10-04)
 
@@ -165,3 +167,47 @@ Everyday features that make the free atlas worth opening again; the paid work ab
 ### Sharing
 
 - [x] Embeddable public map for blogs and personal sites, read-only and without notes.
+
+## New ideas (added 2026-10-26)
+
+Ideas that follow the product direction: a travel record people rely on for visas and taxes, an atlas worth opening again, and Teams that plan ahead. None needs a new external service unless it says so.
+
+### Day ledger
+
+- [ ] Travel history for visa forms: every trip abroad in the last 5 or 10 years (country, entry and exit dates, purpose), as UK, US, Canadian and Australian visa applications ask, printable and as CSV, from the ledger's stays.
+- [ ] "Where was I on…?": pick any date or range and see the country and town for each day, with the visit behind it; also a quick answer on the Ledger tab.
+- [ ] Days that do not count: periods under a residence permit or long-stay visa of a country, excluded from that country's stay rules (the Schengen calculator page already says such days do not count, but the ledger counts them).
+- [ ] Travel documents: passports, visas and residence permits with their validity dates, warnings before they expire, and a check of planned trips against the common "valid six months after your stay" rule; numbers are never stored, only names and dates.
+- [ ] Rule templates: ready-made stay rules and thresholds people commonly need (UK Statutory Residence Test day counts, Schengen-style limits of other countries, 183-day rules), each with its source and the "a guide, not tax advice" note.
+- [ ] US Substantial Presence Test: a weighted threshold over three years (days this year, a third of last year's, a sixth of the year before), a rule kind the ledger cannot express today.
+- [ ] Ledger health: point out overlapping visits in countries too far apart for the same day, visits with no end date, and stays abroad with no way back, so the record holds up when it matters.
+
+### Atlas and places
+
+- [ ] Days on the map: an option to color countries by days spent (from the ledger) instead of by status, as a heat map.
+- [ ] Regions: states, provinces and regions (Natural Earth admin-1, public domain) as an optional deeper level for the largest countries, counted like countries; mind the map data budget.
+- [ ] Flight log: flights by airport codes (OurAirports, public domain) drawn as arcs, with distance per year and a rough CO₂ estimate on the passport.
+- [ ] Merge duplicate places (two pins for the same town, often after imports), keeping every visit.
+
+### Trips
+
+- [ ] Shared trip expenses: on a trip planned together, who paid what and who owes whom, in the trip's currency.
+- [ ] Reservations: flights, stays and bookings with times, addresses and confirmation codes in a trip's days, included in the calendar export.
+- [ ] Calendar subscription: a private, revocable feed URL of trips and planned stays for Google, Apple or Outlook calendars.
+- [ ] Import trips and flights from a calendar file (`.ics`), read in the browser and reviewed like other imports.
+- [ ] Public holidays and typical weather at the destination during a trip. *(waiting: see Needs Input › Public holidays and climate data)*
+
+### Teams
+
+- [ ] Forecast in the employer's report: planned business trips counted as planned days, so a rule shows when it would be reached before anyone travels.
+- [ ] Personal and organization API tokens (read-only, revocable, listed in the audit log) for accountants' and HR systems' integrations, on the documented API.
+
+### Accounts and trust
+
+- [ ] Signed-in devices: the list of active sessions with their browser and last use, and signing out any of them.
+- [ ] Account deletion with a 30-day grace period during which signing in restores everything; deleted for good after it.
+- [ ] Security activity: sign-ins, new passkeys and two-step changes listed in Sign-in security, so a traveler notices an intruder.
+
+### Accessibility
+
+- [ ] A list view of the map: every country and its status in a table that screen-reader and keyboard users can browse and mark, as an equal alternative to clicking the map.
