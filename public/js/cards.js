@@ -6,7 +6,7 @@ import { monthsLabel, priorityLabel, ratingLabel, stars } from './details.js';
 import { HOME, STATUSES, statusFields, statusLabel, statusOf } from './status.js';
 import { openNewTrip } from './trips.js';
 import { visitsSection } from './card-visits.js';
-import { t } from './i18n.js';
+import { t, tn } from './i18n.js';
 
 // ---------------------------------------------------------------- saved places on the map
 
@@ -188,7 +188,9 @@ export function showCountryCard(ctx, country, latlng) {
         countryStatusRow(ctx, country, existing),
         h('dl', { class: 'card-facts' },
             capital ? [h('dt', {}, t('Capital')), h('dd', {}, h('button', { type: 'button', class: 'link-btn', onclick: () => showCityCard(ctx, capital) }, `★ ${capital.name}`))] : null,
-            h('dt', {}, t('Population')), h('dd', {}, formatPopulation(country.population))
+            h('dt', {}, t('Population')), h('dd', {}, formatPopulation(country.population)),
+            // With the map colored by days, the count behind this country's color.
+            ctx.state.mapDays ? [h('dt', {}, t('Days here')), h('dd', {}, tn(ctx.state.mapDays.get(country.id) || 0, '{count} day', '{count} days'))] : null
         ),
         cities.length ? h('div', { class: 'card-cities' },
             h('p', { class: 'muted small' }, t('Your cities here')),
@@ -214,7 +216,7 @@ export function showCityCard(ctx, city) {
     const place = { lat: city.lat, lng: city.lng, name: `${city.name}, ${city.country}`, category: 'City' };
     const card = h('article', { class: 'card' },
         cardHeader(country?.flag || '📍', city.name,
-            [country ? countryLink(ctx, country, city.country) : city.country, city.capital ? ' · ★ Capital' : '']),
+            [country ? countryLink(ctx, country, city.country) : city.country, city.capital ? ` · ★ ${t('Capital')}` : '']),
         h('div', { class: 'card-status' }, statusChip(existing ? statusOf(existing) : null)),
         h('dl', { class: 'card-facts' }, h('dt', {}, t('Population')), h('dd', {}, formatPopulation(city.population))),
         statusButtons(ctx, existing, place),

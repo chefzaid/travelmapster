@@ -3,6 +3,7 @@
 import { Map as MapLibreMap, Marker, Popup } from '../vendor/maplibre/maplibre-gl.mjs';
 import { ALL_STATUSES_SHOWN, countryLook } from './geo.js';
 import { statusInfo, statusOf } from './status.js';
+import { heatLevel } from './heat-map.js';
 import {
     DEFAULT_VIEW, MAX_ZOOM, PATTERNS, STATUS_LAYERS, ZOOM_OFFSET, arrowImage, buildStyle, dataUrl, dotImage, lngLat,
     onlyCountries, patternImage, readTheme, toMapZoom
@@ -151,11 +152,14 @@ export function createTravelMap(element, { index, cities, onCountryClick, onCity
     let status = { visitIds: empty, livedIds: empty, transitIds: empty, wishlistIds: empty, cityOnlyIds: empty, homeId: null };
     let shown = ALL_STATUSES_SHOWN;
     let filterKeys = new Map();
+    // Days per country when the map is colored by days (heat-map.js), or null.
+    let heatDays = null;
     function applyStatus() {
         const byLook = new Map();
         for (const country of index.countries) {
-            const value = countryLook(country.id, status, shown) || '';
-            map.setFeatureState({ source: 'countries', id: country.id }, { status: value });
+            const value = heatDays ? '' : countryLook(country.id, status, shown) || '';
+            const heat = heatDays ? 1 + heatLevel(heatDays.get(country.id) || 0) : 0;
+            map.setFeatureState({ source: 'countries', id: country.id }, { status: value, heat });
             if (!byLook.has(value)) byLook.set(value, []);
             byLook.get(value).push(country.id);
         }
@@ -169,9 +173,10 @@ export function createTravelMap(element, { index, cities, onCountryClick, onCity
         }
     }
     /** Colors countries by status (see countryStatus in geo.js), showing only the statuses in `visible`. */
-    function setCountryStatus(next, visible = ALL_STATUSES_SHOWN) {
+    function setCountryStatus(next, visible = ALL_STATUSES_SHOWN, days = null) {
         status = next;
         shown = visible;
+        heatDays = days;
         ready.then(applyStatus);
     }
 

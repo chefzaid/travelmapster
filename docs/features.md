@@ -29,6 +29,13 @@ The reasoning and what each rule rules out are in [ADR 0017](adr/0017-product-pr
   with stripes, and airport layovers ("transit only") are pale with a dotted outline, so every
   status differs by pattern or outline as well as color ([ADR 0014](adr/0014-home-lived-and-transit.md)).
 - The legend doubles as a filter for each status.
+- **Days on the map** (🌡️ Days in the legend, for your own map and the demo): countries are
+  colored by the days the ledger counts in them instead of by status, in four steps that match
+  common rules: under a month, 30 to 89 days, 90 to 182 (Schengen's 90 days) and 183 or more
+  (the usual tax-residency threshold). The legend counts the countries in each step and a
+  country's card shows its days. Planned stays do not count; with the timeline open, the days
+  follow its year (up to its end, or during it). The steps get darker as days grow, so they
+  read for every kind of color vision and in every palette.
 - **Timeline** (opened from the legend): a year slider replays the map as it was by the end of
   any year, or shows only the places visited during it, from the visit dates. Places without
   dates and wishlist places are left out (the timeline says how many lack dates), places lived

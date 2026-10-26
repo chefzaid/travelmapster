@@ -43,6 +43,8 @@ export function readTheme() {
         journey: token('--journey'),
         journeyCasing: token('--journey-casing'),
         ocean: token('--ocean'),
+        // Days on the map (heat-map.js): no days, then the four steps.
+        heat: ['--heat-none', '--heat-1', '--heat-2', '--heat-3', '--heat-4'].map(token),
         shadow: token('--shadow-color')
     };
 }
@@ -153,7 +155,9 @@ function countryFill(theme) {
         lookIs('wishlist'), theme.wishlistHover,
         lookIs('home', 'lived', 'transit'), status,
         '#fff'];
-    return ['step', ['zoom'], hovered, toMapZoom(HOVER_FILL_MAX_ZOOM), status];
+    // Colored by days instead (heat-map.js): 1 for none, 2 to 5 for the steps, 0 when off.
+    const orHeat = fill => ['match', ['number', ['feature-state', 'heat'], 0], ...theme.heat.flatMap((colour, i) => [i + 1, colour]), fill];
+    return ['step', ['zoom'], orHeat(hovered), toMapZoom(HOVER_FILL_MAX_ZOOM), orHeat(status)];
 }
 
 // Layers drawn only for countries with some statuses. Their filters list those countries, so

@@ -20,6 +20,7 @@
   "{1}Been by the end of": "{1}زرتها بحلول نهاية",
   "{1}Been there {2}": "{1}زرتها {2}",
   "{1}Capital": "{1}العاصمة",
+  "{1}Days": "{1}الأيام",
   "{1}Explore": "{1}استكشف",
   "{1}Home{2}": "{1}البلد الأم{2}",
   "{1}Ledger{2}": "{1}السجل{2}",
@@ -343,7 +344,9 @@
   "{done} of {total} done": "أُنجز {done} من {total}",
   "{file} uses a ZIP compression this app cannot read.": "يستخدم {file} نوع ضغط ZIP لا يستطيع هذا التطبيق قراءته.",
   "{filled} of {total} slots planned": "الفترات المخطط لها: {filled} من {total}",
+  "{from}–{to} days": "{from}–{to} يومًا",
   "{from}: {days} over.": "{from}: تجاوز بمقدار {days}.",
+  "{from}+ days": "{from} يومًا فأكثر",
   "{goal} in {year}": "{goal} في {year}",
   "{goal}: {count} so far": "{goal}: {count} حتى الآن",
   "{icon} Home: {flag} {name}": "{icon} البلد الأم: {flag} {name}",
@@ -403,6 +406,14 @@
   "{owner} can share it with you again.": "يمكن لـ {owner} مشاركتها معك مرة أخرى.",
   "{packed} of {total} packed": "تم توضيب {packed} من {total}",
   "{places} with {visits}.": "{places} مع {visits}.",
+  "{range}: {count} countries": {
+    "zero": "{range}: لا دول",
+    "one": "{range}: دولة واحدة",
+    "two": "{range}: دولتان",
+    "few": "{range}: {count} دول",
+    "many": "{range}: {count} دولة",
+    "other": "{range}: {count} دولة"
+  },
   "{role} · joined {date}": "{role} · انضم في {date}",
   "{shown} of {count} places": {
     "zero": "{shown} من {count} مكان",
@@ -883,6 +894,7 @@
   "Days before the trip must be a whole number from 0 to 365.": "يجب أن يكون عدد الأيام قبل الرحلة عددًا صحيحًا من 0 إلى 365.",
   "Days come back slowly.": "تعود الأيام تدريجيًا.",
   "Days count": "طريقة احتساب الأيام",
+  "Days here": "الأيام هنا",
   "Days in {1}, {2} and {3} count too, as they are reached only through the area. {4} and {5} (EU members outside the area) and {6} do not count, and neither do overseas territories outside Europe, such as French Guiana or Réunion.": "تُحسب أيضًا الأيام في {1} و{2} و{3}، إذ لا يُوصل إليها إلا عبر المنطقة. أما {4} و{5} (عضوان في الاتحاد الأوروبي خارج المنطقة) و{6} فلا تُحسب، ولا تُحسب كذلك الأقاليم ما وراء البحار خارج أوروبا، مثل غويانا الفرنسية أو لا ريونيون.",
   "Days in stop {number}": "الأيام في المحطة {number}",
   "days left": "الأيام المتبقية",
@@ -891,6 +903,7 @@
   "Days per country: {period}": "الأيام لكل دولة: {period}",
   "Days recorded by year": "الأيام المسجّلة حسب السنة",
   "days recorded this year": "الأيام المسجّلة هذا العام",
+  "Days spent in each country": "الأيام المقضية في كل دولة",
   "Days spent under a residence permit or a long-stay national visa of a member country do not count toward the 90. This calculator is a guide, not legal advice: border officers make the final decision.": "الأيام التي تقضيها بموجب تصريح إقامة أو تأشيرة وطنية طويلة الأمد صادرة عن دولة عضو لا تُحتسب ضمن الـ 90 يومًا. هذه الحاسبة دليل إرشادي، وليست استشارة قانونية: القرار النهائي لموظفي الحدود.",
   "Days used, days left and the latest day you can stay in the Schengen area. No account; your dates stay in your browser.": "الأيام المستخدمة والأيام المتبقية وآخر يوم يمكنك البقاء فيه في منطقة شنغن. دون حساب؛ تبقى تواريخك في متصفحك.",
   "days, longest trip": {

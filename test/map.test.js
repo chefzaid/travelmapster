@@ -201,6 +201,8 @@ const OUTLINES = [['--visited-ink', '--visited'], ['--visited-ink', '--visited-s
     ['--lived-ink', '--lived'], ['--home-ink', '--home'], ['--transit-ink', '--transit']];
 const LAND = [1, 2, 3, 4, 5, 6, 7].map(n => `--land-${n}`);
 const SCHEMES = ['light', 'dark'];
+// Days on the map (heat-map.js): no days, then the four steps.
+const HEAT = ['--heat-none', '--heat-1', '--heat-2', '--heat-3', '--heat-4'];
 
 test('every palette keeps map labels and chips at WCAG AA contrast in both themes', () => {
     for (const palette of ['standard', 'colorblind', 'print']) {
@@ -208,7 +210,7 @@ test('every palette keeps map labels and chips at WCAG AA contrast in both theme
             const tokens = tokensFor(palette, scheme);
             const where = `${palette} ${scheme}`;
             // Country and town names, and chip and button text, are --ink-dark on these fills.
-            const backgrounds = [...Object.values(STATUS_FILLS), '--lived-soft', '--home-soft', '--transit-soft', ...LAND];
+            const backgrounds = [...Object.values(STATUS_FILLS), '--lived-soft', '--home-soft', '--transit-soft', ...LAND, ...HEAT];
             for (const name of backgrounds) {
                 assert.ok(contrast(tokens['--ink-dark'], tokens[name]) >= 4.5, `${where}: labels on ${name}`);
             }
@@ -247,4 +249,21 @@ test('the color-blind safe and print palettes keep every status apart for every 
     }
     assert.equal(print['--ocean'], '#ffffff', 'no ink spent on the sea');
     assert.deepEqual(tokensFor('print', 'dark')['--land-1'], print['--land-1'], 'the print palette stays paper-white in the dark theme');
+});
+
+test('the days on the map stay apart step by step for every kind of color vision, in every palette', () => {
+    for (const palette of ['standard', 'colorblind', 'print']) {
+        for (const scheme of SCHEMES) {
+            const tokens = tokensFor(palette, scheme);
+            for (const vision of ['normal', 'protanopia', 'deuteranopia', 'tritanopia']) {
+                for (const [i, token] of HEAT.slice(1).entries()) {
+                    assert.ok(difference(tokens[HEAT[i]], tokens[token], vision) >= 10, `${palette} ${scheme}, ${vision}: ${HEAT[i]} and ${token}`);
+                }
+            }
+            // More days are darker, so the steps also read in grayscale.
+            for (const [i, token] of HEAT.slice(2).entries()) {
+                assert.ok(luminance(channels(tokens[token])) < luminance(channels(tokens[HEAT[i + 1]])), `${palette} ${scheme}: ${token} is darker`);
+            }
+        }
+    }
 });
