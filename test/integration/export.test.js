@@ -35,6 +35,7 @@ test('the account export holds everything the account has, and only its own', as
     assert.equal(archive.profile.username, 'exporter');
     assert.equal(archive.profile.homeCountry, 'PRT');
     assert.equal(archive.profile.mapPalette, 'print');
+    assert.match(archive.profile.lastActiveDay, /^\d{4}-\d{2}-\d{2}$/, 'the last active day is the traveler\'s data too');
     assert.equal(archive.places.length, 1);
     assert.equal(archive.places[0].name, 'Paris, France');
     assert.equal(archive.places[0].hideFromPublic, true, 'hidden places are the owner\'s too');

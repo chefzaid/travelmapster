@@ -6,6 +6,7 @@ const { createLogger } = require('./logger');
 const { createPool } = require('./db/pool');
 const { migrate } = require('./db/migrate');
 const { createMetrics } = require('./metrics');
+const { createUserRepository } = require('./repositories');
 const { createGeocoder, createPgSlots } = require('./services/geocoder');
 const { createPlaceIndex } = require('./services/places');
 const { createApp } = require('./app');
@@ -37,7 +38,7 @@ async function main() {
     const applied = await migrateWithRetry(pool, logger);
     logger.info({ applied }, 'Database migrations complete');
 
-    const metrics = createMetrics();
+    const metrics = createMetrics({ users: createUserRepository(pool), logger });
     const geocoder = createGeocoder(config.geocoder, fetch, createPgSlots(pool, config.geocoder.minIntervalMs));
     const state = { shuttingDown: false };
     // Load the town index in the background so the first search does not wait for it.

@@ -2,7 +2,14 @@
 
 const client = require('prom-client');
 
-function createMetrics() {
+// Activity is counted from accounts' last active day; each replica reports the same numbers.
+const ACTIVITY_WINDOWS = ['total', 'active_1d', 'active_7d', 'active_30d', 'returning_7d'];
+
+/**
+ * Prometheus metrics. With `users` (the user repository), the scrape also reports how many
+ * accounts exist and how recently they were used; nothing identifies a person.
+ */
+function createMetrics({ users, logger } = {}) {
     const registry = new client.Registry();
     registry.setDefaultLabels({ app: 'travelmapster' });
     client.collectDefaultMetrics({ register: registry });
@@ -22,6 +29,31 @@ function createMetrics() {
         registers: [registry]
     });
 
+    // Steps of the product funnel, counted when a traveler reaches them (paid plans come later).
+    const funnel = new client.Counter({
+        name: 'travelmapster_funnel_total',
+        help: 'Travelers reaching each funnel step: sign_up, first_place, ten_places, first_ledger_use.',
+        labelNames: ['step'],
+        registers: [registry]
+    });
+
+    if (users) {
+        new client.Gauge({
+            name: 'travelmapster_users',
+            help: 'Accounts in total and by activity: active in the last 1, 7 or 30 days, and returning (older than 30 days, active in the last 7).',
+            labelNames: ['activity'],
+            registers: [registry],
+            async collect() {
+                try {
+                    const counts = await users.activity();
+                    for (const activity of ACTIVITY_WINDOWS) this.set({ activity }, counts[activity]);
+                } catch (err) {
+                    logger?.warn({ err }, 'Could not count accounts for metrics');
+                }
+            }
+        });
+    }
+
     function httpMiddleware(req, res, next) {
         const end = httpDuration.startTimer();
         res.on('finish', () => {
@@ -32,7 +64,7 @@ function createMetrics() {
         next();
     }
 
-    return { registry, httpMiddleware, authEvents };
+    return { registry, httpMiddleware, authEvents, funnel };
 }
 
 module.exports = { createMetrics };

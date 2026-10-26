@@ -34,12 +34,31 @@ function createUserRepository(db) {
             return rows[0] || null;
         },
 
+        /** The user, with `seen_today` telling whether their activity day is already recorded. */
         async findById(id) {
             const { rows } = await db.query(
-                `SELECT ${USER_COLUMNS} FROM users WHERE id = $1`,
+                `SELECT ${USER_COLUMNS}, last_seen_on, last_seen_on IS NOT DISTINCT FROM current_date AS seen_today FROM users WHERE id = $1`,
                 [id]
             );
             return rows[0] || null;
+        },
+
+        /** Records today as the user's last active day (a date only, for activity metrics). */
+        async markSeen(id) {
+            await db.query('UPDATE users SET last_seen_on = current_date WHERE id = $1 AND last_seen_on IS DISTINCT FROM current_date', [id]);
+        },
+
+        /** Accounts in total and by how recently they were used, for the metrics endpoint. */
+        async activity() {
+            const { rows } = await db.query(
+                `SELECT count(*)::int AS total,
+                    count(*) FILTER (WHERE last_seen_on >= current_date)::int AS active_1d,
+                    count(*) FILTER (WHERE last_seen_on > current_date - 7)::int AS active_7d,
+                    count(*) FILTER (WHERE last_seen_on > current_date - 30)::int AS active_30d,
+                    count(*) FILTER (WHERE last_seen_on > current_date - 7 AND created_at < now() - interval '30 days')::int AS returning_7d
+                 FROM users`
+            );
+            return rows[0];
         },
 
         /** Returns the new user, or null when the username is already taken. */
@@ -128,6 +147,11 @@ function createMarkerRepository(db) {
                 [userId]
             );
             return rows;
+        },
+
+        async count(userId) {
+            const { rows } = await db.query('SELECT count(*)::int AS count FROM markers WHERE user_id = $1', [userId]);
+            return rows[0].count;
         },
 
         /** The places a public map may show: never those the traveler hid (ADR 0013). */
@@ -305,16 +329,18 @@ function createLedgerRepository(db) {
             return rows[0] || { ...LEDGER_DEFAULTS, updatedAt: null };
         },
 
+        /** Saves the settings; `firstSave` tells whether the traveler had none before. */
         async saveSettings(userId, settings) {
             const { rows } = await db.query(
                 `INSERT INTO ledger_settings (user_id, day_rule, rules, planned)
                  VALUES ($1, $2, $3::jsonb, $4::jsonb)
                  ON CONFLICT (user_id) DO UPDATE SET day_rule = EXCLUDED.day_rule, rules = EXCLUDED.rules,
                     planned = EXCLUDED.planned, updated_at = now()
-                 RETURNING day_rule AS "dayRule", rules, planned, updated_at AS "updatedAt"`,
+                 RETURNING day_rule AS "dayRule", rules, planned, updated_at AS "updatedAt", (xmax = 0) AS "firstSave"`,
                 [userId, settings.dayRule, JSON.stringify(settings.rules), JSON.stringify(settings.planned)]
             );
-            return rows[0];
+            const { firstSave, ...saved } = rows[0];
+            return { settings: saved, firstSave };
         },
 
         /** Newest first, at most `limit` (null for all); written by triggers on visits and places (migration 005). */

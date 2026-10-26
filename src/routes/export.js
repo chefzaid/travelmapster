@@ -26,7 +26,7 @@ function createExportRouter({ markers, trips, ledger }) {
             format: 'travelmapster-account',
             version: EXPORT_VERSION,
             exportedAt: new Date().toISOString(),
-            profile: publicUser(req.user),
+            profile: { ...publicUser(req.user), lastActiveDay: req.user.last_seen_on ?? null },
             places,
             trips: itineraries,
             ledger: { settings, changes }

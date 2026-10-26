@@ -7,7 +7,7 @@ const { parseLedgerSettings } = require('../validation');
 const CHANGES_LIMIT = 5000;
 
 /** Day-ledger settings and the history of visit dates; the counting itself runs in the browser. */
-function createLedgerRouter({ ledger }) {
+function createLedgerRouter({ ledger, metrics }) {
     const router = express.Router();
 
     router.get('/', async (req, res) => {
@@ -17,7 +17,9 @@ function createLedgerRouter({ ledger }) {
     router.put('/', async (req, res) => {
         const { settings, error } = parseLedgerSettings(req.body);
         if (error) return res.status(400).json({ error });
-        return res.json(await ledger.saveSettings(req.user.id, settings));
+        const { settings: saved, firstSave } = await ledger.saveSettings(req.user.id, settings);
+        if (firstSave) metrics.funnel.inc({ step: 'first_ledger_use' });
+        return res.json(saved);
     });
 
     router.get('/changes', async (req, res) => {

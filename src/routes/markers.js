@@ -4,8 +4,19 @@ const express = require('express');
 const { withTransaction } = require('../db/pool');
 const { IMPORT_MAX_MARKERS, parseBulkChanges, parseMarkerId, parseMarkerPayload, parseVisitPayload } = require('../validation');
 
-function createMarkerRouter({ pool, markers, visits }) {
+// Funnel steps reached when a traveler's number of places first crosses them.
+const PLACE_STEPS = [[1, 'first_place'], [10, 'ten_places']];
+
+function createMarkerRouter({ pool, markers, visits, metrics }) {
     const router = express.Router();
+
+    async function countFunnel(userId, added) {
+        if (added <= 0) return;
+        const after = await markers.count(userId);
+        for (const [threshold, step] of PLACE_STEPS) {
+            if (after - added < threshold && after >= threshold) metrics.funnel.inc({ step });
+        }
+    }
 
     router.get('/', async (req, res) => {
         res.set('Cache-Control', 'no-store');
@@ -16,6 +27,7 @@ function createMarkerRouter({ pool, markers, visits }) {
         const { marker, error } = parseMarkerPayload(req.body, { withVisits: true });
         if (error) return res.status(400).json({ error });
         const created = await withTransaction(pool, client => markers.create(req.user.id, marker, client));
+        await countFunnel(req.user.id, 1);
         return res.status(201).json(created);
     });
 
@@ -43,6 +55,7 @@ function createMarkerRouter({ pool, markers, visits }) {
             }
             return rows;
         });
+        await countFunnel(req.user.id, created.length);
 
         return res.status(201).json({
             imported: created.length,
@@ -59,6 +72,7 @@ function createMarkerRouter({ pool, markers, visits }) {
         if (error) return res.status(400).json({ error });
         try {
             const result = await withTransaction(pool, client => markers.applyBulk(req.user.id, changes, client));
+            await countFunnel(req.user.id, result.created.length - result.removed.length);
             return res.json(result);
         } catch (err) {
             if (err.code === 'NOT_FOUND') return res.status(404).json({ error: err.message });

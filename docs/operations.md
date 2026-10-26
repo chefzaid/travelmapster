@@ -38,6 +38,8 @@ Logs are JSON lines (pino) on stdout, one per request with method, URL, status a
 |---|---|
 | `http_server_request_duration_seconds{method,route,status}` | Request latency and counts by route pattern |
 | `travelmapster_auth_events_total{event,outcome}` | `register`, `login`, `password_change` and `account_delete` by outcome (`success`, `failure`, `conflict`, and `rejected` for sign-ups refused by the honeypot field) |
+| `travelmapster_funnel_total{step}` | Travelers reaching `sign_up`, `first_place`, `ten_places` and `first_ledger_use` (per process: sum over replicas) ([ADR 0018](adr/0018-product-metrics.md)) |
+| `travelmapster_users{activity}` | Accounts `total`, `active_1d`, `active_7d`, `active_30d` and `returning_7d` (older than 30 days, active in the last 7), from each account's last active day; every replica reports the same numbers, so take the maximum |
 | Node.js defaults | Event loop lag, heap, GC, CPU and handles |
 
 A rising `login` / `failure` rate points to credential stuffing; the auth rate limit answers
