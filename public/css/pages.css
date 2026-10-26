@@ -239,6 +239,10 @@ input[aria-invalid='true'] { border-color: var(--danger); }
     /* While loading, the sheet already takes the height it will have, so nothing jumps. */
     .app[data-state='loading'] .panel { min-height: 62vh; }
 
+    .panel-fold { display: none; }
+    .app.panel-folded .panel,
+    [dir="rtl"] .app.panel-folded .panel { transform: none; visibility: visible; }
+
     .panel-handle {
         position: absolute;
         top: 6px;

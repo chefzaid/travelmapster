@@ -311,7 +311,8 @@ export function createTravelMap(element, { index, cities, onCountryClick, onCity
             ? Math.max(80, element.getBoundingClientRect().bottom - timeBar.getBoundingClientRect().top + 16)
             : 80;
         // The panel sits at the start of the line: the right in right-to-left languages.
-        const beside = !panel || panel.hidden || narrow ? 40
+        const folded = document.getElementById('app')?.classList.contains('panel-folded');
+        const beside = !panel || panel.hidden || narrow || folded ? 40
             : (isRtl() ? window.innerWidth - panel.getBoundingClientRect().left : panel.getBoundingClientRect().right) + 40;
         return {
             top: top + 16,

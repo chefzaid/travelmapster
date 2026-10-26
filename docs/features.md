@@ -290,7 +290,9 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   first; Settings and the landing page offer the choice, kept in the browser. Countries carry
   their names in each language (from Natural Earth) and are found by any of them; dates,
   numbers and money follow the language.
-- Responsive layout with a bottom sheet on phones, `/` to search, screen-reader labels, and light and dark themes that follow the system.
+- Responsive layout: on wider screens the side panel folds away with the tab on its edge (and
+  stays folded in this browser) so the whole map can be seen and clicked, and opens again when
+  a tab, the sign-in form or the skip link needs it; phones have a bottom sheet instead; `/` to search, screen-reader labels, and light and dark themes that follow the system.
 
 ## Organizations
 

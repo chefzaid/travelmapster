@@ -238,6 +238,41 @@
 
 .panel-handle { display: none; }
 
+/* On wider screens the panel folds away (js/panel.js), leaving this tab on its edge to open it
+   again, so the whole map can be seen and clicked. Phones have the bottom sheet instead. */
+.panel { transition: transform 0.25s ease, visibility 0.25s; }
+.panel-fold {
+    position: absolute;
+    z-index: 901;
+    top: 104px;
+    inset-inline-start: calc(13px + var(--panel-width));
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 8px;
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: var(--text);
+    background: var(--paper);
+    border: 3px solid var(--ink);
+    border-inline-start: 0;
+    border-start-end-radius: 14px;
+    border-end-end-radius: 14px;
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: inset-inline-start 0.25s ease;
+}
+.panel-fold:hover { background: var(--paper-2); }
+.panel-fold-icon { font-size: 1.2rem; line-height: 1; }
+.app:not(.panel-folded) .panel-fold-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+.app.panel-folded .panel { transform: translateX(calc(-100% - 32px)); visibility: hidden; }
+.app.panel-folded .panel-fold { inset-inline-start: 0; padding-inline: 10px 14px; }
+.app.panel-folded .panel-fold-icon,
+[dir="rtl"] .panel-fold-icon { transform: scaleX(-1); }
+[dir="rtl"] .app.panel-folded .panel { transform: translateX(calc(100% + 32px)); }
+[dir="rtl"] .app.panel-folded .panel-fold-icon { transform: none; }
+
 .panel section + section { margin-top: 20px; }
 
 .view[hidden] { display: none; }

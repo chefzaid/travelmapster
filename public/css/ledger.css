@@ -374,7 +374,7 @@
     body:not(.is-reporting) { height: auto; overflow: visible; color: #000; background: #fff; }
     body:not(.is-reporting) .app { display: flex; flex-direction: column; height: auto; page: map-sheet; }
 
-    body:not(.is-reporting) :is(.map, .topbar, .panel, .compass, .select-bar, .time-bar, .skip-link, .toasts, .legend-timeline, .legend-filter) {
+    body:not(.is-reporting) :is(.map, .topbar, .panel, .panel-fold, .compass, .select-bar, .time-bar, .skip-link, .toasts, .legend-timeline, .legend-filter) {
         display: none !important;
     }
 
