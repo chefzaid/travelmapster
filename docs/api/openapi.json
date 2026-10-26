@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "TravelMapster API",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "description": "The JSON API the TravelMapster app uses. It is version 1 and changes only in backward-compatible ways ([ADR 0019](../adr/0019-api-description-and-versioning.md)). Errors are `{ \"error\": \"…\" }` with a matching status; every response is `Cache-Control: no-store` unless stated."
   },
   "servers": [
@@ -2420,6 +2420,18 @@
             "items": {
               "$ref": "#/components/schemas/TripDay"
             }
+          },
+          "packing": {
+            "type": "array",
+            "maxItems": 200,
+            "items": {
+              "$ref": "#/components/schemas/PackingItem"
+            },
+            "description": "Left out on an update, the stored list is kept."
+          },
+          "budget": {
+            "$ref": "#/components/schemas/TripBudget",
+            "description": "Left out on an update, the stored budget is kept."
           }
         }
       },
@@ -2666,6 +2678,94 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 999
+          }
+        }
+      },
+      "PackingItem": {
+        "type": "object",
+        "required": [
+          "item"
+        ],
+        "properties": {
+          "item": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "packed": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "Expense": {
+        "type": "object",
+        "required": [
+          "label",
+          "amount",
+          "currency"
+        ],
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "amount": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000000000
+          },
+          "currency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$",
+            "description": "ISO 4217 currency code"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "transport",
+              "stay",
+              "food",
+              "activities",
+              "other"
+            ],
+            "default": "other"
+          }
+        }
+      },
+      "TripBudget": {
+        "type": "object",
+        "description": "Empty for no budget. Expenses are totalled in `currency` with the traveler's own exchange rates (units of `currency` for one unit of another).",
+        "properties": {
+          "currency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$",
+            "description": "ISO 4217 currency code"
+          },
+          "planned": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 1000000000
+          },
+          "rates": {
+            "type": "object",
+            "maxProperties": 30,
+            "additionalProperties": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 1000000
+            }
+          },
+          "expenses": {
+            "type": "array",
+            "maxItems": 300,
+            "items": {
+              "$ref": "#/components/schemas/Expense"
+            }
           }
         }
       }

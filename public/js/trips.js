@@ -1,5 +1,6 @@
 // Trips tab: day-by-day itineraries with ideas from Wikivoyage, copied as text, exported to a
-// calendar, printed, duplicated as a template, or planned in the day ledger.
+// calendar, printed, duplicated as a template, or planned in the day ledger; with a packing
+// list and a budget.
 import { h, fill, toast, formDialog, formatDate, downloadFile } from './ui.js';
 import { fetchIdeas, buildItinerary } from './ideas.js';
 import {
@@ -9,6 +10,8 @@ import {
 import { completeTrip, tripPlace, tripRecorded } from './trip-visits.js';
 import { localToday } from './days.js';
 import { openPrintView, printTable } from './print-view.js';
+import { budgetSection, packingSection } from './trip-extras.js';
+import { budgetTotals, formatMoney, tidyBudget } from './trip-budget.js';
 
 const MAX_DAYS = 30;
 
@@ -139,7 +142,12 @@ function printTrip(trip, opener) {
             printTable(['Day', ...SLOTS.map(([, , label]) => label)], trip.plan.map((day, i) => h('tr', {},
                 h('th', { scope: 'row' }, `Day ${i + 1}`, trip.startDate ? h('small', { class: 'report-edited' }, dayDate(trip.startDate, i)) : null),
                 SLOTS.map(([slot]) => h('td', {}, day[slot]))
-            )))
+            ))),
+            trip.packing?.length ? h('section', {},
+                h('h2', {}, 'Packing list'),
+                h('ul', { class: 'report-checklist' }, trip.packing.map(entry => h('li', {}, `${entry.packed ? '☑' : '☐'} ${entry.item}`)))) : null,
+            trip.budget?.currency ? h('p', {}, h('strong', {}, 'Spent so far: '),
+                formatMoney(budgetTotals(trip.budget).total, trip.budget.currency)) : null
         ]
     });
 }
@@ -232,6 +240,9 @@ async function duplicateTrip(ctx, trip, container) {
 }
 
 function renderEditor(container, ctx, trip) {
+    // Trips cached by an earlier release have neither.
+    trip.packing ??= [];
+    trip.budget ??= {};
     if (!draft || draft.id !== trip.id) {
         draft = structuredClone(trip);
     }
@@ -243,7 +254,7 @@ function renderEditor(container, ctx, trip) {
     const save = async () => {
         saveButton.disabled = true;
         try {
-            const saved = await ctx.api.updateTrip(trip.id, draft);
+            const saved = await ctx.api.updateTrip(trip.id, { ...draft, budget: tidyBudget(draft.budget) });
             Object.assign(trip, saved);
             draft = structuredClone(trip);
             await followInLedger(ctx, trip, tripStay(ctx, trip));
@@ -352,6 +363,8 @@ function renderEditor(container, ctx, trip) {
             visitButton(ctx, trip, dirty)
         ),
         h('div', { class: 'days' }, days),
+        packingSection(draft, { rerender, markDirty }),
+        budgetSection(draft, { rerender, markDirty, trips: ctx.state.trips }),
         h('div', { class: 'row trip-footer' },
             h('button', {
                 type: 'button',

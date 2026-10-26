@@ -40,14 +40,17 @@ export function tripAsText(trip) {
     return lines.join('\n').trim();
 }
 
-/** A copy to plan another trip from: same days and plans, no dates. */
+/** A copy to plan another trip from: same days, plans and packing list, no dates or expenses. */
 export function tripTemplate(trip) {
     const suffix = ' (copy)';
     return {
         title: `${trip.title.slice(0, TITLE_MAX_LENGTH - suffix.length)}${suffix}`,
         destination: trip.destination,
         startDate: '',
-        plan: trip.plan.map(day => Object.fromEntries(SLOTS.map(([slot]) => [slot, day[slot] || ''])))
+        plan: trip.plan.map(day => Object.fromEntries(SLOTS.map(([slot]) => [slot, day[slot] || '']))),
+        // The list to pack again, and the budget's currency and plan without what was spent.
+        packing: (trip.packing || []).map(entry => ({ item: entry.item, packed: false })),
+        budget: trip.budget?.currency ? { currency: trip.budget.currency, planned: trip.budget.planned ?? null, rates: {}, expenses: [] } : {}
     };
 }
 

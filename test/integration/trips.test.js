@@ -82,3 +82,75 @@ test('users cannot touch each other\'s trips', async () => {
     assert.equal((await other.put(`/api/trips/${trip.id}`, sampleTrip)).status, 404);
     assert.equal((await other.delete(`/api/trips/${trip.id}`)).status, 404);
 });
+
+test('a trip keeps a packing list and a budget, and an update without them keeps them', async () => {
+    const client = createClient(ctx.server);
+    await client.register('packer', 'packer password');
+    const packing = [{ item: ' Passport ', packed: true }, { item: 'Adapter', packed: 'yes' }];
+    const budget = {
+        currency: 'EUR',
+        planned: 1200,
+        rates: { JPY: 0.0061234567891, EUR: 2 },
+        expenses: [
+            { label: 'Flights', amount: 640.505, currency: 'EUR', category: 'transport' },
+            { label: 'Ramen', amount: 1200, currency: 'JPY' }
+        ]
+    };
+    const created = await client.post('/api/trips', { ...sampleTrip, packing, budget });
+    assert.equal(created.status, 201);
+    assert.deepEqual(created.body.packing, [{ item: 'Passport', packed: true }, { item: 'Adapter', packed: false }]);
+    assert.deepEqual(created.body.budget, {
+        currency: 'EUR',
+        planned: 1200,
+        rates: { JPY: 0.006123456789 },
+        expenses: [
+            { label: 'Flights', amount: 640.505, currency: 'EUR', category: 'transport' },
+            { label: 'Ramen', amount: 1200, currency: 'JPY', category: 'other' }
+        ]
+    });
+
+    // A tab from the previous release sends neither.
+    const kept = await client.put(`/api/trips/${created.body.id}`, { ...sampleTrip, title: 'Tokyo' });
+    assert.deepEqual(kept.body.packing, created.body.packing);
+    assert.deepEqual(kept.body.budget, created.body.budget);
+
+    const cleared = await client.put(`/api/trips/${created.body.id}`, { ...sampleTrip, packing: [], budget: {} });
+    assert.deepEqual(cleared.body.packing, []);
+    assert.deepEqual(cleared.body.budget, {});
+
+    const plain = await client.post('/api/trips', sampleTrip);
+    assert.deepEqual(plain.body.packing, []);
+    assert.deepEqual(plain.body.budget, {});
+});
+
+test('invalid packing lists and budgets are rejected', async () => {
+    const client = createClient(ctx.server);
+    await client.register('badpacker', 'packer password');
+    const expense = { label: 'Taxi', amount: 20, currency: 'EUR' };
+    const cases = [
+        { packing: 'socks' },
+        { packing: Array(201).fill({ item: 'x' }) },
+        { packing: [{ item: '' }] },
+        { packing: ['socks'] },
+        { packing: [{ item: 'x'.repeat(81) }] },
+        { budget: [] },
+        { budget: { currency: 'euro' } },
+        { budget: { currency: 'EUR', planned: -1 } },
+        { budget: { currency: 'EUR', planned: '100' } },
+        { budget: { currency: 'EUR', rates: [] } },
+        { budget: { currency: 'EUR', rates: { JPY: 0 } } },
+        { budget: { currency: 'EUR', rates: { yen: 1 } } },
+        { budget: { currency: 'EUR', expenses: {} } },
+        { budget: { currency: 'EUR', expenses: Array(301).fill(expense) } },
+        { budget: { currency: 'EUR', expenses: ['taxi'] } },
+        { budget: { currency: 'EUR', expenses: [{ ...expense, label: '' }] } },
+        { budget: { currency: 'EUR', expenses: [{ ...expense, amount: Number.NaN }] } },
+        { budget: { currency: 'EUR', expenses: [{ ...expense, amount: 2e9 }] } },
+        { budget: { currency: 'EUR', expenses: [{ ...expense, currency: 'eur' }] } },
+        { budget: { currency: 'EUR', expenses: [{ ...expense, category: 'gifts' }] } }
+    ];
+    for (const override of cases) {
+        const res = await client.post('/api/trips', { ...sampleTrip, ...override });
+        assert.equal(res.status, 400, JSON.stringify(override).slice(0, 80));
+    }
+});

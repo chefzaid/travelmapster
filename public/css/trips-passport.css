@@ -88,6 +88,82 @@
     margin-top: 14px;
 }
 
+/* Packing list and budget */
+.trip-extra {
+    margin-top: 12px;
+    padding: 10px 12px;
+    background: var(--paper-2);
+    border: 2px solid var(--ink);
+    border-radius: var(--radius);
+}
+
+.trip-extra summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 32px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.trip-extra summary small,
+.trip-extra .hint { color: var(--muted); font-size: 0.82rem; font-weight: 700; }
+
+.packing-list,
+.expense-list,
+.budget-categories {
+    display: grid;
+    gap: 4px;
+    margin: 8px 0;
+    padding: 0;
+    list-style: none;
+}
+
+.packing-list li { display: flex; align-items: center; gap: 8px; }
+.packing-list .check { display: flex; flex: 1; align-items: center; gap: 8px; min-height: 32px; }
+.packing-list .check input:checked + span { color: var(--muted); text-decoration: line-through; }
+.packing-list .icon-btn,
+.expense .icon-btn { flex: none; }
+
+.extra-add { flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.extra-add input:not(.currency-input, .expense-amount) { flex: 1; min-width: 140px; }
+
+.expense,
+.expense-add {
+    display: grid;
+    grid-template-areas: 'label label category category' 'amount currency . action';
+    grid-template-columns: 5.5rem 5rem minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 6px;
+}
+
+.expense-label { grid-area: label; }
+.expense-category { grid-area: category; }
+.expense-amount { grid-area: amount; }
+.expense .currency-input,
+.expense-add .currency-input { grid-area: currency; }
+.expense > button,
+.expense-add > button { grid-area: action; justify-self: end; }
+.expense-list li + li { padding-top: 6px; border-top: 1px dashed var(--line); }
+.expense-add { padding-top: 8px; border-top: 2px dashed var(--line); }
+
+/* Flex bases, since the global input rule sets the width. */
+.currency-input { flex: 0 0 5rem; text-transform: uppercase; }
+.extra-add .expense-amount { flex: 0 0 6.5rem; }
+
+.rates { margin: 8px 0; padding: 6px 10px; border: 1px solid var(--line); border-radius: 10px; }
+.rates legend { font-size: 0.82rem; font-weight: 800; }
+.rate { display: inline-flex; align-items: center; gap: 6px; margin: 4px 12px 4px 0; font-size: 0.85rem; font-weight: 700; }
+.rate span { white-space: nowrap; }
+.rate input[type='number'] { flex: 0 0 7rem; }
+
+.budget-totals p { margin: 6px 0; }
+.budget-totals .over { color: var(--danger-text); font-weight: 800; }
+.budget-categories { font-size: 0.85rem; }
+
+.report-checklist { padding: 0; list-style: none; columns: 2; }
+
 /* ------------------------------------------------------------ passport */
 
 .passport-cover {
