@@ -2,6 +2,7 @@
 
 const { isValidTravelDate, normalizeText } = require('./validation-text');
 const { COUNTRY_ID_PATTERN, parseLedgerSettings, plainObject, wholeNumber } = require('./ledger-validation');
+const { parseTripPayload } = require('./trip-validation');
 
 const MARKER_TYPES = new Set(['visited', 'wishlist']);
 // How the traveler was at a place they have been to (ADR 0014); wishlist places are always 'visit'.
@@ -35,9 +36,6 @@ const EMOJI_MAX_CODE_POINTS = 16;
 const EMOJI_PATTERN = /^[\p{Extended_Pictographic}\p{Emoji_Component}]+$/u;
 const graphemes = new Intl.Segmenter('en', { granularity: 'grapheme' });
 const PRIORITIES = new Set(['high', 'medium', 'low']);
-const TRIP_SLOTS = ['morning', 'afternoon', 'evening'];
-const TRIP_MAX_DAYS = 30;
-const TRIP_SLOT_MAX_LENGTH = 500;
 const GOAL_KINDS = new Set(['countries', 'cities', 'visits']);
 const GOALS_MAX = 12;
 
@@ -353,46 +351,6 @@ function parseBulkChanges(body) {
         return { error: 'Change or remove each place at most once.' };
     }
     return { changes };
-}
-
-function parseTripPayload(body) {
-    if (!body || typeof body !== 'object') {
-        return { error: 'Trip payload must be a JSON object.' };
-    }
-    const title = normalizeText(body.title);
-    const destination = normalizeText(body.destination);
-    const startDate = normalizeText(body.startDate);
-
-    if (!title || title.length > 120) {
-        return { error: 'Trip title is required and must be 120 characters or fewer.' };
-    }
-    if (!destination || destination.length > 160) {
-        return { error: 'Trip destination is required and must be 160 characters or fewer.' };
-    }
-    if (startDate && !isValidTravelDate(startDate)) {
-        return { error: 'Start date must be a valid YYYY-MM-DD date.' };
-    }
-    if (!Array.isArray(body.plan) || body.plan.length < 1 || body.plan.length > TRIP_MAX_DAYS) {
-        return { error: `A trip plan must have between 1 and ${TRIP_MAX_DAYS} days.` };
-    }
-
-    const plan = [];
-    for (const day of body.plan) {
-        if (!day || typeof day !== 'object' || Array.isArray(day)) {
-            return { error: 'Each trip day must be an object.' };
-        }
-        const cleanDay = {};
-        for (const slot of TRIP_SLOTS) {
-            const value = normalizeText(day[slot]);
-            if (value.length > TRIP_SLOT_MAX_LENGTH) {
-                return { error: `Each itinerary slot must be ${TRIP_SLOT_MAX_LENGTH} characters or fewer.` };
-            }
-            cleanDay[slot] = value;
-        }
-        plan.push(cleanDay);
-    }
-
-    return { trip: { title, destination, startDate: startDate || null, plan } };
 }
 
 function parseMarkerId(value) {

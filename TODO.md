@@ -145,7 +145,7 @@ Everyday features that make the free atlas worth opening again; the paid work ab
 - [ ] Itinerary map: pins and a route per day, and drag-and-drop to reorder slots and days.
 - [ ] Multi-destination trips spanning several countries and cities, each with its own dates.
 - [x] Completing a trip turns its destinations into visits with the trip's dates, after the user confirms.
-- [ ] Packing list and budget per trip, with expenses in any currency and a total in the home currency.
+- [x] Packing list and budget per trip, with expenses in any currency and a total in the home currency.
 - [x] Export an itinerary to a calendar (`.ics`) and as a printable PDF; duplicate a trip as a template.
 
 ### Passport and goals

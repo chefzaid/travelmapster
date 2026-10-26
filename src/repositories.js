@@ -357,7 +357,7 @@ function createLedgerRepository(db) {
     };
 }
 
-const TRIP_COLUMNS = `id, title, destination, start_date AS "startDate", plan,
+const TRIP_COLUMNS = `id, title, destination, start_date AS "startDate", plan, packing, budget,
     created_at AS "createdAt", updated_at AS "updatedAt"`;
 
 function createTripRepository(db) {
@@ -373,20 +373,24 @@ function createTripRepository(db) {
 
         async create(userId, trip) {
             const { rows } = await db.query(
-                `INSERT INTO trips (user_id, title, destination, start_date, plan)
-                 VALUES ($1, $2, $3, $4, $5::jsonb)
+                `INSERT INTO trips (user_id, title, destination, start_date, plan, packing, budget)
+                 VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7::jsonb)
                  RETURNING ${TRIP_COLUMNS}`,
-                [userId, trip.title, trip.destination, trip.startDate, JSON.stringify(trip.plan)]
+                [userId, trip.title, trip.destination, trip.startDate, JSON.stringify(trip.plan),
+                    JSON.stringify(trip.packing ?? []), JSON.stringify(trip.budget ?? {})]
             );
             return rows[0];
         },
 
+        // A packing list or budget left out (null) keeps the stored one.
         async update(userId, tripId, trip) {
             const { rows } = await db.query(
-                `UPDATE trips SET title = $1, destination = $2, start_date = $3, plan = $4::jsonb, updated_at = now()
-                 WHERE id = $5 AND user_id = $6
+                `UPDATE trips SET title = $1, destination = $2, start_date = $3, plan = $4::jsonb,
+                     packing = COALESCE($5::jsonb, packing), budget = COALESCE($6::jsonb, budget), updated_at = now()
+                 WHERE id = $7 AND user_id = $8
                  RETURNING ${TRIP_COLUMNS}`,
-                [trip.title, trip.destination, trip.startDate, JSON.stringify(trip.plan), tripId, userId]
+                [trip.title, trip.destination, trip.startDate, JSON.stringify(trip.plan),
+                    trip.packing ? JSON.stringify(trip.packing) : null, trip.budget ? JSON.stringify(trip.budget) : null, tripId, userId]
             );
             return rows[0] || null;
         },

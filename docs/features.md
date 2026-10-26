@@ -161,8 +161,15 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
 - Exporting an itinerary to a calendar: an `.ics` file with an all-day event per day holding
   that day's plans (it needs a start date), which any calendar app imports.
 - A printable itinerary, one row per day, to print or save as PDF from the browser.
-- Duplicating a saved trip as a template: the same days and plans, named "(copy)", without
-  dates.
+- Duplicating a saved trip as a template: the same days, plans and packing list (unpacked),
+  named "(copy)", without dates or expenses.
+- **Packing list**: items to tick off as they are packed, your own or a set of basics (passport,
+  charger, plug adapter…), shown on the printed itinerary as a checklist.
+- **Budget**: expenses by category (transport, stay, food and drink, activities, other) in any
+  currency, totalled in the traveler's home currency with the exchange rate they enter for each
+  other currency (the rate they actually got; no rate service is called), against an optional
+  planned budget. Expenses in a currency without a rate are left out of the total, and the
+  budget says which rates are missing.
 - Planning a trip from a wishlist place, from its card or the 🗓️ button in the places list.
 - **Plan in ledger**: a dated trip becomes a planned stay in the day ledger, in the country of its
   destination ("Lisbon, Portugal", "Japan" or a town such as "Kyoto"), so the Ledger tab checks

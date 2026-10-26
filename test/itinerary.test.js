@@ -71,8 +71,12 @@ test('a template copies the plans without dates and keeps the title in bounds', 
     const copy = tripTemplate({ ...trip, plan: [{ morning: 'A' }] });
     assert.deepEqual(copy, {
         title: 'Summer in Portugal; sun, sea (copy)', destination: 'Lisbon, Portugal', startDate: '',
-        plan: [{ morning: 'A', afternoon: '', evening: '' }]
+        plan: [{ morning: 'A', afternoon: '', evening: '' }], packing: [], budget: {}
     });
+    const budget = { currency: 'EUR', planned: 900, rates: { JPY: 0.006 }, expenses: [{ label: 'Taxi', amount: 30, currency: 'EUR', category: 'transport' }] };
+    const packed = tripTemplate({ ...trip, packing: [{ item: 'Passport', packed: true }], budget });
+    assert.deepEqual(packed.packing, [{ item: 'Passport', packed: false }]);
+    assert.deepEqual(packed.budget, { currency: 'EUR', planned: 900, rates: {}, expenses: [] });
     assert.equal(tripTemplate({ ...trip, title: 'x'.repeat(120) }).title.length, 120);
     copy.plan[0].morning = 'changed';
     assert.equal(trip.plan[0].morning, 'Belém tower', 'the original is untouched');

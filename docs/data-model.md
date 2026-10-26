@@ -75,6 +75,8 @@ erDiagram
         text destination
         date start_date
         jsonb plan "array of days"
+        jsonb packing "packing list"
+        jsonb budget "currency, rates, expenses"
     }
 ```
 
@@ -87,7 +89,7 @@ erDiagram
 | `visits` | One stay at a place: `start_date` required, `end_date` optional and never before the start, `ongoing` true for a stay still going on (the API refuses it with an end date), `notes` up to 2,000, `photo_url` an HTTP(S) URL up to 2,048. At most 500 per place when created with it or imported. |
 | `ledger_settings` | One row per traveler once they save: `day_rule`, and JSON arrays `rules` (at most 20 stay rules and thresholds, each with an id, name, 1–80 three-letter country codes, day counts and a warning margin) and `planned` (at most 30 stays with a country and first and last day). Validated in `ledger-validation.js`. |
 | `visit_changes` | Append-only history of visit dates written by triggers: old and new `start_date`, `end_date` and `ongoing` of each added, changed or removed visit, with the place name and time. Kept after the visit or place is removed. |
-| `trips` | `title` 1–120 and `destination` 1–160 characters, optional `start_date`. `plan` is a JSON array of 1–30 days, each with `morning`, `afternoon` and `evening` text of up to 500 characters. |
+| `trips` | `title` 1–120 and `destination` 1–160 characters, optional `start_date`. `plan` is a JSON array of 1–30 days, each with `morning`, `afternoon` and `evening` text of up to 500 characters. `packing` is a JSON list of at most 200 items (`item` 1–80 characters, `packed`). `budget` is `{}` or `{ currency, planned, rates, expenses }`: ISO 4217 codes, an optional planned amount, at most 30 exchange rates (units of `currency` for one unit of another) and 300 expenses (`label` 1–80 characters, `amount` 0–1,000,000,000, `currency`, `category` `transport`, `stay`, `food`, `activities` or `other`). An update that leaves either out keeps the stored one. |
 | `sessions` | Server-side sessions for `connect-pg-simple`; expired rows are pruned every 15 minutes. |
 | `rate_limits` | Unlogged rate-limit counters per limiter and client IP, shared by replicas; expired rows are swept every 10 minutes. |
 | `geocoder_throttle` | One row with the earliest start time of the next Nominatim request. |
