@@ -39,6 +39,8 @@ Parts of tasks that cannot advance without the owner's decision or information. 
   - Answer:
 - [ ] **Recovery targets.** Stated recovery for paying users needs the RPO and RTO you are willing to promise and the platform backup schedule (swirl-cloud). Are 24 hours RPO and 4 hours RTO right? Where should the restore drill run (a scheduled platform job or a manual runbook step)? *(task: Technical foundation › Recovery for paying users; asked by: Coding Agent)*
   - Answer:
+- [ ] **Alert rules.** Where should the burn-rate alerts on the service level objectives live: a `PrometheusRule` in `infra/k8s/` (does the platform's Prometheus select rules from application namespaces, and with which labels?) or in swirl-cloud's alerting configuration? Where do alerts go (channel or pager)? Are the proposed objectives right: 99.5% of API requests without a 5xx, and 95% within 500 ms, over 30 days? *(task: Technical foundation › Alerts on the service level objectives; asked by: Coding Agent)*
+  - Answer:
 - [ ] **Organization single sign-on.** Teams single sign-on: OIDC only, or SAML as well? Is a hosted broker (for example WorkOS) acceptable, or must it stay in the app? A data processing agreement needs the legal entity from Legal texts. *(task: Teams tier › Organization single sign-on; asked by: Coding Agent)*
   - Answer:
 
@@ -118,7 +120,8 @@ The field splits into scratch-map atlases (Been, Visited, Skratch), travel journ
 - [ ] Type checking of server and browser modules with JSDoc and `tsc --noEmit` in CI, without adding a build step.
 - [ ] Performance budget in CI: page weight, map data payload and Web Vitals on a mid-range phone profile; precompressed (Brotli) map data.
 - [ ] Recovery for paying users: stated RPO and RTO, a scheduled restore drill from the platform backup, and a logical dump before risky migrations. *(waiting: see Needs Input › Recovery targets)*
-- [ ] Service level objectives and alerts for availability and API latency, plus business metrics (places saved, imports, exports, reports generated).
+- [x] Service level objectives for availability and API latency, with their queries in the [runbook](docs/operations.md#service-level-objectives), plus business metrics (places saved by source, account exports; evidence reports stay on the device and are not counted).
+- [ ] Alerts on the service level objectives (burn-rate rules). *(waiting: see Needs Input › Alert rules)*
 - [ ] Mobile apps (Capacitor wrapper of the PWA) only once the ledger ships, for store discovery and optional background location that records the current country on the device, never raw coordinates on the server. *(waiting: see Needs Input › App store accounts)*
 
 ## Product features (added 2026-10-23)

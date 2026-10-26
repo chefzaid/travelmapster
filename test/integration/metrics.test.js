@@ -46,6 +46,11 @@ test('the funnel counts sign-ups, the first and tenth place and the first ledger
         create: [{ lat: 40, lng: -4, type: 'visited', name: 'Spain', category: 'Country' }], update: [], remove: []
     });
     assert.deepEqual(await funnel(), { sign_up: 2, first_place: 2, ten_places: 1, first_ledger_use: 1 });
+
+    const saved = await ctx.metrics.registry.getSingleMetric('travelmapster_places_saved_total').get();
+    assert.deepEqual(Object.fromEntries(saved.values.map(({ labels, value }) => [labels.source, value])), { single: 3, import: 9, bulk: 1 });
+    await client.get('/api/export');
+    assert.equal((await ctx.metrics.registry.getSingleMetric('travelmapster_account_exports_total').get()).values[0].value, 1);
 });
 
 test('activity counts accounts by their last active day, which a session records once a day', async () => {

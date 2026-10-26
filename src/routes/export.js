@@ -11,7 +11,7 @@ const EXPORT_VERSION = 1;
  * their visits, trips, ledger settings and the whole history of visit dates. The browser packs
  * it into the downloadable archive (ADR 0017: a record you can keep).
  */
-function createExportRouter({ markers, trips, ledger }) {
+function createExportRouter({ markers, trips, ledger, metrics }) {
     const router = express.Router();
 
     router.get('/', async (req, res) => {
@@ -22,6 +22,7 @@ function createExportRouter({ markers, trips, ledger }) {
             ledger.findSettings(userId),
             ledger.listChanges(userId, null)
         ]);
+        metrics.exports.inc();
         res.json({
             format: 'travelmapster-account',
             version: EXPORT_VERSION,

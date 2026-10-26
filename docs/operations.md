@@ -40,10 +40,29 @@ Logs are JSON lines (pino) on stdout, one per request with method, URL, status a
 | `travelmapster_auth_events_total{event,outcome}` | `register`, `login`, `password_change` and `account_delete` by outcome (`success`, `failure`, `conflict`, and `rejected` for sign-ups refused by the honeypot field) |
 | `travelmapster_funnel_total{step}` | Travelers reaching `sign_up`, `first_place`, `ten_places` and `first_ledger_use` (per process: sum over replicas) ([ADR 0018](adr/0018-product-metrics.md)) |
 | `travelmapster_users{activity}` | Accounts `total`, `active_1d`, `active_7d`, `active_30d` and `returning_7d` (older than 30 days, active in the last 7), from each account's last active day; every replica reports the same numbers, so take the maximum |
+| `travelmapster_places_saved_total{source}` | Places saved, by `single`, `import` or `bulk` |
+| `travelmapster_account_exports_total` | Account archives downloaded |
 | Node.js defaults | Event loop lag, heap, GC, CPU and handles |
 
 A rising `login` / `failure` rate points to credential stuffing; the auth rate limit answers
 with 429.
+
+Evidence reports are built on the device and never reach the server, so they are not counted.
+
+## Service Level Objectives
+
+Over a rolling 30 days, for the JSON API (routes under `/api`):
+
+| Objective | Target | Indicator (PromQL) |
+|---|---|---|
+| Availability | 99.5% of requests do not fail with a 5xx | `sum(rate(http_server_request_duration_seconds_count{app="travelmapster",route=~"/api.*",status!~"5.."}[30d])) / sum(rate(http_server_request_duration_seconds_count{app="travelmapster",route=~"/api.*"}[30d]))` |
+| Latency | 95% of requests answer within 500 ms | `sum(rate(http_server_request_duration_seconds_bucket{app="travelmapster",route=~"/api.*",le="0.5"}[30d])) / sum(rate(http_server_request_duration_seconds_count{app="travelmapster",route=~"/api.*"}[30d]))` |
+
+The geocoder route depends on Nominatim; when it alone breaks the availability objective, the
+cause is upstream ([common incidents](#common-incidents)). Alerts on these objectives should
+fire on burn rate, for example when the last hour's error ratio is above 14.4 times the budget
+(7.2% of requests failing) and the last six hours' above 6 times (3%); where the alert rules
+live is still open ([roadmap](../TODO.md)).
 
 ## Common Incidents
 

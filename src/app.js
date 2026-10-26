@@ -175,7 +175,7 @@ function createApp({ config, pool, logger, metrics, geocoder, places, state = { 
     api.use('/visits', requireAuth, createVisitRouter({ visits }));
     api.use('/ledger', requireAuth, createLedgerRouter({ ledger, metrics }));
     api.use('/trips', requireAuth, createTripRouter({ trips }));
-    api.use('/export', requireAuth, createExportRouter({ markers, trips, ledger }));
+    api.use('/export', requireAuth, createExportRouter({ markers, trips, ledger, metrics }));
     api.use((req, res) => res.status(404).json({ error: 'Not found.' }));
     app.use('/api', api);
 
