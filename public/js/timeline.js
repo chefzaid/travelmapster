@@ -3,11 +3,6 @@
 // dates and wishlist places have no history, so they are left out. Pure, unit tested in Node.
 import { statusOf } from './status.js';
 
-export const TIME_MODES = [
-    { id: 'by', label: 'Been by the end of' },
-    { id: 'during', label: 'Visited during' }
-];
-
 // Visits of a place, falling back to the single travel date of older data.
 function datedVisits(marker) {
     if (Array.isArray(marker.visits)) return marker.visits.filter(visit => visit?.startDate);

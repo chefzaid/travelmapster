@@ -1,5 +1,6 @@
 // The map's look: colours from the CSS design tokens, town dots, status patterns, journey
 // arrows and the MapLibre style built from them, for the light and dark themes and every palette.
+import { t } from './i18n.js';
 
 // The app and its data use Leaflet-scale zooms; MapLibre's are one lower for the same scale.
 export const ZOOM_OFFSET = 1;
@@ -175,9 +176,9 @@ const statusBorder = (id, colour, width, extra = {}) => ({
 
 export function buildStyle(theme, countries, labels) {
     const atlasLines = [
-        { lat: 0, name: 'Equator' },
-        { lat: 23.44, name: 'Tropic of Cancer' },
-        { lat: -23.44, name: 'Tropic of Capricorn' }
+        { lat: 0, name: t('Equator') },
+        { lat: 23.44, name: t('Tropic of Cancer') },
+        { lat: -23.44, name: t('Tropic of Capricorn') }
     ];
     return {
         version: 8,

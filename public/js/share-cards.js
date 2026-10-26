@@ -1,7 +1,7 @@
 // Image cards to share: the country count, the passport stamps and a year's recap, as square
 // SVG (1080 × 1080) that the browser turns into a PNG. Only counts, country names and flags:
 // never notes, photos, places or dates. Pure, unit tested in Node.
-import { tn } from './i18n.js';
+import { tn, t } from './i18n.js';
 
 export const CARD_SIZE = 1080;
 
@@ -42,7 +42,7 @@ function bar(x, y, width, share, fill) {
 /** The number of countries, the share of the world and the continents. */
 export function countryCountCard({ username, countries, worldPercent, shareLabel, continents, rank }) {
     return frame([
-        text(540, 200, 46, `${username}'s travel map`, { weight: 500 }),
+        text(540, 200, 46, t('{username}\'s travel map', { username }), { weight: 500 }),
         text(540, 430, 230, countries),
         text(540, 520, 64, tn(countries, 'country', 'countries')),
         bar(190, 600, 700, worldPercent / 100, COLORS.teal),
@@ -66,9 +66,9 @@ export function stampsCard({ username, stamps }) {
         return text(x, y, Math.round(cell * 0.42), stamp.flag, { weight: 400, font: EMOJI_FONT })
             + text(x, y + Math.round(cell * 0.27), Math.round(cell * 0.12), fit(stamp.name, 14), { weight: 500 });
     });
-    const more = stamps.length > shown.length ? text(540, 900, 36, `and ${stamps.length - shown.length} more`, { weight: 500 }) : '';
+    const more = stamps.length > shown.length ? text(540, 900, 36, tn(stamps.length - shown.length, 'and {count} more', 'and {count} more'), { weight: 500 }) : '';
     return frame([
-        text(540, 170, 58, 'Passport stamps'),
+        text(540, 170, 58, t('Passport stamps')),
         text(540, 225, 38, `${username} · ${tn(stamps.length, '{count} country', '{count} countries')}`, { weight: 500 }),
         ...items,
         more
@@ -78,8 +78,8 @@ export function stampsCard({ username, stamps }) {
 /** A year in travel: countries, new ones, trips, days away and the longest trip. */
 export function yearRecapCard({ username, year, countries, newCountries, trips, daysAway, longestTrip, awayWord }) {
     const rows = [
-        [tn(countries, '{count} country', '{count} countries'), newCountries ? `${newCountries} new` : 'no new ones', COLORS.teal],
-        [tn(trips, '{count} trip', '{count} trips'), 'begun this year', COLORS.sun],
+        [tn(countries, '{count} country', '{count} countries'), newCountries ? tn(newCountries, '{count} new', '{count} new') : t('no new ones'), COLORS.teal],
+        [tn(trips, '{count} trip', '{count} trips'), t('begun this year'), COLORS.sun],
         [tn(daysAway, '{count} day', '{count} days'), awayWord, COLORS.coral]
     ];
     const lines = rows.map(([big, small, fill], i) => {
@@ -88,10 +88,10 @@ export function yearRecapCard({ username, year, countries, newCountries, trips, 
             + text(280, y, 70, big, { anchor: 'start' }) + text(280, y + 48, 34, small, { weight: 500, anchor: 'start' });
     });
     return frame([
-        text(540, 170, 58, `${year} in travel`),
+        text(540, 170, 58, t('{year} in travel', { year })),
         text(540, 225, 38, username, { weight: 500 }),
         ...lines,
-        longestTrip ? text(540, 860, 34, fit(`Longest trip: ${longestTrip}`, 46), { weight: 500 }) : ''
+        longestTrip ? text(540, 860, 34, fit(t('Longest trip: {trip}', { trip: longestTrip }), 46), { weight: 500 }) : ''
     ].join(''), 'TravelMapster');
 }
 

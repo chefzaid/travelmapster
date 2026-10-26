@@ -63,7 +63,7 @@ export function toast(message, { tone = 'info', action, duration = 4000 } = {}) 
     return close;
 }
 
-export function confirmDialog({ title, message, confirmLabel = 'Confirm', danger = false }) {
+export function confirmDialog({ title, message, confirmLabel = t('Confirm'), danger = false }) {
     return new Promise(resolve => {
         const dialog = h('dialog', { class: 'dialog', 'aria-labelledby': 'confirm-title' },
             h('form', { method: 'dialog', class: 'dialog-body' },
@@ -118,7 +118,7 @@ function pickerField(field, id) {
  * @param {{ title: string, message?: string, content?: Node | Node[], fields: Record<string, any>[], submitLabel?: string, danger?: boolean }} options
  * @returns {Promise<Record<string, any> | null>}
  */
-export function formDialog({ title, message, content, fields, submitLabel = 'Save', danger = false }) {
+export function formDialog({ title, message, content, fields, submitLabel = t('Save'), danger = false }) {
     return new Promise(resolve => {
         const form = h('form', { method: 'dialog', class: 'dialog-body' }, h('h3', {}, title), message ? h('p', {}, message) : null, content);
         for (const field of fields) {

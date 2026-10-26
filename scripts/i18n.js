@@ -198,7 +198,10 @@ function untranslatedStrings() {
             if (parent?.type === 'Property' && parent.key === node) return;
             const value = node.type === 'Literal' && typeof node.value === 'string' ? node.value
                 : node.type === 'TemplateElement' ? node.value.cooked : null;
-            if (value && /[A-Za-z]{2,}[^\n]*\s[A-Za-z]{2,}/.test(value) && /^[\s\p{Extended_Pictographic}A-Z“'"(]/u.test(value)) {
+            // Also one-word labels handed to a function or used as a default, such as input('from', 'From').
+            const handed = (parent?.type === 'CallExpression' && parent.arguments.includes(node)) || parent?.type === 'AssignmentPattern';
+            const sentence = value && /[A-Za-z]{2,}[^\n]*\s[A-Za-z]{2,}/.test(value) && /^[\s\p{Extended_Pictographic}A-Z“'"(]/u.test(value);
+            if (sentence || (handed && value && /^[\p{Extended_Pictographic}\s]*[A-Z][a-z]+[.!?…]?$/u.test(value))) {
                 found.push(`${file}:${node.loc.start.line} ${JSON.stringify(value).slice(0, 100)}`);
             }
         });

@@ -14,7 +14,7 @@ async function addPasskey(ctx) {
         title: t('Add a passkey'),
         message: t('Your device keeps the key and unlocks it with your fingerprint, face or screen lock. Name it to know it again.'),
         submitLabel: t('Create passkey'),
-        fields: [{ name: 'name', label: t('Name'), value: 'Passkey', required: true, maxlength: 60 }]
+        fields: [{ name: 'name', label: t('Name'), value: t('Passkey'), required: true, maxlength: 60 }]
     });
     if (!values) return false;
     const response = await createPasskey(await ctx.api.passkeyOptions());

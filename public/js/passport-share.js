@@ -63,7 +63,7 @@ function recap(ctx) {
         trips: goalCount({ year, kind: 'visits' }, markers, { countryOf, countedIds: stats.countedIds }),
         daysAway: daysAwayByYear(ctx.currentLedger().ledger, stats.homeId, today).find(item => item.year === year)?.count || 0,
         longestTrip: trip ? `${tn(trip.days, '{count} day', '{count} days')}, ${trip.route}` : '',
-        awayWord: stats.homeId ? 'abroad' : 'recorded'
+        awayWord: stats.homeId ? t('abroad') : t('recorded')
     });
 }
 
@@ -72,12 +72,12 @@ export function shareCardsSection(ctx) {
     const date = localToday();
     /** @type {Array<[string, () => string, string]>} */
     const cards = [
-        ['🌍 Countries', () => countryCountCard({
+        [t('🌍 Countries'), () => countryCountCard({
             username: user.username, countries: stats.visitedCountries, worldPercent: stats.worldPercent,
             shareLabel: shareLabel(stats.countryList), continents: stats.visitedContinents, rank: stats.rank.title
         }), 'countries'],
-        ['🛂 Stamps', () => stampsCard({ username: user.username, stamps: stampsOf(stats, index) }), 'stamps'],
-        [`🗓️ ${date.slice(0, 4)} recap`, () => recap(ctx), `recap-${date.slice(0, 4)}`]
+        [t('🛂 Stamps'), () => stampsCard({ username: user.username, stamps: stampsOf(stats, index) }), 'stamps'],
+        [t('🗓️ {year} recap', { year: date.slice(0, 4) }), () => recap(ctx), `recap-${date.slice(0, 4)}`]
     ];
     return h('section', { id: 'share-pictures', 'aria-labelledby': 'share-pictures-title' },
         h('h3', { class: 'section-title', id: 'share-pictures-title' }, t('Share a picture')),

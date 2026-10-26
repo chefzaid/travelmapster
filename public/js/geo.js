@@ -2,7 +2,7 @@
 import { computeCollections } from './collections.js';
 import { statusOf } from './status.js';
 import { countedCountries, countryList } from './lists.js';
-import { t, tk } from './i18n.js';
+import { t, tk, formatNumber } from './i18n.js';
 
 export const CONTINENTS = ['Africa', 'Asia', 'Europe', 'North America', 'Oceania', 'South America'];
 
@@ -419,9 +419,7 @@ export function computeStats(markers, index, { trips = 0, homeId = null, country
 
 export function formatPopulation(value) {
     const number = Number(value);
-    if (!Number.isFinite(number) || number <= 0) return 'Unknown';
-    if (number >= 1e9) return `${(number / 1e9).toFixed(1)} billion`;
-    if (number >= 1e6) return `${(number / 1e6).toFixed(1)} million`;
-    if (number >= 1e3) return `${Math.round(number / 1e3)} thousand`;
-    return String(number);
+    if (!Number.isFinite(number) || number <= 0) return t('Unknown');
+    // "1.2 billion", "45 thousand": written out in the interface's language.
+    return formatNumber(number, { notation: 'compact', compactDisplay: 'long', maximumFractionDigits: 1 });
 }

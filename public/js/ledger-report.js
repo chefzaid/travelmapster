@@ -116,7 +116,7 @@ export function reportSection(ctx, overview) {
             h('select', { id: 'report-country', onchange: event => { form.country = event.target.value; } },
                 h('option', { value: 'all', selected: form.country === 'all' }, t('All countries')),
                 countries.map(id => h('option', { value: id, selected: form.country === id }, countryName(ctx, id))))),
-        h('div', { class: 'row' }, input('from', 'From', 'date'), input('to', 'To', 'date')),
+        h('div', { class: 'row' }, input('from', t('From'), 'date'), input('to', t('To'), 'date')),
         h('div', { class: 'row' },
             h('button', {
                 type: 'button',
