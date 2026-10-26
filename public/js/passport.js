@@ -20,6 +20,30 @@ function continentBars(stats) {
     )));
 }
 
+// Collections to complete, with what is left when only a few remain.
+function collectionsSection(stats, index) {
+    return h('section', { id: 'collections' },
+        h('h3', { class: 'section-title' }, 'Collections'),
+        h('ul', { class: 'continent-bars' }, stats.collections.map(collection => {
+            const percent = collection.total ? Math.round((collection.count / collection.total) * 100) : 0;
+            return h('li', {},
+                h('span', { class: 'bar-label' }, h('span', { 'aria-hidden': 'true' }, collection.icon), ` ${collection.title}`),
+                h('span', {
+                    class: 'bar', role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': String(collection.total),
+                    'aria-valuenow': String(collection.count), 'aria-label': `${collection.title}: ${collection.count} of ${collection.total}`
+                }, h('span', { style: `width:${Math.max(percent, collection.count ? 4 : 0)}%` })),
+                h('small', { class: 'bar-count' }, `${collection.count}/${collection.total}`)
+            );
+        })),
+        stats.collections.map(collection => {
+            if (!collection.count || !collection.missing.length || collection.missing.length > 5) return null;
+            const names = collection.missing.map(id => index.byId.get(id)?.name || id).sort();
+            return h('p', { class: 'muted small' }, `${collection.title}: ${names.join(', ')} to go.`);
+        }),
+        h('p', { class: 'muted small' }, 'Capitals count when you have been to a capital city; a country with several counts once.')
+    );
+}
+
 // Pseudo-random but stable tilt per country so stamps look hand-pressed.
 function tilt(id) {
     let hash = 0;
@@ -169,6 +193,7 @@ export function renderPassport(container, ctx) {
         ),
         goalsSection(ctx),
         h('section', {}, h('h3', { class: 'section-title' }, 'Continents'), continentBars(stats)),
+        collectionsSection(stats, index),
         h('section', {},
             h('h3', { class: 'section-title' }, 'Stamps', h('span', { class: 'count' }, stats.visitedCountries)),
             stamps(stats, index, country => {

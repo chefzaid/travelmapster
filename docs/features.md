@@ -170,7 +170,11 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   the world (or of UN countries), continents, cities and trips, all counted on your chosen
   country list; countries lived in and layovers counted on their own; per-continent progress
   bars.
-- A stamp for every country been to, marked "Home" or "Lived" where it applies, 13 badges with
+- **Collections** to complete, counted on the chosen country list: the capital of every country
+  (a country with several capitals counts once, for any of them) and every member of the
+  European Union, with what is left once only a few remain.
+- A stamp for every country been to, marked "Home" or "Lived" where it applies, 16 badges (three
+  of them for collections: 10 and 50 capitals, and the whole European Union) with
   a confetti celebration, and a visits-by-year chart counting every visit (stays where you lived
   and layovers are not visits).
 - **Goals** for a year, such as "three new countries in 2027": new countries (on the chosen

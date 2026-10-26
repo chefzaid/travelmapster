@@ -1,4 +1,5 @@
 // Pure geography and statistics helpers. No DOM or map access, so they can be unit tested in Node.
+import { computeCollections } from './collections.js';
 import { statusOf } from './status.js';
 import { countedCountries, countryList } from './lists.js';
 
@@ -212,6 +213,13 @@ export function searchCities(cities, query, limit = 8) {
         .map(({ city }) => city);
 }
 
+const collectionOf = (stats, id) => stats.collections?.find(item => item.id === id);
+const collected = (stats, id) => collectionOf(stats, id)?.count || 0;
+const completed = (stats, id) => {
+    const collection = collectionOf(stats, id);
+    return Boolean(collection?.total) && collection.count === collection.total;
+};
+
 export const ACHIEVEMENTS = [
     { id: 'first-stamp', icon: '🛂', title: 'First stamp', description: 'Visit your first country', test: s => s.visitedCountries >= 1 },
     { id: 'explorer', icon: '🧭', title: 'Explorer', description: 'Visit 5 countries', test: s => s.visitedCountries >= 5 },
@@ -225,7 +233,10 @@ export const ACHIEVEMENTS = [
     { id: 'storyteller', icon: '📝', title: 'Storyteller', description: 'Write notes on 5 places', test: s => s.placesWithNotes >= 5 },
     { id: 'shutterbug', icon: '📸', title: 'Shutterbug', description: 'Add photos to 5 places', test: s => s.placesWithPhotos >= 5 },
     { id: 'planner', icon: '🗓️', title: 'Planner', description: 'Plan your first trip', test: s => s.trips >= 1 },
-    { id: 'expat', icon: '🔑', title: 'Expat', description: 'Live in two countries', test: s => s.livedCountries >= 2 }
+    { id: 'expat', icon: '🔑', title: 'Expat', description: 'Live in two countries', test: s => s.livedCountries >= 2 },
+    { id: 'capital-collector', icon: '🏛️', title: 'Capital collector', description: 'Visit 10 capitals', test: s => collected(s, 'capitals') >= 10 },
+    { id: 'capital-connoisseur', icon: '🗝️', title: 'Capital connoisseur', description: 'Visit 50 capitals', test: s => collected(s, 'capitals') >= 50 },
+    { id: 'european', icon: '🇪🇺', title: 'European', description: 'Visit every country of the European Union', test: s => completed(s, 'eu') }
 ];
 
 const RANKS = [
@@ -290,7 +301,7 @@ export function countryLook(id, status, shown = ALL_STATUSES_SHOWN) {
  * list (ADR 0015); the map and the day ledger still use every territory, so the status sets
  * (`visitedIds` and the others) hold all of them.
  */
-export function computeStats(markers, index, { trips = 0, homeId = null, countryList: listId = 'all' } = {}) {
+export function computeStats(markers, index, { trips = 0, homeId = null, countryList: listId = 'all', capitals = [] } = {}) {
     const markerCountry = new Map();
     for (const marker of markers) markerCountry.set(marker.id, resolveMarkerCountry(index, marker));
     const status = countryStatus(markers, marker => markerCountry.get(marker.id), { homeId: index.byId.has(homeId) ? homeId : null });
@@ -342,7 +353,10 @@ export function computeStats(markers, index, { trips = 0, homeId = null, country
         continents,
         years: [...years.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([year, count]) => ({ year, count })),
         ...status,
-        markerCountry
+        markerCountry,
+        collections: computeCollections({
+            beenCities, countryOf: marker => markerCountry.get(marker.id)?.id, visitedIds: status.visitedIds, countedIds, capitals, normalize: normalizeName
+        })
     };
     stats.rank = rankFor(stats.visitedCountries);
     stats.nextRank = nextRankFor(stats.visitedCountries);

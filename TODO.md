@@ -41,6 +41,8 @@ Parts of tasks that cannot advance without the owner's decision or information. 
   - Answer:
 - [ ] **Alert rules.** Where should the burn-rate alerts on the service level objectives live: a `PrometheusRule` in `infra/k8s/` (does the platform's Prometheus select rules from application namespaces, and with which labels?) or in swirl-cloud's alerting configuration? Where do alerts go (channel or pager)? Are the proposed objectives right: 99.5% of API requests without a 5xx, and 95% within 500 ms, over 30 days? *(task: Technical foundation › Alerts on the service level objectives; asked by: Coding Agent)*
   - Answer:
+- [ ] **World Heritage sites.** Sites are not towns, so the collection needs a way to count them. Which one? (a) Tick sites off a list per country in the passport, stored on the account (exact, a little more to do for the traveler); (b) count a site when a saved town lies within a few kilometers (automatic, but wrong for rural sites and big cities); (c) both, with (b) as a suggestion to confirm. And which data: Wikidata (CC0, includes coordinates) or UNESCO's own list (CC BY-SA 3.0 IGO, needs credit)? *(task: Product features › UNESCO World Heritage sites; asked by: Coding Agent)*
+  - Answer:
 - [ ] **Organization single sign-on.** Teams single sign-on: OIDC only, or SAML as well? Is a hosted broker (for example WorkOS) acceptable, or must it stay in the app? A data processing agreement needs the legal entity from Legal texts. *(task: Teams tier › Organization single sign-on; asked by: Coding Agent)*
   - Answer:
 
@@ -145,7 +147,8 @@ Everyday features that make the free atlas worth opening again; the paid work ab
 
 - [x] Richer passport stats: days abroad per year, longest trip, approximate distance travelled and a countries-per-year timeline.
 - [x] Yearly goals ("three new countries in 2027") with progress on the passport and a celebration when reached.
-- [ ] Collections to complete: every capital, every EU country, UNESCO World Heritage sites from open data, with their own badges.
+- [x] Collections to complete: every capital and every EU country, with their own badges.
+- [ ] UNESCO World Heritage sites as a collection, from open data. *(waiting: see Needs Input › World Heritage sites)*
 - [x] "On this day" memories of past visits, shown in the app.
 - [ ] "On this day" memories in an optional email digest, once email exists (see [Accounts and trust](#accounts-and-trust-added-2026-10-23)). *(waiting: see Needs Input › Transactional email provider)*
 

@@ -88,7 +88,7 @@ JSON under `/api`, described in full in [OpenAPI](api/openapi.json) and kept bac
 | `public/js/map.js`, `map-style.js`, `map-journeys.js` | MapLibre GL map ([ADR 0008](adr/0008-maplibre-gl.md)): country states, towns and tile loading, pins, cards, camera and the picture printed; its cartoon style from the CSS tokens (redrawn when the palette or theme changes); and journey lines with their replay |
 | `public/js/timeline.js`, `journeys.js` | The map by the end of a year or during it, and journey stops, legs, trips and arcs ([ADR 0016](adr/0016-timeline-journeys-and-palettes.md)) (pure, unit tested) |
 | `public/js/palettes.js` | The map palettes offered in Settings; their colors are token overrides in `css/tokens.css` (pure, unit tested) |
-| `public/js/geo.js` | Country index, city search, country statuses and how the map draws them, stats, ranks and badges (pure, unit tested) |
+| `public/js/geo.js`, `collections.js` | Country index, city search, country statuses and how the map draws them, stats, ranks and badges, and the capitals and European Union collections (pure, unit tested) |
 | `public/js/lists.js` | The country lists the passport counts against: every territory on the map, or UN members and observer states ([ADR 0015](adr/0015-country-lists.md)) (pure, unit tested) |
 | `public/js/status.js` | Place statuses: been there, lived there, transit only and wishlist, and their API fields ([ADR 0014](adr/0014-home-lived-and-transit.md)) (pure, unit tested) |
 | `public/js/places.js`, `io.js` | Places tab, import and export (pure `io.js` is unit tested) |

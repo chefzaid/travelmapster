@@ -242,6 +242,8 @@ test('a traveler sets a home country, a city lived in, a layover and the UN list
     await expect(page.locator('.stamp', { hasText: 'Germany' })).toContainText('Lived');
     await expect(page.locator('.stamp')).toHaveCount(2);
     await expect(page.locator('#passport-tab')).toContainText('Transit only, not counted: United Arab Emirates.');
+    // Berlin, lived in, is a capital; Dubai, a layover, is not.
+    await expect(page.locator('#collections [role="progressbar"]').first()).toHaveAttribute('aria-valuenow', '1');
     await page.click('#tab-places');
     await page.locator('.filter-chip', { hasText: 'Transit' }).click();
     await expect(page.locator('#places-tab .place')).toHaveCount(1);
