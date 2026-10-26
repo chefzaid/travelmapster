@@ -4,8 +4,8 @@ Planned work only; shipped behavior is listed in [features](docs/features.md). K
 [product principles](docs/features.md#product-principles) when adding features, and record
 material design changes as an [ADR](docs/architecture.md#adr-process).
 
-- [ ] Google and Facebook login, linked to existing accounts ([ADR 0003](docs/adr/0003-sessions-and-csrf.md))
-- [ ] Travel albums: give each pinned place a description and a photo album instead of a single photo link
+- [ ] Google and Facebook login, linked to existing accounts ([ADR 0003](docs/adr/0003-sessions-and-csrf.md)) *(waiting: see Needs Input › Social login providers)*
+- [ ] Travel albums: give each pinned place a description and a photo album instead of a single photo link *(waiting: see Needs Input › Photo storage)*
 
 ## Bugs to fix
 
@@ -18,6 +18,28 @@ Bugs, failing checks, security findings and code smells found while working on a
 Parts of tasks that cannot advance without the owner's decision or information. Only the part needing input is set aside here; the rest of the task keeps moving. Answer under the item, and the next agent run applies the answer and removes the entry.
 
 - [ ] **Container image base.** Clearing the findings needs an image build and a Trivy scan, which the coding agent's environment cannot run (no Docker daemon, no Trivy), and a choice the platform shares. Which way? (a) Node runtime on Alpine (`node:22-alpine`): no Perl, current zlib; `bcrypt` ships no musl prebuild, so the `deps` stage needs `python3 make g++` to compile it, and the `LIBC=glibc` workaround goes. (b) Distroless (`gcr.io/distroless/nodejs22-debian12`): still Debian 12, no shell, so the `HEALTHCHECK` and `CMD` change; whether zlib1g is still present needs a scan. (c) Keep bookworm-slim and record an exception, if the findings are not reachable here (the app runs no Perl and Node bundles its own zlib). For the database setup Job: switch to `postgres:18-alpine` (it only runs `psql`), or keep the image the other applications use? Please paste the current `trivy image --severity CRITICAL` result for `1.10.0` if you have it. *(task: Bugs to fix › Container image findings; asked by: Coding Agent)*
+  - Answer:
+- [ ] **Social login providers.** Google and Facebook sign-in needs an OAuth client for each (client ID and secret, stored as platform secrets) and the production redirect URL. Do you want both, or Google first? Should an existing account be linked only after the traveler signs in with their password (safest), or also when the provider's verified email matches (needs the email task first)? *(task: Google and Facebook login; asked by: Coding Agent)*
+  - Answer:
+- [ ] **Transactional email provider.** Email verification, password reset, ledger email alerts and the "On this day" digest all need a sender. Which provider (for example Postmark, Amazon SES, Brevo, or the platform's own SMTP relay), which sending domain, and SMTP or the provider's HTTP API? An ADR records the choice as a new external dependency. *(task: Accounts and trust › Email address; Day ledger › Email alerts; Product features › "On this day" email digest; asked by: Coding Agent)*
+  - Answer:
+- [ ] **Photo storage.** Albums, travel books and photo uploads need S3-compatible object storage. Which service (the platform's MinIO, Cloudflare R2, Scaleway, AWS S3…), which bucket and region, and what quota per plan (free and Pro)? The app would resize on the server and strip location metadata from anything shown publicly. *(task: Travel albums; Commercial foundation › Photo storage; Keepsakes › travel book; asked by: Coding Agent)*
+  - Answer:
+- [ ] **Paid plans and payments.** Plans, entitlements, plan pricing on the landing page, referrals and the pricing waitlist all need the plan list and prices, and a payment provider with EU VAT handling (for example Stripe with Stripe Tax, Paddle or Lemon Squeezy as merchant of record). Which provider, which prices (monthly and annual), and which features are Pro-only at launch? ADR 0017 already rules that nothing free today becomes paid. *(task: Commercial foundation › Plans and entitlements; Market and growth › plan pricing, referrals, pricing validation; asked by: Coding Agent)*
+  - Answer:
+- [ ] **Print-on-demand partner.** Ordering printed posters needs a print partner with an API (for example Gelato or Prodigi) and an account. Which one, and which sizes and paper? The poster export itself (vector file in standard sizes) does not wait on this. *(task: Keepsakes › Map poster export (ordering part); asked by: Coding Agent)*
+  - Answer:
+- [ ] **Travel-club country lists.** Counting by the Travelers' Century Club list needs the club's permission or a licence, and map data that draws the parts it counts on their own. Do you have, or want to request, that permission? *(task: Market and growth › Travel-club country lists; asked by: Coding Agent)*
+  - Answer:
+- [ ] **Legal texts.** Terms of service and a privacy policy need the legal entity (name, address, registration), the governing law, a contact for data requests and whether a DPO is appointed. Will you supply the texts or the facts for a draft that a lawyer reviews? The GDPR access request flow can follow once the full account export exists. *(task: Accounts and trust › Terms of service, privacy policy and GDPR; asked by: Coding Agent)*
+  - Answer:
+- [ ] **App store accounts.** Mobile apps need Apple Developer and Google Play accounts and the store listing details. Should this start now that the ledger has shipped, or after the PWA? *(task: Technical foundation › Mobile apps; asked by: Coding Agent)*
+  - Answer:
+- [ ] **Partnerships.** Partnerships with tax advisers, relocation and employer-of-record firms, and print partners are business work outside the code. Which partners, if any, should the app integrate with or mention? *(task: Market and growth › Partnerships for Teams; asked by: Coding Agent)*
+  - Answer:
+- [ ] **Recovery targets.** Stated recovery for paying users needs the RPO and RTO you are willing to promise and the platform backup schedule (swirl-cloud). Are 24 hours RPO and 4 hours RTO right? Where should the restore drill run (a scheduled platform job or a manual runbook step)? *(task: Technical foundation › Recovery for paying users; asked by: Coding Agent)*
+  - Answer:
+- [ ] **Organization single sign-on.** Teams single sign-on: OIDC only, or SAML as well? Is a hosted broker (for example WorkOS) acceptable, or must it stay in the app? A data processing agreement needs the legal entity from Legal texts. *(task: Teams tier › Organization single sign-on; asked by: Coding Agent)*
   - Answer:
 
 ## Product direction (added 2026-10-04)
@@ -38,14 +60,14 @@ Differentiators:
 ### Day ledger (builds on the Ledger tab, [ADR 0010](docs/adr/0010-day-ledger.md))
 
 - [x] A short "a guide, not legal or tax advice" note on the Ledger tab and the evidence report, like the Schengen calculator's ([ADR 0017](docs/adr/0017-product-principles.md)).
-- [ ] Email alerts before thresholds and stay limits are reached; alerts are in-app only until email exists (see [Accounts and trust](#accounts-and-trust-added-2026-10-23)), and scheduled checks need the background jobs below.
+- [ ] Email alerts before thresholds and stay limits are reached; alerts are in-app only until email exists (see [Accounts and trust](#accounts-and-trust-added-2026-10-23)), and scheduled checks need the background jobs below. *(waiting: see Needs Input › Transactional email provider)*
 - [ ] Overseas territories drawn as part of a country on the map (French Guiana, Réunion, Svalbard, Caribbean Netherlands) counted on their own, so they stop counting as Schengen days.
 - [ ] Automatic import from location-history exports and photo metadata (dates and GPS), processed in the browser and reduced to country and city before upload; the user reviews every visit before it is saved.
 
 ### Keepsakes and sharing
 
 - [ ] Map poster export: high-resolution vector output in standard sizes and styles with a title, plus print-on-demand ordering.
-- [ ] Yearly travel recap and a printable travel book from places, notes and photos (builds on travel albums).
+- [ ] Yearly travel recap and a printable travel book from places, notes and photos (builds on travel albums). *(waiting: see Needs Input › Photo storage)*
 - [ ] Shareable image cards (passport stamps, country count, yearly recap) without exposing private notes.
 - [ ] Friends: follow public maps, compare countries visited, and plan an itinerary together with edit or view roles.
 - [ ] Installable offline app (PWA) using the bundled map data.
@@ -55,12 +77,12 @@ Differentiators:
 - [ ] **ADR — Teams:** organization accounts where employees record business trips. Personal trips are never visible to the employer, which sees only business-travel day counts per country.
 - [ ] Threshold rules per destination for tax and social security, configured by the organization, with alerts to the traveller and the mobility or HR team and reports for their advisers.
 - [ ] Pre-trip checklist per destination configured by the organization (for example A1 certificate and posted-worker declaration reminders within the EU).
-- [ ] Organization single sign-on, roles, audit log, data export and deletion, and a data processing agreement.
+- [ ] Organization single sign-on, roles, audit log, data export and deletion, and a data processing agreement. *(waiting: see Needs Input › Organization single sign-on)*
 
 ### Commercial foundation
 
-- [ ] Plans and entitlements enforced server-side: free atlas; Pro (day ledger, imports, evidence reports, albums, poster exports); Teams per traveller. Payments with EU VAT handling for digital services.
-- [ ] Photo storage for albums: the app stores no files today, so albums and travel books need S3-compatible object storage with per-plan quotas, server-side resizing, and location metadata stripped from anything shown publicly.
+- [ ] Plans and entitlements enforced server-side: free atlas; Pro (day ledger, imports, evidence reports, albums, poster exports); Teams per traveller. Payments with EU VAT handling for digital services. *(waiting: see Needs Input › Paid plans and payments)*
+- [ ] Photo storage for albums: the app stores no files today, so albums and travel books need S3-compatible object storage with per-plan quotas, server-side resizing, and location metadata stripped from anything shown publicly. *(waiting: see Needs Input › Photo storage)*
 - [x] Privacy statement for the ledger: precise coordinates are never stored beyond city level unless the user chooses, and evidence reports are generated only on request.
 
 ## Market and growth (added 2026-10-23)
@@ -69,22 +91,22 @@ The field splits into scratch-map atlases (Been, Visited, Skratch), travel journ
 
 - [ ] Competitive review in `docs/`: features, pricing and privacy stance of the main atlas, journal, planner and day-tracking apps, refreshed every six months, with the gaps TravelMapster targets.
 - [ ] Presentation website: a full page that presents what TravelMapster does and each of its features (atlas, places and visits, journeys, trips, passport, day ledger, Schengen calculator, sharing), shown to visitors before the app instead of the sign-up panel over the demo map. Update [ADR 0011](docs/adr/0011-public-pages.md), where `/` stays the app.
-- [ ] Plan pricing on the landing page once paid plans exist: it shows the free plan and keepsakes as coming soon today, without prices ([ADR 0011](docs/adr/0011-public-pages.md)).
+- [ ] Plan pricing on the landing page once paid plans exist: it shows the free plan and keepsakes as coming soon today, without prices ([ADR 0011](docs/adr/0011-public-pages.md)). *(waiting: see Needs Input › Paid plans and payments)*
 - [ ] Public maps worth sharing: opt-in indexing (shared maps are sent with `noindex` and left out of the sitemap until then), an Open Graph preview image of the user's map, and a "make your own map" call to action.
-- [ ] Travel-club country lists (such as the Travelers' Century Club's) as a choice for counting, beside the UN and full-map lists ([ADR 0015](docs/adr/0015-country-lists.md)): needs the club's permission or a licence, and map data that draws the parts those lists count on their own (states, islands and regions such as Alaska or the Canary Islands).
-- [ ] Referrals: an invite link that gives both sides a free Pro month or a poster discount.
+- [ ] Travel-club country lists (such as the Travelers' Century Club's) as a choice for counting, beside the UN and full-map lists ([ADR 0015](docs/adr/0015-country-lists.md)): needs the club's permission or a licence, and map data that draws the parts those lists count on their own (states, islands and regions such as Alaska or the Canary Islands). *(waiting: see Needs Input › Travel-club country lists)*
+- [ ] Referrals: an invite link that gives both sides a free Pro month or a poster discount. *(waiting: see Needs Input › Paid plans and payments)*
 - [ ] Localization: extract UI strings and ship French, Spanish, German and Arabic (right-to-left layout), with country names from Natural Earth's localized fields.
 - [ ] Privacy-respecting product metrics: server-side aggregate counters for the funnel (sign-up, first place, ten places, first ledger use, paid) and retention, with no third-party analytics.
-- [ ] Partnerships for Teams: tax advisers, relocation and employer-of-record firms that can resell or recommend the tier; print partners for keepsakes in the EU and North America.
-- [ ] Pricing validation before launch: a waitlist and survey for Pro and Teams, annual billing first, and an early-supporter price for the first users.
+- [ ] Partnerships for Teams: tax advisers, relocation and employer-of-record firms that can resell or recommend the tier; print partners for keepsakes in the EU and North America. *(waiting: see Needs Input › Partnerships)*
+- [ ] Pricing validation before launch: a waitlist and survey for Pro and Teams, annual billing first, and an early-supporter price for the first users. *(waiting: see Needs Input › Paid plans and payments)*
 
 ## Accounts and trust (added 2026-10-23)
 
 - [ ] Guest mode: visitors without an account can pin places and use every feature, with everything saved in the browser's local storage; signing in stays optional. Today a signed-out visitor's changes to the demo map are never saved ([ADR 0011](docs/adr/0011-public-pages.md)), so this needs an ADR.
-- [ ] Email address with verification and password reset; today a forgotten password locks the user out for good. Needs a transactional email provider ([ADR](docs/architecture.md#adr-process): new external dependency).
+- [ ] Email address with verification and password reset; today a forgotten password locks the user out for good. Needs a transactional email provider ([ADR](docs/architecture.md#adr-process): new external dependency). *(waiting: see Needs Input › Transactional email provider)*
 - [ ] Passkeys (WebAuthn) and optional TOTP two-factor sign-in, required for Teams administrators.
 - [ ] Full account export as one archive (places, visits, trips, albums, ledger) plus GeoJSON and KML export of places; the "record you can keep" promise depends on it.
-- [ ] Terms of service, privacy policy and a GDPR access request flow, published before the first paid plan.
+- [ ] Terms of service, privacy policy and a GDPR access request flow, published before the first paid plan. *(waiting: see Needs Input › Legal texts)*
 - [x] Sign-up abuse protection without third-party captchas (honeypot field and per-IP limits on registration).
 
 ## Technical foundation (added 2026-10-23)
@@ -94,9 +116,9 @@ The field splits into scratch-map atlases (Been, Visited, Skratch), travel journ
 - [ ] OpenAPI description of the JSON API and a versioning rule, needed before mobile apps or Teams integrations.
 - [ ] Type checking of server and browser modules with JSDoc and `tsc --noEmit` in CI, without adding a build step.
 - [ ] Performance budget in CI: page weight, map data payload and Web Vitals on a mid-range phone profile; precompressed (Brotli) map data.
-- [ ] Recovery for paying users: stated RPO and RTO, a scheduled restore drill from the platform backup, and a logical dump before risky migrations.
+- [ ] Recovery for paying users: stated RPO and RTO, a scheduled restore drill from the platform backup, and a logical dump before risky migrations. *(waiting: see Needs Input › Recovery targets)*
 - [ ] Service level objectives and alerts for availability and API latency, plus business metrics (places saved, imports, exports, reports generated).
-- [ ] Mobile apps (Capacitor wrapper of the PWA) only once the ledger ships, for store discovery and optional background location that records the current country on the device, never raw coordinates on the server.
+- [ ] Mobile apps (Capacitor wrapper of the PWA) only once the ledger ships, for store discovery and optional background location that records the current country on the device, never raw coordinates on the server. *(waiting: see Needs Input › App store accounts)*
 
 ## Product features (added 2026-10-23)
 
@@ -121,7 +143,7 @@ Everyday features that make the free atlas worth opening again; the paid work ab
 - [ ] Yearly goals ("three new countries in 2027") with progress on the passport and a celebration when reached.
 - [ ] Collections to complete: every capital, every EU country, UNESCO World Heritage sites from open data, with their own badges.
 - [x] "On this day" memories of past visits, shown in the app.
-- [ ] "On this day" memories in an optional email digest, once email exists (see [Accounts and trust](#accounts-and-trust-added-2026-10-23)).
+- [ ] "On this day" memories in an optional email digest, once email exists (see [Accounts and trust](#accounts-and-trust-added-2026-10-23)). *(waiting: see Needs Input › Transactional email provider)*
 
 ### Sharing
 
