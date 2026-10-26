@@ -200,5 +200,6 @@ number (`NNNN-short-title.md`) and the template below. Statuses: **Proposed**, *
 - [ADR 0022: Teams, where employers see business days only](adr/0022-teams.md)
 - [ADR 0023: Link previews for shared maps, and indexing only by choice](adr/0023-shared-map-previews-and-indexing.md)
 - [ADR 0024: Overseas territories outside the Schengen area are territories of their own](adr/0024-overseas-territories.md)
+- [ADR 0025: Imports from photos and location history stay in the browser](adr/0025-imports-from-photos-and-location-history.md)
 
 Superseded: [ADR 0007: Draw towns on a canvas layer](adr/0007-canvas-towns.md).
