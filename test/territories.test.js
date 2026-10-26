@@ -75,3 +75,12 @@ test('the UN list counts a member for its overseas parts; the full list counts e
     const everywhere = computeStats(mixed, index);
     assert.deepEqual([everywhere.visitedCountries, everywhere.transitCountries, everywhere.wishlistCountries], [1, 2, 2]);
 });
+
+test('islands Natural Earth files under the open ocean belong to their UN region\'s continent', async () => {
+    const { createCountryIndex } = await load('geo.js');
+    const index = createCountryIndex(countries);
+    const continents = Object.fromEntries(['MUS', 'SYC', 'SHN', 'MDV', 'SGS', 'HMD'].map(id => [id, index.byId.get(id).continent]));
+    assert.deepEqual(continents, { MUS: 'Africa', SYC: 'Africa', SHN: 'Africa', MDV: 'Asia', SGS: 'South America', HMD: 'Oceania' });
+    const { CONTINENTS } = await load('geo.js');
+    assert.ok(index.countries.every(country => CONTINENTS.includes(country.continent)), 'every territory is on a continent');
+});

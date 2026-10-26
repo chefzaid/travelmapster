@@ -35,6 +35,12 @@ const TILE_MAX_CITIES = 4000;
 const EXCLUDED_FEATURE_CODES = new Set(['PPLX', 'PPLH', 'PPLQ', 'PPLW', 'PPLCH']);
 // Natural Earth marks Taiwan as CN-TW; GeoNames uses TW.
 const ISO2_OVERRIDES = { TW: 'TWN' };
+// Natural Earth files some islands under "Seven seas (open ocean)"; they get the continent of
+// their UN M49 region instead.
+const OCEAN_CONTINENTS = {
+    MUS: 'Africa', SYC: 'Africa', SHN: 'Africa', IOT: 'Africa', ATF: 'Africa', REU: 'Africa',
+    MDV: 'Asia', HMD: 'Oceania', SGS: 'South America'
+};
 // Overseas parts that Natural Earth draws within a country but that are outside the Schengen
 // area become territories of their own, from the map subunits layer (ADR 0024): the country
 // keeps the subunits in `keep` (by SU_A3) and each one in `split` becomes a territory.
@@ -154,8 +160,6 @@ function splitTerritories(feature, subunits) {
                 ADM0_A3: p.ISO_A3,
                 NAME: p.SUBUNIT,
                 ISO_A2: p.ISO_A2_EH,
-                // Natural Earth files Réunion under the open ocean; it is in Africa.
-                CONTINENT: p.CONTINENT === 'Seven seas (open ocean)' && p.SUBREGION.includes('Africa') ? 'Africa' : p.CONTINENT,
                 ADMIN: p.NAME,
                 NAME_SORT: null,
                 NAME_CIAWF: null
@@ -180,7 +184,7 @@ const countries = {
                     id: p.ADM0_A3,
                     name: p.NAME,
                     iso2: isoCode(p),
-                    continent: p.CONTINENT === 'Seven seas (open ocean)' ? 'Oceania' : p.CONTINENT,
+                    continent: p.CONTINENT === 'Seven seas (open ocean)' ? OCEAN_CONTINENTS[p.ADM0_A3] || 'Oceania' : p.CONTINENT,
                     subregion: p.SUBREGION,
                     population: p.POP_EST,
                     color: p.MAPCOLOR7,
