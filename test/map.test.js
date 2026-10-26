@@ -1,5 +1,5 @@
 // Unit tests for the map's timeline, journey lines and palettes (ADR 0016): pure browser
-// modules, and the palette tokens in styles.css checked for contrast and colour-blind safety.
+// modules, and the palette tokens in css/tokens.css checked for contrast and colour-blind safety.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -117,7 +117,7 @@ test('palette ids fall back to the standard palette', async () => {
     assert.equal(paletteId(undefined), 'standard');
 });
 
-// ---- palette tokens in styles.css
+// ---- palette tokens in css/tokens.css
 
 // The custom properties set by each rule, with the media query around it.
 function cssRules(css) {
@@ -142,7 +142,7 @@ function cssRules(css) {
     }));
 }
 
-const css = fs.readFileSync(path.join(publicDir, 'styles.css'), 'utf8');
+const css = fs.readFileSync(path.join(publicDir, 'css', 'tokens.css'), 'utf8');
 const rules = cssRules(css);
 const DARK = '@media (prefers-color-scheme: dark)';
 

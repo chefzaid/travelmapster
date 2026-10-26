@@ -70,7 +70,7 @@ Invalid integers stop startup with a clear error. Production values come from
 - **API**: add limits to `validation.js`, SQL to `repositories.js` (scoped to `req.user.id`),
   a route under `src/routes/`, integration tests, and a new migration if the schema changes.
 - **Frontend**: add an ES module under `public/js/`; keep logic that can be pure in `geo.js`
-  or `io.js` so it is unit tested; use the colour tokens in `styles.css` so both themes keep
+  or `io.js` so it is unit tested; use the colour tokens in `css/tokens.css` so both themes keep
   [AA contrast](features.md#product-principles).
 - **Third-party calls** need a CSP change in `src/app.js` and a [security](security.md) review.
 

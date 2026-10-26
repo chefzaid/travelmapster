@@ -85,7 +85,7 @@ JSON under `/api`; errors are `{ "error": "…" }` with a matching status. All r
 | `public/js/schengen.js`, `calculator.js` | Free Schengen calculator: stay checks and results over `days.js` (pure, unit and property tested), and the page that draws them |
 | `public/js/map.js` | MapLibre GL map ([ADR 0008](adr/0008-maplibre-gl.md)): cartoon style from the CSS tokens (redrawn when the palette or theme changes), country states, towns and tile loading, pins, journey lines and their replay, cards, camera and the picture printed |
 | `public/js/timeline.js`, `journeys.js` | The map by the end of a year or during it, and journey stops, legs, trips and arcs ([ADR 0016](adr/0016-timeline-journeys-and-palettes.md)) (pure, unit tested) |
-| `public/js/palettes.js` | The map palettes offered in Settings; their colors are token overrides in `styles.css` (pure, unit tested) |
+| `public/js/palettes.js` | The map palettes offered in Settings; their colors are token overrides in `css/tokens.css` (pure, unit tested) |
 | `public/js/geo.js` | Country index, city search, country statuses and how the map draws them, stats, ranks and badges (pure, unit tested) |
 | `public/js/lists.js` | The country lists the passport counts against: every territory on the map, or UN members and observer states ([ADR 0015](adr/0015-country-lists.md)) (pure, unit tested) |
 | `public/js/status.js` | Place statuses: been there, lived there, transit only and wishlist, and their API fields ([ADR 0014](adr/0014-home-lived-and-transit.md)) (pure, unit tested) |
@@ -99,7 +99,7 @@ JSON under `/api`; errors are `{ "error": "…" }` with a matching status. All r
 | `public/js/trips.js`, `ideas.js` | Trip planner and Wikivoyage ideas |
 | `public/js/passport.js`, `travel-stats.js` | Passport tab, and its travel statistics: days abroad per year, the longest trip, the distance traveled and countries per year (pure, unit tested) |
 | `public/js/api.js`, `ui.js`, `confetti.js` | API client with CSRF handling, DOM helpers, celebration |
-| `public/styles.css` | Design tokens, map palettes and components for light and dark themes, and print styles for the map and the evidence report |
+| `public/css/` | Styles by area, loaded in order: `tokens.css` (fonts, design tokens and map palettes for light and dark themes), `layout.css` (layout, panel, buttons), `tabs.css` (tabs, Explore and Places), `trips-passport.css`, `map.css` (legend, timeline, map and its cards), `ledger.css` (dialogs, toasts, the day ledger and print styles for the map and the evidence report) and `pages.css` (landing and public pages, responsive rules) |
 
 ## Key Flows
 
