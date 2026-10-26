@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "TravelMapster API",
-    "version": "1.7.0",
+    "version": "1.8.0",
     "description": "The JSON API the TravelMapster app uses. It is version 1 and changes only in backward-compatible ways ([ADR 0019](../adr/0019-api-description-and-versioning.md)). Errors are `{ \"error\": \"…\" }` with a matching status; every response is `Cache-Control: no-store` unless stated."
   },
   "servers": [
@@ -3572,6 +3572,112 @@
           }
         ]
       }
+    },
+    "/api/orgs/{id}/checklist": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "put": {
+        "summary": "Replace the pre-trip checklist (admins)",
+        "tags": [
+          "Organizations"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "checklist"
+                ],
+                "properties": {
+                  "checklist": {
+                    "type": "array",
+                    "maxItems": 50,
+                    "items": {
+                      "$ref": "#/components/schemas/ChecklistItem"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "checklist"
+                  ],
+                  "properties": {
+                    "checklist": {
+                      "type": "array",
+                      "maxItems": 50,
+                      "items": {
+                        "$ref": "#/components/schemas/ChecklistItem"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid checklist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "description": "CSRF token rejected, or the caller's role does not allow it",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not a member of that organization",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "security": [
+          {
+            "session": [],
+            "csrf": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -4500,6 +4606,13 @@
             "type": "string",
             "format": "date-time",
             "description": "The version the trip was edited from; a trip saved by someone else since is refused with 409."
+          },
+          "organizationId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "A business trip for one of the caller's organizations; null makes it personal, and left out the stored one stays. Only the owner changes it (ADR 0030)."
           }
         }
       },
@@ -5058,7 +5171,8 @@
           "id",
           "name",
           "role",
-          "rules"
+          "rules",
+          "checklist"
         ],
         "properties": {
           "id": {
@@ -5081,6 +5195,12 @@
               "$ref": "#/components/schemas/LedgerRule"
             },
             "description": "The employer's rules, counted on business visits for it."
+          },
+          "checklist": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChecklistItem"
+            }
           }
         }
       },
@@ -5279,6 +5399,51 @@
                 }
               }
             }
+          }
+        }
+      },
+      "ChecklistItem": {
+        "type": "object",
+        "required": [
+          "id",
+          "task",
+          "countries",
+          "daysBefore"
+        ],
+        "description": "A task an organization asks of its travelers before a business trip to some countries (ADR 0030).",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{1,40}$"
+          },
+          "task": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "example": "A1 certificate"
+          },
+          "countries": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 80,
+            "items": {
+              "type": "string",
+              "pattern": "^[A-Z]{3}$"
+            }
+          },
+          "daysBefore": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 365,
+            "description": "Due this many days before the trip starts."
+          },
+          "link": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2048,
+            "description": "An HTTP or HTTPS link to the official page."
           }
         }
       }

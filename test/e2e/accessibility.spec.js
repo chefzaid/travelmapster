@@ -113,6 +113,10 @@ for (const colorScheme of ['light', 'dark']) {
         await page.fill('#dialog-name', 'Audit visa');
         await page.fill('#dialog-countries', 'Japan');
         await page.getByRole('button', { name: 'Add rule' }).click();
+        await page.getByRole('button', { name: '＋ Task before trips' }).click();
+        await page.fill('#dialog-task', 'A1 certificate');
+        await page.fill('#dialog-countries', 'Portugal');
+        await page.getByRole('button', { name: 'Add task' }).click();
         await page.getByRole('button', { name: 'Show business days' }).click();
         await expect(page.locator('.org-report')).toBeVisible();
         await expectAccessible(page, 'organization report');
@@ -170,6 +174,9 @@ for (const colorScheme of ['light', 'dark']) {
         await page.getByLabel('Where to?').fill('Lisbon');
         await page.getByRole('button', { name: 'Create trip' }).click();
         await expect(page.locator('#trips-tab .day-card')).toHaveCount(3);
+        // A business trip, with what the organization asks before going (ADR 0030).
+        await page.locator('#trips-tab').getByLabel('Trip for').selectOption({ label: 'Business: Audit Co' });
+        await page.locator('#trips-tab details.trip-extra', { hasText: 'Before you go' }).locator('summary').click();
         await expectAccessible(page, 'trip editor');
         await page.locator('#trips-tab').getByRole('button', { name: '🖨️ Print' }).click();
         await expect(page.locator('#report-view tbody tr')).toHaveCount(3);

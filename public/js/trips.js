@@ -15,6 +15,7 @@ import { localToday } from './days.js';
 import { openPrintView, printTable } from './print-view.js';
 import { budgetSection, packingSection, stopsSection } from './trip-extras.js';
 import { budgetTotals, formatMoney, tidyBudget } from './trip-budget.js';
+import { checklistBadge, checklistSection, purposeField } from './trip-checklist.js';
 
 const MAX_DAYS = 30;
 
@@ -92,6 +93,7 @@ function tripCard(trip, ctx, container) {
                 h('strong', {}, trip.title),
                 h('small', {}, `${tripRoute(trip)} · ${trip.plan.length} ${trip.plan.length === 1 ? 'day' : 'days'}`,
                     trip.startDate ? ` · ${formatDate(trip.startDate)}` : '', trip.owner ? ` · 👥 ${trip.owner}` : ''),
+                checklistBadge(ctx, trip),
                 h('span', { class: 'progress', 'aria-label': `${filled} of ${trip.plan.length * 3} slots planned` },
                     h('span', { style: `width:${Math.round((filled / (trip.plan.length * 3)) * 100)}%` }))
             ),
@@ -330,7 +332,8 @@ function renderEditor(container, ctx, trip) {
                 draft.stops?.length ? null : h('label', { class: 'field' }, h('span', {}, 'Destination'),
                     h('input', { value: draft.destination, maxlength: 160, oninput: event => { draft.destination = event.target.value; markDirty(); } })),
                 h('label', { class: 'field' }, h('span', {}, 'Start date'),
-                    h('input', { type: 'date', value: draft.startDate, onchange: event => { draft.startDate = event.target.value; rerender(); } }))
+                    h('input', { type: 'date', value: draft.startDate, onchange: event => { draft.startDate = event.target.value; rerender(); } })),
+                purposeField(ctx, draft, trip, rerender)
             ),
             stopsSection(draft, { rerender, markDirty })
         )),
@@ -355,6 +358,7 @@ function renderEditor(container, ctx, trip) {
         ),
         editable(
             h('div', { class: 'days' }, days),
+            checklistSection(ctx, draft, { rerender, readOnly }),
             packingSection(draft, { rerender, markDirty }),
             budgetSection(draft, { rerender, markDirty, trips: ctx.state.trips })
         ),

@@ -87,7 +87,7 @@ Differentiators:
 
 - [x] **ADR — Teams:** ([ADR 0022](docs/adr/0022-teams.md)) organization accounts where employees record business trips. Personal trips are never visible to the employer, which sees only business-travel day counts per country.
 - [x] Threshold rules per destination for tax and social security, configured by the organization, with alerts to the traveller and the mobility or HR team and reports for their advisers. ([ADR 0029](docs/adr/0029-organizations-and-business-days.md): organizations with roles, invitation links, business trips, employer rules in the Ledger tab, the report with CSV and the audit log.)
-- [ ] Pre-trip checklist per destination configured by the organization (for example A1 certificate and posted-worker declaration reminders within the EU).
+- [x] Pre-trip checklist per destination configured by the organization (for example A1 certificate and posted-worker declaration reminders within the EU). ([ADR 0030](docs/adr/0030-pre-trip-checklists.md): business trips, tasks per country with due dates in the trip editor and the trips list; email reminders wait for a sender.)
 - [ ] Organization single sign-on and a data processing agreement; roles, the audit log, data export and deletion came with [ADR 0029](docs/adr/0029-organizations-and-business-days.md). *(waiting: see Needs Input › Organization single sign-on)*
 
 ### Commercial foundation

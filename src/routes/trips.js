@@ -2,6 +2,7 @@
 
 const express = require('express');
 const { USERNAME_PATTERN, parseMarkerId, parseTripPayload } = require('../validation');
+const { checkTripOrganization } = require('./orgs');
 
 const MEMBER_ROLES = new Set(['edit', 'view']);
 const MAX_MEMBERS = 20;
@@ -11,7 +12,7 @@ function toClientTrip(trip) {
     return { ...trip, startDate: trip.startDate || '' };
 }
 
-function createTripRouter({ trips, users }) {
+function createTripRouter({ trips, users, orgs }) {
     const router = express.Router();
 
     // The trip in the path, when the traveler owns it or it is shared with them.
@@ -33,6 +34,8 @@ function createTripRouter({ trips, users }) {
     router.post('/', async (req, res) => {
         const { trip, error } = parseTripPayload(req.body);
         if (error) return res.status(400).json({ error });
+        const notMember = await checkTripOrganization(orgs, req.user.id, trip);
+        if (notMember) return res.status(400).json({ error: notMember });
         return res.status(201).json(toClientTrip(await trips.create(req.user.id, trip)));
     });
 
@@ -42,6 +45,12 @@ function createTripRouter({ trips, users }) {
         if (!tripId) return res.status(400).json({ error: 'Invalid trip id.' });
         const { trip, error } = parseTripPayload(req.body);
         if (error) return res.status(400).json({ error });
+        // Editors of a shared trip send the owner's organization back; only the owner's counts.
+        const existing = trip.organizationId ? await trips.findForUser(req.user.id, tripId) : null;
+        if (existing?.role === 'owner') {
+            const notMember = await checkTripOrganization(orgs, req.user.id, trip);
+            if (notMember) return res.status(400).json({ error: notMember });
+        }
         const version = typeof req.body.updatedAt === 'string' && !Number.isNaN(Date.parse(req.body.updatedAt)) ? req.body.updatedAt : null;
         const updated = await trips.update(req.user.id, tripId, trip, version);
         if (updated) return res.json(toClientTrip(updated));

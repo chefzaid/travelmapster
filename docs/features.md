@@ -297,13 +297,20 @@ menu.
   adviser. No place, city, date or note is in it.
 - **Audit log**: every look at the report is recorded for each member shown; members read who
   looked and when under **Who looked at your days**, and in their data download.
+- **Before a trip** ([ADR 0030](adr/0030-pre-trip-checklists.md)): admins list tasks for
+  business trips to some countries, such as an A1 certificate or a posted-worker declaration
+  within the EU, each due a number of days before the trip, with a link to the official page.
+  A member marks a trip as a business trip for the organization in the trip editor; the editor
+  then lists the tasks for its countries with their due dates, adds them to the packing list in
+  one click, and the trips list shows how many are left to do on an upcoming trip. Recording a
+  business trip as visits makes business visits.
 
 ## Current Boundaries
 
 - No social login yet; a place or visit holds one photo link, not an album ([roadmap](../TODO.md)).
 - No paid plans or prices yet; the presentation and the landing page show printed keepsakes as coming soon.
 - Photos are links to images hosted elsewhere; the app stores no files.
-- Ledger and employer alerts are in-app only: there is no email yet, so invitation links are
+- Ledger alerts, employer alerts and checklist reminders are in-app only: there is no email yet, so invitation links are
   passed on by hand, and organizations have no single sign-on or billing yet. The date history starts with the day
   ledger release. A rule for a country does not count its overseas territories that the map
   draws on their own (such as Réunion for France): add them to the rule to count them together.

@@ -215,7 +215,7 @@ function createApp({ config, pool, logger, metrics, geocoder, places, state = { 
     api.use('/markers', requireAuth, createMarkerRouter({ pool, markers, visits, orgs, metrics }));
     api.use('/visits', requireAuth, createVisitRouter({ visits, orgs }));
     api.use('/ledger', requireAuth, createLedgerRouter({ ledger, metrics }));
-    api.use('/trips', requireAuth, createTripRouter({ trips, users }));
+    api.use('/trips', requireAuth, createTripRouter({ trips, users, orgs }));
     api.use('/follows', requireAuth, createFollowRouter({ users, follows }));
     api.use('/orgs', requireAuth, createOrgRouter({ orgs, users, security }));
     api.use('/export', requireAuth, createExportRouter({ markers, trips, ledger, security, follows, orgs, metrics }));

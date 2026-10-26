@@ -1,6 +1,7 @@
 'use strict';
 
-// Validation of the day ledger's settings (ADR 0010): stay rules, thresholds and planned stays.
+// Validation of the day ledger's settings (ADR 0010): stay rules, thresholds and planned stays,
+// and an organization's pre-trip checklist (ADR 0030), which shares their ids and countries.
 // src/validation.js re-exports parseLedgerSettings and shares the small helpers below.
 const { isValidTravelDate, normalizeText } = require('./validation-text');
 
@@ -12,6 +13,9 @@ const LEDGER_MAX_WINDOW_DAYS = 3660;
 const LEDGER_ID_PATTERN = /^[A-Za-z0-9_-]{1,40}$/;
 const COUNTRY_ID_PATTERN = /^[A-Z]{3}$/;
 const DAY_MS = 86_400_000;
+const CHECKLIST_MAX_ITEMS = 50;
+const TASK_MAX_LENGTH = 80;
+const LINK_MAX_LENGTH = 2048;
 
 function wholeNumber(value, min, max) {
     return Number.isInteger(value) && value >= min && value <= max;
@@ -97,7 +101,7 @@ function parseList(value, max, label, parseItem) {
     for (const [index, item] of value.entries()) {
         const result = parseItem(item);
         if (result.error) return { error: `${label} ${index + 1}: ${result.error}` };
-        const parsed = result.rule || result.stay;
+        const parsed = result.rule || result.stay || result.item;
         if (ids.has(parsed.id)) return { error: `${label} ${index + 1}: ids must be unique.` };
         ids.add(parsed.id);
         items.push(parsed);
@@ -121,4 +125,33 @@ function parseLedgerRules(value) {
     return rules.error ? { error: rules.error } : { rules: rules.items };
 }
 
-module.exports = { COUNTRY_ID_PATTERN, parseLedgerRules, parseLedgerSettings, plainObject, wholeNumber };
+function isHttpLink(value) {
+    try {
+        return ['http:', 'https:'].includes(new URL(value).protocol);
+    } catch {
+        return false;
+    }
+}
+
+/** A task to do before a trip to some countries, due `daysBefore` days before it starts. */
+function parseChecklistItem(body) {
+    if (!plainObject(body)) return { error: 'Each item must be an object.' };
+    const id = normalizeText(body.id);
+    if (!LEDGER_ID_PATTERN.test(id)) return { error: 'Each item needs an id of up to 40 letters, digits, dashes or underscores.' };
+    const task = normalizeText(body.task);
+    if (!task || task.length > TASK_MAX_LENGTH) return { error: `Name the task in 1 to ${TASK_MAX_LENGTH} characters.` };
+    const { countries, error } = parseCountryIds(body.countries);
+    if (error) return { error };
+    if (!wholeNumber(body.daysBefore, 0, 365)) return { error: 'Days before the trip must be a whole number from 0 to 365.' };
+    const link = normalizeText(body.link);
+    if (link && (link.length > LINK_MAX_LENGTH || !isHttpLink(link))) return { error: `The link must be an HTTP or HTTPS address of up to ${LINK_MAX_LENGTH} characters.` };
+    return { item: { id, task, countries, daysBefore: body.daysBefore, link: link || null } };
+}
+
+/** An organization's pre-trip checklist (ADR 0030). */
+function parseChecklist(value) {
+    const items = parseList(value ?? [], CHECKLIST_MAX_ITEMS, 'Item', parseChecklistItem);
+    return items.error ? { error: items.error } : { checklist: items.items };
+}
+
+module.exports = { COUNTRY_ID_PATTERN, parseChecklist, parseLedgerRules, parseLedgerSettings, plainObject, wholeNumber };

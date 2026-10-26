@@ -1,6 +1,7 @@
 'use strict';
 
-// Validation of trips: the day-by-day plan, the stops, the packing list and the budget.
+// Validation of trips: the day-by-day plan, the stops, the packing list, the budget and the
+// organization of a business trip.
 // src/validation.js re-exports parseTripPayload.
 const { isValidTravelDate, normalizeText } = require('./validation-text');
 const { plainObject } = require('./ledger-validation');
@@ -144,8 +145,9 @@ function parseBudget(value) {
 }
 
 /**
- * A trip from the request body. Stops, a packing list or a budget left out stay undefined, so
- * an update keeps the stored ones (previous-release tabs never send them).
+ * A trip from the request body. Stops, a packing list, a budget or an organization left out
+ * stay undefined, so an update keeps the stored ones (previous-release tabs never send them).
+ * `organizationId` null makes it a personal trip again (ADR 0030).
  */
 function parseTripPayload(body) {
     if (!plainObject(body)) return { error: 'Trip payload must be a JSON object.' };
@@ -179,6 +181,11 @@ function parseTripPayload(body) {
         const { budget, error } = parseBudget(body.budget);
         if (error) return { error };
         trip.budget = budget;
+    }
+    if (body.organizationId !== undefined) {
+        const id = body.organizationId;
+        if (id !== null && !(/^\d{1,15}$/.test(String(id)) && Number(id) >= 1)) return { error: 'A business trip needs the organization it is for.' };
+        trip.organizationId = id === null ? null : Number(id);
     }
     return { trip };
 }
