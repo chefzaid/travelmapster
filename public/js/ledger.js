@@ -181,6 +181,11 @@ async function plannedStayDialog(ctx) {
     }
 }
 
+// A planned stay that follows a trip (its id is "trip-<id>") is named after it.
+function tripTitle(ctx, stay) {
+    return ctx.state.trips.find(trip => `trip-${trip.id}` === stay.id)?.title || '';
+}
+
 function plansSection(ctx, overview) {
     const { planned } = ctx.state.ledger.settings;
     const { plans } = overview;
@@ -195,7 +200,8 @@ function plansSection(ctx, overview) {
         planned.length ? h('ul', { class: 'ledger-list' }, planned.map(stay => h('li', { class: 'ledger-item' },
             h('span', { class: 'ledger-item-text' },
                 h('strong', {}, countryLabel(ctx, stay.countryId)),
-                h('small', {}, `${spanLabel(stay.startDate, stay.endDate)} · ${dayCount(dayNumber(stay.endDate) - dayNumber(stay.startDate) + 1)}`)),
+                h('small', {}, `${spanLabel(stay.startDate, stay.endDate)} · ${dayCount(dayNumber(stay.endDate) - dayNumber(stay.startDate) + 1)}`,
+                    tripTitle(ctx, stay) ? ` · trip “${tripTitle(ctx, stay)}”` : '')),
             h('button', { type: 'button', class: 'icon-btn', 'aria-label': `Remove the planned stay in ${countryName(ctx, stay.countryId)}`, title: 'Remove', onclick: () => remove(stay) }, '🗑️')
         ))) : h('p', { class: 'muted small' }, 'Add a future stay to see whether it fits your visa rules and thresholds.'),
         plans.stays.length || plans.thresholds.length ? h('ul', { class: 'plan-outcomes' },

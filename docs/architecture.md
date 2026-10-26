@@ -99,7 +99,7 @@ JSON under `/api`; errors are `{ "error": "…" }` with a matching status. All r
 | `public/js/days.js` | Day ledger: day rules, days per country, Schengen 90/180 and stay rules, thresholds, planned stays, alerts and evidence reports (pure, unit and property tested) |
 | `public/js/ledger.js`, `ledger-report.js` | Ledger tab, and its date history and printable evidence report |
 | `public/js/trips.js`, `ideas.js` | Trip planner and Wikivoyage ideas |
-| `public/js/itinerary.js` | An itinerary as text, as an iCalendar file and as a template copy without dates (pure, unit tested) |
+| `public/js/itinerary.js` | An itinerary as text, as an iCalendar file, as a template copy without dates, and as the day ledger's planned stay that follows the trip (pure, unit tested) |
 | `public/js/print-view.js` | The full page printed on its own, shared by the evidence report and printable itineraries |
 | `public/js/passport.js`, `travel-stats.js` | Passport tab, and its travel statistics: days abroad per year, the longest trip, the distance traveled and countries per year (pure, unit tested) |
 | `public/js/api.js`, `ui.js`, `confetti.js` | API client with CSRF handling, DOM helpers, celebration |

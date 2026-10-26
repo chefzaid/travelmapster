@@ -131,7 +131,7 @@ Everyday features that make the free atlas worth opening again; the paid work ab
 
 ### Trips
 
-- [ ] Plan a trip from a wishlist place, and let planned trip dates become the ledger's planned stays.
+- [x] Plan a trip from a wishlist place, and let planned trip dates become the ledger's planned stays.
 - [ ] Itinerary map: pins and a route per day, and drag-and-drop to reorder slots and days.
 - [ ] Multi-destination trips spanning several countries and cities, each with its own dates.
 - [ ] Completing a trip turns its destinations into visits with the trip's dates, after the user confirms.
