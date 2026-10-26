@@ -58,6 +58,7 @@ startup. The compose database also creates `travelmapster_test` for the
 | `TRUST_PROXY` | `false` | `true`, a hop count or reverse-proxy CIDRs; needed for correct client IPs |
 | `PUBLIC_URL` | origin of each request | Public origin such as `https://travel.example.org`, used for absolute links in `robots.txt` and the sitemap |
 | `RATE_LIMIT_AUTH`, `RATE_LIMIT_API`, `RATE_LIMIT_GEOCODE` | `10`/15 min, `300`/min, `30`/min | Per client IP, shared by all replicas; auth covers sign-in, sign-up and account changes |
+| `RATE_LIMIT_REGISTER` | `5`/hour | Sign-ups per client IP, on top of the auth limit; failed sign-ups count too |
 | `GEOCODER_URL`, `GEOCODER_USER_AGENT` | Nominatim | Put a contact URL in the User-Agent |
 | `GEOCODER_MIN_INTERVAL_MS`, `GEOCODER_TIMEOUT_MS`, `GEOCODER_CACHE_SIZE` | `1100`, `8000`, `1000` | Nominatim usage policy |
 
@@ -93,5 +94,5 @@ before committing.
 | `Database not ready, retrying migrations` | PostgreSQL is running and `DATABASE_URL` is right; startup gives up after ten attempts. |
 | `SESSION_SECRET must be set…` | Set a 32+ character secret, or use a non-production `NODE_ENV` locally. |
 | Writes fail with `Invalid or missing CSRF token` | The client must send the token from `/api/csrf-token`; it changes after login and logout. |
-| Sign-ups return 429 | The auth limit is 10 per 15 minutes per IP and survives restarts; raise `RATE_LIMIT_AUTH` locally or run `DELETE FROM rate_limits`. |
+| Sign-ups return 429 | The sign-up limit is 5 per hour and the auth limit 10 per 15 minutes per IP, and both survive restarts; raise `RATE_LIMIT_REGISTER` and `RATE_LIMIT_AUTH` locally or run `DELETE FROM rate_limits`. |
 | Port 3000, 3100 or 5432 in use | Stop the other process or change `PORT`, `E2E_PORT` or the compose port. |

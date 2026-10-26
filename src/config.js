@@ -72,6 +72,7 @@ function loadConfig(env = process.env) {
         },
         rateLimit: {
             authPerWindow: readInteger(env, 'RATE_LIMIT_AUTH', 10),
+            registerPerHour: readInteger(env, 'RATE_LIMIT_REGISTER', 5),
             apiPerMinute: readInteger(env, 'RATE_LIMIT_API', 300),
             geocodePerMinute: readInteger(env, 'RATE_LIMIT_GEOCODE', 30)
         },

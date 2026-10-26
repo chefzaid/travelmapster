@@ -37,7 +37,7 @@ Logs are JSON lines (pino) on stdout, one per request with method, URL, status a
 | Metric | Meaning |
 |---|---|
 | `http_server_request_duration_seconds{method,route,status}` | Request latency and counts by route pattern |
-| `travelmapster_auth_events_total{event,outcome}` | `register`, `login`, `password_change` and `account_delete` by outcome (`success`, `failure`, `conflict`) |
+| `travelmapster_auth_events_total{event,outcome}` | `register`, `login`, `password_change` and `account_delete` by outcome (`success`, `failure`, `conflict`, and `rejected` for sign-ups refused by the honeypot field) |
 | Node.js defaults | Event loop lag, heap, GC, CPU and handles |
 
 A rising `login` / `failure` rate points to credential stuffing; the auth rate limit answers

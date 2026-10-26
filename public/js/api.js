@@ -81,7 +81,7 @@ function placeFields(marker) {
 export const api = {
     currentUser: async () => (await request('GET', '/auth/me')).user,
     login: async (username, password) => (await request('POST', '/auth/login', { username, password })).user,
-    register: async (username, password) => (await request('POST', '/auth/register', { username, password })).user,
+    register: async (username, password, website = '') => (await request('POST', '/auth/register', { username, password, website })).user,
     logout: () => request('POST', '/auth/logout', {}),
     // Sends only the settings that change: profileVisibility, homeCountry.
     saveProfile: changes => request('PATCH', '/profile', changes),

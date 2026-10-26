@@ -64,10 +64,16 @@ function login(req, user) {
     });
 }
 
-function createAuthRouter({ passport, users, authLimiter, metrics, logger }) {
+function createAuthRouter({ passport, users, authLimiter, registerLimiter, metrics, logger }) {
     const router = express.Router();
 
-    router.post('/register', authLimiter, async (req, res) => {
+    router.post('/register', authLimiter, registerLimiter, async (req, res) => {
+        // The sign-up form has a field people never see; anything in it comes from a bot.
+        if (req.body?.website) {
+            metrics.authEvents.inc({ event: 'register', outcome: 'rejected' });
+            logger.info('Sign-up rejected by the honeypot field');
+            return res.status(400).json({ error: 'Sign-up could not be completed. Please try again.' });
+        }
         const { credentials, error } = parseCredentials(req.body);
         if (error) return res.status(400).json({ error });
 

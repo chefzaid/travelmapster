@@ -47,6 +47,7 @@ async function createTestContext(envOverrides = {}) {
         DATABASE_URL,
         SESSION_SECRET: 'test-secret-that-is-long-enough-for-production-use',
         RATE_LIMIT_AUTH: '1000',
+        RATE_LIMIT_REGISTER: '1000',
         RATE_LIMIT_API: '10000',
         RATE_LIMIT_GEOCODE: '1000',
         ...envOverrides
