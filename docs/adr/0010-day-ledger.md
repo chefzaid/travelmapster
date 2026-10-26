@@ -62,9 +62,9 @@ changed, so a report can show what was edited and when. The map itself stays sim
   Slovenia, Spain, Sweden and Switzerland (Bulgaria and Romania fully since 1 January 2025).
   Monaco, San Marino and Vatican City are counted because they are reached only through the area
   with no border checks. Cyprus and Ireland (EU members outside the area), Andorra (border checks
-  with France and Spain) and other countries are not. A known limit: overseas parts of members that
-  the bundled map draws as part of the member, such as French Guiana within France or Svalbard
-  within Norway, count as Schengen days although they lie outside the area.
+  with France and Spain) and other countries are not. Overseas parts of members outside the area,
+  such as French Guiana or Svalbard, used to count with their member because the map drew them
+  inside it; they are territories of their own since [ADR 0024](0024-overseas-territories.md).
 - **Stay rules** of the traveler: "N days in any M-day window" for one country or a group counted
   together, with a day rule and a warning margin.
 - **Thresholds**: the built-in 183 days in a calendar year, applied to each country on its own,

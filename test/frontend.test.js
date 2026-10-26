@@ -56,7 +56,7 @@ test('country index finds countries by name, alias and location', async () => {
     assert.equal(flagEmoji(''), '🏳️');
 
     const france = index.byId.get('FRA');
-    assert.ok(france.mainBounds[0] > -10, 'France frames the mainland, not French Guiana');
+    assert.ok(france.mainBounds[0] > -10, 'France frames the mainland');
 });
 
 test('stats count visited countries, cities and badges', async () => {

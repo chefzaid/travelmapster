@@ -83,7 +83,7 @@ function computeBounds(geometry) {
     return [minLng, minLat, maxLng, maxLat];
 }
 
-// Bounds of the polygon holding the label point, so France frames Europe rather than French Guiana too.
+// Bounds of the polygon holding the label point, so the United States frames its mainland rather than Alaska and Hawaii too.
 function computeMainBounds(geometry, label) {
     const polygons = ringsOf(geometry);
     const [lat, lng] = label || [];
@@ -308,8 +308,13 @@ export function computeStats(markers, index, { trips = 0, homeId = null, country
     const list = countryList(listId);
     const counted = countedCountries(index, list.id);
     const countedIds = new Set(counted.map(country => country.id));
-    const inList = ids => new Set([...ids].filter(id => countedIds.has(id)));
+    // A list may count a member for its overseas parts that the map draws on their own.
+    const listed = id => list.partOf?.[id] ?? id;
+    const inList = (ids, ...taken) => new Set([...ids].map(listed)
+        .filter(id => countedIds.has(id) && !taken.some(set => set.has(id))));
     const visited = inList(status.visitedIds);
+    // A visit wins over a layover and a layover over a wish, also once parts count as members.
+    const transit = inList(status.transitIds, visited);
 
     const continents = CONTINENTS.map(name => {
         const total = counted.filter(country => country.continent === name).length;
@@ -335,8 +340,8 @@ export function computeStats(markers, index, { trips = 0, homeId = null, country
     const stats = {
         visitedCountries: visited.size,
         livedCountries: inList(status.livedIds).size,
-        transitCountries: inList(status.transitIds).size,
-        wishlistCountries: inList(status.wishlistIds).size,
+        transitCountries: transit.size,
+        wishlistCountries: inList(status.wishlistIds, visited, transit).size,
         visitedCities: new Set(beenCities.map(m => m.name)).size,
         wishlistPlaces: markers.filter(m => m.type === 'wishlist').length,
         totalPlaces: markers.length,
@@ -348,7 +353,7 @@ export function computeStats(markers, index, { trips = 0, homeId = null, country
         countryList: list.id,
         countedIds,
         // Territories been to that the list leaves out, such as Kosovo or Greenland on the UN list.
-        uncountedIds: [...status.visitedIds].filter(id => !countedIds.has(id)),
+        uncountedIds: [...status.visitedIds].filter(id => !countedIds.has(listed(id))),
         trips,
         continents,
         years: [...years.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([year, count]) => ({ year, count })),

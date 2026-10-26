@@ -1,7 +1,7 @@
 // The lists of countries a traveler can count against (ADR 0015): every territory the map
 // draws, or the members and observer states of the United Nations. A list only decides which
-// territories count; places always belong to the territory the map draws them in. Pure, unit
-// tested in Node.
+// territories count, and the UN list counts a member for its overseas parts; places always
+// belong to the territory the map draws them in. Pure, unit tested in Node.
 
 // The 193 UN member states by map code; Natural Earth codes South Sudan SDS.
 export const UN_MEMBERS = Object.freeze(`
@@ -17,11 +17,18 @@ export const UN_MEMBERS = Object.freeze(`
 // The two non-member observer states: the Holy See (Vatican City) and Palestine.
 export const UN_OBSERVERS = Object.freeze(['VAT', 'PSX']);
 
+// Overseas parts of members that the map draws on their own because they are outside the
+// Schengen area (ADR 0024). They are part of the member state, so on the UN list having been
+// to one counts the member.
+export const MEMBER_PARTS = Object.freeze({
+    GUF: 'FRA', GLP: 'FRA', MTQ: 'FRA', REU: 'FRA', MYT: 'FRA', SJM: 'NOR', BES: 'NLD'
+});
+
 export const COUNTRY_LISTS = Object.freeze([
     { id: 'all', label: 'Every territory on the map', phrase: 'every territory on the map', unit: 'territories', ids: null },
     {
         id: 'un', label: 'UN members and observer states', phrase: 'UN members and observer states', unit: 'UN countries',
-        ids: Object.freeze([...UN_MEMBERS, ...UN_OBSERVERS])
+        ids: Object.freeze([...UN_MEMBERS, ...UN_OBSERVERS]), partOf: MEMBER_PARTS
     }
 ]);
 
