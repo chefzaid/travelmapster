@@ -1,0 +1,299 @@
+/* ------------------------------------------------------------ landing */
+
+.app[data-state='welcome'] { --panel-width: 420px; }
+
+.hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 14px 0 12px;
+}
+
+.demo-note,
+.privacy-note {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    background: var(--paper-2);
+    border: 2px dashed var(--line);
+    border-radius: var(--radius-sm);
+}
+
+.story,
+.plans { display: grid; gap: 10px; }
+.story h2,
+.plans h2 { margin: 0; }
+
+.story-card,
+.plan-card {
+    padding: 12px 14px;
+    border: 2px solid var(--ink);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+}
+
+.story-card h3,
+.plan-card h3 { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.story-card > :last-child,
+.plan-card > :last-child { margin-bottom: 0; }
+.story-atlas { background: #e8f9f6; }
+.story-ledger { background: #e6f7ff; }
+.story-keepsakes { background: #fff1c2; }
+
+.demo-ledger {
+    padding: 6px 10px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    border-radius: var(--radius-sm);
+}
+
+.demo-ledger:empty { display: none; }
+.story-link { display: inline-block; min-height: 24px; font-weight: 800; }
+.chip-soon { color: var(--ink-dark); background: var(--sunny); font-family: var(--font-body); }
+.plan-free { background: var(--paper); }
+.plan-soon { background: var(--paper-2); border-style: dashed; box-shadow: none; }
+.plan-tag { font-size: 0.8rem; font-weight: 800; color: var(--muted); }
+.plan-points { margin: 0 0 12px; padding-left: 1.2em; font-size: 0.9rem; }
+.auth-card h2 { font-size: 1.2rem; }
+
+@media (prefers-color-scheme: dark) {
+    .story-atlas { background: #1c4744; }
+    .story-ledger { background: #1f4260; }
+    .story-keepsakes { background: #4b3c12; }
+}
+
+/* ------------------------------------------------------------ public pages */
+
+/* Standalone pages such as the Schengen calculator scroll like a document. */
+body.page { height: auto; min-height: 100%; overflow: visible; }
+
+.page-header,
+.page-main,
+.page-footer {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding-left: 16px;
+    padding-right: 16px;
+}
+
+.page-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-top: 16px;
+    padding-bottom: 16px;
+}
+
+.page-nav { display: flex; flex-wrap: wrap; gap: 8px; }
+.page-main { display: grid; gap: 20px; padding-bottom: 24px; }
+
+.page-intro,
+.calculator,
+.cta-card,
+.page-section {
+    padding: 20px;
+    background: var(--paper);
+    border: 3px solid var(--ink);
+    border-radius: 24px;
+    box-shadow: 6px 6px 0 var(--shadow-color);
+}
+
+.page-intro h1 { font-size: clamp(1.8rem, 5vw, 2.6rem); }
+.lead { max-width: 62ch; font-size: 1.05rem; }
+.privacy-note { display: inline-block; margin: 0; }
+
+.calculator {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 20px;
+    align-items: start;
+}
+
+.calculator h2 { font-size: 1.25rem; }
+
+.stay-list {
+    display: grid;
+    gap: 10px;
+    margin: 0 0 10px;
+    padding: 0;
+    list-style: none;
+}
+
+.stay-row fieldset {
+    min-width: 0;
+    margin: 0;
+    padding: 6px 12px 2px;
+    background: var(--paper-2);
+    border: 2px solid var(--ink);
+    border-radius: var(--radius-sm);
+}
+
+.stay-row legend { padding: 0 6px; font-family: var(--font-display); font-weight: 600; }
+
+.stay-fields {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: start;
+}
+
+.stay-fields .field { margin-bottom: 6px; }
+.stay-remove { margin-top: 22px; }
+.field-error { margin: 0 0 8px; font-size: 0.85rem; font-weight: 700; color: var(--danger-text); }
+.field-error[hidden] { display: none; }
+input[aria-invalid='true'] { border-color: var(--danger); }
+.check-date { margin: 16px 0 0; }
+
+.calculator-result {
+    padding: 14px;
+    background: #e6f7ff;
+    border: 2px solid var(--ink);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+}
+
+.calculator-result > :last-child { margin-bottom: 0; }
+.calculator-result h3 { margin: 0; font-size: 1.25rem; }
+
+.overstay {
+    margin: 10px 0;
+    padding: 10px 12px;
+    background: #ffe3e3;
+    border: 2px solid var(--danger);
+    border-radius: var(--radius-sm);
+}
+
+.overstay ul { margin: 0 0 6px; padding-left: 1.2em; font-weight: 700; }
+.overstay p { margin: 0; }
+.fits { font-weight: 800; }
+.stay-table { margin-top: 10px; }
+.stay-table td { width: auto; padding-right: 8px; vertical-align: top; }
+.stay-table td small { color: var(--muted); font-weight: 700; }
+
+.cta-card { background: #fff1c2; }
+.cta-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.rule-list { display: grid; gap: 8px; margin: 0 0 12px; padding-left: 1.2em; }
+.member-list { margin: 0 0 12px; padding-left: 1.2em; columns: 3 10em; }
+.page-section > :last-child { margin-bottom: 0; }
+.page-footer { padding-bottom: 32px; font-weight: 700; }
+
+@media (prefers-color-scheme: dark) {
+    .calculator-result { background: #1f4260; }
+    .overstay { background: #4d1f22; }
+    .cta-card { background: #4b3c12; }
+}
+
+@media (max-width: 760px) {
+    .calculator { grid-template-columns: minmax(0, 1fr); }
+    .page-intro,
+    .calculator,
+    .cta-card,
+    .page-section { padding: 16px; border-radius: 20px; box-shadow: 4px 4px 0 var(--shadow-color); }
+}
+
+@media (max-width: 520px) {
+    .stay-fields { grid-template-columns: minmax(0, 1fr); }
+    .stay-remove { justify-self: end; margin-top: 0; }
+}
+
+/* ------------------------------------------------------------ responsive */
+
+@media (max-width: 1100px) {
+    .search { margin-left: 0; }
+    .btn-sunny .btn-label { display: none; }
+    .btn-sunny { width: 48px; padding: 0; }
+}
+
+@media (max-width: 760px) {
+    :root { --panel-width: 100%; }
+
+    .topbar { top: 10px; left: 10px; right: 10px; gap: 8px; }
+    .brand { padding: 4px; }
+    .brand-name { display: none; }
+    .brand img { width: 34px; height: 34px; }
+    .search { flex: 1; }
+    #global-search { height: 44px; }
+    .search-hint { display: none; }
+    .avatar, .btn-sunny { width: 44px; height: 44px; }
+    .compass { display: none; }
+
+    .panel {
+        top: auto;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: auto;
+        max-height: 62vh;
+        padding-top: 26px;
+        border-radius: 24px 24px 0 0;
+        border-width: 3px 0 0;
+        box-shadow: 0 -4px 0 var(--shadow-color);
+        transition: max-height 0.25s ease;
+    }
+
+    .panel.is-collapsed { max-height: 92px; overflow: hidden; }
+
+    .panel-handle {
+        position: absolute;
+        top: 6px;
+        left: 50%;
+        display: block;
+        width: 64px;
+        height: 16px;
+        padding: 0;
+        background: none;
+        border: 0;
+        transform: translateX(-50%);
+        cursor: pointer;
+    }
+
+    .panel-handle::before {
+        content: '';
+        display: block;
+        width: 48px;
+        height: 6px;
+        margin: 0 auto;
+        background: var(--line);
+        border-radius: 999px;
+    }
+
+    .tabs { top: -26px; margin-top: -8px; }
+
+    .legend {
+        right: auto;
+        left: 10px;
+        top: 64px;
+        bottom: auto;
+        flex-wrap: wrap;
+        max-width: calc(100% - 20px);
+        padding: 4px;
+        border-width: 2px;
+        border-radius: 20px;
+    }
+
+    .select-bar { top: 104px; left: 10px; right: 10px; bottom: auto; }
+    /* Above the tucked-away bottom sheet, clear of the legend at the top. */
+    .time-bar { left: 10px; right: 10px; bottom: 102px; padding: 8px 10px 10px; }
+
+    .legend-static { display: none; }
+    .legend-item { padding: 2px 8px; font-size: 0.72rem; white-space: nowrap; }
+
+    .zoom-control { display: none; }
+    .maplibregl-ctrl-bottom-right { top: 64px; right: 0; bottom: auto; }
+
+    .hero h1 { font-size: 1.6rem; }
+    .continent-bars li { grid-template-columns: 110px 1fr 40px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
+}

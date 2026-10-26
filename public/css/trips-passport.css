@@ -1,0 +1,318 @@
+/* ------------------------------------------------------------ trips */
+
+.trip-list {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.trip-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px;
+    text-align: left;
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: transform 0.08s;
+}
+
+.trip-card:hover { transform: translate(-1px, -1px); }
+.trip-flag { font-size: 2rem; }
+.trip-text { display: grid; flex: 1; gap: 2px; }
+.trip-text small { color: var(--muted); font-weight: 700; }
+.chevron { font-size: 1.6rem; color: var(--muted); }
+
+.progress {
+    display: block;
+    height: 8px;
+    overflow: hidden;
+    background: var(--paper-2);
+    border: 1.5px solid var(--ink);
+    border-radius: 999px;
+}
+
+.progress > span {
+    display: block;
+    height: 100%;
+    background: var(--visited);
+    border-radius: 999px;
+}
+
+.trip-meta { margin-bottom: 4px; }
+.trip-tools { margin-bottom: 14px; }
+
+.days {
+    display: grid;
+    gap: 12px;
+}
+
+.day-card {
+    padding: 12px;
+    background: var(--paper-2);
+    border: 2px solid var(--ink);
+    border-radius: var(--radius);
+}
+
+.panel .day-card + .day-card { margin-top: 0; }
+
+.day-card header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.day-card header h3 { margin: 0; }
+.day-card header small { color: var(--muted); font-weight: 700; }
+.day-card header .icon-btn { margin-left: auto; }
+
+.slot {
+    display: grid;
+    gap: 2px;
+    margin-bottom: 8px;
+    font-size: 0.8rem;
+    font-weight: 800;
+}
+
+.slot textarea { font-size: 0.88rem; }
+
+.trip-footer {
+    justify-content: space-between;
+    margin-top: 14px;
+}
+
+/* ------------------------------------------------------------ passport */
+
+.passport-cover {
+    padding: 18px;
+    color: #fff;
+    background:
+        radial-gradient(circle at 85% 20%, rgba(255, 255, 255, 0.15) 0 40px, transparent 41px),
+        linear-gradient(135deg, #274c77, #1f3b57);
+    border: 3px solid var(--ink);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+}
+
+.passport-cover .eyebrow { color: var(--sunny); }
+.passport-cover h2 { font-size: 1.7rem; margin: 0; }
+.passport-cover .rank { margin: 6px 0 10px; font-weight: 800; }
+.passport-cover .progress { background: rgba(255, 255, 255, 0.2); border-color: #fff; }
+.passport-cover .progress > span { background: var(--sunny); }
+.passport-cover small { display: block; margin-top: 4px; opacity: 0.85; }
+
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin: 14px 0 20px;
+}
+
+.stat {
+    display: grid;
+    justify-items: center;
+    padding: 10px 4px;
+    text-align: center;
+    background: var(--paper-2);
+    border: 2px solid var(--ink);
+    border-radius: var(--radius-sm);
+}
+
+.stat strong {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.stat small { font-size: 0.72rem; font-weight: 700; color: var(--muted); }
+.stat.tone-visited,
+.stat.tone-visited small { color: var(--ink-dark); }
+.stat.tone-visited { background: var(--visited-soft); }
+.stat.tone-wishlist { background: #fff1c2; }
+.stat.tone-lived,
+.stat.tone-lived small { color: var(--ink-dark); }
+.stat.tone-lived { background: var(--lived-soft); }
+.stat.tone-transit,
+.stat.tone-transit small { color: var(--ink-dark); }
+.stat.tone-transit { background: var(--transit-soft); border-style: dotted; }
+
+@media (prefers-color-scheme: dark) {
+    .stat.tone-wishlist { background: #5a4712; }
+}
+
+.continent-bars {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.continent-bars li {
+    display: grid;
+    grid-template-columns: 130px 1fr 44px;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.bar {
+    height: 14px;
+    overflow: hidden;
+    background: var(--paper-2);
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+}
+
+.bar > span {
+    display: block;
+    height: 100%;
+    background: repeating-linear-gradient(45deg, var(--visited), var(--visited) 6px, var(--visited-stripe) 6px, var(--visited-stripe) 12px);
+    transition: width 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+.bar-count { color: var(--muted); text-align: right; }
+
+.stamps {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.stamp {
+    display: grid;
+    justify-items: center;
+    width: 100%;
+    padding: 10px 6px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--ink-dark);
+    background: var(--land-1);
+    border: 2.5px dashed var(--ink);
+    border-radius: 14px;
+    transform: rotate(var(--tilt, 0deg));
+    cursor: pointer;
+    transition: transform 0.15s;
+}
+
+.stamp:hover { transform: rotate(0deg) scale(1.05); }
+.stamp-c2 { background: var(--land-2); }
+.stamp-c3 { background: var(--land-3); }
+.stamp-c4 { background: var(--land-4); }
+.stamp-c5 { background: var(--land-5); }
+.stamp-c6 { background: var(--land-6); }
+.stamp-c7 { background: var(--land-7); }
+.stamp-flag { font-size: 1.7rem; line-height: 1.2; }
+
+.stamp-ribbon {
+    margin-top: 4px;
+    padding: 0 6px;
+    font-size: 0.66rem;
+    text-transform: none;
+    color: var(--text);
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+}
+
+.passport-home { margin: 0 0 6px; font-weight: 800; }
+
+.stamp-name {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.badges {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.badge {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    column-gap: 8px;
+    align-items: center;
+    padding: 8px;
+    background: var(--paper-2);
+    border: 2px solid var(--line);
+    border-radius: var(--radius-sm);
+    opacity: 0.7;
+}
+
+.badge-icon {
+    grid-row: span 2;
+    font-size: 1.7rem;
+    text-align: center;
+    filter: grayscale(1);
+}
+
+.badge strong { font-size: 0.85rem; }
+.badge small { font-size: 0.72rem; color: var(--muted); }
+
+.badge.is-unlocked {
+    background: #fff1c2;
+    border-color: var(--ink);
+    opacity: 1;
+}
+
+.badge.is-unlocked .badge-icon { filter: none; }
+
+@media (prefers-color-scheme: dark) {
+    .badge.is-unlocked { background: #5a4712; }
+}
+
+.year-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    height: 120px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.year-chart li {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    height: 100%;
+    max-width: 48px;
+}
+
+.year-bar {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    background: var(--primary);
+    border: 2px solid var(--ink);
+    border-radius: 8px 8px 0 0;
+}
+
+.year-bar span {
+    margin-top: -1.4em;
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+
+.year-chart small { font-weight: 800; color: var(--muted); }

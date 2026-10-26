@@ -1,0 +1,471 @@
+/* ------------------------------------------------------------ legend & compass */
+
+.legend {
+    position: absolute;
+    z-index: 800;
+    right: 76px;
+    bottom: 16px;
+    display: flex;
+    gap: 6px;
+    padding: 6px;
+    background: var(--paper);
+    border: 3px solid var(--ink);
+    border-radius: 999px;
+    box-shadow: var(--shadow);
+}
+
+.legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    background: none;
+    border: 0;
+    border-radius: 999px;
+}
+
+button.legend-item { cursor: pointer; }
+button.legend-item:hover { background: var(--paper-2); }
+button.legend-item[aria-pressed='false'] { color: var(--muted); text-decoration: line-through; }
+button.legend-item[aria-pressed='false'] .swatch { opacity: 0.35; }
+.legend-item[hidden] { display: none; }
+button.legend-filter { color: var(--ink-dark); background: var(--sunny); }
+button.legend-filter:hover { background: var(--wishlist); }
+
+.swatch {
+    display: inline-grid;
+    place-items: center;
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--ink);
+    border-radius: 5px;
+}
+
+.swatch-visited { background: var(--visited); }
+.swatch-lived { background: repeating-linear-gradient(45deg, var(--lived), var(--lived) 3px, var(--lived-ink) 3px, var(--lived-ink) 4px); border-color: var(--lived-ink); }
+.swatch-home { background: radial-gradient(var(--home-ink) 1.5px, var(--home) 2px) 0 0 / 6px 6px; border-color: var(--home-ink); border-width: 3px; }
+.swatch-transit { background: var(--transit); border-style: dotted; border-color: var(--transit-ink); }
+.swatch-wishlist { background: repeating-linear-gradient(45deg, var(--wishlist), var(--wishlist) 3px, var(--wishlist-stripe) 3px, var(--wishlist-stripe) 6px); }
+.swatch-capital { border: 0; font-size: 0.9rem; }
+
+.compass {
+    position: absolute;
+    z-index: 700;
+    right: 22px;
+    top: 84px;
+    width: 64px;
+    height: 64px;
+    pointer-events: none;
+    opacity: 0.9;
+}
+
+.compass circle { fill: var(--paper); stroke: var(--ink); stroke-width: 3; }
+.compass .n { fill: var(--primary-strong); stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; }
+.compass .s { fill: var(--paper-2); stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; }
+
+.compass text {
+    font-family: var(--font-display);
+    font-size: 9px;
+    font-weight: 700;
+    text-anchor: middle;
+    fill: #fff;
+}
+
+/* Picking countries on the map to mark them at once. */
+.select-bar {
+    position: absolute;
+    z-index: 850;
+    left: calc(var(--panel-width) + 40px);
+    right: 96px;
+    bottom: 76px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 12px;
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 10px 14px;
+    background: var(--paper);
+    border: 3px solid var(--ink);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.select-bar[hidden] { display: none; }
+.select-count { margin: 0; font-weight: 800; }
+.select-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* The timeline: the map year by year, with journey lines (ADR 0016). */
+.time-bar {
+    position: absolute;
+    z-index: 850;
+    left: calc(var(--panel-width) + 40px);
+    right: 96px;
+    bottom: 76px;
+    display: grid;
+    gap: 8px;
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 10px 14px 12px;
+    background: var(--paper);
+    border: 3px solid var(--ink);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.time-bar[hidden] { display: none; }
+.time-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.time-title { margin: 0 auto 0 0; font-size: 1.05rem; }
+
+.time-modes {
+    display: inline-flex;
+    gap: 2px;
+    margin: 0;
+    padding: 3px;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+}
+
+.time-modes label {
+    position: relative;
+    padding: 3px 12px;
+    font-size: 0.82rem;
+    font-weight: 800;
+    border-radius: 999px;
+    cursor: pointer;
+}
+
+.time-modes input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+.time-modes label:has(input:checked) { color: var(--paper); background: var(--text); }
+.time-modes label:has(input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; }
+.time-range { display: flex; align-items: center; gap: 12px; }
+.time-range label { font-weight: 800; }
+
+.time-year {
+    min-width: 3.4em;
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.time-range input[type='range'] {
+    flex: 1;
+    min-width: 0;
+    height: 28px;
+    padding: 0;
+    background: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    appearance: none;
+    cursor: pointer;
+}
+
+.time-range input[type='range']::-webkit-slider-runnable-track {
+    height: 10px;
+    background: var(--paper-2);
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+}
+
+.time-range input[type='range']::-moz-range-track {
+    height: 6px;
+    background: var(--paper-2);
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+}
+
+.time-range input[type='range']::-webkit-slider-thumb {
+    width: 24px;
+    height: 24px;
+    margin-top: -9px;
+    background: var(--primary-strong);
+    border: 3px solid var(--ink);
+    border-radius: 50%;
+    appearance: none;
+}
+
+.time-range input[type='range']::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: var(--primary-strong);
+    border: 3px solid var(--ink);
+    border-radius: 50%;
+}
+
+.time-range input[type='range']:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.time-range input[type='range']:disabled { cursor: not-allowed; opacity: 0.5; }
+.time-summary { margin: 0; font-size: 0.85rem; font-weight: 700; }
+.time-journeys { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.time-journeys[hidden] { display: none; }
+.time-journeys .switch { padding: 4px 0; font-weight: 800; }
+.time-journeys select { flex: 1 1 160px; width: auto; min-width: 0; padding: 5px 10px; }
+.time-now { margin: 0; font-size: 0.85rem; font-weight: 700; color: var(--muted); }
+.time-now:not(:has(:not(:empty))) { display: none; }
+button.legend-timeline[aria-expanded='true'] { color: var(--paper); background: var(--text); }
+
+/* ------------------------------------------------------------ the map */
+
+/* MapLibre draws countries and towns on a transparent WebGL canvas (js/map.js), so the
+   dotted ocean is this background. Map colours come from the tokens above. */
+.map {
+    font-family: var(--font-body);
+    background-color: var(--ocean);
+    background-image:
+        radial-gradient(var(--ocean-dots) 1.2px, transparent 1.4px),
+        radial-gradient(ellipse at 30% 40%, var(--ocean) 0%, var(--ocean-deep) 100%);
+    background-size: 22px 22px, 100% 100%;
+}
+
+.pin {
+    padding: 0;
+    background: none;
+    border: 0;
+    cursor: pointer;
+}
+
+.pin-body {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    background: var(--visited);
+    border: 3px solid var(--ink);
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    box-shadow: 2px 2px 0 rgba(31, 59, 87, 0.35);
+    animation: drop-in 0.45s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.pin-wishlist .pin-body { background: var(--wishlist); }
+.pin-lived .pin-body { background: var(--lived-ink); }
+.pin-transit .pin-body { background: var(--transit); border-style: dotted; }
+.pin-transit .pin-symbol { color: var(--ink-dark); text-shadow: none; }
+
+.pin-symbol {
+    font-size: 14px;
+    font-weight: 900;
+    color: #fff;
+    transform: rotate(45deg);
+    text-shadow: 0 1px 0 var(--shadow-color);
+}
+
+.pin:hover .pin-body { filter: brightness(1.1); }
+.pin-emoji .pin-symbol { font-size: 15px; font-weight: 400; text-shadow: none; }
+
+@keyframes drop-in {
+    from { transform: translateY(-24px) rotate(-45deg) scale(0.6); opacity: 0; }
+    to { transform: rotate(-45deg); opacity: 1; }
+}
+
+.map-tooltip { pointer-events: none; }
+.map-tooltip .maplibregl-popup-tip { display: none; }
+
+.map-tooltip .maplibregl-popup-content {
+    padding: 4px 10px;
+    font-weight: 800;
+    color: var(--text);
+    background: var(--paper);
+    border: 2.5px solid var(--ink);
+    border-radius: 999px;
+    box-shadow: var(--shadow-sm);
+}
+
+.zoom-control {
+    display: grid;
+    overflow: hidden;
+    margin: 0 16px 30px 0;
+    border: 3px solid var(--ink);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+}
+
+.zoom-control button {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    font-family: var(--font-display);
+    font-size: 22px;
+    color: var(--text);
+    background: var(--paper);
+    border: 0;
+    cursor: pointer;
+}
+
+.zoom-control button + button { border-top: 2px solid var(--ink); }
+.zoom-control button:hover { color: var(--ink-dark); background: var(--sunny); }
+
+.maplibregl-ctrl-attrib {
+    font-size: 10px;
+    color: var(--text);
+    background: var(--paper);
+    border-radius: 8px 0 0 0;
+}
+
+.maplibregl-ctrl-attrib a { color: var(--text); text-decoration: underline; }
+
+/* Map card popups */
+.card-popup .maplibregl-popup-content {
+    padding: 0;
+    color: var(--text);
+    background: var(--paper);
+    border: 3px solid var(--ink);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    font-size: 14px;
+    line-height: 1.45;
+    min-width: 260px;
+}
+
+.card-popup .maplibregl-popup-tip { border-top-color: var(--ink); }
+
+/* A comfortable touch target (WCAG 2.2 asks for at least 24px). */
+.card-popup .maplibregl-popup-close-button {
+    top: 6px;
+    right: 6px;
+    width: 32px;
+    height: 32px;
+    font-size: 22px;
+    line-height: 32px;
+    color: var(--text);
+    border-radius: 50%;
+}
+
+.card-popup .maplibregl-popup-close-button:hover { background: var(--paper-2); }
+
+.card { padding: 16px; }
+
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+    padding-right: 32px;
+}
+
+.card-header h3 { margin: 0; font-size: 1.3rem; }
+.card-flag { font-size: 2.6rem; line-height: 1; }
+.card-sub { margin: 0; font-size: 0.85rem; color: var(--muted); font-weight: 700; }
+
+.card-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.card-facts {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 2px 12px;
+    margin: 0 0 12px;
+    font-size: 0.88rem;
+}
+
+.card-facts dt { color: var(--muted); font-weight: 700; }
+.card-facts dd { margin: 0; font-weight: 700; }
+.card-cities { margin-bottom: 12px; }
+.card-cities p { margin-bottom: 4px; }
+
+.card-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.card-note { font-size: 0.85rem; color: var(--muted); }
+
+.card-saved {
+    padding: 10px 0 0;
+    margin-bottom: 10px;
+    border-top: 2px dashed var(--line);
+}
+
+.card-notes {
+    padding: 8px 10px;
+    font-size: 0.88rem;
+    background: #fff9e0;
+    border-radius: 10px;
+    white-space: pre-wrap;
+}
+
+@media (prefers-color-scheme: dark) {
+    .card-notes { background: #3b3522; }
+}
+
+.card-photo img {
+    display: block;
+    width: 100%;
+    max-height: 160px;
+    margin-bottom: 8px;
+    object-fit: cover;
+    border: 2px solid var(--ink);
+    border-radius: 12px;
+}
+
+/* Visits of a place, newest first; long histories scroll inside the card. */
+.card-visits { margin-bottom: 10px; }
+
+.visits-title {
+    margin: 0 0 6px;
+    font-size: 0.95rem;
+}
+
+.visit-list {
+    display: grid;
+    gap: 6px;
+    max-height: 190px;
+    margin: 0 0 8px;
+    padding: 0;
+    overflow-y: auto;
+    list-style: none;
+}
+
+.visit {
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 6px 4px 6px 10px;
+    background: var(--paper-2);
+    border: 2px solid var(--ink);
+    border-left: 6px solid var(--visited);
+    border-radius: var(--radius-sm);
+}
+
+.visit-text {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.85rem;
+}
+
+.visit-text small { display: block; color: var(--muted); font-weight: 700; }
+
+.visit-notes {
+    margin: 2px 0 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.visit-photo {
+    display: inline-block;
+    min-height: 24px;
+    margin-top: 2px;
+    font-weight: 800;
+    color: var(--text);
+    text-decoration-color: var(--sunny);
+    text-decoration-thickness: 2px;
+}
+
+.visit-actions { display: flex; }
+
+.card-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    font-size: 0.85rem;
+}

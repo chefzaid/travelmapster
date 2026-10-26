@@ -6,7 +6,7 @@ report-only analyses in GitLab: SonarQube and Trivy. Neither blocks a release.
 ## SonarQube
 
 Project `swirlit:travelmapster` analyzes `src/`, `public/js/`, `public/index.html` and
-`public/styles.css`, with `test/` as tests and coverage from `coverage/lcov.info`. Bundled data
+`public/css/`, with `test/` as tests and coverage from `coverage/lcov.info`. Bundled data
 and vendor files are excluded. Settings live in [sonar-project.properties](../sonar-project.properties).
 
 `01-quality` downloads the coverage artifact from `01-test` and submits the analysis without
