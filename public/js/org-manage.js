@@ -6,6 +6,7 @@ import { ruleDialog } from './ledger.js';
 import { countryName } from './ledger-report.js';
 import { statusChip } from './ledger-parts.js';
 import { openSecurity } from './security.js';
+import { checklistSection } from './org-checklist.js';
 
 const ROLE_LABELS = { traveler: 'Traveler', manager: 'Manager', admin: 'Admin' };
 const ROLE_OPTIONS = Object.entries(ROLE_LABELS).map(([value, label]) => ({ value, label }));
@@ -138,11 +139,7 @@ function invitationsSection(ctx, org, invitations, step) {
 
 function rulesSection(ctx, org, step) {
     const admin = org.role === 'admin';
-    const save = async rules => {
-        await ctx.api.saveOrgRules(org.id, rules);
-        // The traveler's own Ledger tab counts them too.
-        ctx.renderActiveTab();
-    };
+    const save = rules => ctx.api.saveOrgRules(org.id, rules);
     const edit = (kind, rule) => step(async () => {
         const checked = await ruleDialog(ctx, kind, rule);
         if (!checked) return;
@@ -194,7 +191,10 @@ export function manageOrg(ctx, org, back) {
     return steppedDialog({
         labelledBy: 'org-manage-title',
         load: async () => {
-            const current = (await ctx.api.getOrgs()).find(item => item.id === org.id);
+            // The app's own copy follows: the Ledger and Trips tabs count the rules and checklist.
+            ctx.state.orgs = await ctx.api.getOrgs();
+            ctx.renderActiveTab();
+            const current = ctx.state.orgs.find(item => item.id === org.id);
             if (!current || current.role === 'traveler') throw new Error(`You no longer run ${org.name}.`);
             const [members, invitations] = await Promise.all([
                 ctx.api.getOrgMembers(org.id),
@@ -212,6 +212,7 @@ export function manageOrg(ctx, org, back) {
                 h('ul', { class: 'dialog-list' }, members.map(member => memberItem(ctx, current, member, step)))),
             current.role === 'admin' ? invitationsSection(ctx, current, invitations, step) : null,
             rulesSection(ctx, current, step),
+            checklistSection(ctx, current, step),
             current.role === 'admin' ? h('div', { class: 'dialog-buttons dialog-section' },
                 h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => step(() => rename(ctx, current)) }, '✏️ Rename'),
                 h('button', { type: 'button', class: 'btn btn-danger-ghost btn-sm', onclick: () => step(() => remove(ctx, current, back)) }, '🗑️ Delete')) : null,

@@ -46,8 +46,10 @@ Organization routes check the caller's role in that organization on every reques
 only their own organizations and rules, managers also the members and the report, and admins
 also change members, invitations, rules and the organization itself. Managers and admins need a
 passkey or two-step sign-in for any of that (403 `second_factor_required`), and so does
-creating an organization. A visit can be marked as a business trip only for one of the
-caller's own organizations. Invitation tokens are 24 random bytes, shown once and stored only as
+creating an organization. A visit or a trip can be marked as a business trip only for one of the
+caller's own organizations, and only a trip's owner changes that
+([ADR 0030](adr/0030-pre-trip-checklists.md)); checklist links must be HTTP or HTTPS and open
+with `rel="noopener noreferrer"`. The organization never reads members' trips. Invitation tokens are 24 random bytes, shown once and stored only as
 a SHA-256 hash; each works once, for seven days, and is revoked by the admin or by use.
 
 ## Request Protection

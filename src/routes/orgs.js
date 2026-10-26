@@ -5,7 +5,7 @@
 const crypto = require('node:crypto');
 const express = require('express');
 const { USERNAME_PATTERN, normalizeText, parseMarkerId } = require('../validation');
-const { parseLedgerRules } = require('../ledger-validation');
+const { parseChecklist, parseLedgerRules } = require('../ledger-validation');
 const { orgReport, parsePeriod, yearOf } = require('../org-report');
 
 const ROLES = new Set(['traveler', 'manager', 'admin']);
@@ -103,6 +103,15 @@ function createOrgRouter({ orgs, users, security }) {
         if (error) return res.status(400).json({ error });
         await orgs.setRules(org.id, rules);
         return res.json({ rules });
+    });
+
+    router.put('/:id/checklist', async (req, res) => {
+        const org = await orgFor(req, res, ADMINS);
+        if (!org) return undefined;
+        const { checklist, error } = parseChecklist(req.body?.checklist);
+        if (error) return res.status(400).json({ error });
+        await orgs.setChecklist(org.id, checklist);
+        return res.json({ checklist });
     });
 
     // ---- members
@@ -204,4 +213,10 @@ async function checkVisitPurpose(orgs, userId, visit) {
     return (await orgs.roleOf(userId, visit.organizationId)) ? null : 'You can only mark visits as business for your own organizations.';
 }
 
-module.exports = { checkVisitPurpose, createOrgRouter, hashToken };
+/** Whether the traveler may make a trip a business trip for that organization (ADR 0030). */
+async function checkTripOrganization(orgs, userId, trip) {
+    if (!trip.organizationId) return null;
+    return (await orgs.roleOf(userId, trip.organizationId)) ? null : 'You can only plan business trips for your own organizations.';
+}
+
+module.exports = { checkTripOrganization, checkVisitPurpose, createOrgRouter, hashToken };

@@ -148,6 +148,14 @@ fieldset.trip-stops { padding: 8px 10px; border: 2px solid var(--ink); border-ra
 .trip-extra summary small,
 .trip-extra .hint { color: var(--muted); font-size: 0.82rem; font-weight: 700; }
 
+.checklist { display: grid; gap: 6px; margin: 8px 0; padding: 0; list-style: none; }
+.checklist-item { display: flex; align-items: flex-start; gap: 8px; }
+.checklist-item > span:last-child { display: grid; }
+.checklist-item small { color: var(--muted); font-weight: 700; }
+.checklist-item a { font-weight: 800; }
+.checklist-badge { font-weight: 800; }
+.checklist-badge.is-overdue { color: var(--danger-text); }
+
 .packing-list,
 .expense-list,
 .budget-categories {

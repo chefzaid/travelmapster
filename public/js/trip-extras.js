@@ -11,7 +11,7 @@ const CURRENCY_LIST_ID = 'currency-codes';
 // Sections the traveler opened stay open when the editor redraws.
 const openSections = new Set();
 
-function section(id, title, summary, ...body) {
+export function section(id, title, summary, ...body) {
     return h('details', {
         class: 'trip-extra',
         open: openSections.has(id),

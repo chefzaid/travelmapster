@@ -23,6 +23,7 @@ erDiagram
     organizations ||--o| org_rules : "sets rules"
     organizations ||--o{ audit_log : "looked at"
     organizations |o--o{ visits : "business trips for"
+    organizations |o--o{ trips : "business trips for"
     users {
         bigint id PK
         text username "unique, case-insensitive"
@@ -92,6 +93,7 @@ erDiagram
         jsonb stops "destinations with their days"
         jsonb packing "packing list"
         jsonb budget "currency, rates, expenses"
+        bigint organization_id FK "for a business trip"
     }
     organizations {
         bigint id PK
@@ -127,7 +129,7 @@ erDiagram
 | `visits` | One stay at a place: `start_date` required, `end_date` optional and never before the start, `ongoing` true for a stay still going on (the API refuses it with an end date), `notes` up to 2,000, `photo_url` an HTTP(S) URL up to 2,048. At most 500 per place when created with it or imported. `purpose` is `personal` (the default) or `business`, with `organization_id` one of the traveler's organizations; a trigger keeps a visit without an organization personal, so leaving or deleting the organization turns its business visits personal ([ADR 0029](adr/0029-organizations-and-business-days.md)). Visits created with a place or imported are personal. |
 | `ledger_settings` | One row per traveler once they save: `day_rule`, and JSON arrays `rules` (at most 20 stay rules and thresholds, each with an id, name, 1–80 three-letter country codes, day counts and a warning margin) and `planned` (at most 30 stays with a country and first and last day). Validated in `ledger-validation.js`. |
 | `visit_changes` | Append-only history of visit dates written by triggers: old and new `start_date`, `end_date` and `ongoing` of each added, changed or removed visit, with the place name and time. Kept after the visit or place is removed. |
-| `trips` | `title` 1–120 and `destination` 1–160 characters, optional `start_date`. `plan` is a JSON array of 1–30 days, each with `morning`, `afternoon` and `evening` text of up to 500 characters. `stops` is `[]` for a trip to its one destination, or a JSON list of 2–10 stops in order, each with a `destination` (1–160 characters) and its `days` (1–30); the first stop's destination is also the trip's. `packing` is a JSON list of at most 200 items (`item` 1–80 characters, `packed`). `budget` is `{}` or `{ currency, planned, rates, expenses }`: ISO 4217 codes, an optional planned amount, at most 30 exchange rates (units of `currency` for one unit of another) and 300 expenses (`label` 1–80 characters, `amount` 0–1,000,000,000, `currency`, `category` `transport`, `stay`, `food`, `activities` or `other`). An update that leaves out the stops, the packing list or the budget keeps the stored ones. |
+| `trips` | `title` 1–120 and `destination` 1–160 characters, optional `start_date`. `plan` is a JSON array of 1–30 days, each with `morning`, `afternoon` and `evening` text of up to 500 characters. `stops` is `[]` for a trip to its one destination, or a JSON list of 2–10 stops in order, each with a `destination` (1–160 characters) and its `days` (1–30); the first stop's destination is also the trip's. `packing` is a JSON list of at most 200 items (`item` 1–80 characters, `packed`). `budget` is `{}` or `{ currency, planned, rates, expenses }`: ISO 4217 codes, an optional planned amount, at most 30 exchange rates (units of `currency` for one unit of another) and 300 expenses (`label` 1–80 characters, `amount` 0–1,000,000,000, `currency`, `category` `transport`, `stay`, `food`, `activities` or `other`). An update that leaves out the stops, the packing list or the budget keeps the stored ones. `organization_id` makes it a business trip for one of the owner's organizations; only the owner changes it, and leaving or deleting the organization clears it ([ADR 0030](adr/0030-pre-trip-checklists.md)). |
 | `passkeys` | WebAuthn credentials ([ADR 0027](adr/0027-passkeys-and-two-step-sign-in.md)): the credential `id` (base64url), the public key, the signature `counter`, `transports`, a `name` of 1–60 characters, and when it was added and last used. At most 10 per account. |
 | `totp_secrets` | One per account: the two-step secret, encrypted (AES-256-GCM); `enabled_at` once the first code matched; `last_step`, the latest time step used, so a code works once. |
 | `recovery_codes` | SHA-256 hashes of the ten recovery codes, with `used_at` once spent. |
@@ -136,7 +138,7 @@ erDiagram
 | `organizations` | A Teams organization ([ADR 0029](adr/0029-organizations-and-business-days.md)): `name` 1–80 characters. Deleting it removes its members, invitations, rules and audit log. |
 | `memberships` | `organization_id`, `user_id`, `role` (`traveler`, `manager` or `admin`), `joined_at`; at most 10 organizations per account, and each keeps an admin (checked by the API). |
 | `invitations` | Single-use invitation links: the SHA-256 `token_hash` (never the token), the `role` given, who made it, `expires_at` seven days on, and `used_at`/`used_by` once used. |
-| `org_rules` | The employer's rules: a JSON array in the ledger's rule format (at most 20, validated like `ledger_settings.rules`). |
+| `org_rules` | The employer's rules: a JSON array in the ledger's rule format (at most 20, validated like `ledger_settings.rules`), and `checklist`, at most 50 tasks before a trip, each with an `id`, a `task` of 1–80 characters, 1–80 `countries`, `daysBefore` (0–365) and an optional HTTP(S) `link` ([ADR 0030](adr/0030-pre-trip-checklists.md)). |
 | `audit_log` | One row per member each time a manager or admin looks at the report: `actor_id` (null once that account is gone), `traveler_id`, `action`, `at`. Members read their own rows. |
 | `sessions` | Server-side sessions for `connect-pg-simple`; expired rows are pruned every 15 minutes. |
 | `rate_limits` | Unlogged rate-limit counters per limiter and client IP, shared by replicas; expired rows are swept every 10 minutes. |

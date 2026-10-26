@@ -73,7 +73,7 @@ JSON under `/api`, described in full in [OpenAPI](api/openapi.json) and kept bac
 | PATCH, DELETE | `/api/visits/:id` | Replace or remove a visit |
 | GET, PUT | `/api/ledger` | Day-ledger settings: `dayRule`, `rules` (stay rules and thresholds) and `planned` stays, replaced as a whole ([ADR 0010](adr/0010-day-ledger.md)) |
 | GET | `/api/ledger/changes` | History of visit dates, newest first (latest 5,000) |
-| GET, POST | `/api/trips` | List or create itineraries, the caller's own and those shared with them |
+| GET, POST | `/api/trips` | List or create itineraries, the caller's own and those shared with them; `organizationId` makes one a business trip |
 | PUT, DELETE | `/api/trips/:id` | Replace (owner or editor; 409 when changed meanwhile) or remove (owner) an itinerary |
 | GET, PUT, DELETE | `/api/trips/:id/members[/:username]` | Who a trip is shared with, to edit or view ([ADR 0028](adr/0028-friends-and-shared-trips.md)) |
 | GET, POST, DELETE | `/api/follows[/:username]` | Public maps the caller follows, with their country counts |
@@ -82,6 +82,7 @@ JSON under `/api`, described in full in [OpenAPI](api/openapi.json) and kept bac
 | PATCH, DELETE, PUT | `/api/orgs/:id`, `/api/orgs/:id/rules` | Rename or delete it, and replace its rules (admins) |
 | GET, PATCH, DELETE | `/api/orgs/:id/members[/:username]` | Members and roles (managers see, admins change); anyone leaves, but the last admin |
 | GET, POST, DELETE | `/api/orgs/:id/invitations[/:invitationId]` | Single-use invitation links (admins) |
+| PUT | `/api/orgs/:id/checklist` | The tasks before a business trip, per country (admins, [ADR 0030](adr/0030-pre-trip-checklists.md)) |
 | GET | `/api/orgs/:id/report?from=&to=` | Business days per country and rule status for each member (managers and admins), written to the members' audit log |
 | GET | `/api/export` | Everything the account holds, for the data archive: `profile` (with the last active day), `places` with their visits, `trips`, and `ledger` with its `settings` and the whole date history (`changes`), sign-in security, follows, `organizations` (name and role) and the `auditLog` about the caller; `format` and `version` describe the document |
 | PATCH | `/api/profile` | Change account settings, each optional: `profileVisibility` (`private` or `public`), `homeCountry` (a map code or `null`), `countryList` (`all` or `un`, [ADR 0015](adr/0015-country-lists.md)), `mapPalette` (`standard`, `colorblind` or `print`), `publicJourneys` (a boolean, [ADR 0016](adr/0016-timeline-journeys-and-palettes.md)) and `goals` (up to 12 yearly goals, one per kind and year); returns them all |
@@ -99,7 +100,7 @@ JSON under `/api`, described in full in [OpenAPI](api/openapi.json) and kept bac
 | `public/js/guest.js`, `guest-api.js` | Guest mode: a map kept in the browser, with the API's answers from its storage (pure `guest-api.js`, unit tested), moved into an account on sign-up ([ADR 0026](adr/0026-guest-mode.md)) |
 | `public/js/security.js`, `webauthn.js`, `qr.js` | Sign-in security: passkeys with the browser's WebAuthn calls, and two-step sign-in with its QR code (pure `qr.js`, unit tested) ([ADR 0027](adr/0027-passkeys-and-two-step-sign-in.md)) |
 | `public/js/friends.js`, `compare.js`, `trip-share.js` | Followed maps and comparing countries (pure `compare.js`, unit tested), and sharing a trip ([ADR 0028](adr/0028-friends-and-shared-trips.md)) |
-| `public/js/orgs.js`, `org-manage.js`, `org-data.js` | Organizations: joining by link, creating, leaving and the audit log; running one (report, members, invitations, rules); and the pure parts, invitation links, a visit's purpose and the report's CSV (unit tested) ([ADR 0029](adr/0029-organizations-and-business-days.md)) |
+| `public/js/orgs.js`, `org-manage.js`, `org-checklist.js`, `org-data.js` | Organizations: joining by link, creating, leaving and the audit log; running one (report, members, invitations, rules, the checklist before trips); and the pure parts, invitation links, a visit's purpose, the report's CSV and a trip's checklist (unit tested) ([ADR 0029](adr/0029-organizations-and-business-days.md), [ADR 0030](adr/0030-pre-trip-checklists.md)) |
 | `public/js/exif.js`, `towns.js`, `auto-import.js` | Imports from photos and location history: EXIF dates and positions, the nearest bundled town, and the visits found (pure, unit tested) ([ADR 0025](adr/0025-imports-from-photos-and-location-history.md)) |
 | `public/js/cards.js`, `card-visits.js`, `place-form.js` | Map cards for countries and cities, the visits on them, and the form that edits a saved place |
 | `public/js/search.js`, `explore.js`, `selection.js` | Place search and "Surprise me", the Explore tab and travel ideas, and picking several countries to mark at once |
@@ -127,7 +128,7 @@ JSON under `/api`, described in full in [OpenAPI](api/openapi.json) and kept bac
 | `public/js/days.js`, `ledger-evidence.js`, `ledger-rules.js` | Day ledger: day rules, days per country, Schengen 90/180 and stay rules, thresholds, planned stays and alerts; the day-by-day evidence and its CSV; and checking edited rules like the API (pure, unit and property tested) |
 | `public/js/ledger.js`, `ledger-report.js`, `ledger-org.js`, `ledger-parts.js` | Ledger tab, its date history and printable evidence report, the employer rules counted on business trips, and the status chips and meters they share |
 | `public/js/trips.js`, `ideas.js` | Trip planner and Wikivoyage ideas |
-| `public/js/trip-days.js`, `trip-extras.js`, `trip-stops.js`, `trip-budget.js` | The trip editor's day cards, its stops, packing list and budget, and their pure rules (unit tested) |
+| `public/js/trip-days.js`, `trip-extras.js`, `trip-stops.js`, `trip-budget.js`, `trip-checklist.js` | The trip editor's day cards, its stops, packing list and budget, and their pure rules (unit tested); whom a trip is for and its organization's checklist |
 | `public/js/itinerary.js` | An itinerary as text, as an iCalendar file, as a template copy without dates, and as the day ledger's planned stay that follows the trip (pure, unit tested) |
 | `public/js/trip-visits.js` | Where a trip goes (a country or a town of the map data), and recording a trip as a visit to it |
 | `public/js/print-view.js` | The full page printed on its own, shared by the evidence report and printable itineraries |
@@ -225,5 +226,6 @@ number (`NNNN-short-title.md`) and the template below. Statuses: **Proposed**, *
 - [ADR 0027: Passkeys and two-step sign-in](adr/0027-passkeys-and-two-step-sign-in.md)
 - [ADR 0028: Friends follow public maps, and trips are planned together](adr/0028-friends-and-shared-trips.md)
 - [ADR 0029: Organizations, business visits and employer rules](adr/0029-organizations-and-business-days.md)
+- [ADR 0030: Pre-trip checklists from the organization](adr/0030-pre-trip-checklists.md)
 
 Superseded: [ADR 0007: Draw towns on a canvas layer](adr/0007-canvas-towns.md).

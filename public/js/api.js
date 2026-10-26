@@ -149,6 +149,7 @@ export const api = {
     renameOrg: (id, name) => request('PATCH', `/orgs/${Number(id)}`, { name }),
     deleteOrg: id => request('DELETE', `/orgs/${Number(id)}`),
     saveOrgRules: (id, rules) => request('PUT', `/orgs/${Number(id)}/rules`, { rules }),
+    saveOrgChecklist: (id, checklist) => request('PUT', `/orgs/${Number(id)}/checklist`, { checklist }),
     getOrgMembers: id => request('GET', `/orgs/${Number(id)}/members`),
     setOrgRole: (id, username, role) => request('PATCH', `/orgs/${Number(id)}/members/${encodeURIComponent(username)}`, { role }),
     removeOrgMember: (id, username) => request('DELETE', `/orgs/${Number(id)}/members/${encodeURIComponent(username)}`),

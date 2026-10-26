@@ -6,10 +6,10 @@ const { withTransaction } = require('./db/pool');
 
 function createOrgRepository(db) {
     return {
-        /** The traveler's organizations, with their role and the employer's rules. */
+        /** The traveler's organizations, with their role, the employer's rules and pre-trip checklist. */
         async listForUser(userId) {
             const { rows } = await db.query(
-                `SELECT o.id, o.name, ms.role, COALESCE(r.rules, '[]'::jsonb) AS rules
+                `SELECT o.id, o.name, ms.role, COALESCE(r.rules, '[]'::jsonb) AS rules, COALESCE(r.checklist, '[]'::jsonb) AS checklist
                  FROM memberships ms JOIN organizations o ON o.id = ms.organization_id
                  LEFT JOIN org_rules r ON r.organization_id = o.id
                  WHERE ms.user_id = $1 ORDER BY lower(o.name), o.id`,
@@ -35,7 +35,7 @@ function createOrgRepository(db) {
                 const { rows } = await client.query('INSERT INTO organizations (name) VALUES ($1) RETURNING id, name', [name]);
                 await client.query("INSERT INTO memberships (organization_id, user_id, role) VALUES ($1, $2, 'admin')", [rows[0].id, userId]);
                 await client.query('INSERT INTO org_rules (organization_id) VALUES ($1)', [rows[0].id]);
-                return { ...rows[0], role: 'admin', rules: [] };
+                return { ...rows[0], role: 'admin', rules: [], checklist: [] };
             });
         },
 
@@ -52,6 +52,14 @@ function createOrgRepository(db) {
                 `INSERT INTO org_rules (organization_id, rules) VALUES ($1, $2::jsonb)
                  ON CONFLICT (organization_id) DO UPDATE SET rules = EXCLUDED.rules, updated_at = now()`,
                 [orgId, JSON.stringify(rules)]
+            );
+        },
+
+        async setChecklist(orgId, checklist) {
+            await db.query(
+                `INSERT INTO org_rules (organization_id, checklist) VALUES ($1, $2::jsonb)
+                 ON CONFLICT (organization_id) DO UPDATE SET checklist = EXCLUDED.checklist, updated_at = now()`,
+                [orgId, JSON.stringify(checklist)]
             );
         },
 
@@ -77,7 +85,7 @@ function createOrgRepository(db) {
         },
 
         async removeMember(orgId, userId) {
-            // Their business visits for it become personal again.
+            // Their business visits and trips for it become personal again.
             return withTransaction(db, async client => {
                 const { rowCount } = await client.query('DELETE FROM memberships WHERE organization_id = $1 AND user_id = $2', [orgId, userId]);
                 await client.query(
@@ -85,6 +93,7 @@ function createOrgRepository(db) {
                      WHERE m.id = v.marker_id AND m.user_id = $2 AND v.organization_id = $1`,
                     [orgId, userId]
                 );
+                await client.query('UPDATE trips SET organization_id = NULL WHERE organization_id = $1 AND user_id = $2', [orgId, userId]);
                 return rowCount > 0;
             });
         },

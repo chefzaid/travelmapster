@@ -40,11 +40,14 @@ function savedOrNew(ctx, where) {
 function tripVisits(ctx, trip) {
     const stops = tripStops(trip);
     const visits = [];
+    // A business trip makes business visits for its organization (ADR 0030).
+    const business = (ctx.state.orgs || []).some(org => org.id === trip.organizationId)
+        ? { purpose: 'business', organizationId: trip.organizationId } : {};
     for (const [i, stop] of stops.entries()) {
         const where = destinationPlace(ctx, stop.destination);
         if (!where) return { unknown: stop.destination };
         const endDate = stops[i + 1]?.startDate || tripEndDate(trip);
-        visits.push({ where, ...savedOrNew(ctx, where), visit: { startDate: stop.startDate, endDate, notes: `Trip: ${trip.title}`.slice(0, 2000), photoUrl: '', ongoing: false } });
+        visits.push({ where, ...savedOrNew(ctx, where), visit: { startDate: stop.startDate, endDate, notes: `Trip: ${trip.title}`.slice(0, 2000), photoUrl: '', ongoing: false, ...business } });
     }
     return { visits };
 }
@@ -57,12 +60,14 @@ export function tripRecorded(ctx, trip) {
 }
 
 // Looked up again for each visit: a trip back to a place saved by an earlier stop adds to it.
+// A new place takes a personal visit with it; a business one is added once it exists.
 async function addTripVisit(ctx, { where, visit }) {
-    const { existing, place } = savedOrNew(ctx, where);
-    if (!existing) {
+    const { existing: saved, place } = savedOrNew(ctx, where);
+    if (!saved && visit.purpose !== 'business') {
         await ctx.savePlace({ ...place, ...statusFields('visited'), visits: [visit] }, { quiet: true });
         return;
     }
+    const existing = saved || await ctx.savePlace({ ...place, ...statusFields('visited') }, { quiet: true });
     if (statusOf(existing) === 'wishlist') await ctx.updatePlace(existing, statusFields('visited'));
     if (existing.visits?.some(item => item.startDate === visit.startDate)) return;
     const added = await ctx.api.addVisit(existing.id, visit);
