@@ -9,6 +9,7 @@ import { SCHENGEN_RULE } from './days.js';
 import { COUNTRY_LISTS, countedCountries } from './lists.js';
 import { PALETTES, paletteId } from './palettes.js';
 import { LOCALES, locale, rememberLocale, t, tParts, tn } from './i18n.js';
+import { showPanel } from './panel.js';
 
 // ---------------------------------------------------------------- landing
 
@@ -29,6 +30,7 @@ export function renderDemoLedger(ctx) {
 export const AUTH_HASHES = { '#sign-up': 'register', '#log-in': 'login' };
 
 export function openAuth(mode) {
+    showPanel();
     setAuthMode(mode);
     $('#account-start').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     $('#auth-username').focus({ preventScroll: true });

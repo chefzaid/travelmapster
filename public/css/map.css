@@ -208,6 +208,7 @@ button.legend-filter:hover { background: var(--wishlist); }
 .time-now:not(:has(:not(:empty))) { display: none; }
 button.legend-timeline[aria-expanded='true'] { color: var(--paper); background: var(--text); }
 /* Days on the map: the steps replace the statuses in the legend. */
+button.legend-days[aria-pressed='false'] { color: inherit; text-decoration: none; }
 button.legend-days[aria-pressed='true'] { color: var(--paper); background: var(--text); }
 .legend.is-days .legend-item[data-filter],
 .legend.is-days #legend-home,

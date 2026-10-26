@@ -1,6 +1,7 @@
 'use strict';
 
-// The map itself: towns drawn at street level, and the timeline with journey lines and palettes.
+// The map itself: towns drawn at street level, the panel folded away, and the timeline with
+// journey lines and palettes.
 const { test, expect } = require('@playwright/test');
 const { addPlaces, journeyLineCount, openDemo, signUp, stubThirdParties, trackErrors } = require('./helpers');
 
@@ -23,6 +24,41 @@ test('towns drawn on the map open their card when clicked', async ({ page }) => 
     const box = await page.locator('#map').boundingBox();
     await page.mouse.click(box.x + town.x, box.y + town.y);
     await expect(page.locator('.maplibregl-popup.card-popup .card-header h3')).toHaveText(town.name);
+});
+
+test('the panel folds away on wide screens so the whole map can be used, and opens when needed', async ({ page }) => {
+    const errors = trackErrors(page);
+    await openDemo(page);
+    const fold = page.locator('#panel-fold');
+    const box = await page.locator('#panel').boundingBox();
+    const point = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+    const onMap = () => page.evaluate(({ x, y }) => Boolean(globalThis.document.elementFromPoint(x, y)?.closest('#map')), point);
+    expect(await onMap()).toBe(false);
+
+    await fold.click();
+    await expect(page.locator('#panel')).toBeHidden();
+    await expect(fold).toHaveAttribute('aria-expanded', 'false');
+    await expect(fold).toHaveText(/Show panel/);
+    await expect.poll(onMap).toBe(true);
+
+    // Remembered in this browser; asking for the sign-up form opens it again.
+    await page.reload();
+    await expect(page.locator('#app[data-map="ready"]')).toBeVisible();
+    await expect(page.locator('#panel')).toBeHidden();
+    await page.goto('about:blank');
+    await page.goto('/#sign-up');
+    await expect(page.locator('#auth-username')).toBeVisible();
+    await expect(fold).toHaveAttribute('aria-expanded', 'true');
+    await fold.click();
+    await expect(page.locator('#panel')).toBeHidden();
+    await fold.click();
+    await expect(page.locator('#panel')).toBeVisible();
+
+    // Phones keep the bottom sheet and its handle.
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(fold).toBeHidden();
+    await expect(page.locator('#panel-handle')).toBeVisible();
+    expect(errors).toEqual([]);
 });
 
 test('a traveler replays their map year by year with journey lines, picks map colors and prints it', async ({ page, browser }) => {

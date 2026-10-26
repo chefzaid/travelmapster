@@ -1,5 +1,6 @@
 // The panel's tabs: which one shows, remembered in this browser, and drawing the open one.
 import { $, $all } from './ui.js';
+import { showPanel } from './panel.js';
 import { renderExplore } from './explore.js';
 import { renderPlaces } from './places.js';
 import { renderTrips } from './trips.js';
@@ -22,6 +23,7 @@ export function storedTab() {
 
 export function selectTab(ctx, name) {
     ctx.state.activeTab = name;
+    showPanel();
     // The open trip's route shows only on the Trips tab.
     if (name !== 'trips') ctx.map?.setItinerary([]);
     for (const tab of $all('.tabs [role="tab"]')) {
