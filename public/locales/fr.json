@@ -20,6 +20,7 @@
   "{1}Been by the end of": "{1}Visités à la fin de",
   "{1}Been there {2}": "{1}Visité {2}",
   "{1}Capital": "{1}Capitale",
+  "{1}Days": "{1}Jours",
   "{1}Explore": "{1}Explorer",
   "{1}Home{2}": "{1}Chez moi{2}",
   "{1}Ledger{2}": "{1}Registre{2}",
@@ -232,7 +233,9 @@
   "{done} of {total} done": "{done} sur {total} fait(s)",
   "{file} uses a ZIP compression this app cannot read.": "{file} utilise une compression ZIP que cette application ne sait pas lire.",
   "{filled} of {total} slots planned": "{filled} créneaux prévus sur {total}",
+  "{from}–{to} days": "{from} à {to} jours",
   "{from}: {days} over.": "{from} : {days} de trop.",
+  "{from}+ days": "{from} jours et plus",
   "{goal} in {year}": "{goal} en {year}",
   "{goal}: {count} so far": "{goal} : {count} pour l'instant",
   "{icon} Home: {flag} {name}": "{icon} Chez vous : {flag} {name}",
@@ -280,6 +283,11 @@
   "{owner} can share it with you again.": "{owner} pourra le partager à nouveau avec vous.",
   "{packed} of {total} packed": "{packed} sur {total} dans la valise",
   "{places} with {visits}.": "{places} avec {visits}.",
+  "{range}: {count} countries": {
+    "one": "{range} : {count} pays",
+    "many": "{range} : {count} de pays",
+    "other": "{range} : {count} pays"
+  },
   "{role} · joined {date}": "{role} · membre depuis le {date}",
   "{shown} of {count} places": {
     "one": "{shown} lieu sur {count}",
@@ -733,6 +741,7 @@
   "Days before the trip must be a whole number from 0 to 365.": "Les jours avant le voyage doivent être un nombre entier de 0 à 365.",
   "Days come back slowly.": "Les jours reviennent lentement.",
   "Days count": "Les jours comptent",
+  "Days here": "Jours passés ici",
   "Days in {1}, {2} and {3} count too, as they are reached only through the area. {4} and {5} (EU members outside the area) and {6} do not count, and neither do overseas territories outside Europe, such as French Guiana or Réunion.": "Les jours passés à {1}, à {2} et dans la {3} comptent aussi, car on n’y accède qu’en passant par l’espace. {4} et l’{5} (membres de l’UE hors de l’espace) ainsi qu’{6} ne comptent pas, pas plus que les territoires d’outre-mer hors d’Europe, comme la Guyane ou La Réunion.",
   "Days in stop {number}": "Jours à l'étape {number}",
   "days left": "jours restants",
@@ -741,6 +750,7 @@
   "Days per country: {period}": "Jours par pays : {period}",
   "Days recorded by year": "Jours enregistrés par année",
   "days recorded this year": "jours enregistrés cette année",
+  "Days spent in each country": "Jours passés dans chaque pays",
   "Days spent under a residence permit or a long-stay national visa of a member country do not count toward the 90. This calculator is a guide, not legal advice: border officers make the final decision.": "Les jours passés sous un titre de séjour ou un visa national de long séjour d'un pays membre ne comptent pas dans les 90. Ce calculateur est un guide, pas un conseil juridique : les agents aux frontières ont le dernier mot.",
   "Days used, days left and the latest day you can stay in the Schengen area. No account; your dates stay in your browser.": "Jours utilisés, jours restants et dernier jour où vous pouvez rester dans l'espace Schengen. Sans compte ; vos dates restent dans votre navigateur.",
   "days, longest trip": {

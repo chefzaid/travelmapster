@@ -16,6 +16,7 @@ import { celebrate } from './confetti.js';
 import { celebrateGoals } from './passport-goals.js';
 import { setupOffline } from './offline.js';
 import { setupLegend, setupPanel } from './panel.js';
+import { mapDays, setupDaysLegend } from './map-days.js';
 import { renderTimeline, setTimelineOpen, setupTimeline, timelineView, collapsePanelOnPhones } from './timeline-bar.js';
 import { applyPalette, setupPrinting, storedPalette } from './printing.js';
 import { markContinent, setupSelectBar, startSelecting, stopSelecting, toggleSelected } from './selection.js';
@@ -48,6 +49,10 @@ const state = {
     demo: false,
     // The legend's status toggles, and the tag and rating filter shared by the map and the Places tab.
     filters: { visited: true, lived: true, transit: true, wishlist: true, tag: 'all', rating: 'all' },
+    // The legend's "Days" switch: countries colored by days spent instead of by status.
+    colorByDays: false,
+    // The days per country the map shows then, for the country card.
+    mapDays: null,
     activeTab: 'explore',
     // Countries picked on the map to mark at once, or null when not picking.
     selection: null,
@@ -101,7 +106,7 @@ function applyFilters() {
     const status = filtered || timeline
         ? countryStatus(markers, countryOfMarker, { homeId: state.stats.homeId })
         : state.stats;
-    travelMap.setCountryStatus(status, shown);
+    travelMap.setCountryStatus(status, shown, mapDays(context, timeline));
     const visible = markers.filter(marker => state.filters[statusOf(marker)]);
     travelMap.setPins(visible);
     renderTimeline(context, timeline, visible);
@@ -124,6 +129,9 @@ function refresh({ celebrateNew = true } = {}) {
     state.stats = computeStats(state.markers, state.index, {
         trips: state.trips.length, homeId: homeCountryId(), countryList: countryListId(), capitals: state.capitals
     });
+    // Places or settings changed: the ledger counts again, before the map shows its days.
+    state.ledger.overview = null;
+    state.ledger.changes = null;
     applyFilters();
     $('#legend-visited').textContent = state.stats.visitedCountries;
     $('#legend-lived').textContent = state.stats.livedCountries;
@@ -146,8 +154,6 @@ function refresh({ celebrateNew = true } = {}) {
     }
     state.unlocked = unlocked;
     if (state.user) state.reachedGoals = celebrateGoals(context, celebrateNew ? state.reachedGoals : null);
-    state.ledger.overview = null;
-    state.ledger.changes = null;
     updateLedgerBadge(context);
     renderActiveTab(context);
     if (state.demo) renderDemoLedger(context);
@@ -430,6 +436,7 @@ async function init() {
     setupAccountMenu(context);
     setupPanel();
     setupLegend(context);
+    setupDaysLegend(context);
     setupSelectBar(context);
     setupTimeline(context);
     setupPrinting(context);

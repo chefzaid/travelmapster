@@ -207,6 +207,17 @@ button.legend-filter:hover { background: var(--wishlist); }
 .time-now { margin: 0; font-size: 0.85rem; font-weight: 700; color: var(--muted); }
 .time-now:not(:has(:not(:empty))) { display: none; }
 button.legend-timeline[aria-expanded='true'] { color: var(--paper); background: var(--text); }
+/* Days on the map: the steps replace the statuses in the legend. */
+button.legend-days[aria-pressed='true'] { color: var(--paper); background: var(--text); }
+.legend.is-days .legend-item[data-filter],
+.legend.is-days #legend-home,
+.legend.is-days .legend-capital { display: none; }
+.legend-heat { display: contents; }
+.legend-heat[hidden] { display: none; }
+.swatch-heat-1 { background: var(--heat-1); }
+.swatch-heat-2 { background: var(--heat-2); }
+.swatch-heat-3 { background: var(--heat-3); }
+.swatch-heat-4 { background: var(--heat-4); }
 
 /* ------------------------------------------------------------ the map */
 

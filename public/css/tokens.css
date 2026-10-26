@@ -82,6 +82,13 @@
     --land-6: #ffd9ec;
     --land-7: #f5dfb9;
     --border-ink: rgba(31, 59, 87, 0.55);
+    /* Days on the map: a cool grey for no days, then warmer and darker with more days, so the
+       steps differ by lightness for every kind of colour vision and in every palette. */
+    --heat-none: #eceef1;
+    --heat-1: #fff3a3;
+    --heat-2: #ffcb52;
+    --heat-3: #ff9e4d;
+    --heat-4: #f9856e;
     --star: #8a5a00;
     --shadow: 4px 4px 0 var(--shadow-color);
     --shadow-sm: 2px 2px 0 var(--shadow-color);
@@ -119,6 +126,11 @@
         --land-6: #e3aecb;
         --land-7: #d7bd90;
         --border-ink: rgba(13, 27, 42, 0.8);
+        --heat-none: #b4bcc4;
+        --heat-1: #f6e58d;
+        --heat-2: #f2bc45;
+        --heat-3: #ec8f3e;
+        --heat-4: #e0645c;
         --visited-soft: #5fb7ad;
         --lived-soft: #b7a6f5;
         --home-soft: #f0a487;

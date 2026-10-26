@@ -1,6 +1,7 @@
 'use strict';
 
-// The day ledger: Schengen days, a planned stay, a threshold alert and the evidence report.
+// The day ledger: days on the map, Schengen days, a planned stay, a threshold alert and the
+// evidence report.
 const { test, expect } = require('@playwright/test');
 const { browserDay, markCity, signUp, stubThirdParties, trackErrors } = require('./helpers');
 
@@ -17,6 +18,21 @@ test('a traveler counts Schengen days, tries a plan, gets an alert and prints ev
     await page.check('#dialog-ongoing');
     await page.getByRole('button', { name: 'Add visit' }).click();
     await expect(page.locator('.card-popup .visit')).toContainText('still there');
+
+    // Days on the map: the legend's steps replace the statuses, and Portugal's card has its days.
+    await page.click('#legend-days');
+    await expect(page.locator('#legend-days')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('#legend [data-filter="visited"]')).toBeHidden();
+    const steps = page.locator('#legend-heat .legend-item');
+    await expect(steps).toHaveCount(4);
+    await expect(steps.first()).toContainText('1–29 days: 1 country');
+    await expect(steps.last()).toContainText('183+ days: 0 countries');
+    await page.fill('#global-search', 'Portugal');
+    await page.locator('#search-results [role="option"]').filter({ hasText: 'Portugal' }).first().click();
+    await expect(page.locator('.card-popup .card-facts')).toContainText('Days here10 days');
+    await page.click('#legend-days');
+    await expect(page.locator('#legend [data-filter="visited"]')).toBeVisible();
+    await expect(page.locator('#legend-heat')).toBeHidden();
 
     await page.click('#tab-ledger');
     const ledger = page.locator('#ledger-tab');
