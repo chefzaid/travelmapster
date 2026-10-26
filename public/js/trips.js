@@ -1,8 +1,12 @@
 // Trips tab: day-by-day itineraries with ideas from Wikivoyage, copied as text, exported to a
-// calendar, printed, or duplicated as a template.
+// calendar, printed, duplicated as a template, or planned in the day ledger.
 import { h, fill, toast, formDialog, formatDate, downloadFile } from './ui.js';
 import { fetchIdeas, buildItinerary } from './ideas.js';
-import { SLOTS, dayDate, tripAsText, tripCalendar, tripEndDate, tripFileName, tripTemplate } from './itinerary.js';
+import {
+    SLOTS, dayDate, destinationCountry, syncPlannedStays, tripAsText, tripCalendar, tripEndDate, tripFileName, tripPlanId,
+    tripPlannedStay, tripTemplate
+} from './itinerary.js';
+import { normalizeName, searchCities, splitPlaceQuery } from './geo.js';
 import { openPrintView, printTable } from './print-view.js';
 
 const MAX_DAYS = 30;
@@ -149,6 +153,61 @@ function exportCalendar(trip) {
     toast('Calendar file downloaded: open it to add each day to your calendar.', { tone: 'success' });
 }
 
+// ---------------------------------------------------------------- the trip in the day ledger
+
+function ledgerButton(ctx, trip, dirty) {
+    const planned = ctx.state.ledger.settings.planned.some(item => item.id === tripPlanId(trip));
+    return h('button', {
+        type: 'button',
+        class: 'btn btn-ghost btn-sm',
+        'aria-pressed': String(planned),
+        onclick: () => {
+            // The plan follows the saved trip, so unsaved dates must be saved first.
+            if (dirty()) toast('Save your changes before planning the trip in the ledger.', { tone: 'error' });
+            else toggleLedgerPlan(ctx, trip);
+        }
+    }, planned ? '📒 In ledger plans' : '📒 Plan in ledger');
+}
+
+// The ledger's planned stay for a trip, from its dates and the country of its destination.
+function tripStay(ctx, trip) {
+    const { index, cities } = ctx.state;
+    const countryId = destinationCountry(trip.destination, {
+        findCountry: name => index.findByName(name),
+        findCity: name => searchCities(cities, name, 1).find(city => normalizeName(city.name) === splitPlaceQuery(name)[0])
+    });
+    return tripPlannedStay(trip, countryId);
+}
+
+// A trip planned in the ledger keeps its planned stay in step when it is saved or deleted.
+async function followInLedger(ctx, trip, stay) {
+    const { settings } = ctx.state.ledger;
+    const planned = syncPlannedStays(settings.planned, trip, stay);
+    if (planned) await ctx.saveLedger({ ...settings, planned });
+}
+
+async function toggleLedgerPlan(ctx, trip) {
+    const { settings } = ctx.state.ledger;
+    try {
+        if (settings.planned.some(item => item.id === tripPlanId(trip))) {
+            await ctx.saveLedger({ ...settings, planned: settings.planned.filter(item => item.id !== tripPlanId(trip)) });
+            toast('Taken out of the ledger plans.');
+            return;
+        }
+        const stay = tripStay(ctx, trip);
+        if (!stay) {
+            toast(trip.startDate
+                ? `Which country is ${trip.destination} in? Name it in the destination, such as “Lisbon, Portugal”.`
+                : 'Choose a start date to plan this trip in the day ledger.', { tone: 'error' });
+            return;
+        }
+        await ctx.saveLedger({ ...settings, planned: [...settings.planned, stay] });
+        toast('Planned in the ledger: the Ledger tab checks it against your stay rules and thresholds.', { tone: 'success' });
+    } catch (error) {
+        ctx.handleError(error);
+    }
+}
+
 async function duplicateTrip(ctx, trip, container) {
     try {
         const copy = await ctx.api.createTrip(tripTemplate(trip));
@@ -177,6 +236,7 @@ function renderEditor(container, ctx, trip) {
             const saved = await ctx.api.updateTrip(trip.id, draft);
             Object.assign(trip, saved);
             draft = structuredClone(trip);
+            await followInLedger(ctx, trip, tripStay(ctx, trip));
             toast('Trip saved.', { tone: 'success' });
             rerender();
         } catch (error) {
@@ -277,7 +337,8 @@ function renderEditor(container, ctx, trip) {
                 // The copy is made from the saved trip, so unsaved edits are not left behind unseen.
                 if (dirty()) toast('Save your changes before duplicating the trip.', { tone: 'error' });
                 else duplicateTrip(ctx, trip, container);
-            } }, '⧉ Duplicate')
+            } }, '⧉ Duplicate'),
+            ledgerButton(ctx, trip, dirty)
         ),
         h('div', { class: 'days' }, days),
         h('div', { class: 'row trip-footer' },
@@ -298,6 +359,7 @@ function renderEditor(container, ctx, trip) {
                     try {
                         await ctx.api.deleteTrip(trip.id);
                         ctx.state.trips = ctx.state.trips.filter(item => item.id !== trip.id);
+                        await followInLedger(ctx, trip, null);
                         openTripId = null;
                         draft = null;
                         toast('Trip deleted.');

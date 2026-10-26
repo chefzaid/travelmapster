@@ -5,6 +5,7 @@ import { buildGeoJson, buildKml } from './archive.js';
 import { lastVisitDate, lastVisitYears, matchesLastVisit, visitCount } from './visits.js';
 import { groupByNextMonth, matchesDetails, monthsLabel, priorityLabel, ratingLabel, stars, usedTags } from './details.js';
 import { STATUSES, statusLabel, statusOf } from './status.js';
+import { openNewTrip } from './trips.js';
 
 const view = { query: '', type: 'all', category: 'all', lastVisit: 'all', sort: 'continent' };
 
@@ -68,6 +69,13 @@ function placeItem(marker, country, ctx) {
             )
         ),
         h('div', { class: 'place-actions' },
+            status === 'wishlist' ? h('button', {
+                type: 'button',
+                class: 'icon-btn',
+                'aria-label': `Plan a trip to ${marker.name}`,
+                title: 'Plan a trip',
+                onclick: () => openNewTrip(ctx, marker.name.split(',')[0])
+            }, '🗓️') : null,
             h('button', { type: 'button', class: 'icon-btn', 'aria-label': `Edit ${marker.name}`, title: 'Edit', onclick: () => ctx.editPlace(marker) }, '✏️'),
             h('button', {
                 type: 'button',

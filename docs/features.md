@@ -111,7 +111,8 @@ counting rules are in [ADR 0010](adr/0010-day-ledger.md).
 - **Tax residency**: 183 days in the calendar year for each country, plus your own thresholds over
   a year starting on any day (such as the UK tax year from 6 April) or a rolling window. Each one
   warns ahead of time, including when a stay still going on would reach it.
-- **Plan ahead**: try planned stays against every rule and threshold they touch before you go.
+- **Plan ahead**: try planned stays against every rule and threshold they touch before you go,
+  typed in or taken from a dated trip.
 - **Days per country** for any calendar year or the last 365, 180 or 90 days, and a **timeline**
   of stays per country with the city visits behind them.
 - **Alerts** in the app: a badge on the Ledger tab, a list at its top and a reminder after
@@ -153,6 +154,11 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
 - A printable itinerary, one row per day, to print or save as PDF from the browser.
 - Duplicating a saved trip as a template: the same days and plans, named "(copy)", without
   dates.
+- Planning a trip from a wishlist place, from its card or the 🗓️ button in the places list.
+- **Plan in ledger**: a dated trip becomes a planned stay in the day ledger, in the country of its
+  destination ("Lisbon, Portugal", "Japan" or a town such as "Kyoto"), so the Ledger tab checks
+  it against every stay rule and threshold. The planned stay follows the trip when its dates
+  change and goes when the trip is deleted.
 
 ## Passport
 

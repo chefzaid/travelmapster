@@ -190,6 +190,12 @@ test('a traveler marks several countries and a whole continent at once, with und
     await page.reload();
     await expect(page.locator('#main-view')).toBeVisible();
     await expect(page.locator('#legend-wishlist')).toHaveText('12');
+
+    // A wishlist place starts a trip plan from the list.
+    await page.click('#tab-places');
+    await page.getByRole('button', { name: 'Plan a trip to Brazil' }).click();
+    await expect(page.getByLabel('Where to?')).toHaveValue('Brazil');
+    await page.getByRole('button', { name: 'Cancel' }).click();
     expect(errors).toEqual([]);
 });
 
@@ -371,10 +377,24 @@ test('a traveler plans a trip that is saved to their account', async ({ page }) 
     await trips.getByRole('button', { name: '📅 Calendar' }).click();
     expect((await download).suggestedFilename()).toBe('pastel-de-nata-tour.ics');
 
+    // Planned in the ledger, the trip's stay follows its dates.
+    await trips.getByRole('button', { name: '📒 Plan in ledger' }).click();
+    await expect(trips.getByRole('button', { name: '📒 In ledger plans' })).toHaveAttribute('aria-pressed', 'true');
+    await page.click('#tab-ledger');
+    await expect(page.locator('#ledger-tab .ledger-item', { hasText: 'Pastel de nata tour' })).toContainText('Portugal');
+    await expect(page.locator('#ledger-tab .ledger-item', { hasText: 'Pastel de nata tour' })).toContainText('2 days');
+    await page.click('#tab-trips');
+    await trips.getByRole('button', { name: '＋ Add a day' }).click();
+    await trips.getByRole('button', { name: '💾 Save' }).click();
+    await expect(page.locator('.toast-success', { hasText: 'Trip saved.' }).last()).toBeVisible();
+    await page.click('#tab-ledger');
+    await expect(page.locator('#ledger-tab .ledger-item', { hasText: 'Pastel de nata tour' })).toContainText('3 days');
+    await page.click('#tab-trips');
+
     await trips.getByRole('button', { name: '🖨️ Print' }).click();
     const sheet = page.locator('#report-view');
     await expect(sheet.locator('h1')).toHaveText('Pastel de nata tour');
-    await expect(sheet.locator('tbody tr')).toHaveCount(2);
+    await expect(sheet.locator('tbody tr')).toHaveCount(3);
     await sheet.getByRole('button', { name: 'Close' }).click();
     await expect(sheet).toBeHidden();
 
@@ -383,6 +403,14 @@ test('a traveler plans a trip that is saved to their account', async ({ page }) 
     await expect(trips.getByLabel('Start date')).toHaveValue('');
     await trips.getByRole('button', { name: '‹ All trips' }).click();
     await expect(page.locator('.trip-card')).toHaveCount(2);
+
+    // Deleting the trip takes its stay out of the ledger plans.
+    await page.locator('.trip-card', { hasText: 'Pastel de nata tour' }).filter({ hasNotText: 'copy' }).click();
+    await trips.getByRole('button', { name: '🗑️ Delete trip' }).click();
+    await page.getByRole('button', { name: 'Delete trip' }).last().click();
+    await expect(page.locator('.trip-card')).toHaveCount(1);
+    await page.click('#tab-ledger');
+    await expect(page.locator('#ledger-tab')).not.toContainText('Pastel de nata tour');
     expect(errors).toEqual([]);
 });
 

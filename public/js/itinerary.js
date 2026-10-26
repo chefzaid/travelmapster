@@ -1,5 +1,6 @@
 // Itineraries outside the app: as text, as an iCalendar file with an all-day event per day,
-// and as a template copy without dates. Pure, unit tested in Node.
+// as a template copy without dates, and as a planned stay in the day ledger. Pure, unit tested
+// in Node.
 
 export const SLOTS = [
     ['morning', '🌅', 'Morning'],
@@ -48,6 +49,42 @@ export function tripTemplate(trip) {
         startDate: '',
         plan: trip.plan.map(day => Object.fromEntries(SLOTS.map(([slot]) => [slot, day[slot] || ''])))
     };
+}
+
+// ---------------------------------------------------------------- day ledger
+
+/**
+ * The country a destination such as "Lisbon, Portugal", "Japan" or "Kyoto" lies in, or null:
+ * a country named last, then the whole destination as a country, then a town of that name.
+ */
+export function destinationCountry(destination, { findCountry, findCity }) {
+    const parts = String(destination ?? '').split(',').map(part => part.trim()).filter(Boolean);
+    for (const name of [parts.at(-1), parts.join(', ')]) {
+        const country = name ? findCountry(name) : null;
+        if (country) return country.id;
+    }
+    return parts.length ? findCity(parts.join(', '))?.countryId || null : null;
+}
+
+/** The id of the ledger's planned stay that follows a trip. */
+export const tripPlanId = trip => `trip-${trip.id}`;
+
+/** The ledger's planned stay for a dated trip in a known country, or null. */
+export function tripPlannedStay(trip, countryId) {
+    if (!trip.startDate || !countryId) return null;
+    return { id: tripPlanId(trip), countryId, startDate: trip.startDate, endDate: tripEndDate(trip) };
+}
+
+/**
+ * The planned stays once a trip changed: its stay follows the new dates and country, or goes
+ * when the trip has none any more (or was deleted, with `stay` null). Null when nothing changes.
+ */
+export function syncPlannedStays(planned, trip, stay) {
+    const index = planned.findIndex(item => item.id === tripPlanId(trip));
+    if (index < 0) return null;
+    const current = planned[index];
+    if (stay && ['countryId', 'startDate', 'endDate'].every(key => current[key] === stay[key])) return null;
+    return stay ? planned.map((item, i) => (i === index ? stay : item)) : planned.filter((_, i) => i !== index);
 }
 
 // ---------------------------------------------------------------- iCalendar (RFC 5545)

@@ -91,3 +91,31 @@ test('trip text, end dates and file names', async () => {
     assert.equal(tripFileName({ title: 'Été à Montréal!' }, 'ics'), 'ete-a-montreal.ics');
     assert.equal(tripFileName({ title: '🌍' }, 'ics'), 'trip.ics');
 });
+
+test('a trip destination resolves to a country, then becomes a planned stay that follows the trip', async () => {
+    const { destinationCountry, tripPlannedStay, syncPlannedStays, tripPlanId } = await load();
+    const countries = { portugal: { id: 'PRT' }, japan: { id: 'JPN' } };
+    const towns = { kyoto: { countryId: 'JPN' } };
+    const lookups = {
+        findCountry: name => countries[name.toLowerCase()] || null,
+        findCity: name => towns[name.toLowerCase()] || null
+    };
+    assert.equal(destinationCountry('Lisbon, Portugal', lookups), 'PRT');
+    assert.equal(destinationCountry('Japan', lookups), 'JPN');
+    assert.equal(destinationCountry('Kyoto', lookups), 'JPN');
+    assert.equal(destinationCountry('Atlantis', lookups), null);
+    assert.equal(destinationCountry('', lookups), null);
+
+    assert.equal(tripPlanId(trip), 'trip-7');
+    const stay = tripPlannedStay(trip, 'PRT');
+    assert.deepEqual(stay, { id: 'trip-7', countryId: 'PRT', startDate: '2027-02-27', endDate: '2027-03-01' });
+    assert.equal(tripPlannedStay({ ...trip, startDate: '' }, 'PRT'), null);
+    assert.equal(tripPlannedStay(trip, null), null);
+
+    const other = { id: 'abc', countryId: 'ESP', startDate: '2027-01-01', endDate: '2027-01-02' };
+    assert.equal(syncPlannedStays([other], trip, stay), null, 'a trip without a planned stay adds none');
+    assert.equal(syncPlannedStays([other, stay], trip, stay), null, 'nothing changed');
+    const moved = { ...stay, startDate: '2027-03-01', endDate: '2027-03-03' };
+    assert.deepEqual(syncPlannedStays([other, stay], trip, moved), [other, moved]);
+    assert.deepEqual(syncPlannedStays([other, stay], trip, null), [other], 'a deleted or undated trip leaves the ledger');
+});
