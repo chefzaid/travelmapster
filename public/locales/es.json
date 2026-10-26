@@ -127,6 +127,11 @@
     "many": "Faltan {count} países para {title}",
     "other": "Faltan {count} países para {title}"
   },
+  "{count} more stretches: choose a shorter period to see them.": {
+    "one": "{count} tramo más: elige un periodo más corto para verlo.",
+    "many": "{count} tramos más: elige un periodo más corto para verlos.",
+    "other": "{count} tramos más: elige un periodo más corto para verlos."
+  },
   "{count} new": {
     "one": "{count} nuevo",
     "many": "{count} nuevos",
@@ -392,6 +397,7 @@
   "📷 Photo": "📷 Foto",
   "📷 Photos": "📷 Fotos",
   "📷 View photo": "📷 Ver foto",
+  "🔎 Where was I?": "🔎 ¿Dónde estaba?",
   "🔐 Sign-in security": "🔐 Seguridad del inicio de sesión",
   "🔑 Change password": "🔑 Cambiar contraseña",
   "🔑 Lived": "🔑 Viví",
@@ -1090,6 +1096,7 @@
   "No rules yet.": "Todavía no hay reglas.",
   "No saved places to export yet.": "Todavía no hay lugares guardados que exportar.",
   "No visit on this map has dates yet.": "Ninguna visita de este mapa tiene fechas todavía.",
+  "No visit recorded": "Ninguna visita registrada",
   "No visits recorded yet": "Todavía no hay visitas registradas",
   "Nobody has looked at your business days yet.": "Nadie ha consultado todavía tus días de negocios.",
   "None": "Ninguno",
@@ -1208,6 +1215,7 @@
   "Planned": "Previsto",
   "Planned budget": "Presupuesto previsto",
   "Planned in the ledger: the Ledger tab checks it against your stay rules and thresholds.": "Planeado en el registro: la pestaña Registro lo comprueba con tus reglas de estancia y tus umbrales.",
+  "planned stay": "estancia prevista",
   "Planned stay": "Estancia prevista",
   "Planned stay added.": "Estancia prevista añadida.",
   "Planner": "Planificador",
@@ -1461,6 +1469,7 @@
   "The basics are already on your list.": "Lo básico ya está en tu lista.",
   "The calculator needs JavaScript. The rules below explain how to count by hand.": "La calculadora necesita JavaScript. Las reglas de abajo explican cómo contar a mano.",
   "The card could not be drawn.": "No se pudo dibujar la tarjeta.",
+  "The countries and towns of each day, from your dated visits. Travel days show both countries.": "Los países y ciudades de cada día, según tus visitas con fecha. Los días de viaje muestran ambos países.",
   "The date history could not be loaded.": "No se pudo cargar el historial de fechas.",
   "The day ledger": "El registro de días",
   "The day ledger: Schengen, visa and tax-residency counting with evidence reports": "El registro de días: cómputo Schengen, de visados y de residencia fiscal con informes de pruebas",

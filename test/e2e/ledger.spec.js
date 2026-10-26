@@ -23,6 +23,18 @@ test('a traveler counts Schengen days, tries a plan, gets an alert and prints ev
     await expect(ledger.locator('.days-left strong')).toHaveText('80');
     await expect(ledger.locator('.timeline-stay').first()).toContainText('Portugal');
     await expect(ledger.locator('.timeline-stay').first()).toContainText('10 days');
+
+    // Where was I? The last 30 days at first: twenty with no visit, then ten in Lisbon.
+    const where = ledger.locator('.whereabouts');
+    await expect(where.locator('li')).toHaveCount(2);
+    await expect(where.locator('li').first()).toContainText('20 days');
+    await expect(where.locator('li').first()).toContainText('No visit recorded');
+    await expect(where.locator('li').last()).toContainText('10 days');
+    await expect(where.locator('li').last()).toContainText('Portugal: Lisbon');
+    await ledger.locator('#where-from').fill(await browserDay(page, -3));
+    await ledger.locator('#where-from').dispatchEvent('change');
+    await expect(where.locator('li')).toHaveCount(1);
+    await expect(where.locator('li')).toContainText('4 days');
     await expect(ledger.locator('#ledger-advice')).toContainText('not legal or tax advice');
     await ledger.getByText('How your ledger data is kept').click();
     await expect(ledger.locator('#ledger-privacy')).toContainText('never your precise location');

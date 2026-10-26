@@ -1,7 +1,9 @@
 // Day ledger evidence (ADR 0010): one row per day, country and visit, with why the day counts
-// and the history of the visit's dates, for the report and its CSV.
+// and the history of the visit's dates, for the report and its CSV; and where the traveler was
+// on any day.
 import { DAY_RULES, dayNumber, daysIn, isoDay } from './days.js';
 import { t } from './i18n.js';
+
 function spanText(start, end, ongoing, format) {
     if (!start) return '';
     if (end) return end === start ? format(start) : `${format(start)} – ${format(end)}`;
@@ -112,3 +114,37 @@ export function buildEvidenceCsv(report, nameOf = id => id) {
     return rows.map(row => row.map(csvField).join(',')).join('\r\n');
 }
 
+
+const MAX_WHEREABOUTS_DAYS = 3660;
+
+/**
+ * Where the traveler was each day from `from` to `to` (YYYY-MM-DD, at most ten years): runs of
+ * consecutive days in the same countries and towns, `{ from, to, days, stays }`, where each stay
+ * is `{ countryId, places, planned }` (a planned stay only, no visit) and a run with no stays has
+ * no visit recorded. Read the any-part-of-a-day ledger, so a travel day is in both countries.
+ */
+export function whereabouts(ledger, from, to) {
+    const start = dayNumber(from);
+    const end = Math.min(dayNumber(to), start + MAX_WHEREABOUTS_DAYS - 1);
+    const runs = [];
+    for (let day = start; day <= end; day += 1) {
+        const stays = [];
+        for (const [countryId, days] of ledger.countries) {
+            const sources = days.get(day);
+            if (!sources?.length) continue;
+            const visits = sources.filter(source => source.kind === 'visit');
+            const places = [...new Set(visits.map(source => source.place.split(',')[0]))].sort((a, b) => a.localeCompare(b));
+            stays.push({ countryId, places, planned: !visits.length });
+        }
+        stays.sort((a, b) => a.countryId.localeCompare(b.countryId));
+        const key = JSON.stringify(stays);
+        const last = runs.at(-1);
+        if (last && last.key === key) {
+            last.to = isoDay(day);
+            last.days += 1;
+        } else {
+            runs.push({ key, from: isoDay(day), to: isoDay(day), days: 1, stays });
+        }
+    }
+    return runs.map(({ key, ...run }) => run);
+}

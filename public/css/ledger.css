@@ -405,3 +405,7 @@
     body:not(.is-reporting) .legend-item[aria-pressed='false'] { display: none; }
     body:not(.is-reporting) .swatch { print-color-adjust: exact; }
 }
+
+/* Where was I? (Ledger tab): days no visit covers stay quiet */
+.whereabouts .is-empty strong { color: var(--muted); }
+.whereabouts small { display: block; }

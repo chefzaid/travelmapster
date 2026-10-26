@@ -1,4 +1,5 @@
-// Small pieces the Ledger tab's sections share: a rule's status chip and a days-used meter.
+// Small pieces the Ledger tab's sections share: a rule's status chip, a days-used meter and a
+// country with its flag.
 import { h } from './ui.js';
 import { t } from './i18n.js';
 
@@ -18,4 +19,9 @@ export function meter(value, max, label) {
         'aria-valuenow': String(Math.min(value, max)),
         'aria-label': label
     }, h('span', { style: `width:${percent}%` }));
+}
+
+export function countryLabel(ctx, id) {
+    const country = ctx.state.index.byId.get(id);
+    return country ? `${country.flag} ${country.name}` : id;
 }
