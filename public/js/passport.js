@@ -6,6 +6,7 @@ import { countryList, shareLabel } from './lists.js';
 import { localToday } from './days.js';
 import { goalsSection } from './passport-goals.js';
 import { shareCardsSection } from './passport-share.js';
+import { friendsSection } from './friends.js';
 import { EARTH_CIRCUMFERENCE_KM, countriesByYear, daysAwayByYear, distanceTraveled, longestTrip } from './travel-stats.js';
 
 function statTile(value, label, tone = '') {
@@ -219,7 +220,9 @@ export function renderPassport(container, ctx) {
         ),
         yearChart('Visits by year', stats.years, row => `${row.year}: ${plural(row.count, 'visit', 'visits')}`),
         travelSections(ctx),
-        h('section', { class: 'share-card' },
+        friendsSection(ctx),
+        // A guest map is never public (ADR 0026).
+        user.guest ? null : h('section', { class: 'share-card' },
             h('h3', {}, '🔗 Share your map'),
             h('p', { class: 'muted small' }, isPublic
                 ? 'Your map is public. Anyone with the link can see your countries and cities (notes and photos stay private).'

@@ -26,6 +26,7 @@ import { setupSearch } from './search.js';
 import { renderExplore, showIdeas } from './explore.js';
 import { AUTH_HASHES, closeAccountMenu, openAuth, renderDemoLedger, setupAccountMenu, setupAuth } from './account.js';
 import { hideHome, offerHome, rememberSignedIn, setupHome, wasSignedIn } from './home.js';
+import { followButton } from './friends.js';
 import { enterGuestMode, guestActive, labelGuestButtons, leaveGuestMode, moveGuestMap, setupGuest, showGuestControls } from './guest.js';
 
 const state = {
@@ -389,6 +390,7 @@ async function startPublicView(username) {
         renderPublicStats($('#public-stats'), state.stats);
         setView('public');
         document.title = `${data.username}'s travel map · TravelMapster`;
+        followButton(context, data.username);
     } catch (error) {
         toast(error.message, { tone: 'error' });
         history.replaceState(null, '', '/');

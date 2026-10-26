@@ -1,5 +1,7 @@
 'use strict';
 
+const { createTripRepository } = require('./trip-repository');
+
 // The legacy travel date is derived from the visits. The app no longer reads or writes
 // markers.travel_date; triggers keep it in step for the previous release until the column
 // is dropped (ADR 0009).
@@ -369,57 +371,11 @@ function createLedgerRepository(db) {
     };
 }
 
-const TRIP_COLUMNS = `id, title, destination, start_date AS "startDate", plan, stops, packing, budget,
-    created_at AS "createdAt", updated_at AS "updatedAt"`;
-
-function createTripRepository(db) {
-    return {
-        async listForUser(userId) {
-            const { rows } = await db.query(
-                `SELECT ${TRIP_COLUMNS} FROM trips WHERE user_id = $1
-                 ORDER BY COALESCE(start_date::timestamptz, created_at) DESC, id DESC`,
-                [userId]
-            );
-            return rows;
-        },
-
-        async create(userId, trip) {
-            const { rows } = await db.query(
-                `INSERT INTO trips (user_id, title, destination, start_date, plan, stops, packing, budget)
-                 VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7::jsonb, $8::jsonb)
-                 RETURNING ${TRIP_COLUMNS}`,
-                [userId, trip.title, trip.destination, trip.startDate, JSON.stringify(trip.plan), JSON.stringify(trip.stops ?? []),
-                    JSON.stringify(trip.packing ?? []), JSON.stringify(trip.budget ?? {})]
-            );
-            return rows[0];
-        },
-
-        // Stops, a packing list or a budget left out (null) keep the stored ones.
-        async update(userId, tripId, trip) {
-            const json = value => (value ? JSON.stringify(value) : null);
-            const { rows } = await db.query(
-                `UPDATE trips SET title = $1, destination = $2, start_date = $3, plan = $4::jsonb,
-                     stops = COALESCE($5::jsonb, stops), packing = COALESCE($6::jsonb, packing),
-                     budget = COALESCE($7::jsonb, budget), updated_at = now()
-                 WHERE id = $8 AND user_id = $9
-                 RETURNING ${TRIP_COLUMNS}`,
-                [trip.title, trip.destination, trip.startDate, JSON.stringify(trip.plan),
-                    json(trip.stops), json(trip.packing), json(trip.budget), tripId, userId]
-            );
-            return rows[0] || null;
-        },
-
-        async remove(userId, tripId) {
-            const { rowCount } = await db.query('DELETE FROM trips WHERE id = $1 AND user_id = $2', [tripId, userId]);
-            return rowCount > 0;
-        }
-    };
-}
-
 module.exports = {
     createUserRepository,
     createMarkerRepository,
     createVisitRepository,
     createLedgerRepository,
+    // Trips, with the accounts they are shared with, live in trip-repository.js (ADR 0028).
     createTripRepository
 };

@@ -352,6 +352,8 @@ export function computeStats(markers, index, { trips = 0, homeId = null, country
         totalCountries: counted.length,
         countryList: list.id,
         countedIds,
+        // The countries been to as the list counts them, to compare with a friend's (ADR 0028).
+        countedVisitedIds: visited,
         // Territories been to that the list leaves out, such as Kosovo or Greenland on the UN list.
         uncountedIds: [...status.visitedIds].filter(id => !countedIds.has(listed(id))),
         trips,

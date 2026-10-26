@@ -79,7 +79,7 @@ Differentiators:
 - [ ] Print-on-demand ordering of posters. *(waiting: see Needs Input › Print-on-demand partner)*
 - [ ] Yearly travel recap and a printable travel book from places, notes and photos (builds on travel albums). *(waiting: see Needs Input › Photo storage)*
 - [x] Shareable image cards (passport stamps, country count, yearly recap) without exposing private notes.
-- [ ] Friends: follow public maps, compare countries visited, and plan an itinerary together with edit or view roles.
+- [x] Friends: follow public maps, compare countries visited, and plan an itinerary together with edit or view roles.
 - [x] Installable offline app (PWA) using the bundled map data.
 
 ### Teams tier

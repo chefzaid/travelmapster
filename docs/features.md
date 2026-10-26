@@ -182,6 +182,11 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   two, each with its own days and dates. Each day shows its stop; ideas, the calendar, the
   printed itinerary and the text copy follow the stops. In the ledger the trip plans a stay per
   country, the travel day counting in both, and recording it adds a visit to each stop.
+- **Planning together** ([ADR 0028](adr/0028-friends-and-shared-trips.md)): the owner of a trip
+  shares it by username with up to 20 people who can edit it (days, stops, packing list, budget)
+  or only view it; it shows in their Trips tab marked with its owner, and they can plan it in
+  their own ledger, record it as their own visits or leave it. A save from an older copy than
+  someone else's is refused, and the newer trip shows instead.
 - **Itinerary map**: the open trip shows on the map as numbered stops along a route, framed
   when the stops change; a day's 📍 button flies to its stop and shows it bigger. Days move by
   dragging their handle or with the ↑ ↓ buttons (the stops keep their days, so a day's plans can
@@ -236,6 +241,9 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   lived in left out), the approximate distance traveled (straight lines between every place been
   to, in the order of the visits, also told as times around the Earth) and countries per year
   with how many were new.
+- **Friends**: follow friends' public maps from their shared page or the Passport tab (up to
+  200; they are not told), see how many countries each has been to and how many you share,
+  and compare them: both of you, only you, only them, counted on your country list.
 
 ## Accounts And Sharing
 

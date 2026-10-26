@@ -77,6 +77,9 @@ their owner chose `public`; private and missing profiles return the same 404.
   ledger settings or the date history. Whether a shared place was lived in or a layover is shown,
   like its status. Journey lines, which make the order of trips obvious, are drawn for visitors
   only when the owner turns them on ([ADR 0016](adr/0016-timeline-journeys-and-palettes.md)).
+- Following a map shows only what its public page shows, and its owner is never told or shown
+  who follows; a trip is visible only to its owner and the accounts it is shared with, and only
+  editors change it ([ADR 0028](adr/0028-friends-and-shared-trips.md)).
 - A guest map is kept only in the browser's storage and never sent, until the guest signs up and
   it moves into the account; anyone using the same browser profile can see it
   ([ADR 0026](adr/0026-guest-mode.md)).
