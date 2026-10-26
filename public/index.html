@@ -23,9 +23,144 @@
     <link rel="stylesheet" href="/__assets__/css/map.css">
     <link rel="stylesheet" href="/__assets__/css/ledger.css">
     <link rel="stylesheet" href="/__assets__/css/pages.css">
+    <link rel="stylesheet" href="/__assets__/css/home.css">
 </head>
 <body>
     <a class="skip-link" href="#panel">Skip to panel</a>
+
+    <!-- Signed out at "/": the presentation, before the app (ADR 0011) -->
+    <div id="home" class="home" hidden>
+        <header class="home-bar">
+            <a class="brand" href="/" aria-label="TravelMapster home">
+                <img src="/__assets__/logo.svg" alt="" width="40" height="40">
+                <span class="brand-name">Travel<span>Mapster</span></span>
+            </a>
+            <nav class="home-nav" aria-label="Presentation">
+                <a href="#home-features">Features</a>
+                <a href="#home-ledger">Day ledger</a>
+                <a href="#home-plans">Plans</a>
+            </nav>
+            <button class="btn btn-ghost btn-sm" type="button" data-auth-mode="login">Log in</button>
+        </header>
+
+        <main class="home-main">
+            <section class="home-hero" aria-labelledby="home-title">
+                <p class="eyebrow">Your world, colored in</p>
+                <h1 id="home-title" tabindex="-1">Where have you <span class="scribble">been?</span></h1>
+                <p class="home-lead">TravelMapster is a playful travel atlas with a day ledger you can rely on. Color in the
+                    countries you have visited, keep every trip with its dates, plan the next one, and always know how many
+                    days you have left in the Schengen area or before a tax-residency limit.</p>
+                <div class="hero-actions">
+                    <button class="btn btn-primary" type="button" data-auth-mode="register">Sign up free</button>
+                    <button class="btn btn-ghost" type="button" data-home-demo>Explore the demo map</button>
+                </div>
+                <p class="home-note">Free, no card needed. No ads, no trackers: your travels are yours.</p>
+            </section>
+
+            <section id="home-features" class="home-features" aria-labelledby="home-features-title">
+                <h2 id="home-features-title">Everything about your travels, in one map</h2>
+
+                <article class="home-feature feature-atlas">
+                    <p class="feature-icon" aria-hidden="true">🎨</p>
+                    <h3>The atlas</h3>
+                    <p>Click a country or a town and mark it <strong>been there</strong>, <strong>lived there</strong>,
+                        <strong>transit only</strong> or <strong>wishlist</strong>; the map colors itself in. Set your home
+                        country, choose cheerful, color-blind safe or print-friendly colors, and count against every
+                        territory on the map or the UN list.</p>
+                </article>
+
+                <article class="home-feature feature-places">
+                    <p class="feature-icon" aria-hidden="true">📍</p>
+                    <h3>Places and visits</h3>
+                    <p>Every place keeps its visits with their dates, notes, photo links, ratings, tags and an emoji pin.
+                        Bring your past with you: import a Polarsteps export, a list of countries from Been or Visited, your
+                        photos or your phone's location history (read in your browser, reduced to towns), or a file from
+                        another app.</p>
+                </article>
+
+                <article class="home-feature feature-journeys">
+                    <p class="feature-icon" aria-hidden="true">🕰️</p>
+                    <h3>Journeys through time</h3>
+                    <p>Slide the timeline to see your map as it was in any year, and replay your journeys as lines drawn
+                        from place to place. "On this day" brings back where you were in years past.</p>
+                </article>
+
+                <article class="home-feature feature-trips">
+                    <p class="feature-icon" aria-hidden="true">🗓️</p>
+                    <h3>Trips</h3>
+                    <p>Plan day-by-day itineraries to one place or several, filled with ideas from travel guides and shown
+                        as a route on the map. Keep a packing list and a budget in any currency, export the trip to your
+                        calendar, print it, and record it as visits once you are back.</p>
+                </article>
+
+                <article class="home-feature feature-passport">
+                    <p class="feature-icon" aria-hidden="true">🛂</p>
+                    <h3>Your passport</h3>
+                    <p>Stamps for every country, traveler ranks, badges, collections such as every EU member or every
+                        capital, and yearly goals. Share picture cards of your count, your stamps or your year, and
+                        download your map as a poster in standard print sizes.</p>
+                </article>
+
+                <article id="home-ledger" class="home-feature feature-ledger">
+                    <p class="feature-icon" aria-hidden="true">📒</p>
+                    <h3>The day ledger</h3>
+                    <p>Because every visit has dates, TravelMapster counts your days in each country: the Schengen 90/180
+                        rule, your own visa stay limits and the 183-day tax-residency threshold, with alerts before a limit,
+                        plans checked ahead of time and a printable evidence report for an adviser or a border officer.</p>
+                </article>
+
+                <article class="home-feature feature-calculator">
+                    <p class="feature-icon" aria-hidden="true">🧮</p>
+                    <h3>Free Schengen calculator</h3>
+                    <p>Not ready for an account? Count your days in the Schengen area for any date, with past and planned
+                        stays. Nothing leaves your browser.</p>
+                    <a class="story-link" href="/schengen-calculator">Open the Schengen calculator <span aria-hidden="true">→</span></a>
+                </article>
+
+                <article class="home-feature feature-sharing">
+                    <p class="feature-icon" aria-hidden="true">🔗</p>
+                    <h3>Share your map</h3>
+                    <p>Make your map public and share its link, with a preview picture when you post it; embed it on your
+                        blog; and choose whether search engines may list it. Notes, photos, your home country and where you
+                        are now stay private.</p>
+                </article>
+
+                <article class="home-feature feature-yours">
+                    <p class="feature-icon" aria-hidden="true">📦</p>
+                    <h3>Yours to keep</h3>
+                    <p>Works on any device and installs as an app that opens offline. Download all your data at any time,
+                        as JSON, CSV, GeoJSON or KML, and delete your account whenever you like.</p>
+                </article>
+            </section>
+
+            <section id="home-plans" class="home-plans" aria-labelledby="home-plans-title">
+                <h2 id="home-plans-title">Plans</h2>
+                <div class="plan-card plan-free">
+                    <h3>Free</h3>
+                    <p class="plan-tag">Available now · no card needed</p>
+                    <ul class="plan-points">
+                        <li>The atlas: countries, cities, wishlist, trips and passport</li>
+                        <li>The day ledger: Schengen, visa and tax-residency counting with evidence reports</li>
+                        <li>Imports, exports, posters to download and a public map to share</li>
+                    </ul>
+                    <button class="btn btn-primary btn-block" type="button" data-auth-mode="register">Start my free map</button>
+                </div>
+                <div class="plan-card plan-soon">
+                    <h3>Keepsakes</h3>
+                    <p class="plan-tag">Coming soon</p>
+                    <p>Posters printed and delivered, and travel books made from your map. Prices will be announced before
+                        they launch.</p>
+                </div>
+            </section>
+        </main>
+
+        <footer class="home-footer">
+            <p><button class="link-button" type="button" data-home-demo>Explore the demo map</button> ·
+                <a href="/schengen-calculator">Schengen calculator</a> ·
+                <button class="link-button" type="button" data-auth-mode="login">Log in</button></p>
+            <p class="muted small">Map data: Natural Earth (public domain) and GeoNames (CC BY 4.0).</p>
+        </footer>
+    </div>
 
     <div class="app" id="app" data-state="loading">
         <div id="map" class="map" role="application" aria-label="World map. Click a country or city to see details."></div>
@@ -90,6 +225,7 @@
                         <button class="btn btn-primary" type="button" data-auth-mode="register">Sign up free</button>
                         <button class="btn btn-ghost" type="button" data-auth-mode="login">Log in</button>
                     </div>
+                    <p><button class="link-button" type="button" data-home-show><span aria-hidden="true">←</span> What TravelMapster does</button></p>
                     <p class="demo-note"><span aria-hidden="true">👀</span> The map shows a sample traveler. Click a
                         country, press <strong>Been there</strong> and watch it color in. Nothing is saved.</p>
                 </div>
@@ -110,8 +246,9 @@
                         <a class="story-link" href="/schengen-calculator">Try the free Schengen calculator, no account needed <span aria-hidden="true">→</span></a>
                     </article>
                     <article class="story-card story-keepsakes">
-                        <h3><span aria-hidden="true">🖼️</span> Keepsakes <span class="chip chip-soon">Coming soon</span></h3>
-                        <p>Turn your map into a printed poster, and your places, notes and photos into a travel book.</p>
+                        <h3><span aria-hidden="true">🖼️</span> Keepsakes</h3>
+                        <p>Download your map as a poster in standard print sizes today. Printed posters and travel books
+                            made from your places, notes and photos are <span class="chip chip-soon">Coming soon</span></p>
                     </article>
                 </section>
 

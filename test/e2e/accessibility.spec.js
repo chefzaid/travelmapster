@@ -29,7 +29,11 @@ for (const colorScheme of ['light', 'dark']) {
         // audit would otherwise be measured at half opacity.
         await page.emulateMedia({ colorScheme, reducedMotion: 'reduce' });
         await page.goto('/');
-        await expect(page.locator('#app[data-map="ready"] #welcome-view')).toBeVisible();
+        await expect(page.locator('#home')).toBeVisible();
+        await expect(page.locator('#app[data-map="ready"]')).toBeAttached();
+        await expectAccessible(page, 'presentation');
+        await page.locator('#home').getByRole('button', { name: 'Explore the demo map' }).first().click();
+        await expect(page.locator('#welcome-view')).toBeVisible();
         await expectAccessible(page, 'welcome');
 
         await page.click('#tab-register');
@@ -168,7 +172,7 @@ for (const colorScheme of ['light', 'dark']) {
         test.setTimeout(90_000);
         await page.emulateMedia({ colorScheme, reducedMotion: 'reduce' });
         const username = `a11y_map_${colorScheme}_${Date.now()}`;
-        await page.goto('/');
+        await page.goto('/#sign-up');
         await expect(page.locator('#app[data-map="ready"] #welcome-view')).toBeVisible();
         await page.click('#tab-register');
         await page.fill('#auth-username', username);
@@ -233,6 +237,7 @@ for (const colorScheme of ['light', 'dark']) {
         await page.emulateMedia({ colorScheme });
         // Landing page with a demo place card open.
         await page.goto('/');
+        await page.locator('#home').getByRole('button', { name: 'Explore the demo map' }).first().click();
         await expect(page.locator('#demo-ledger')).toContainText('Schengen days');
         await page.fill('#global-search', 'Lisbon');
         await page.locator('#search-results [role="option"]').filter({ hasText: 'Lisbon' }).first().click();

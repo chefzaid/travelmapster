@@ -155,6 +155,9 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   traveler. They can color places in on it, and the ledger story counts the sample traveler's
   Schengen days live; nothing is saved. Signed-in visitors land on their own map, and shared
   maps open read-only as before.
+- **Presentation page**: signed-out visitors at `/` first see what TravelMapster does, feature
+  by feature, with the plans and the ways in (sign up, log in, explore the demo map); travelers
+  signed in on this browser go straight to their map.
 - **Free Schengen 90/180 calculator** at `/schengen-calculator`, without an account: past and
   planned stays (or "still there"), days used and left on any day, overstays with the stays
   that cause them, and the latest day you can stay. It counts with the same rules as the Ledger
@@ -258,7 +261,7 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
 ## Current Boundaries
 
 - No social login yet; a place or visit holds one photo link, not an album ([roadmap](../TODO.md)).
-- No paid plans or prices yet; the landing page shows keepsakes as coming soon.
+- No paid plans or prices yet; the presentation and the landing page show printed keepsakes as coming soon.
 - Photos are links to images hosted elsewhere; the app stores no files.
 - Ledger alerts are in-app only: there is no email yet. The date history starts with the day
   ledger release. A rule for a country does not count its overseas territories that the map

@@ -14,7 +14,7 @@ test('the app opens offline with the places last loaded, and keeps nothing after
     expect(manifest.icons.map(icon => icon.sizes)).toEqual(expect.arrayContaining(['192x192', '512x512']));
 
     const username = `e2e_offline_${Date.now()}`;
-    await page.goto('/');
+    await page.goto('/#sign-up');
     await expect(page.locator('#app[data-map="ready"] #welcome-view')).toBeVisible();
     await page.click('#tab-register');
     await page.fill('#auth-username', username);
@@ -54,6 +54,8 @@ test('the app opens offline with the places last loaded, and keeps nothing after
     expect(await page.evaluate(async () => (await globalThis.caches.keys()).includes('travelmapster-account'))).toBe(false);
     await context.setOffline(true);
     await page.reload();
+    // Signed out, the page starts with the presentation, from the cached copy.
+    await expect(page.locator('#home')).toBeVisible();
     await expect(page.locator('#app[data-map="ready"] #welcome-view')).toBeVisible();
     await expect(page.locator('#main-view')).toBeHidden();
     await context.setOffline(false);

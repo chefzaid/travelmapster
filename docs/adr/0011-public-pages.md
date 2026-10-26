@@ -20,6 +20,13 @@ and the privacy promise of the day ledger ([ADR 0010](0010-day-ledger.md)).
   `/schengen-calculator`) with the asset fingerprint rewritten like the app page. There is no
   server-side rendering: crawlers read the static content, and scripts only add the
   interactive parts.
+- **Presentation.** Signed-out visitors at `/` first see a full presentation page over the app:
+  every feature (atlas, places and visits, journeys, trips, passport, day ledger, Schengen
+  calculator, sharing, data ownership) and the plans, with **Sign up free**, **Log in** and
+  **Explore the demo map**. It is static HTML in `index.html`, so crawlers read it, and the app
+  behind it stays inert. A browser that was signed in recently waits for the session check
+  before showing it, so returning travelers never see it flash; shared maps and the `#sign-up`
+  and `#log-in` links skip it, and the landing panel links back to it. *(Amended 2026-10-26.)*
 - **Landing page.** `/` stays the app. Signed-in visitors land on their map as before, and a
   shared map (`/?u=<name>`) opens read-only as before. Signed out, the panel tells the atlas,
   ledger and keepsakes story, shows the plans (the free plan today, keepsakes marked as coming

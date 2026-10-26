@@ -84,6 +84,15 @@ test('a visitor tries the demo map on the landing page, then signs up to an empt
         if (request.method() !== 'GET' && new URL(request.url()).pathname.startsWith('/api/markers')) writes.push(request.url());
     });
     await page.goto('/');
+    // The presentation comes first: every feature, the plans, and the ways in.
+    const home = page.locator('#home');
+    await expect(home.getByRole('heading', { level: 1 })).toHaveText('Where have you been?');
+    for (const feature of ['The atlas', 'Places and visits', 'Journeys through time', 'Trips', 'Your passport', 'The day ledger', 'Free Schengen calculator', 'Share your map']) {
+        await expect(home.getByRole('heading', { name: feature })).toBeVisible();
+    }
+    await expect(home.locator('.plan-soon')).toContainText('Coming soon');
+    await expect(home.getByRole('link', { name: /Schengen calculator/ }).first()).toHaveAttribute('href', '/schengen-calculator');
+    await home.getByRole('button', { name: 'Explore the demo map' }).first().click();
     await expect(page.locator('#app[data-map="ready"] #welcome-view')).toBeVisible();
     await expect(page.locator('#demo-ledger')).toContainText('Schengen days');
     await expect(page.locator('#legend-visited')).toHaveText('10');
@@ -97,8 +106,12 @@ test('a visitor tries the demo map on the landing page, then signs up to an empt
     await expect(page.locator('.toast')).toContainText('on the demo map');
     expect(writes).toEqual([]);
 
+    // The panel leads back to the presentation, whose sign-up opens the form.
     await page.keyboard.press('Escape');
-    await page.locator('.hero-actions').getByRole('button', { name: 'Sign up free' }).click();
+    await page.getByRole('button', { name: 'What TravelMapster does' }).click();
+    await expect(home).toBeVisible();
+    await home.locator('.home-hero').getByRole('button', { name: 'Sign up free' }).click();
+    await expect(home).toBeHidden();
     await expect(page.locator('#tab-register')).toHaveAttribute('aria-selected', 'true');
     await expect(page.locator('#auth-username')).toBeFocused();
     await page.fill('#auth-username', `e2e_demo_${Date.now()}`);
@@ -107,5 +120,9 @@ test('a visitor tries the demo map on the landing page, then signs up to an empt
     await expect(page.locator('#main-view')).toBeVisible({ timeout: 15_000 });
     // The demo places were never saved: the new map starts empty.
     await expect(page.locator('#legend-visited')).toHaveText('0');
+    // Back in this browser, a signed-in traveler goes straight to their map.
+    await page.reload();
+    await expect(page.locator('#main-view')).toBeVisible();
+    await expect(home).toBeHidden();
     expect(errors).toEqual([]);
 });

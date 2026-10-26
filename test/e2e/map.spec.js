@@ -2,13 +2,12 @@
 
 // The map itself: towns drawn at street level, and the timeline with journey lines and palettes.
 const { test, expect } = require('@playwright/test');
-const { addPlaces, journeyLineCount, signUp, stubThirdParties, trackErrors } = require('./helpers');
+const { addPlaces, journeyLineCount, openDemo, signUp, stubThirdParties, trackErrors } = require('./helpers');
 
 test.beforeEach(({ page }) => stubThirdParties(page));
 
 test('towns drawn on the map open their card when clicked', async ({ page }) => {
-    await page.goto('/');
-    await expect(page.locator('#app[data-map="ready"] #welcome-view')).toBeVisible();
+    await openDemo(page);
     // Zoom to street level around Brussels, then pick a town MapLibre actually drew.
     await page.evaluate(() => globalThis.document.getElementById('map').travelMap.jumpTo({ center: [4.5, 50.8], zoom: 9 }));
     const handle = await page.waitForFunction(() => {

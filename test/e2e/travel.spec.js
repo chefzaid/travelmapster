@@ -261,7 +261,7 @@ test('private maps are not shared', async ({ page }) => {
 });
 
 test('login errors are shown inline', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/#log-in');
     await page.fill('#auth-username', 'nobody_here');
     await page.fill('#auth-password', 'wrong password');
     await page.click('#auth-submit');
