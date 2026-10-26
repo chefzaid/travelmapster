@@ -126,7 +126,8 @@ JSON under `/api`, described in full in [OpenAPI](api/openapi.json) and kept bac
 | `public/js/visits.js` | Visit dates, counts, last-visit filter and validation (pure, unit tested) |
 | `public/js/memories.js` | "On this day": visits that began on today's date in earlier years (pure, unit tested) |
 | `public/js/days.js`, `ledger-evidence.js`, `ledger-rules.js` | Day ledger: day rules, days per country, Schengen 90/180 and stay rules, thresholds, planned stays and alerts; the day-by-day evidence and its CSV; and checking edited rules like the API (pure, unit and property tested) |
-| `public/js/ledger.js`, `ledger-report.js`, `ledger-org.js`, `ledger-parts.js` | Ledger tab, its date history and printable evidence report, the employer rules counted on business trips, and the status chips and meters they share |
+| `public/js/ledger.js`, `ledger-report.js`, `ledger-org.js`, `ledger-parts.js` | Ledger tab, its date history and printable evidence report, the employer rules counted on business trips, and the status chips, meters and country labels they share |
+| `public/js/ledger-where.js`, `ledger-history.js`, `travel-history.js` | "Where was I?" for any period, and the travel history for visa forms with its printable page and CSV (pure `travel-history.js`, unit tested) |
 | `public/js/trips.js`, `ideas.js` | Trip planner and Wikivoyage ideas |
 | `public/js/trip-days.js`, `trip-extras.js`, `trip-stops.js`, `trip-budget.js`, `trip-checklist.js` | The trip editor's day cards, its stops, packing list and budget, and their pure rules (unit tested); whom a trip is for and its organization's checklist |
 | `public/js/itinerary.js` | An itinerary as text, as an iCalendar file, as a template copy without dates, and as the day ledger's planned stay that follows the trip (pure, unit tested) |

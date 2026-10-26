@@ -175,7 +175,7 @@ Ideas that follow the product direction: a travel record people rely on for visa
 
 ### Day ledger
 
-- [ ] Travel history for visa forms: every trip abroad in the last 5 or 10 years (country, entry and exit dates, purpose), as UK, US, Canadian and Australian visa applications ask, printable and as CSV, from the ledger's stays.
+- [x] Travel history for visa forms: every trip abroad in the last 5 or 10 years (country, entry and exit dates, purpose), as UK, US, Canadian and Australian visa applications ask, printable and as CSV, from the ledger's stays.
 - [x] "Where was I on…?": pick any date or range and see the country and town for each day, with the visit behind it; also a quick answer on the Ledger tab.
 - [ ] Days that do not count: periods under a residence permit or long-stay visa of a country, excluded from that country's stay rules (the Schengen calculator page already says such days do not count, but the ledger counts them).
 - [ ] Travel documents: passports, visas and residence permits with their validity dates, warnings before they expire, and a check of planned trips against the common "valid six months after your stay" rule; numbers are never stored, only names and dates.

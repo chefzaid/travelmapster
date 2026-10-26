@@ -76,6 +76,20 @@ test('a traveler counts Schengen days, tries a plan, gets an alert and prints ev
     await page.keyboard.press('Escape');
     await expect(report).toBeHidden();
 
+    // The travel history for visa forms: the stay in Portugal, still going on; the planned
+    // stay in Spain is not part of it.
+    await expect(ledger.locator('#history-title + p + label + p')).toHaveText('1 stay abroad in this period.');
+    await ledger.getByRole('button', { name: /View history/ }).click();
+    await expect(report.locator('tbody tr')).toHaveCount(1);
+    await expect(report.locator('tbody tr')).toContainText('Portugal');
+    await expect(report.locator('tbody tr')).toContainText('still there');
+    await expect(report.locator('tbody tr')).toContainText('Tourism or personal');
+    const historyDownload = page.waitForEvent('download');
+    await report.getByRole('button', { name: /CSV/ }).click();
+    expect((await historyDownload).suggestedFilename()).toBe('travelmapster-travel-history-10-years.csv');
+    await page.keyboard.press('Escape');
+    await expect(report).toBeHidden();
+
     // Settings and plans live in the account.
     await page.reload();
     await expect(page.locator('#main-view')).toBeVisible();

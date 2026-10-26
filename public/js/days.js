@@ -130,6 +130,9 @@ export function buildLedger(markers, countryOf, { dayRule = 'presence', today, p
                 visitId: visit.id,
                 place: marker.name,
                 category: marker.category,
+                // How the traveler was there and why, for the travel history (visa forms ask).
+                stay: marker.stay || 'visit',
+                purpose: visit.purpose || 'personal',
                 startDate: visit.startDate,
                 endDate: visit.endDate || '',
                 ongoing: Boolean(visit.ongoing) && !visit.endDate,
