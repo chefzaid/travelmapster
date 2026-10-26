@@ -147,6 +147,11 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
 - Itineraries of up to 30 days with morning, afternoon and evening slots.
 - New itineraries are pre-filled with sights, activities and food ideas from Wikivoyage, fetched by the browser.
 - A travel-ideas panel for any country or city, and copying an itinerary as text.
+- Exporting an itinerary to a calendar: an `.ics` file with an all-day event per day holding
+  that day's plans (it needs a start date), which any calendar app imports.
+- A printable itinerary, one row per day, to print or save as PDF from the browser.
+- Duplicating a saved trip as a template: the same days and plans, named "(copy)", without
+  dates.
 
 ## Passport
 

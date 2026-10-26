@@ -25,7 +25,9 @@ for (const colorScheme of ['light', 'dark']) {
     test(`every screen meets WCAG AA in the ${colorScheme} theme`, async ({ page }) => {
         // One journey audits every screen and dialog, which takes longer than a single flow.
         test.setTimeout(90_000);
-        await page.emulateMedia({ colorScheme });
+        // Reduced motion settles the screen at once: a toast fading out in the middle of an
+        // audit would otherwise be measured at half opacity.
+        await page.emulateMedia({ colorScheme, reducedMotion: 'reduce' });
         await page.goto('/');
         await expect(page.locator('#welcome-view')).toBeVisible();
         await expectAccessible(page, 'welcome');
@@ -116,6 +118,18 @@ for (const colorScheme of ['light', 'dark']) {
         await page.getByRole('button', { name: /View report/ }).click();
         await expect(page.locator('#report-view tbody tr').nth(3)).toBeVisible();
         await expectAccessible(page, 'evidence report');
+        await page.locator('#report-view').getByRole('button', { name: 'Close' }).click();
+
+        // A trip and its printable itinerary.
+        await page.click('#tab-trips');
+        await page.getByRole('button', { name: 'Plan my first trip' }).click();
+        await page.getByLabel('Where to?').fill('Lisbon');
+        await page.getByRole('button', { name: 'Create trip' }).click();
+        await expect(page.locator('#trips-tab .day-card')).toHaveCount(3);
+        await expectAccessible(page, 'trip editor');
+        await page.locator('#trips-tab').getByRole('button', { name: '🖨️ Print' }).click();
+        await expect(page.locator('#report-view tbody tr')).toHaveCount(3);
+        await expectAccessible(page, 'printable itinerary');
         await page.locator('#report-view').getByRole('button', { name: 'Close' }).click();
 
         await page.click('#account-btn');

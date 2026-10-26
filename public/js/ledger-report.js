@@ -1,6 +1,7 @@
 // Ledger tab, evidence side: the date history and the day-by-day evidence report, printed
 // or downloaded as CSV. Built on the device from days.js, only when asked.
-import { h, $, downloadFile, formatDate } from './ui.js';
+import { h, downloadFile, formatDate } from './ui.js';
+import { openPrintView, printTable } from './print-view.js';
 import { DAY_RULES, buildEvidenceCsv, describeChange, evidenceReport, localToday } from './days.js';
 
 const form = { country: 'all', from: '', to: '' };
@@ -37,38 +38,16 @@ function reportCountries(ctx, overview) {
     return [...overview.ledger.countries.keys()].sort((a, b) => countryName(ctx, a).localeCompare(countryName(ctx, b)));
 }
 
-function closeReport(opener) {
-    $('#report-view')?.remove();
-    document.body.classList.remove('is-reporting');
-    opener?.focus();
-}
-
-function reportTable(headings, rows) {
-    return h('table', { class: 'report-table' },
-        h('thead', {}, h('tr', {}, headings.map(label => h('th', { scope: 'col' }, label)))),
-        h('tbody', {}, rows));
-}
-
 function openReport(ctx, report, opener) {
     const nameOf = id => countryName(ctx, id);
     const csvName = `travelmapster-evidence-${report.from}-${report.to}.csv`;
     const rule = DAY_RULES[report.dayRule];
-    const close = () => closeReport(opener);
-    const page = h('div', {
-        id: 'report-view',
-        class: 'report-view',
-        role: 'region',
-        'aria-labelledby': 'report-title',
-        onkeydown: event => { if (event.key === 'Escape') close(); }
-    },
-        h('article', { class: 'report' },
-            h('div', { class: 'report-actions' },
-                h('button', { type: 'button', class: 'btn btn-primary btn-sm', onclick: () => window.print() }, '🖨️ Print or save as PDF'),
-                h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => downloadFile(csvName, buildEvidenceCsv(report, nameOf), 'text/csv') }, '⬇️ CSV'),
-                h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: close }, 'Close')
-            ),
-            h('p', { class: 'eyebrow' }, 'TravelMapster day ledger'),
-            h('h1', { id: 'report-title', tabindex: '-1' }, 'Day-by-day evidence'),
+    openPrintView({
+        eyebrow: 'TravelMapster day ledger',
+        title: 'Day-by-day evidence',
+        opener,
+        actions: h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => downloadFile(csvName, buildEvidenceCsv(report, nameOf), 'text/csv') }, '⬇️ CSV'),
+        content: [
             h('dl', { class: 'report-facts' },
                 h('dt', {}, 'Traveler'), h('dd', {}, ctx.state.user.username),
                 h('dt', {}, 'Period'), h('dd', {}, `${formatDate(report.from)} – ${formatDate(report.to)}`),
@@ -76,10 +55,10 @@ function openReport(ctx, report, opener) {
                 h('dt', {}, 'Generated'), h('dd', {}, new Date().toLocaleString(undefined, { dateStyle: 'long', timeStyle: 'short' }))
             ),
             h('h2', {}, 'Days per country'),
-            reportTable(['Country', 'Days'],
+            printTable(['Country', 'Days'],
                 report.totals.map(total => h('tr', {}, h('th', { scope: 'row' }, nameOf(total.countryId)), h('td', {}, total.days)))),
             h('h2', {}, 'Days'),
-            report.rows.length ? reportTable(['Date', 'Country', 'Place', 'Visit', 'Why it counts'],
+            report.rows.length ? printTable(['Date', 'Country', 'Place', 'Visit', 'Why it counts'],
                 report.rows.flatMap(row => row.sources.map(source => h('tr', {},
                     h('td', {}, row.date),
                     h('td', {}, nameOf(row.countryId)),
@@ -89,19 +68,15 @@ function openReport(ctx, report, opener) {
                 ))))
                 : h('p', {}, 'No days in this period.'),
             h('h2', {}, 'Changes to visit dates'),
-            report.changes.length ? reportTable(['When', 'Place', 'Change'],
+            report.changes.length ? printTable(['When', 'Place', 'Change'],
                 report.changes.map(change => h('tr', {},
                     h('td', {}, changeWhen(change)), h('td', {}, change.placeName), h('td', {}, describeChange(change, formatDate))
                 )))
                 : h('p', {}, 'No changes recorded for these visits.'),
             h('p', { class: 'report-foot' }, 'Each day lists the visit it comes from. A city counts for its country. A visit without a last day counts its first day only, unless it is marked as still going on, when it counts up to the day of the report. The date history starts with the day ledger; visits recorded earlier show no history before it.'),
             h('p', { class: 'report-foot' }, ADVICE_NOTE)
-        )
-    );
-    closeReport();
-    document.body.append(page);
-    document.body.classList.add('is-reporting');
-    $('#report-title').focus();
+        ]
+    });
 }
 
 export function reportSection(ctx, overview) {
