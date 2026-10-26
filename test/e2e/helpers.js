@@ -21,9 +21,17 @@ function trackErrors(page) {
     return errors;
 }
 
-async function signUp(page, username) {
+/** Opens the demo map from the presentation that visitors see first. */
+async function openDemo(page) {
     await page.goto('/');
-    // The form is ready once the landing page shows.
+    await page.locator('#home').getByRole('button', { name: 'Explore the demo map' }).first().click();
+    await expect(page.locator('#home')).toBeHidden();
+    await expect(page.locator('#app[data-map="ready"] #welcome-view')).toBeVisible();
+}
+
+async function signUp(page, username) {
+    // A sign-up link skips the presentation; the form is ready once the landing panel shows.
+    await page.goto('/#sign-up');
     await expect(page.locator('#app[data-map="ready"] #welcome-view')).toBeVisible();
     await page.click('#tab-register');
     await page.fill('#auth-username', username);
@@ -77,4 +85,4 @@ async function addPlaces(page, places) {
 const journeyLineCount = page => page.evaluate(async () =>
     (await globalThis.document.getElementById('map').travelMap.getSource('journeys').getData()).features.length);
 
-module.exports = { addPlaces, addVisit, browserDay, journeyLineCount, markCity, signUp, stubThirdParties, trackErrors };
+module.exports = { addPlaces, addVisit, browserDay, journeyLineCount, markCity, openDemo, signUp, stubThirdParties, trackErrors };

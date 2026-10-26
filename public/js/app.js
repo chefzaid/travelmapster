@@ -25,6 +25,7 @@ import { editPlace } from './place-form.js';
 import { setupSearch } from './search.js';
 import { renderExplore, showIdeas } from './explore.js';
 import { AUTH_HASHES, closeAccountMenu, openAuth, renderDemoLedger, setupAccountMenu, setupAuth } from './account.js';
+import { hideHome, offerHome, rememberSignedIn, setupHome, wasSignedIn } from './home.js';
 
 const state = {
     user: null,
@@ -284,6 +285,7 @@ function setView(name) {
 }
 
 function showSignedOut() {
+    rememberSignedIn(false);
     state.user = null;
     state.demo = true;
     state.markers = demoMarkers(localToday());
@@ -309,10 +311,12 @@ let sessionStarted = false;
 // Starts the signed-in view, for `known` user or the session's; it waits for the map.
 async function startSession(known) {
     sessionStarted = true;
+    hideHome();
     const user = known || await api.currentUser();
     await mapReady;
     state.user = user;
     state.demo = false;
+    rememberSignedIn(true);
     setTimelineOpen(context, false);
     // A replica of the previous release sends no palette: keep this browser's.
     if (user.mapPalette) applyPalette(context, user.mapPalette);
@@ -452,16 +456,22 @@ async function init() {
     // Start with this browser's palette; a signed-in traveler's own choice follows.
     applyPalette(context, storedPalette());
     setupOffline();
-    // The landing page's forms work before the map has loaded.
+    // The landing page's forms work before the map has loaded. The presentation's buttons open
+    // the app before the form takes the focus.
+    setupHome();
     setupAuth(context);
     const publicMap = new URLSearchParams(location.search).has('u');
     const signedIn = publicMap ? Promise.resolve(null) : api.currentUser().catch(() => null);
+    // Visitors see the presentation first; a browser signed in recently waits for the session.
+    const presenting = !publicMap && !AUTH_HASHES[location.hash];
+    if (presenting && !wasSignedIn()) offerHome();
     // Tests and scripts can tell when the map is drawn: the landing page shows before it.
     mapReady = createMap().then(() => { $('#app').dataset.map = 'ready'; });
     // A signed-out visitor reads the landing page while the map is still loading.
     if (!publicMap) {
         signedIn.then(user => {
             if (!user && $('#app').dataset.state === 'loading') setView('welcome');
+            if (!user && presenting) offerHome();
         });
     }
     await mapReady;

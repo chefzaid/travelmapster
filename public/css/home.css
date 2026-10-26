@@ -1,0 +1,139 @@
+/* ------------------------------------------------------------ presentation (ADR 0011) */
+
+/* A full page over the app for signed-out visitors at "/", scrolling on its own. */
+.home {
+    position: fixed;
+    inset: 0;
+    /* Above the top bar and panel, below toasts and the skip link. */
+    z-index: 1500;
+    overflow-y: auto;
+    color: var(--text);
+    background:
+        radial-gradient(circle at 12% 8%, rgba(255, 255, 255, 0.55) 0 120px, transparent 121px),
+        radial-gradient(circle at 92% 30%, rgba(255, 255, 255, 0.35) 0 160px, transparent 161px),
+        var(--ocean);
+}
+
+.home[hidden] { display: none; }
+
+.home-bar {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px max(16px, calc((100% - 1100px) / 2));
+    background: var(--paper);
+    border-bottom: 3px solid var(--ink);
+}
+
+.home-bar .brand { margin-right: auto; }
+
+.home-nav { display: flex; gap: 4px; }
+
+.home-nav a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    padding: 0 10px;
+    color: var(--text);
+    font-weight: 800;
+    text-decoration: none;
+    border-radius: 10px;
+}
+
+.home-nav a:hover { background: var(--paper-2); }
+
+.home-main {
+    display: grid;
+    gap: 28px;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 28px 16px 12px;
+}
+
+.home-hero,
+.home-feature,
+.home-plans .plan-card {
+    background: var(--paper);
+    border: 3px solid var(--ink);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+}
+
+.home-hero { max-width: 760px; padding: 24px 22px; }
+.home-hero h1 { margin: 0 0 10px; font-size: clamp(2rem, 6vw, 3.2rem); line-height: 1.1; }
+.home-lead { font-size: 1.08rem; }
+.home-note { margin: 0; font-size: 0.9rem; font-weight: 700; color: var(--muted); }
+
+.home-features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+    gap: 14px;
+}
+
+.home-features h2,
+.home-plans h2 {
+    grid-column: 1 / -1;
+    margin: 0;
+    padding: 6px 12px;
+    justify-self: start;
+    background: var(--paper);
+    border: 3px solid var(--ink);
+    border-radius: var(--radius);
+}
+
+.home-feature { padding: 14px 16px; scroll-margin-top: 80px; }
+.home-feature h3 { margin: 0 0 6px; }
+.home-feature p { margin: 0 0 8px; }
+.home-feature > :last-child { margin-bottom: 0; }
+.feature-icon { font-size: 2rem; line-height: 1; }
+.feature-atlas { background: #e8f9f6; }
+.feature-ledger { background: #e6f7ff; }
+.feature-passport { background: #fff1c2; }
+.feature-trips { background: #ffe9e4; }
+.feature-journeys { background: #efe9ff; }
+
+.home-plans {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+    gap: 14px;
+    scroll-margin-top: 80px;
+}
+
+.home-plans .plan-card { padding: 14px 16px; }
+
+.home-footer {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 8px 16px 28px;
+    font-weight: 700;
+}
+
+.home-footer a,
+.link-button { color: var(--text); font-weight: 800; }
+
+/* A button that reads as a link. */
+.link-button {
+    min-height: 24px;
+    padding: 0;
+    background: none;
+    border: 0;
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+@media (max-width: 640px) {
+    .home-nav { display: none; }
+    .home-hero { padding: 18px 16px; }
+}
+
+@media (prefers-color-scheme: dark) {
+    .feature-atlas { background: #1c4744; }
+    .feature-ledger { background: #1f4260; }
+    .feature-passport { background: #4b3c12; }
+    .feature-trips { background: #4a2a26; }
+    .feature-journeys { background: #352c55; }
+}
