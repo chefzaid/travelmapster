@@ -193,5 +193,6 @@ number (`NNNN-short-title.md`) and the template below. Statuses: **Proposed**, *
 - [ADR 0019: Describe the API in OpenAPI and keep version 1 compatible](adr/0019-api-description-and-versioning.md)
 - [ADR 0020: An embeddable public map](adr/0020-embeddable-map.md)
 - [ADR 0021: An installable app that works offline](adr/0021-installable-offline-app.md)
+- [ADR 0022: Teams, where employers see business days only](adr/0022-teams.md)
 
 Superseded: [ADR 0007: Draw towns on a canvas layer](adr/0007-canvas-towns.md).

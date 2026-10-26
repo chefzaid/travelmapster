@@ -80,7 +80,7 @@ Differentiators:
 
 ### Teams tier
 
-- [ ] **ADR — Teams:** organization accounts where employees record business trips. Personal trips are never visible to the employer, which sees only business-travel day counts per country.
+- [x] **ADR — Teams:** ([ADR 0022](docs/adr/0022-teams.md)) organization accounts where employees record business trips. Personal trips are never visible to the employer, which sees only business-travel day counts per country.
 - [ ] Threshold rules per destination for tax and social security, configured by the organization, with alerts to the traveller and the mobility or HR team and reports for their advisers.
 - [ ] Pre-trip checklist per destination configured by the organization (for example A1 certificate and posted-worker declaration reminders within the EU).
 - [ ] Organization single sign-on, roles, audit log, data export and deletion, and a data processing agreement. *(waiting: see Needs Input › Organization single sign-on)*
