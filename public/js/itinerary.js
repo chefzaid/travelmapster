@@ -1,6 +1,6 @@
-// Itineraries outside the app: as text, as an iCalendar file with an all-day event per day,
-// as a template copy without dates, and as a planned stay in the day ledger. Pure, unit tested
-// in Node.
+// Itineraries: their stops, and the trip outside the app: as text, as an iCalendar file with an
+// all-day event per day, as a template copy without dates, and as planned stays in the day
+// ledger. Pure, unit tested in Node.
 
 export const SLOTS = [
     ['morning', '🌅', 'Morning'],
@@ -10,9 +10,47 @@ export const SLOTS = [
 
 const TITLE_MAX_LENGTH = 120;
 
+export function emptyDay() {
+    return { morning: '', afternoon: '', evening: '' };
+}
+
 function shiftDate(startDate, offset) {
     const [year, month, day] = startDate.split('-').map(Number);
     return new Date(Date.UTC(year, month - 1, day + offset));
+}
+
+const isoDate = (startDate, offset) => (startDate ? shiftDate(startDate, offset).toISOString().slice(0, 10) : '');
+
+/**
+ * Where the trip goes, stop by stop: `{ destination, firstDay, days, startDate, endDate }` with
+ * day numbers from 0 and dates when the trip has a start date. A trip without stops has one,
+ * its destination. Stops take the plan's days in turn; the last one takes the days left.
+ */
+export function tripStops(trip) {
+    const total = trip.plan.length;
+    const listed = trip.stops?.length ? trip.stops : [{ destination: trip.destination, days: total }];
+    const stops = [];
+    let firstDay = 0;
+    listed.forEach((stop, i) => {
+        if (firstDay >= total) return;
+        const days = i === listed.length - 1 ? total - firstDay : Math.min(stop.days, total - firstDay);
+        stops.push({
+            destination: stop.destination, firstDay, days,
+            startDate: isoDate(trip.startDate, firstDay), endDate: isoDate(trip.startDate, firstDay + days - 1)
+        });
+        firstDay += days;
+    });
+    return stops;
+}
+
+/** The stop a day of the trip (from 0) belongs to. */
+export function stopOfDay(trip, day) {
+    return tripStops(trip).find(stop => day >= stop.firstDay && day < stop.firstDay + stop.days);
+}
+
+/** "Lisbon → Madrid", or the destination of a trip without stops. */
+export function tripRoute(trip) {
+    return trip.stops?.length ? trip.stops.map(stop => stop.destination).join(' → ') : trip.destination;
 }
 
 /** "Mon, Jun 2" for day `offset` of a trip, or '' without a start date. */
@@ -23,15 +61,15 @@ export function dayDate(startDate, offset) {
 
 /** The trip's last day (YYYY-MM-DD), or '' without a start date. */
 export function tripEndDate(trip) {
-    if (!trip.startDate) return '';
-    return shiftDate(trip.startDate, trip.plan.length - 1).toISOString().slice(0, 10);
+    return isoDate(trip.startDate, trip.plan.length - 1);
 }
 
 export function tripAsText(trip) {
-    const lines = [`${trip.title} (${trip.destination})`, ''];
+    const lines = [`${trip.title} (${tripRoute(trip)})`, ''];
+    const several = trip.stops?.length > 1;
     trip.plan.forEach((day, i) => {
         const date = dayDate(trip.startDate, i);
-        lines.push(`Day ${i + 1}${date ? `, ${date}` : ''}`);
+        lines.push(`Day ${i + 1}${date ? `, ${date}` : ''}${several ? `, ${stopOfDay(trip, i).destination}` : ''}`);
         for (const [slot, , label] of SLOTS) {
             if (day[slot]) lines.push(`  ${label}: ${day[slot]}`);
         }
@@ -48,6 +86,7 @@ export function tripTemplate(trip) {
         destination: trip.destination,
         startDate: '',
         plan: trip.plan.map(day => Object.fromEntries(SLOTS.map(([slot]) => [slot, day[slot] || '']))),
+        stops: (trip.stops || []).map(({ destination, days }) => ({ destination, days })),
         // The list to pack again, and the budget's currency and plan without what was spent.
         packing: (trip.packing || []).map(entry => ({ item: entry.item, packed: false })),
         budget: trip.budget?.currency ? { currency: trip.budget.currency, planned: trip.budget.planned ?? null, rates: {}, expenses: [] } : {}
@@ -73,25 +112,47 @@ export function resolveDestination(destination, { findCountry, findCity }) {
     return last ? { country: last, countryId: last.id } : null;
 }
 
-/** The id of the ledger's planned stay that follows a trip. */
+/** The id of the ledger's (first) planned stay that follows a trip. */
 export const tripPlanId = trip => `trip-${trip.id}`;
 
-/** The ledger's planned stay for a dated trip in a known country, or null. */
-export function tripPlannedStay(trip, countryId) {
-    if (!trip.startDate || !countryId) return null;
-    return { id: tripPlanId(trip), countryId, startDate: trip.startDate, endDate: tripEndDate(trip) };
+/** Whether a planned stay of the ledger follows this trip: its first, or one for a later country. */
+export const isTripPlan = (trip, id) => id === tripPlanId(trip) || String(id).startsWith(`${tripPlanId(trip)}-`);
+
+/**
+ * The ledger's planned stays for a dated trip: one per country in turn, from `countryOf(stop
+ * destination)`. A day spent going from one country to the next ends one stay and starts the
+ * next, as the ledger counts days under its "any part of a day" rule. `{ stays }`, or
+ * `{ unknown }` with the first destination in no known country; no stays without a start date.
+ */
+export function tripPlannedStays(trip, countryOf) {
+    if (!trip.startDate) return { stays: [] };
+    const stays = [];
+    for (const stop of tripStops(trip)) {
+        const countryId = countryOf(stop.destination);
+        if (!countryId) return { unknown: stop.destination };
+        const last = stays.at(-1);
+        if (last?.countryId === countryId) last.endDate = stop.endDate;
+        else {
+            if (last) last.endDate = stop.startDate;
+            stays.push({ id: stays.length ? `${tripPlanId(trip)}-${stays.length + 1}` : tripPlanId(trip), countryId, startDate: stop.startDate, endDate: stop.endDate });
+        }
+    }
+    return { stays };
 }
 
 /**
- * The planned stays once a trip changed: its stay follows the new dates and country, or goes
- * when the trip has none any more (or was deleted, with `stay` null). Null when nothing changes.
+ * The planned stays once a trip changed: its stays follow the new dates and countries, in the
+ * place of the old ones, or go when the trip has none any more (or was deleted, with `stays`
+ * empty). Null when the trip is not planned in the ledger or nothing changes.
  */
-export function syncPlannedStays(planned, trip, stay) {
-    const index = planned.findIndex(item => item.id === tripPlanId(trip));
-    if (index < 0) return null;
-    const current = planned[index];
-    if (stay && ['countryId', 'startDate', 'endDate'].every(key => current[key] === stay[key])) return null;
-    return stay ? planned.map((item, i) => (i === index ? stay : item)) : planned.filter((_, i) => i !== index);
+export function syncPlannedStays(planned, trip, stays) {
+    const own = planned.filter(item => isTripPlan(trip, item.id));
+    if (!own.length) return null;
+    const same = (a, b) => ['id', 'countryId', 'startDate', 'endDate'].every(key => a[key] === b[key]);
+    if (own.length === stays.length && own.every((item, i) => same(item, stays[i]))) return null;
+    const at = planned.findIndex(item => isTripPlan(trip, item.id));
+    const rest = planned.filter(item => !isTripPlan(trip, item.id));
+    return [...rest.slice(0, at), ...stays, ...rest.slice(at)];
 }
 
 // ---------------------------------------------------------------- iCalendar (RFC 5545)
@@ -145,7 +206,7 @@ export function tripCalendar(trip, now = new Date()) {
             `DTSTART;VALUE=DATE:${compactDate(shiftDate(trip.startDate, i))}`,
             `DTEND;VALUE=DATE:${compactDate(shiftDate(trip.startDate, i + 1))}`,
             `SUMMARY:${escapeText(`Day ${i + 1}: ${trip.title}`)}`,
-            `LOCATION:${escapeText(trip.destination)}`,
+            `LOCATION:${escapeText(stopOfDay(trip, i).destination)}`,
             ...(plans.length ? [`DESCRIPTION:${escapeText(plans.join('\n'))}`] : []),
             'TRANSP:TRANSPARENT',
             'END:VEVENT'

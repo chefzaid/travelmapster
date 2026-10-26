@@ -138,3 +138,48 @@ test('a trip keeps a packing list and a budget in any currency', async ({ page }
     await expect(page.locator('#report-view')).toContainText('Spent so far: €780.00');
     expect(errors).toEqual([]);
 });
+
+test('a trip goes to several places, each planned in the ledger and recorded as a visit', async ({ page }) => {
+    const errors = trackErrors(page);
+    await signUp(page, `e2e_stops_${Date.now()}`);
+    await page.click('#tab-trips');
+    await page.getByRole('button', { name: 'Plan my first trip' }).click();
+    await page.getByLabel('Where to?').fill('Lisbon, Portugal');
+    await page.getByLabel('Trip name').fill('Iberian loop');
+    await page.getByLabel('Start date').fill('2024-04-01');
+    await page.getByLabel('How many days?').fill('2');
+    await page.getByRole('button', { name: 'Create trip' }).click();
+    const trips = page.locator('#trips-tab');
+
+    await trips.getByRole('button', { name: '＋ Add another destination' }).click();
+    await trips.getByLabel('Stop 2', { exact: true }).fill('Madrid, Spain');
+    await trips.getByLabel('Stop 2', { exact: true }).dispatchEvent('change');
+    await trips.getByLabel('Days in stop 2').fill('2');
+    await trips.getByLabel('Days in stop 2').dispatchEvent('change');
+    await expect(trips.locator('.day-card')).toHaveCount(4);
+    await expect(trips.locator('.day-card').nth(2)).toContainText('📍 Madrid, Spain');
+    await trips.getByRole('button', { name: '💾 Save' }).click();
+    await expect(page.locator('.toast-success', { hasText: 'Trip saved.' })).toBeVisible();
+
+    // One planned stay per country: the travel day counts in both.
+    await trips.getByRole('button', { name: '📒 Plan in ledger' }).click();
+    await expect(trips.getByRole('button', { name: '📒 In ledger plans' })).toBeVisible();
+    await page.click('#tab-ledger');
+    const plans = page.locator('#ledger-tab .ledger-item', { hasText: 'Iberian loop' });
+    await expect(plans).toHaveCount(2);
+    await expect(plans.filter({ hasText: 'Portugal' })).toContainText('3 days');
+    await expect(plans.filter({ hasText: 'Spain' })).toContainText('2 days');
+
+    await page.click('#tab-trips');
+    await trips.getByRole('button', { name: '✅ Record as a visit' }).click();
+    await expect(page.locator('dialog.dialog')).toContainText('Lisbon, Portugal: a visit from');
+    await expect(page.locator('dialog.dialog')).toContainText('Madrid, Spain: a visit from');
+    await page.getByRole('button', { name: 'Add the visits' }).click();
+    // Two places are saved one after the other.
+    await expect(trips.getByRole('button', { name: '✓ Recorded as a visit' })).toBeDisabled({ timeout: 15_000 });
+    await expect(page.locator('#legend-visited')).toHaveText('2');
+
+    await trips.getByRole('button', { name: '‹ All trips' }).click();
+    await expect(page.locator('.trip-card')).toContainText('Lisbon, Portugal → Madrid, Spain · 4 days');
+    expect(errors).toEqual([]);
+});

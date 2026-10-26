@@ -369,7 +369,7 @@ function createLedgerRepository(db) {
     };
 }
 
-const TRIP_COLUMNS = `id, title, destination, start_date AS "startDate", plan, packing, budget,
+const TRIP_COLUMNS = `id, title, destination, start_date AS "startDate", plan, stops, packing, budget,
     created_at AS "createdAt", updated_at AS "updatedAt"`;
 
 function createTripRepository(db) {
@@ -385,24 +385,26 @@ function createTripRepository(db) {
 
         async create(userId, trip) {
             const { rows } = await db.query(
-                `INSERT INTO trips (user_id, title, destination, start_date, plan, packing, budget)
-                 VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7::jsonb)
+                `INSERT INTO trips (user_id, title, destination, start_date, plan, stops, packing, budget)
+                 VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7::jsonb, $8::jsonb)
                  RETURNING ${TRIP_COLUMNS}`,
-                [userId, trip.title, trip.destination, trip.startDate, JSON.stringify(trip.plan),
+                [userId, trip.title, trip.destination, trip.startDate, JSON.stringify(trip.plan), JSON.stringify(trip.stops ?? []),
                     JSON.stringify(trip.packing ?? []), JSON.stringify(trip.budget ?? {})]
             );
             return rows[0];
         },
 
-        // A packing list or budget left out (null) keeps the stored one.
+        // Stops, a packing list or a budget left out (null) keep the stored ones.
         async update(userId, tripId, trip) {
+            const json = value => (value ? JSON.stringify(value) : null);
             const { rows } = await db.query(
                 `UPDATE trips SET title = $1, destination = $2, start_date = $3, plan = $4::jsonb,
-                     packing = COALESCE($5::jsonb, packing), budget = COALESCE($6::jsonb, budget), updated_at = now()
-                 WHERE id = $7 AND user_id = $8
+                     stops = COALESCE($5::jsonb, stops), packing = COALESCE($6::jsonb, packing),
+                     budget = COALESCE($7::jsonb, budget), updated_at = now()
+                 WHERE id = $8 AND user_id = $9
                  RETURNING ${TRIP_COLUMNS}`,
                 [trip.title, trip.destination, trip.startDate, JSON.stringify(trip.plan),
-                    trip.packing ? JSON.stringify(trip.packing) : null, trip.budget ? JSON.stringify(trip.budget) : null, tripId, userId]
+                    json(trip.stops), json(trip.packing), json(trip.budget), tripId, userId]
             );
             return rows[0] || null;
         },

@@ -8,6 +8,7 @@ import {
     isoDay, localToday, maxStayFrom, newId, parseCountryList
 } from './days.js';
 import { ADVICE_NOTE, countryName, historySection, reportSection } from './ledger-report.js';
+import { isTripPlan } from './itinerary.js';
 
 const view = { entry: '', period: '', showAllStays: false };
 const STAYS_SHOWN = 12;
@@ -182,9 +183,10 @@ async function plannedStayDialog(ctx) {
     }
 }
 
-// A planned stay that follows a trip (its id is "trip-<id>") is named after it.
+// A planned stay that follows a trip (its id is "trip-<id>", or "trip-<id>-<n>" for a later
+// country) is named after it.
 function tripTitle(ctx, stay) {
-    return ctx.state.trips.find(trip => `trip-${trip.id}` === stay.id)?.title || '';
+    return ctx.state.trips.find(trip => isTripPlan(trip, stay.id))?.title || '';
 }
 
 function plansSection(ctx, overview) {
