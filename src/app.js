@@ -28,6 +28,8 @@ const { createGeocodeRouter } = require('./routes/geocode');
 const { createTripRouter } = require('./routes/trips');
 const { createPlacesRouter } = require('./routes/places');
 const { createExportRouter } = require('./routes/export');
+const { createFollowRouter } = require('./routes/follows');
+const { createFollowRepository } = require('./follow-repository');
 
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 
@@ -55,6 +57,7 @@ function createApp({ config, pool, logger, metrics, geocoder, places, state = { 
     const ledger = createLedgerRepository(pool);
     const trips = createTripRepository(pool);
     const security = createSecurityRepository(pool);
+    const follows = createFollowRepository(pool);
     const passport = createPassport(users, logger);
     const assets = createAssets(PUBLIC_DIR);
     const publicMaps = createPublicMaps({ users, markers, publicDir: PUBLIC_DIR });
@@ -209,8 +212,9 @@ function createApp({ config, pool, logger, metrics, geocoder, places, state = { 
     api.use('/markers', requireAuth, createMarkerRouter({ pool, markers, visits, metrics }));
     api.use('/visits', requireAuth, createVisitRouter({ visits }));
     api.use('/ledger', requireAuth, createLedgerRouter({ ledger, metrics }));
-    api.use('/trips', requireAuth, createTripRouter({ trips }));
-    api.use('/export', requireAuth, createExportRouter({ markers, trips, ledger, security, metrics }));
+    api.use('/trips', requireAuth, createTripRouter({ trips, users }));
+    api.use('/follows', requireAuth, createFollowRouter({ users, follows }));
+    api.use('/export', requireAuth, createExportRouter({ markers, trips, ledger, security, follows, metrics }));
     api.use((req, res) => res.status(404).json({ error: 'Not found.' }));
     app.use('/api', api);
 

@@ -32,17 +32,17 @@ function dropZone(type, onDrop) {
  * The day cards of a trip's draft. `showStop(day)` shows the day's stop on the map; the other
  * hooks redraw the editor and mark the draft as changed.
  */
-export function dayCards(draft, { rerender, markDirty, showStop }) {
+export function dayCards(draft, { rerender, markDirty, showStop, readOnly = false }) {
     const move = (from, to) => {
         if (moveDay(draft, from, to)) rerender();
     };
     const last = draft.plan.length - 1;
     return draft.plan.map((day, i) => h('section', {
         class: 'day-card',
-        ...dropZone(DAY_TYPE, from => move(Number(from), i))
+        ...(readOnly ? {} : dropZone(DAY_TYPE, from => move(Number(from), i)))
     },
         h('header', {},
-            h('span', {
+            readOnly ? null : h('span', {
                 class: 'drag-handle', draggable: 'true', title: 'Drag to move this day', 'aria-hidden': 'true',
                 ondragstart: event => {
                     event.dataTransfer.setData(DAY_TYPE, String(i));
@@ -66,12 +66,12 @@ export function dayCards(draft, { rerender, markDirty, showStop }) {
         ),
         SLOTS.map(([slot, icon, label]) => h('label', {
             class: 'slot',
-            ...dropZone(SLOT_TYPE, from => {
+            ...(readOnly ? {} : dropZone(SLOT_TYPE, from => {
                 if (swapSlots(draft, JSON.parse(from), { day: i, slot })) rerender();
-            })
+            }))
         },
             h('span', {
-                draggable: 'true', title: 'Drag onto another slot to swap their plans',
+                draggable: readOnly ? false : 'true', title: readOnly ? undefined : 'Drag onto another slot to swap their plans',
                 ondragstart: event => {
                     event.dataTransfer.setData(SLOT_TYPE, JSON.stringify({ day: i, slot }));
                     event.dataTransfer.effectAllowed = 'move';

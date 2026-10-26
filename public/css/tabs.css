@@ -381,3 +381,12 @@ button.chip { cursor: pointer; }
 
 .bulk-section .row { margin-bottom: 8px; }
 .bulk-section p { margin: 8px 0 0; }
+
+/* Friends' maps in the Passport tab (ADR 0028) */
+.friend-list { display: grid; gap: 6px; margin: 8px 0; padding: 0; list-style: none; }
+.friend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.friend > span { display: grid; flex: 1; min-width: 140px; }
+.friend small { color: var(--muted); font-weight: 700; }
+.compare-columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; max-height: 50vh; overflow-y: auto; }
+.compare-columns h4 { margin: 0 0 4px; }
+.compare-list { margin: 0; padding-left: 0; list-style: none; font-size: 0.88rem; }

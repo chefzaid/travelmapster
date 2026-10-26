@@ -93,6 +93,16 @@
     margin-top: 14px;
 }
 
+/* Trips planned together (ADR 0028) */
+.trip-edit { min-width: 0; margin: 0; padding: 0; border: 0; }
+.trip-shared { margin: 0 0 8px; font-size: 0.85rem; font-weight: 800; color: var(--muted); }
+.member-list { display: grid; gap: 6px; margin: 8px 0; padding: 0; list-style: none; }
+.member { display: flex; align-items: center; gap: 8px; }
+.member strong { flex: 1; }
+.member select { width: auto; }
+.share-add input { flex: 1; min-width: 120px; }
+.share-add select { width: auto; }
+
 /* Stops of a trip with several destinations */
 .trip-stops { margin: 4px 0 8px; }
 fieldset.trip-stops { padding: 8px 10px; border: 2px solid var(--ink); border-radius: var(--radius); }

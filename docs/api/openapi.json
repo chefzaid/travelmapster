@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "TravelMapster API",
-    "version": "1.5.0",
+    "version": "1.6.0",
     "description": "The JSON API the TravelMapster app uses. It is version 1 and changes only in backward-compatible ways ([ADR 0019](../adr/0019-api-description-and-versioning.md)). Errors are `{ \"error\": \"…\" }` with a matching status; every response is `Cache-Control: no-store` unless stated."
   },
   "servers": [
@@ -1275,7 +1275,7 @@
         }
       ],
       "put": {
-        "summary": "Replace an itinerary",
+        "summary": "Replace an itinerary; its owner or an editor",
         "tags": [
           "Trips"
         ],
@@ -1301,7 +1301,7 @@
             }
           },
           "404": {
-            "description": "Not the caller's trip",
+            "description": "Neither the caller's trip nor shared with them",
             "content": {
               "application/json": {
                 "schema": {
@@ -1314,10 +1314,35 @@
             "$ref": "#/components/responses/Unauthenticated"
           },
           "403": {
-            "$ref": "#/components/responses/CsrfRejected"
+            "description": "CSRF token rejected, or the caller can only view the trip",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
+          },
+          "409": {
+            "description": "Someone else saved the trip since `updatedAt`; the newer trip comes along",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "trip": {
+                      "$ref": "#/components/schemas/Trip"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "requestBody": {
@@ -1338,7 +1363,7 @@
         ]
       },
       "delete": {
-        "summary": "Remove an itinerary",
+        "summary": "Remove an itinerary; only its owner",
         "tags": [
           "Trips"
         ],
@@ -1360,7 +1385,14 @@
             "$ref": "#/components/responses/Unauthenticated"
           },
           "403": {
-            "$ref": "#/components/responses/CsrfRejected"
+            "description": "CSRF token rejected, or the caller is a member, not the owner",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
@@ -2103,6 +2135,397 @@
           },
           "403": {
             "$ref": "#/components/responses/CsrfRejected"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "security": [
+          {
+            "session": [],
+            "csrf": []
+          }
+        ]
+      }
+    },
+    "/api/trips/{id}/members": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "The trip id.",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      ],
+      "get": {
+        "summary": "The accounts a trip is shared with",
+        "tags": [
+          "Trips"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TripMember"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid trip id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "404": {
+            "description": "Neither the caller's trip nor shared with them",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      }
+    },
+    "/api/trips/{id}/members/{username}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "The trip id.",
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        {
+          "name": "username",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{3,32}$"
+          }
+        }
+      ],
+      "put": {
+        "summary": "Share a trip with an account, or change its role; only the owner",
+        "tags": [
+          "Trips"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "role"
+                ],
+                "properties": {
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "edit",
+                      "view"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TripMember"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid role, or the owner's own name",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "description": "CSRF token rejected, or the caller is not the owner",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such trip for the caller, or no account by that name",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Twenty members already",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "security": [
+          {
+            "session": [],
+            "csrf": []
+          }
+        ]
+      },
+      "delete": {
+        "summary": "Stop sharing with an account; the owner, or the member leaving",
+        "tags": [
+          "Trips"
+        ],
+        "responses": {
+          "204": {
+            "description": "Removed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "description": "CSRF token rejected, or a member removing someone else",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not shared with that account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "security": [
+          {
+            "session": [],
+            "csrf": []
+          }
+        ]
+      }
+    },
+    "/api/follows": {
+      "get": {
+        "summary": "The public maps the caller follows",
+        "tags": [
+          "Account"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Follow"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "Follow a public map; its owner is not told",
+        "tags": [
+          "Account"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "username"
+                ],
+                "properties": {
+                  "username": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Following",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Follow"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The caller's own map",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/CsrfRejected"
+          },
+          "404": {
+            "description": "No public map by that name (private and missing alike)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Two hundred follows already",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "security": [
+          {
+            "session": [],
+            "csrf": []
+          }
+        ]
+      }
+    },
+    "/api/follows/{username}": {
+      "parameters": [
+        {
+          "name": "username",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{3,32}$"
+          }
+        }
+      ],
+      "delete": {
+        "summary": "Stop following a map",
+        "tags": [
+          "Account"
+        ],
+        "responses": {
+          "204": {
+            "description": "Stopped"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/CsrfRejected"
+          },
+          "404": {
+            "description": "Not followed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
@@ -3023,6 +3446,11 @@
           "budget": {
             "$ref": "#/components/schemas/TripBudget",
             "description": "Left out on an update, the stored budget is kept."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The version the trip was edited from; a trip saved by someone else since is refused with 409."
           }
         }
       },
@@ -3044,6 +3472,22 @@
               "updatedAt": {
                 "type": "string",
                 "format": "date-time"
+              },
+              "role": {
+                "type": "string",
+                "enum": [
+                  "owner",
+                  "edit",
+                  "view"
+                ],
+                "description": "The caller's access (ADR 0028)."
+              },
+              "owner": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The owner's username for a trip shared with the caller, else null."
               }
             }
           }
@@ -3271,6 +3715,21 @@
                 "type": "boolean"
               }
             }
+          },
+          "follows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "username": {
+                  "type": "string"
+                },
+                "since": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            }
           }
         }
       },
@@ -3483,6 +3942,41 @@
         "type": "object",
         "description": "The credential as RegistrationResponseJSON or AuthenticationResponseJSON (WebAuthn Level 3), binary fields in base64url.",
         "additionalProperties": true
+      },
+      "Follow": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "public": {
+            "type": "boolean",
+            "description": "False once the map went private; the follow stays until dropped."
+          },
+          "since": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "TripMember": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "edit",
+              "view"
+            ]
+          },
+          "addedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
       }
     }
   }

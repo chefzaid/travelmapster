@@ -47,7 +47,8 @@ async function request(method, path, body, retried = false) {
         return request(method, path, body, true);
     }
     if (!response.ok) {
-        throw Object.assign(new Error(data?.error || `Request failed (${response.status}).`), { status: response.status });
+        // The answer comes along, such as the newer trip of a refused save (ADR 0028).
+        throw Object.assign(new Error(data?.error || `Request failed (${response.status}).`), { status: response.status, data });
     }
     if (data?.csrfToken) csrfToken = data.csrfToken;
     return data;
@@ -133,6 +134,13 @@ export const api = {
     createTrip: trip => request('POST', '/trips', trip),
     updateTrip: (id, trip) => request('PUT', `/trips/${Number(id)}`, trip),
     deleteTrip: id => request('DELETE', `/trips/${Number(id)}`),
+    getTripMembers: id => request('GET', `/trips/${Number(id)}/members`),
+    shareTrip: (id, username, role) => request('PUT', `/trips/${Number(id)}/members/${encodeURIComponent(username)}`, { role }),
+    unshareTrip: (id, username) => request('DELETE', `/trips/${Number(id)}/members/${encodeURIComponent(username)}`),
+
+    getFollows: () => request('GET', '/follows'),
+    follow: username => request('POST', '/follows', { username }),
+    unfollow: username => request('DELETE', `/follows/${encodeURIComponent(username)}`),
 
     getPublicMap: async username => {
         const data = await request('GET', `/public/${encodeURIComponent(username)}`);

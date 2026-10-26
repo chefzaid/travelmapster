@@ -15,6 +15,8 @@ erDiagram
     users ||--o{ passkeys : "signs in with"
     users ||--o| totp_secrets : "two-step"
     users ||--o{ recovery_codes : "recovers with"
+    users ||--o{ follows : follows
+    trips ||--o{ trip_members : "shared with"
     users {
         bigint id PK
         text username "unique, case-insensitive"
@@ -98,6 +100,8 @@ erDiagram
 | `passkeys` | WebAuthn credentials ([ADR 0027](adr/0027-passkeys-and-two-step-sign-in.md)): the credential `id` (base64url), the public key, the signature `counter`, `transports`, a `name` of 1–60 characters, and when it was added and last used. At most 10 per account. |
 | `totp_secrets` | One per account: the two-step secret, encrypted (AES-256-GCM); `enabled_at` once the first code matched; `last_step`, the latest time step used, so a code works once. |
 | `recovery_codes` | SHA-256 hashes of the ten recovery codes, with `used_at` once spent. |
+| `follows` | Public maps a traveler follows ([ADR 0028](adr/0028-friends-and-shared-trips.md)): `follower_id`, `followee_id` (never the same), `created_at`; at most 200 per traveler. Following a private map is refused; a map made private stays followed but hidden. |
+| `trip_members` | Accounts a trip is shared with: `trip_id`, `user_id`, `role` (`edit` or `view`), `added_at`; at most 20 per trip, gone with the trip or either account. |
 | `sessions` | Server-side sessions for `connect-pg-simple`; expired rows are pruned every 15 minutes. |
 | `rate_limits` | Unlogged rate-limit counters per limiter and client IP, shared by replicas; expired rows are swept every 10 minutes. |
 | `geocoder_throttle` | One row with the earliest start time of the next Nominatim request. |
@@ -225,5 +229,5 @@ category, latest travel date and visit dates of each place, and whether journey 
 drawn between them, never the map palette, the home country, the notes or
 photo links of places or visits, ratings, tags, emoji or wishlist plans, nor anything of the places hidden from it, whether a stay is still going on, ledger settings or date history
 ([security](security.md#privacy)). Deleting an account removes the user, their
-places, visits, ledger settings, date history, trips, passkeys, two-step secrets, recovery codes
-and sessions at once.
+places, visits, ledger settings, date history, trips (and their sharing), the maps they follow and
+who follows them, passkeys, two-step secrets, recovery codes and sessions at once.

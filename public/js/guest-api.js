@@ -193,6 +193,12 @@ export function createGuestApi(storage, now = () => new Date().toISOString()) {
         changePassword: needsAccount('A password'),
         deleteAccount: needsAccount('Deleting an account'),
         geocodeCity: needsAccount('Searching every town in the world'),
-        getPublicMap: needsAccount('A shared map')
+        getPublicMap: needsAccount('A shared map'),
+        getFollows: async () => [],
+        follow: needsAccount('Following friends\' maps'),
+        unfollow: needsAccount('Following friends\' maps'),
+        getTripMembers: async () => [],
+        shareTrip: needsAccount('Planning a trip together'),
+        unshareTrip: needsAccount('Planning a trip together')
     };
 }
