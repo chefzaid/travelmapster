@@ -54,6 +54,7 @@ Differentiators:
 The field splits into scratch-map atlases (Been, Visited, Skratch), travel journals (Polarsteps, Journi), trip planners (Wanderlog, TripIt) and day-tracking tools for tax residency (Monaeo and similar). Atlases are free and crowded, journals depend on phone tracking, and day trackers are dry, costly and built for advisers. TravelMapster's opening is the overlap: the atlas wins the user for free, the ledger earns the subscription, and keepsakes pay one-off. Growth should come from things people share or search for, not from ads or third-party trackers.
 
 - [ ] Competitive review in `docs/`: features, pricing and privacy stance of the main atlas, journal, planner and day-tracking apps, refreshed every six months, with the gaps TravelMapster targets.
+- [ ] Presentation website: a full page that presents what TravelMapster does and each of its features (atlas, places and visits, journeys, trips, passport, day ledger, Schengen calculator, sharing), shown to visitors before the app instead of the sign-up panel over the demo map. Update [ADR 0011](docs/adr/0011-public-pages.md), where `/` stays the app.
 - [ ] Plan pricing on the landing page once paid plans exist: it shows the free plan and keepsakes as coming soon today, without prices ([ADR 0011](docs/adr/0011-public-pages.md)).
 - [ ] Public maps worth sharing: opt-in indexing (shared maps are sent with `noindex` and left out of the sitemap until then), an Open Graph preview image of the user's map, and a "make your own map" call to action.
 - [ ] Travel-club country lists (such as the Travelers' Century Club's) as a choice for counting, beside the UN and full-map lists ([ADR 0015](docs/adr/0015-country-lists.md)): needs the club's permission or a licence, and map data that draws the parts those lists count on their own (states, islands and regions such as Alaska or the Canary Islands).
@@ -65,6 +66,7 @@ The field splits into scratch-map atlases (Been, Visited, Skratch), travel journ
 
 ## Accounts and trust (added 2026-10-23)
 
+- [ ] Guest mode: visitors without an account can pin places and use every feature, with everything saved in the browser's local storage; signing in stays optional. Today a signed-out visitor's changes to the demo map are never saved ([ADR 0011](docs/adr/0011-public-pages.md)), so this needs an ADR.
 - [ ] Email address with verification and password reset; today a forgotten password locks the user out for good. Needs a transactional email provider ([ADR](docs/architecture.md#adr-process): new external dependency).
 - [ ] Passkeys (WebAuthn) and optional TOTP two-factor sign-in, required for Teams administrators.
 - [ ] Full account export as one archive (places, visits, trips, albums, ledger) plus GeoJSON and KML export of places; the "record you can keep" promise depends on it.
