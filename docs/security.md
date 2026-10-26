@@ -76,8 +76,9 @@ their owner chose `public`; private and missing profiles return the same 404.
 - The browser loads photo links from their hosts and sends destination names to Wikivoyage for
   ideas; both are visible to those third parties.
 - Logs carry user IDs, never passwords, cookies or tokens.
-- Travelers can delete their account, which removes all their data at once
-  ([data model](data-model.md#privacy)).
+- Travelers can download everything their account holds as one archive (`GET /api/export`,
+  only ever the caller's own data, never the password hash) and delete their account, which
+  removes all their data at once ([data model](data-model.md#privacy)).
 
 ## Runtime And Supply Chain
 

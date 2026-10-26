@@ -79,6 +79,7 @@ The reasoning and what each rule rules out are in [ADR 0017](adr/0017-product-pr
 - Tag and rating filters that narrow the places list and the map together; the legend shows
   the active filter and clears it in one tap.
 - Undo after removing a place, which brings its visits back too.
+- Export places as GeoJSON or KML for other map apps, GIS tools and Google Earth.
 - Import and export as JSON (visits nested in each place) or CSV (one row per visit), with
   ratings, tags, emoji, wishlist plans and whether a place was lived in or a layover; import
   also reads files from before visits or tags existed, and
@@ -175,6 +176,10 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
 - Username and password accounts ([security](security.md#authentication-and-sessions)); change
   the password (signing out other devices) or delete the account and all its data from the
   account menu.
+- **Download all my data** in the account menu: one ZIP archive with everything the account
+  holds (`account.json`: profile and settings, places and visits, trips, ledger settings and the
+  whole date history) and the places as CSV, GeoJSON and KML, with a README
+  ([ADR 0017](adr/0017-product-principles.md)).
 - Private by default; a public map is shared read-only at `/?u=<username>` with visit dates and
   whether a place was lived in or a layover, counted on the owner's country list, without notes,
   photo links, ratings, tags, emoji, wishlist plans or the home country. Visitors can use the

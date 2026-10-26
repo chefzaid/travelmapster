@@ -1,6 +1,7 @@
 import { h, fill, toast, downloadFile, formatDate } from './ui.js';
 import { CONTINENTS, CONTINENT_EMOJI } from './geo.js';
 import { buildCsv, buildJson, parseImportContent, validatePlace, placeKey, mergePlaces } from './io.js';
+import { buildGeoJson, buildKml } from './archive.js';
 import { lastVisitDate, lastVisitYears, matchesLastVisit, visitCount } from './visits.js';
 import { groupByNextMonth, matchesDetails, monthsLabel, priorityLabel, ratingLabel, stars, usedTags } from './details.js';
 import { STATUSES, statusLabel, statusOf } from './status.js';
@@ -144,6 +145,14 @@ async function importFile(file, ctx, status) {
     }
 }
 
+// Each export format: how to build the file, its media type and its name.
+const EXPORTS = {
+    json: [buildJson, 'application/json', 'JSON'],
+    csv: [buildCsv, 'text/csv', 'CSV'],
+    geojson: [buildGeoJson, 'application/geo+json', 'GeoJSON'],
+    kml: [buildKml, 'application/vnd.google-earth.kml+xml', 'KML']
+};
+
 function dataSection(ctx) {
     const status = h('small', { class: 'muted', role: 'status', 'aria-live': 'polite' });
     const fileInput = h('input', {
@@ -163,15 +172,17 @@ function dataSection(ctx) {
             return;
         }
         const date = new Date().toISOString().slice(0, 10);
-        if (format === 'csv') downloadFile(`travelmapster-places-${date}.csv`, buildCsv(markers), 'text/csv');
-        else downloadFile(`travelmapster-places-${date}.json`, buildJson(markers), 'application/json');
-        status.textContent = `Exported ${markers.length} places as ${format.toUpperCase()}.`;
+        const [build, type, label] = EXPORTS[format];
+        downloadFile(`travelmapster-places-${date}.${format}`, build(markers), type);
+        status.textContent = `Exported ${markers.length} ${markers.length === 1 ? 'place' : 'places'} as ${label}.`;
     };
     return h('section', { class: 'data-section' },
         h('h3', { class: 'section-title' }, 'Backup & move your data'),
         h('div', { class: 'row' },
             h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => exportAs('json') }, '⬇️ JSON'),
             h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => exportAs('csv') }, '⬇️ CSV'),
+            h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => exportAs('geojson') }, '⬇️ GeoJSON'),
+            h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => exportAs('kml') }, '⬇️ KML'),
             h('label', { class: 'btn btn-ghost btn-sm', for: 'import-file' }, '⬆️ Import'),
             fileInput
         ),

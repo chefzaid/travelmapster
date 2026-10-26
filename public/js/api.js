@@ -108,6 +108,7 @@ export const api = {
     getVisitChanges: () => request('GET', '/ledger/changes'),
 
     getTrips: () => request('GET', '/trips'),
+    exportAccount: () => request('GET', '/export'),
     createTrip: trip => request('POST', '/trips', trip),
     updateTrip: (id, trip) => request('PUT', `/trips/${Number(id)}`, trip),
     deleteTrip: id => request('DELETE', `/trips/${Number(id)}`),
