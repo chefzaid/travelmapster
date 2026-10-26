@@ -173,6 +173,10 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
 - A stamp for every country been to, marked "Home" or "Lived" where it applies, 13 badges with
   a confetti celebration, and a visits-by-year chart counting every visit (stays where you lived
   and layovers are not visits).
+- **Goals** for a year, such as "three new countries in 2027": new countries (on the chosen
+  list) or new cities first visited that year, or trips begun in it, with a progress bar each
+  and a confetti celebration when one is reached. One goal per kind and year; goals are never
+  on the public map.
 - **On the road**, from dated visits: days abroad this year and per year (days outside the home
   country, counted by the ledger's day rule; every recorded day when no home country is set), the
   longest trip (stays away from home no more than three days apart, layovers included, places

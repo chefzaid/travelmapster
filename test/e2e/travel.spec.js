@@ -152,6 +152,17 @@ test('a traveler records several visits to the same city', async ({ page }) => {
     await expect(travel).toContainText('Longest trip: Lisbon');
     await expect(travel).toContainText('Set a home country');
     await expect(page.locator('#passport-tab')).toContainText('Countries by year');
+
+    // A goal already met is celebrated at once; it can be removed again.
+    await page.getByRole('button', { name: '＋ Set a goal' }).click();
+    await page.fill('#dialog-target', '1');
+    await page.selectOption('#dialog-kind', 'cities');
+    await page.fill('#dialog-year', '2019');
+    await page.getByRole('button', { name: 'Set goal' }).click();
+    await expect(page.locator('.toast', { hasText: 'Goal reached: 1 new city in 2019!' })).toBeVisible();
+    await expect(page.locator('#goals')).toContainText('Reached: 1 of 1');
+    await page.getByRole('button', { name: 'Remove the goal 1 new city in 2019' }).click();
+    await expect(page.locator('#goals .ledger-item')).toHaveCount(0);
     expect(errors).toEqual([]);
 });
 

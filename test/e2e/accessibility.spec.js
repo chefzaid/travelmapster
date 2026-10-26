@@ -120,6 +120,15 @@ for (const colorScheme of ['light', 'dark']) {
         await expectAccessible(page, 'evidence report');
         await page.locator('#report-view').getByRole('button', { name: 'Close' }).click();
 
+        // A yearly goal: its dialog, then the passport with it.
+        await page.click('#tab-passport');
+        await page.getByRole('button', { name: '＋ Set a goal' }).click();
+        await expect(page.locator('dialog.dialog')).toBeVisible();
+        await expectAccessible(page, 'goal dialog');
+        await page.getByRole('button', { name: 'Set goal' }).click();
+        await expect(page.locator('#goals .ledger-item')).toHaveCount(1);
+        await expectAccessible(page, 'passport with a goal');
+
         // A trip and its printable itinerary.
         await page.click('#tab-trips');
         await page.getByRole('button', { name: 'Plan my first trip' }).click();

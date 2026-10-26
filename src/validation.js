@@ -38,6 +38,8 @@ const PRIORITIES = new Set(['high', 'medium', 'low']);
 const TRIP_SLOTS = ['morning', 'afternoon', 'evening'];
 const TRIP_MAX_DAYS = 30;
 const TRIP_SLOT_MAX_LENGTH = 500;
+const GOAL_KINDS = new Set(['countries', 'cities', 'visits']);
+const GOALS_MAX = 12;
 
 // Passwords are not trimmed: leading or trailing spaces are part of the secret.
 function readPassword(value) {
@@ -400,6 +402,26 @@ function parseMarkerId(value) {
 }
 
 /**
+ * Yearly goals: at most one per kind and year, such as three new countries in 2027, sorted by
+ * year and kind.
+ */
+function parseGoals(value) {
+    if (!Array.isArray(value) || value.length > GOALS_MAX) return { error: `Goals must be a list of at most ${GOALS_MAX}.` };
+    const goals = [];
+    const keys = new Set();
+    for (const item of value) {
+        if (!plainObject(item) || !wholeNumber(item.year, 2000, 2100) || !GOAL_KINDS.has(item.kind) || !wholeNumber(item.target, 1, 999)) {
+            return { error: 'Each goal needs a year from 2000 to 2100, a kind (countries, cities or visits) and a target from 1 to 999.' };
+        }
+        const key = `${item.year}:${item.kind}`;
+        if (keys.has(key)) return { error: 'Set one goal of each kind per year.' };
+        keys.add(key);
+        goals.push({ year: item.year, kind: item.kind, target: item.target });
+    }
+    return { goals: goals.sort((a, b) => a.year - b.year || a.kind.localeCompare(b.kind)) };
+}
+
+/**
  * Account settings, each optional so a client changes only what it sends: who can see the
  * map, the home country (a map code, or null or empty to clear it), the list of countries
  * the passport counts against, the map palette and whether a public map shows journey lines.
@@ -433,8 +455,13 @@ function parseProfile(body) {
         if (typeof body.publicJourneys !== 'boolean') return { error: 'Public journeys must be true or false.' };
         profile.publicJourneys = body.publicJourneys;
     }
+    if (body.goals !== undefined) {
+        const { goals, error } = parseGoals(body.goals);
+        if (error) return { error };
+        profile.goals = goals;
+    }
     if (!Object.keys(profile).length) {
-        return { error: 'Send profileVisibility, homeCountry, countryList, mapPalette or publicJourneys.' };
+        return { error: 'Send profileVisibility, homeCountry, countryList, mapPalette, publicJourneys or goals.' };
     }
     return { profile };
 }
