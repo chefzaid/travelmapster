@@ -1,6 +1,7 @@
 // Ratings, tags, a custom emoji and wishlist plans per place, and the filters and wishlist
 // order built on them (ADR 0012).
 // The rules match src/validation.js. Pure functions, unit tested in Node.
+import { t, locale, tn } from './i18n.js';
 
 export const SUGGESTED_TAGS = ['food', 'hiking', 'family', 'work', 'beach', 'culture'];
 export const TAGS_MAX = 8;
@@ -27,9 +28,9 @@ export function splitTags(value) {
 
 export function checkTags(value) {
     const tags = [...new Set(splitTags(value))];
-    if (tags.length > TAGS_MAX) return { error: `A place can have at most ${TAGS_MAX} tags.` };
+    if (tags.length > TAGS_MAX) return { error: t('A place can have at most {TAGS_MAX} tags.', { TAGS_MAX }) };
     const bad = tags.find(tag => tag.length > TAG_MAX_LENGTH || !TAG_PATTERN.test(tag));
-    if (bad) return { error: `“${bad}” is not a tag: use up to ${TAG_MAX_LENGTH} letters or digits.` };
+    if (bad) return { error: t('“{bad}” is not a tag: use up to {TAG_MAX_LENGTH} letters or digits.', { bad, TAG_MAX_LENGTH }) };
     return { tags };
 }
 
@@ -49,14 +50,20 @@ export function parseRating(value) {
 }
 
 export const PRIORITIES = [
-    { value: 'high', label: '🔥 Must go' },
-    { value: 'medium', label: '⭐ Would love to' },
-    { value: 'low', label: '💭 Someday' }
+    { value: 'high', get label() { return t('🔥 Must go'); } },
+    { value: 'medium', get label() { return t('⭐ Would love to'); } },
+    { value: 'low', get label() { return t('💭 Someday'); } }
 ];
 const PRIORITY_ORDER = { high: 0, medium: 1, low: 2 };
 
-export const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September',
-    'October', 'November', 'December'];
+/**
+ * A month's name (1–12) in the interface's language, in full or short.
+ * @param {number} month
+ * @param {'long' | 'short'} width
+ */
+export function monthName(month, width = 'long') {
+    return new Intl.DateTimeFormat(locale(), { month: width, timeZone: 'UTC' }).format(Date.UTC(2000, month - 1, 1));
+}
 
 export function priorityLabel(priority) {
     return PRIORITIES.find(item => item.value === priority)?.label || '';
@@ -67,7 +74,7 @@ export function checkMonths(value) {
     const items = Array.isArray(value) ? value : String(value ?? '').split(/[;,\s]+/).filter(Boolean);
     const months = items.map(Number);
     if (!months.every(month => Number.isInteger(month) && month >= 1 && month <= 12)) {
-        return { error: 'Best months are month numbers from 1 to 12.' };
+        return { error: t('Best months are month numbers from 1 to 12.') };
     }
     return { months: [...new Set(months)].sort((a, b) => a - b) };
 }
@@ -75,13 +82,13 @@ export function checkMonths(value) {
 /** Validates the details of a form or an imported record the way the API does. */
 export function checkDetails(record) {
     const rating = parseRating(record?.rating);
-    if (rating === undefined) return { error: 'A rating is a whole number of stars from 1 to 5.' };
+    if (rating === undefined) return { error: t('A rating is a whole number of stars from 1 to 5.') };
     const { tags, error } = checkTags(record?.tags);
     if (error) return { error };
     const emoji = typeof record?.emoji === 'string' ? record.emoji.trim() : '';
-    if (emoji && !isSingleEmoji(emoji)) return { error: 'Choose a single emoji for the pin.' };
+    if (emoji && !isSingleEmoji(emoji)) return { error: t('Choose a single emoji for the pin.') };
     const priority = typeof record?.priority === 'string' ? record.priority.trim() : '';
-    if (priority && !(priority in PRIORITY_ORDER)) return { error: 'Priority is high, medium or low.' };
+    if (priority && !(priority in PRIORITY_ORDER)) return { error: t('Priority is high, medium or low.') };
     const { months, error: monthError } = checkMonths(record?.bestMonths);
     if (monthError) return { error: monthError };
     return { details: { rating, tags, emoji, priority: priority || null, bestMonths: months } };
@@ -90,9 +97,9 @@ export function checkDetails(record) {
 /** "Apr–Jun", "Nov–Feb" across the new year, "Mar, Sep" or "All year". */
 export function monthsLabel(months = []) {
     if (!months.length) return '';
-    if (months.length === 12) return 'All year';
+    if (months.length === 12) return t('All year');
     const set = new Set(months);
-    const short = month => MONTH_NAMES[month - 1].slice(0, 3);
+    const short = month => monthName(month, 'short');
     // Start each run at a month whose previous month is not chosen, so runs wrap past December.
     const starts = months.filter(month => !set.has(month === 1 ? 12 : month - 1));
     return starts.map(start => {
@@ -122,10 +129,10 @@ export function groupByNextMonth(markers, month) {
     }
     const rank = marker => PRIORITY_ORDER[marker.priority] ?? 3;
     const title = wait => {
-        if (wait === null) return 'No month chosen';
-        const name = MONTH_NAMES[(month - 1 + wait) % 12];
-        if (wait === 0) return `${name} (this month)`;
-        return wait === 1 ? `${name} (next month)` : name;
+        if (wait === null) return t('No month chosen');
+        const name = monthName(((month - 1 + wait) % 12) + 1);
+        if (wait === 0) return t('{month} (this month)', { month: name });
+        return wait === 1 ? t('{month} (next month)', { month: name }) : name;
     };
     return [...groups.entries()]
         .sort(([a], [b]) => (a ?? 12) - (b ?? 12))
@@ -143,8 +150,8 @@ export function stars(rating) {
 }
 
 export function ratingLabel(rating) {
-    if (!rating) return 'Not rated';
-    return rating === 1 ? 'Rated 1 star out of 5' : `Rated ${rating} stars out of 5`;
+    if (!rating) return t('Not rated');
+    return tn(rating, 'Rated {count} star out of 5', 'Rated {count} stars out of 5');
 }
 
 /** Tags offered in forms: the suggested ones, then the traveler's own by how often they are used. */

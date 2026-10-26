@@ -7,11 +7,12 @@ import { countryName } from './ledger-report.js';
 import { statusChip } from './ledger-parts.js';
 import { openSecurity } from './security.js';
 import { checklistSection } from './org-checklist.js';
+import { t, tn, tk } from './i18n.js';
 
-const ROLE_LABELS = { traveler: 'Traveler', manager: 'Manager', admin: 'Admin' };
-const ROLE_OPTIONS = Object.entries(ROLE_LABELS).map(([value, label]) => ({ value, label }));
+const ROLE_LABELS = { traveler: tk('Traveler'), manager: tk('Manager'), admin: tk('Admin') };
+const roleOptions = () => Object.entries(ROLE_LABELS).map(([value, label]) => ({ value, label: t(label) }));
 
-export const roleLabel = role => ROLE_LABELS[role] || role;
+export const roleLabel = role => (ROLE_LABELS[role] ? t(ROLE_LABELS[role]) : role);
 
 /**
  * Errors of the organization dialogs: managers and admins without a second factor are offered
@@ -22,7 +23,7 @@ export async function orgError(ctx, error) {
         ctx.handleError(error);
         return undefined;
     }
-    const agreed = await ctx.confirmDialog({ title: 'Secure your account first', message: error.message, confirmLabel: 'Open sign-in security' });
+    const agreed = await ctx.confirmDialog({ title: t('Secure your account first'), message: error.message, confirmLabel: t('Open sign-in security') });
     if (!agreed) return undefined;
     await openSecurity(ctx);
     return STAY_CLOSED;
@@ -35,17 +36,17 @@ function thisYear() {
 
 function ruleSummary(ctx, rule) {
     const countries = rule.countries.map(id => countryName(ctx, id)).join(', ');
-    if (rule.kind === 'stay') return `${rule.maxDays} days in any ${rule.windowDays} · ${countries}`;
-    const period = rule.period === 'rolling' ? `in any ${rule.windowDays} days` : `a year from ${rule.yearStart || '01-01'}`;
-    return `${rule.maxDays} days ${period} · ${countries}`;
+    if (rule.kind === 'stay') return t('{maxDays} days in any {windowDays} · {countries}', { maxDays: rule.maxDays, windowDays: rule.windowDays, countries });
+    if (rule.period === 'rolling') return t('{maxDays} days in any {windowDays} days · {countries}', { maxDays: rule.maxDays, windowDays: rule.windowDays, countries });
+    return t('{maxDays} days a year from {date} · {countries}', { maxDays: rule.maxDays, date: rule.yearStart || '01-01', countries });
 }
 
 // ---------------------------------------------------------------- the report
 
 function reportTable(report) {
     return h('div', { class: 'org-report' }, h('table', {},
-        h('caption', { class: 'small' }, `Business days from ${formatDate(report.from)} to ${formatDate(report.to)}`),
-        h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, 'Member'), h('th', { scope: 'col' }, 'Days per country'), h('th', { scope: 'col' }, 'Rules'))),
+        h('caption', { class: 'small' }, t('Business days from {from} to {to}', { from: formatDate(report.from), to: formatDate(report.to) })),
+        h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, t('Member')), h('th', { scope: 'col' }, t('Days per country')), h('th', { scope: 'col' }, t('Rules')))),
         h('tbody', {}, report.members.map(member => h('tr', {},
             h('th', { scope: 'row' }, member.username),
             h('td', {}, member.countries.length ? member.countries.map(country => `${country.name} ${country.days}`).join(' · ') : '—'),
@@ -62,15 +63,15 @@ function reportSection(org, view, step) {
     });
     const fileName = `${org.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'organization'}-business-days-${view.report?.from}-${view.report?.to}.csv`;
     return h('section', { class: 'dialog-section', 'aria-labelledby': 'org-report-title' },
-        h('h4', { id: 'org-report-title' }, '📊 Business days'),
-        h('p', { class: 'small' }, 'Each member\'s business trips for this organization, per country, and its rules. Members see in their account each time you look.'),
+        h('h4', { id: 'org-report-title' }, t('📊 Business days')),
+        h('p', { class: 'small' }, t('Each member\'s business trips for this organization, per country, and its rules. Members see in their account each time you look.')),
         h('div', { class: 'org-period' },
-            h('label', { class: 'field', for: 'org-report-from' }, h('span', {}, 'From'), from),
-            h('label', { class: 'field', for: 'org-report-to' }, h('span', {}, 'To'), to),
-            h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: show }, 'Show business days')),
+            h('label', { class: 'field', for: 'org-report-from' }, h('span', {}, t('From')), from),
+            h('label', { class: 'field', for: 'org-report-to' }, h('span', {}, t('To')), to),
+            h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: show }, t('Show business days'))),
         view.report ? [
             reportTable(view.report),
-            h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => downloadFile(fileName, buildReportCsv(view.report), 'text/csv') }, '⬇️ CSV for your adviser')
+            h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => downloadFile(fileName, buildReportCsv(view.report), 'text/csv') }, t('⬇️ CSV for your adviser'))
         ] : null);
 }
 
@@ -80,59 +81,59 @@ function memberItem(ctx, org, member, step) {
     const self = member.username === ctx.state.user.username;
     const admin = org.role === 'admin';
     return h('li', { class: 'dialog-item' },
-        h('span', {}, h('strong', {}, member.username, self ? ' (you)' : ''), h('small', {}, `${roleLabel(member.role)} · joined ${formatDate(member.joinedAt.slice(0, 10))}`)),
+        h('span', {}, h('strong', {}, member.username, self ? ` ${t('(you)')}` : ''), h('small', {}, t('{role} · joined {date}', { role: roleLabel(member.role), date: formatDate(member.joinedAt.slice(0, 10)) }))),
         admin && !self ? h('select', {
-            'aria-label': `Role of ${member.username}`,
+            'aria-label': t('Role of {username}', { username: member.username }),
             onchange: event => step(async () => {
                 await ctx.api.setOrgRole(org.id, member.username, event.target.value);
-                toast(`${member.username} is now ${roleLabel(event.target.value).toLowerCase()}.`, { tone: 'success' });
+                toast(t('{username}\'s role is now {role}.', { username: member.username, role: roleLabel(event.target.value) }), { tone: 'success' });
             })
-        }, ROLE_OPTIONS.map(option => h('option', { value: option.value, selected: option.value === member.role }, option.label))) : null,
+        }, roleOptions().map(option => h('option', { value: option.value, selected: option.value === member.role }, option.label))) : null,
         admin && !self ? h('button', {
-            type: 'button', class: 'icon-btn', 'aria-label': `Remove ${member.username}`, title: 'Remove',
+            type: 'button', class: 'icon-btn', 'aria-label': t('Remove {username}', { username: member.username }), title: t('Remove'),
             onclick: () => step(async () => {
-                if (!(await ctx.confirmDialog({ title: `Remove ${member.username}?`, message: 'Their business trips for this organization become personal again.', confirmLabel: 'Remove', danger: true }))) return;
+                if (!(await ctx.confirmDialog({ title: t('Remove {username}?', { username: member.username }), message: t('Their business trips for this organization become personal again.'), confirmLabel: t('Remove'), danger: true }))) return;
                 await ctx.api.removeOrgMember(org.id, member.username);
-                toast(`Removed ${member.username}.`);
+                toast(t('Removed {username}.', { username: member.username }));
             })
         }, '✕') : null);
 }
 
 async function invite(ctx, org) {
     const values = await formDialog({
-        title: `Invite to ${org.name}`,
-        message: 'The link works once, for seven days. Send it to the person you invite as you like.',
-        submitLabel: 'Make the link',
-        fields: [{ name: 'role', label: 'They join as', type: 'select', value: 'traveler', options: ROLE_OPTIONS }]
+        title: t('Invite to {name}', { name: org.name }),
+        message: t('The link works once, for seven days. Send it to the person you invite as you like.'),
+        submitLabel: t('Make the link'),
+        fields: [{ name: 'role', label: t('They join as'), type: 'select', value: 'traveler', options: roleOptions() }]
     });
     if (!values) return;
     const invitation = await ctx.api.inviteToOrg(org.id, values.role);
     const link = invitationLink(location.origin, invitation.token);
     await formDialog({
-        title: 'Invitation link',
-        message: 'Copy it now: it is shown only once.',
+        title: t('Invitation link'),
+        message: t('Copy it now: it is shown only once.'),
         content: [
             h('code', { class: 'invitation-link' }, link),
-            h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => copyText(link, 'Invitation link copied.', `Invitation link: ${link}`) }, '📋 Copy the link')
+            h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => copyText(link, t('Invitation link copied.'), t('Invitation link: {link}', { link })) }, t('📋 Copy the link'))
         ],
-        submitLabel: 'Done',
+        submitLabel: t('Done'),
         fields: []
     });
 }
 
 function invitationsSection(ctx, org, invitations, step) {
     return h('section', { class: 'dialog-section', 'aria-labelledby': 'org-invitations-title' },
-        h('h4', { id: 'org-invitations-title' }, '✉️ Invitations'),
+        h('h4', { id: 'org-invitations-title' }, t('✉️ Invitations')),
         invitations.length ? h('ul', { class: 'dialog-list' }, invitations.map(invitation => h('li', { class: 'dialog-item' },
-            h('span', {}, h('strong', {}, `For a ${roleLabel(invitation.role).toLowerCase()}`), h('small', {}, `Until ${formatDate(invitation.expiresAt.slice(0, 10))}`)),
+            h('span', {}, h('strong', {}, t('Role: {role}', { role: roleLabel(invitation.role) })), h('small', {}, t('Until {date}', { date: formatDate(invitation.expiresAt.slice(0, 10)) }))),
             h('button', {
                 type: 'button', class: 'btn btn-danger-ghost btn-sm',
                 onclick: () => step(async () => {
                     await ctx.api.revokeOrgInvitation(org.id, invitation.id);
-                    toast('Invitation revoked: its link no longer works.');
+                    toast(t('Invitation revoked: its link no longer works.'));
                 })
-            }, 'Revoke')))) : h('p', { class: 'muted small' }, 'No invitation waiting.'),
-        h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => step(() => invite(ctx, org)) }, '＋ Invite someone'));
+            }, t('Revoke'))))) : h('p', { class: 'muted small' }, t('No invitation waiting.')),
+        h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => step(() => invite(ctx, org)) }, t('＋ Invite someone')));
 }
 
 // ---------------------------------------------------------------- rules
@@ -144,41 +145,41 @@ function rulesSection(ctx, org, step) {
         const checked = await ruleDialog(ctx, kind, rule);
         if (!checked) return;
         await save(rule ? org.rules.map(item => (item.id === rule.id ? checked : item)) : [...org.rules, checked]);
-        toast(`Saved ${checked.name}.`, { tone: 'success' });
+        toast(t('Saved {name}.', { name: checked.name }), { tone: 'success' });
     });
     const remove = rule => step(async () => {
         await save(org.rules.filter(item => item.id !== rule.id));
-        toast(`Removed ${rule.name}.`);
+        toast(t('Removed {name}.', { name: rule.name }));
     });
     return h('section', { class: 'dialog-section', 'aria-labelledby': 'org-rules-title' },
-        h('h4', { id: 'org-rules-title' }, '📏 Rules'),
-        h('p', { class: 'small' }, 'Stay limits and thresholds that matter to the organization, such as social security or tax days. Members see them in their Ledger tab.'),
+        h('h4', { id: 'org-rules-title' }, t('📏 Rules')),
+        h('p', { class: 'small' }, t('Stay limits and thresholds that matter to the organization, such as social security or tax days. Members see them in their Ledger tab.')),
         org.rules.length ? h('ul', { class: 'dialog-list' }, org.rules.map(rule => h('li', { class: 'dialog-item' },
             h('span', {}, h('strong', {}, rule.name), h('small', {}, ruleSummary(ctx, rule))),
-            admin ? h('button', { type: 'button', class: 'icon-btn', 'aria-label': `Edit ${rule.name}`, title: 'Edit', onclick: () => edit(rule.kind, rule) }, '✏️') : null,
-            admin ? h('button', { type: 'button', class: 'icon-btn', 'aria-label': `Remove ${rule.name}`, title: 'Remove', onclick: () => remove(rule) }, '🗑️') : null
-        ))) : h('p', { class: 'muted small' }, 'No rules yet.'),
+            admin ? h('button', { type: 'button', class: 'icon-btn', 'aria-label': t('Edit {name}', { name: rule.name }), title: t('Edit'), onclick: () => edit(rule.kind, rule) }, '✏️') : null,
+            admin ? h('button', { type: 'button', class: 'icon-btn', 'aria-label': t('Remove {name}', { name: rule.name }), title: t('Remove'), onclick: () => remove(rule) }, '🗑️') : null
+        ))) : h('p', { class: 'muted small' }, t('No rules yet.')),
         admin && org.rules.length < 20 ? h('div', { class: 'dialog-buttons' },
-            h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => edit('stay') }, '＋ Stay rule'),
-            h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => edit('threshold') }, '＋ Threshold')) : null);
+            h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => edit('stay') }, t('＋ Stay rule')),
+            h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => edit('threshold') }, t('＋ Threshold'))) : null);
 }
 
 // ---------------------------------------------------------------- the organization itself
 
 async function rename(ctx, org) {
-    const values = await formDialog({ title: `Rename ${org.name}`, submitLabel: 'Rename', fields: [{ name: 'name', label: 'Name', value: org.name, required: true, maxlength: 80 }] });
+    const values = await formDialog({ title: t('Rename {name}', { name: org.name }), submitLabel: t('Rename'), fields: [{ name: 'name', label: t('Name'), value: org.name, required: true, maxlength: 80 }] });
     if (values) await ctx.api.renameOrg(org.id, values.name.trim());
 }
 
 async function remove(ctx, org, back) {
     const agreed = await ctx.confirmDialog({
-        title: `Delete ${org.name}?`,
-        message: 'Its members, invitations, rules and audit log go; every business trip for it becomes personal again. This cannot be undone.',
-        confirmLabel: 'Delete organization', danger: true
+        title: t('Delete {name}?', { name: org.name }),
+        message: t('Its members, invitations, rules and audit log go; every business trip for it becomes personal again. This cannot be undone.'),
+        confirmLabel: t('Delete organization'), danger: true
     });
     if (!agreed) return undefined;
     await ctx.api.deleteOrg(org.id);
-    toast(`Deleted ${org.name}.`);
+    toast(t('Deleted {name}.', { name: org.name }));
     await ctx.reloadMarkers();
     back();
     return STAY_CLOSED;
@@ -195,7 +196,7 @@ export function manageOrg(ctx, org, back) {
             ctx.state.orgs = await ctx.api.getOrgs();
             ctx.renderActiveTab();
             const current = ctx.state.orgs.find(item => item.id === org.id);
-            if (!current || current.role === 'traveler') throw new Error(`You no longer run ${org.name}.`);
+            if (!current || current.role === 'traveler') throw new Error(t('You no longer run {name}.', { name: org.name }));
             const [members, invitations] = await Promise.all([
                 ctx.api.getOrgMembers(org.id),
                 current.role === 'admin' ? ctx.api.getOrgInvitations(org.id) : []
@@ -205,24 +206,24 @@ export function manageOrg(ctx, org, back) {
         onError: error => orgError(ctx, error),
         draw: ({ current, members, invitations }, step, close) => [
             h('h3', { id: 'org-manage-title' }, current.name),
-            h('p', { class: 'small muted' }, `You are ${roleLabel(current.role).toLowerCase()} · ${members.length} ${members.length === 1 ? 'member' : 'members'}`),
+            h('p', { class: 'small muted' }, `${t('Your role: {role}', { role: roleLabel(current.role) })} · ${tn(members.length, '{count} member', '{count} members')}`),
             reportSection(current, view, step),
             h('section', { class: 'dialog-section', 'aria-labelledby': 'org-members-title' },
-                h('h4', { id: 'org-members-title' }, '👥 Members'),
+                h('h4', { id: 'org-members-title' }, t('👥 Members')),
                 h('ul', { class: 'dialog-list' }, members.map(member => memberItem(ctx, current, member, step)))),
             current.role === 'admin' ? invitationsSection(ctx, current, invitations, step) : null,
             rulesSection(ctx, current, step),
             checklistSection(ctx, current, step),
             current.role === 'admin' ? h('div', { class: 'dialog-buttons dialog-section' },
-                h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => step(() => rename(ctx, current)) }, '✏️ Rename'),
-                h('button', { type: 'button', class: 'btn btn-danger-ghost btn-sm', onclick: () => step(() => remove(ctx, current, back)) }, '🗑️ Delete')) : null,
+                h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => step(() => rename(ctx, current)) }, t('✏️ Rename')),
+                h('button', { type: 'button', class: 'btn btn-danger-ghost btn-sm', onclick: () => step(() => remove(ctx, current, back)) }, t('🗑️ Delete'))) : null,
             h('div', { class: 'dialog-actions' }, h('button', {
                 type: 'button', class: 'btn btn-primary',
                 onclick: () => {
                     close();
                     back();
                 }
-            }, 'Back'))
+            }, t('Back')))
         ]
     });
 }

@@ -3,6 +3,7 @@
 // Node; nothing here touches the DOM, storage or the network.
 import { SCHENGEN_RULE, addDays, breaches, countBetween, dayNumber, isoDay, maxStayFrom, usedOn, visitSpan } from './days.js';
 import { isValidDate } from './visits.js';
+import { t } from './i18n.js';
 
 export const MAX_STAYS = 60;
 
@@ -19,11 +20,11 @@ export function checkStays(rows, today) {
         const exit = String(row?.exit ?? '').trim();
         if (!entry && !exit) return;
         const fail = (field, message) => errors.push({ index, field, message });
-        if (!isValidDate(entry)) return fail('entry', 'Choose the day you entered the area.');
-        if (exit && !isValidDate(exit)) return fail('exit', 'Choose the day you left, or leave it empty if you are still there.');
-        if (exit && exit < entry) return fail('exit', 'The exit day must be on or after the entry day.');
-        if (!exit && entry > today) return fail('exit', 'Add the exit day of a planned stay.');
-        if (dayNumber(exit || today) - dayNumber(entry) >= 3660) return fail('exit', 'A stay can last at most 3,660 days.');
+        if (!isValidDate(entry)) return fail('entry', t('Choose the day you entered the area.'));
+        if (exit && !isValidDate(exit)) return fail('exit', t('Choose the day you left, or leave it empty if you are still there.'));
+        if (exit && exit < entry) return fail('exit', t('The exit day must be on or after the entry day.'));
+        if (!exit && entry > today) return fail('exit', t('Add the exit day of a planned stay.'));
+        if (dayNumber(exit || today) - dayNumber(entry) >= 3660) return fail('exit', t('A stay can last at most 3,660 days.'));
         stays.push({ index, startDate: entry, endDate: exit, ongoing: !exit });
     });
     return { stays, errors };

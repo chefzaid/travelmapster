@@ -8,8 +8,10 @@ src/                     Express API; see architecture.md for each module
 public/                  Everything the browser loads (the only folder served)
   js/                    Native ES modules, no build step
   data/                  Country borders and cities (Natural Earth)
+  locales/               Translations of the interface, one catalog per language (ADR 0031)
   vendor/                MapLibre GL (BSD-3-Clause) and fonts (Fredoka, Nunito; SIL OFL)
 scripts/build-map-data.js  Rebuilds public/data
+scripts/i18n.js          Lists translation keys and checks or syncs the catalogs
 test/                    Unit, integration and Playwright tests
 infra/                   Compose stack, Kubernetes, Argo CD and CI scripts
 docs/                    Guides and ADRs
@@ -76,6 +78,14 @@ Invalid integers stop startup with a clear error. Production values come from
 - **Frontend**: add an ES module under `public/js/`; keep logic that can be pure in `geo.js`
   or `io.js` so it is unit tested; use the colour tokens in `css/tokens.css` so both themes keep
   [AA contrast](features.md#product-principles).
+- **Interface text** is English in the code, wrapped for translation
+  ([ADR 0031](adr/0031-localization.md)): `t('Trip saved.')`, `t('Removed {name}.', { name })`,
+  `tn(count, '{count} day', '{count} days')` for counts, `tk('…')` for text kept in a constant
+  (translated with `t()` where it is shown, or from a getter), and `data-i18n`,
+  `data-i18n-attr` or `data-i18n-parts` in the pages. Then run `node scripts/i18n.js sync`, which
+  adds the new keys to `public/locales/*.json`, fill in each language, and check with
+  `node scripts/i18n.js check`; a test fails while a catalog misses a key.
+  `node scripts/i18n.js strings` lists literals that look like interface text but are not keys.
 - **Third-party calls** need a CSP change in `src/app.js` and a [security](security.md) review.
 
 ## App Icons
@@ -96,7 +106,9 @@ node scripts/build-map-data.js path/to/folder
 node scripts/build-map-data.js path/to/folder --countries-only
 ```
 
-It takes about half a minute, the last part writing a Brotli copy (`.br`) beside every data
+The borders carry each country's name in the app's languages (`names`, from Natural Earth's
+`NAME_FR`, `NAME_ES`, `NAME_DE` and `NAME_AR`). It takes about half a minute, the last part
+writing a Brotli copy (`.br`) beside every data
 file, which the server sends to browsers that accept it. After editing a data file by hand, run
 `node scripts/compress-map-data.js`; a test fails while a copy is out of date. Review the size
 and the [data format](data-model.md#map-data) before committing.

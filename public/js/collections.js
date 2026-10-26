@@ -1,5 +1,6 @@
 // Collections to complete on the passport: the capital of every country, and every member of
 // the European Union, each counted on the traveler's country list. Pure, unit tested in Node.
+import { t } from './i18n.js';
 
 // Member states of the European Union as of 2026, by map code.
 export const EU_MEMBERS = Object.freeze([
@@ -33,7 +34,7 @@ export function computeCollections({ beenCities, countryOf, visitedIds, countedI
         id, icon, title, total: ids.length, count: ids.filter(done).length, missing: ids.filter(item => !done(item))
     });
     return [
-        collection('capitals', '🏛️', 'Capitals', capitalCountries, id => seenCapitals.has(id)),
-        collection('eu', '🇪🇺', 'European Union', eu, id => visitedIds.has(id))
+        collection('capitals', '🏛️', t('Capitals'), capitalCountries, id => seenCapitals.has(id)),
+        collection('eu', '🇪🇺', t('European Union'), eu, id => visitedIds.has(id))
     ];
 }

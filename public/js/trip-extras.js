@@ -6,6 +6,7 @@ import {
     EXPENSE_CATEGORIES, EXPENSES_MAX, PACKING_MAX_ITEMS, budgetTotals, currencyOptions, emptyBudget,
     foreignCurrencies, formatMoney, homeCurrency, packingProgress, withStarterItems
 } from './trip-budget.js';
+import { locale, t, tn } from './i18n.js';
 
 const CURRENCY_LIST_ID = 'currency-codes';
 // Sections the traveler opened stay open when the editor redraws.
@@ -30,7 +31,7 @@ export function section(id, title, summary, ...body) {
 function ensureCurrencyList() {
     if (document.getElementById(CURRENCY_LIST_ID)) return;
     document.body.append(h('datalist', { id: CURRENCY_LIST_ID },
-        currencyOptions(navigator.language).map(option => h('option', { value: option.value, label: option.label }))));
+        currencyOptions(locale()).map(option => h('option', { value: option.value, label: option.label }))));
 }
 
 function currencyInput(value, label, onvalid) {
@@ -41,7 +42,7 @@ function currencyInput(value, label, onvalid) {
             const code = event.target.value.trim().toUpperCase();
             if (/^[A-Z]{3}$/.test(code)) onvalid(code);
             else {
-                toast('Use a three-letter currency code, such as EUR or JPY.', { tone: 'error' });
+                toast(t('Use a three-letter currency code, such as EUR or JPY.'), { tone: 'error' });
                 event.target.value = value;
             }
         }
@@ -68,13 +69,13 @@ export function stopsSection(draft, { rerender, markDirty }) {
             addStop(draft);
             rerender();
         }
-    }, several ? '＋ Add a stop' : '＋ Add another destination');
+    }, several ? t('＋ Add a stop') : t('＋ Add another destination'));
     if (!several) return h('div', { class: 'trip-stops' }, add);
     return h('fieldset', { class: 'trip-stops' },
-        h('legend', {}, 'Stops'),
+        h('legend', {}, t('Stops')),
         h('ol', { class: 'stop-list' }, stops.map((stop, i) => h('li', { class: 'stop' },
             h('input', {
-                value: stop.destination, maxlength: 160, placeholder: 'Porto, Portugal', 'aria-label': `Stop ${i + 1}`, class: 'stop-destination',
+                value: stop.destination, maxlength: 160, placeholder: t('Porto, Portugal'), 'aria-label': t('Stop {number}', { number: i + 1 }), class: 'stop-destination',
                 oninput: event => {
                     renameStop(draft, i, event.target.value);
                     markDirty();
@@ -85,15 +86,15 @@ export function stopsSection(draft, { rerender, markDirty }) {
             h('label', { class: 'rate' },
                 h('input', {
                     type: 'number', min: 1, max: stop.days + MAX_DAYS - draft.plan.length, value: stop.days,
-                    'aria-label': `Days in stop ${i + 1}`,
+                    'aria-label': t('Days in stop {number}', { number: i + 1 }),
                     onchange: event => {
                         resizeStop(draft, i, Number(event.target.value));
                         rerender();
                     }
                 }),
-                h('span', {}, stop.days === 1 ? 'day' : 'days')),
+                h('span', {}, tn(stop.days, 'day', 'days'))),
             h('button', {
-                type: 'button', class: 'icon-btn', 'aria-label': `Remove stop ${i + 1}`, title: 'Remove stop and its days',
+                type: 'button', class: 'icon-btn', 'aria-label': t('Remove stop {number}', { number: i + 1 }), title: t('Remove stop and its days'),
                 onclick: () => {
                     removeStop(draft, i);
                     rerender();
@@ -109,14 +110,14 @@ export function stopsSection(draft, { rerender, markDirty }) {
 /** The packing list section: tick items off, add your own or the basics, remove them. */
 export function packingSection(draft, { rerender, markDirty }) {
     const { packed, total } = packingProgress(draft.packing);
-    const summary = h('small', {}, total ? `${packed} of ${total} packed` : '');
+    const summary = h('small', {}, total ? t('{packed} of {total} packed', { packed, total }) : '');
     const add = event => {
         event.preventDefault();
         const input = event.currentTarget.elements.namedItem('entry');
         const item = input.value.trim();
         if (!item) return;
         if (draft.packing.length >= PACKING_MAX_ITEMS) {
-            toast(`A packing list holds at most ${PACKING_MAX_ITEMS} items.`, { tone: 'error' });
+            toast(t('A packing list holds at most {PACKING_MAX_ITEMS} items.', { PACKING_MAX_ITEMS }), { tone: 'error' });
             return;
         }
         draft.packing.push({ item, packed: false });
@@ -131,33 +132,33 @@ export function packingSection(draft, { rerender, markDirty }) {
                 onchange: event => {
                     entry.packed = event.target.checked;
                     const progress = packingProgress(draft.packing);
-                    summary.textContent = `${progress.packed} of ${progress.total} packed`;
+                    summary.textContent = t('{packed} of {total} packed', { packed: progress.packed, total: progress.total });
                     markDirty();
                 }
             }),
             h('span', {}, entry.item)),
         h('button', {
-            type: 'button', class: 'icon-btn', 'aria-label': `Remove ${entry.item}`, title: 'Remove',
+            type: 'button', class: 'icon-btn', 'aria-label': t('Remove {item}', { item: entry.item }), title: t('Remove'),
             onclick: () => {
                 draft.packing.splice(i, 1);
                 rerender();
             }
         }, '✕')
     ));
-    return section('packing', '🎒 Packing list', summary,
-        items.length ? h('ul', { class: 'packing-list' }, items) : h('p', { class: 'hint' }, 'Nothing on the list yet.'),
+    return section('packing', t('🎒 Packing list'), summary,
+        items.length ? h('ul', { class: 'packing-list' }, items) : h('p', { class: 'hint' }, t('Nothing on the list yet.')),
         h('form', { class: 'row extra-add', onsubmit: add },
-            h('input', { name: 'entry', maxlength: 80, placeholder: 'Sunscreen, snorkel…', 'aria-label': 'Item to pack', autocomplete: 'off' }),
-            h('button', { type: 'submit', class: 'btn btn-ghost btn-sm' }, '＋ Add')),
+            h('input', { name: 'entry', maxlength: 80, placeholder: t('Sunscreen, snorkel…'), 'aria-label': t('Item to pack'), autocomplete: 'off' }),
+            h('button', { type: 'submit', class: 'btn btn-ghost btn-sm' }, t('＋ Add'))),
         h('button', {
             type: 'button', class: 'btn btn-ghost btn-sm',
             onclick: () => {
                 const before = draft.packing.length;
                 draft.packing = withStarterItems(draft.packing);
-                toast(draft.packing.length > before ? 'Added the basics. Save to keep them.' : 'The basics are already on your list.');
+                toast(draft.packing.length > before ? t('Added the basics. Save to keep them.') : t('The basics are already on your list.'));
                 rerender();
             }
-        }, '✨ Add the basics')
+        }, t('✨ Add the basics'))
     );
 }
 
@@ -166,7 +167,7 @@ export function packingSection(draft, { rerender, markDirty }) {
 function expenseRow(draft, expense, i, rerender, markDirty) {
     return h('li', { class: 'expense' },
         h('input', {
-            value: expense.label, maxlength: 80, 'aria-label': 'Expense', class: 'expense-label',
+            value: expense.label, maxlength: 80, 'aria-label': t('Expense'), class: 'expense-label',
             oninput: event => {
                 const label = event.target.value.trim();
                 if (label) expense.label = label;
@@ -175,14 +176,14 @@ function expenseRow(draft, expense, i, rerender, markDirty) {
             onchange: event => { event.target.value = expense.label; }
         }),
         h('select', {
-            'aria-label': `Category of ${expense.label}`, class: 'expense-category',
+            'aria-label': t('Category of {expense}', { expense: expense.label }), class: 'expense-category',
             onchange: event => {
                 expense.category = event.target.value;
                 rerender();
             }
-        }, EXPENSE_CATEGORIES.map(([id, icon, label]) => h('option', { value: id, selected: id === expense.category }, `${icon} ${label}`))),
+        }, EXPENSE_CATEGORIES.map(([id, icon, label]) => h('option', { value: id, selected: id === expense.category }, `${icon} ${t(label)}`))),
         h('input', {
-            type: 'number', min: 0, step: 'any', value: expense.amount, 'aria-label': `Amount of ${expense.label}`, class: 'expense-amount',
+            type: 'number', min: 0, step: 'any', value: expense.amount, 'aria-label': t('Amount of {expense}', { expense: expense.label }), class: 'expense-amount',
             onchange: event => {
                 const amount = readAmount(event.target);
                 if (amount === undefined || amount === null) event.target.value = expense.amount;
@@ -190,12 +191,12 @@ function expenseRow(draft, expense, i, rerender, markDirty) {
                 rerender();
             }
         }),
-        currencyInput(expense.currency, `Currency of ${expense.label}`, code => {
+        currencyInput(expense.currency, t('Currency of {expense}', { expense: expense.label }), code => {
             expense.currency = code;
             rerender();
         }),
         h('button', {
-            type: 'button', class: 'icon-btn', 'aria-label': `Remove ${expense.label}`, title: 'Remove',
+            type: 'button', class: 'icon-btn', 'aria-label': t('Remove {expense}', { expense: expense.label }), title: t('Remove'),
             onclick: () => {
                 draft.budget.expenses.splice(i, 1);
                 rerender();
@@ -209,7 +210,7 @@ function rateRow(budget, code, rerender) {
         h('span', {}, `1 ${code} =`),
         h('input', {
             type: 'number', min: 0, step: 'any', value: budget.rates[code] ?? '', placeholder: 'rate',
-            'aria-label': `${budget.currency} for 1 ${code}`,
+            'aria-label': t('{currency} for 1 {code}', { currency: budget.currency, code }),
             onchange: event => {
                 const rate = readAmount(event.target);
                 if (rate) budget.rates[code] = rate;
@@ -233,23 +234,23 @@ function addExpenseForm(draft, rerender) {
             const amount = readAmount(form.amount);
             const currency = form.currency.value.trim().toUpperCase();
             if (!label || amount === undefined || amount === null || !/^[A-Z]{3}$/.test(currency)) {
-                toast('Name the expense, and give its amount and a three-letter currency code.', { tone: 'error' });
+                toast(t('Name the expense, and give its amount and a three-letter currency code.'), { tone: 'error' });
                 return;
             }
             if (budget.expenses.length >= EXPENSES_MAX) {
-                toast(`A budget holds at most ${EXPENSES_MAX} expenses.`, { tone: 'error' });
+                toast(t('A budget holds at most {EXPENSES_MAX} expenses.', { EXPENSES_MAX }), { tone: 'error' });
                 return;
             }
             budget.expenses.push({ label, amount, currency, category: form.category.value });
             rerender();
         }
     },
-        h('input', { name: 'label', maxlength: 80, placeholder: 'Train to Kyoto', 'aria-label': 'New expense', autocomplete: 'off', class: 'expense-label' }),
-        h('select', { name: 'category', 'aria-label': 'Category', class: 'expense-category' },
-            EXPENSE_CATEGORIES.map(([id, icon, label]) => h('option', { value: id, selected: id === 'other' }, `${icon} ${label}`))),
-        h('input', { name: 'amount', type: 'number', min: 0, step: 'any', placeholder: '0.00', 'aria-label': 'Amount', class: 'expense-amount' }),
-        h('input', { name: 'currency', value: lastCurrency, list: CURRENCY_LIST_ID, maxlength: 3, size: 4, 'aria-label': 'Currency', class: 'currency-input' }),
-        h('button', { type: 'submit', class: 'btn btn-ghost btn-sm' }, '＋ Add')
+        h('input', { name: 'label', maxlength: 80, placeholder: t('Train to Kyoto'), 'aria-label': t('New expense'), autocomplete: 'off', class: 'expense-label' }),
+        h('select', { name: 'category', 'aria-label': t('Category'), class: 'expense-category' },
+            EXPENSE_CATEGORIES.map(([id, icon, label]) => h('option', { value: id, selected: id === 'other' }, `${icon} ${t(label)}`))),
+        h('input', { name: 'amount', type: 'number', min: 0, step: 'any', placeholder: '0.00', 'aria-label': t('Amount'), class: 'expense-amount' }),
+        h('input', { name: 'currency', value: lastCurrency, list: CURRENCY_LIST_ID, maxlength: 3, size: 4, 'aria-label': t('Currency'), class: 'currency-input' }),
+        h('button', { type: 'submit', class: 'btn btn-ghost btn-sm' }, t('＋ Add'))
     );
 }
 
@@ -257,11 +258,11 @@ function totalsView(budget) {
     const { total, byCategory, missing, left } = budgetTotals(budget);
     const money = amount => formatMoney(amount, budget.currency);
     return h('div', { class: 'budget-totals', 'aria-live': 'polite' },
-        h('p', {}, h('strong', {}, `Spent: ${money(total)}`),
-            left === null ? null : h('span', { class: left < 0 ? 'over' : '' }, left < 0 ? ` · ${money(-left)} over budget` : ` · ${money(left)} left`)),
+        h('p', {}, h('strong', {}, t('Spent: {total}', { total: money(total) })),
+            left === null ? null : h('span', { class: left < 0 ? 'over' : '' }, ` · ${left < 0 ? t('{money} over budget', { money: money(-left) }) : t('{money} left', { money: money(left) })}`)),
         h('ul', { class: 'budget-categories' }, EXPENSE_CATEGORIES.filter(([id]) => byCategory[id]).map(([id, icon, label]) =>
-            h('li', {}, `${icon} ${label}: ${money(byCategory[id])}`))),
-        missing.length ? h('p', { class: 'hint' }, `Add a rate for ${missing.join(', ')} to count those expenses.`) : null
+            h('li', {}, `${icon} ${t(label)}: ${money(byCategory[id])}`))),
+        missing.length ? h('p', { class: 'hint' }, t('Add a rate for {currencies} to count those expenses.', { currencies: missing.join(', ') })) : null
     );
 }
 
@@ -272,9 +273,9 @@ export function budgetSection(draft, { rerender, markDirty, trips }) {
     if (!budget.currency) {
         let currency = homeCurrency(trips);
         return section('budget', '🧾 Budget', null,
-            h('p', { class: 'hint' }, 'Note what the trip costs in any currency and see the total in your home currency.'),
+            h('p', { class: 'hint' }, t('Note what the trip costs in any currency and see the total in your home currency.')),
             h('div', { class: 'row extra-add' },
-                h('label', { class: 'rate' }, h('span', {}, 'Home currency'), currencyInput(currency, 'Home currency', code => { currency = code; })),
+                h('label', { class: 'rate' }, h('span', {}, t('Home currency')), currencyInput(currency, t('Home currency'), code => { currency = code; })),
                 h('button', {
                     type: 'button', class: 'btn btn-ghost btn-sm',
                     onclick: () => {
@@ -282,21 +283,21 @@ export function budgetSection(draft, { rerender, markDirty, trips }) {
                         openSections.add('budget');
                         rerender();
                     }
-                }, 'Start a budget'))
+                }, t('Start a budget')))
         );
     }
     const { total } = budgetTotals(budget);
     const summary = budget.planned === null ? formatMoney(total, budget.currency)
         : `${formatMoney(total, budget.currency)} of ${formatMoney(budget.planned, budget.currency)}`;
     const foreign = foreignCurrencies(budget);
-    return section('budget', '🧾 Budget', h('small', {}, summary),
+    return section('budget', t('🧾 Budget'), h('small', {}, summary),
         h('div', { class: 'row extra-add' },
-            h('label', { class: 'rate' }, h('span', {}, 'Home currency'), currencyInput(budget.currency, 'Home currency', code => {
+            h('label', { class: 'rate' }, h('span', {}, t('Home currency')), currencyInput(budget.currency, t('Home currency'), code => {
                 budget.currency = code;
                 rerender();
             })),
-            h('label', { class: 'rate' }, h('span', {}, 'Planned'), h('input', {
-                type: 'number', min: 0, step: 'any', value: budget.planned ?? '', placeholder: 'optional', 'aria-label': 'Planned budget', class: 'expense-amount',
+            h('label', { class: 'rate' }, h('span', {}, t('Planned')), h('input', {
+                type: 'number', min: 0, step: 'any', value: budget.planned ?? '', placeholder: 'optional', 'aria-label': t('Planned budget'), class: 'expense-amount',
                 onchange: event => {
                     const planned = readAmount(event.target);
                     if (planned !== undefined) budget.planned = planned;
@@ -306,10 +307,10 @@ export function budgetSection(draft, { rerender, markDirty, trips }) {
         ),
         budget.expenses.length
             ? h('ul', { class: 'expense-list' }, budget.expenses.map((expense, i) => expenseRow(draft, expense, i, rerender, markDirty)))
-            : h('p', { class: 'hint' }, 'No expenses yet.'),
+            : h('p', { class: 'hint' }, t('No expenses yet.')),
         addExpenseForm(draft, rerender),
         foreign.length ? h('fieldset', { class: 'rates' },
-            h('legend', {}, 'Exchange rates: the rate you got'),
+            h('legend', {}, t('Exchange rates: the rate you got')),
             foreign.map(code => rateRow(budget, code, rerender))) : null,
         totalsView(budget),
         h('button', {
@@ -318,6 +319,6 @@ export function budgetSection(draft, { rerender, markDirty, trips }) {
                 draft.budget = {};
                 rerender();
             }
-        }, 'Remove the budget')
+        }, t('Remove the budget'))
     );
 }

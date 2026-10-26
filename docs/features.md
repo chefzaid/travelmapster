@@ -272,6 +272,11 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
 - **Install it** on a phone or computer from the browser, and open it offline: the map, its data
   and your places, trips and ledger as last loaded; changes wait until you are back online, and
   signing out removes the offline copy ([ADR 0021](adr/0021-installable-offline-app.md)).
+- **Five languages** ([ADR 0031](adr/0031-localization.md)): English, French, Spanish, German
+  and Arabic, read right to left with the layout mirrored. The browser's language decides at
+  first; Settings and the landing page offer the choice, kept in the browser. Countries carry
+  their names in each language (from Natural Earth) and are found by any of them; dates,
+  numbers and money follow the language.
 - Responsive layout with a bottom sheet on phones, `/` to search, screen-reader labels, and light and dark themes that follow the system.
 
 ## Organizations

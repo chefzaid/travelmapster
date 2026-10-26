@@ -1,5 +1,5 @@
 import { h, fill, toast, downloadFile, formatDate } from './ui.js';
-import { CONTINENTS, CONTINENT_EMOJI } from './geo.js';
+import { CONTINENTS, CONTINENT_EMOJI, regionName } from './geo.js';
 import { buildCsv, buildJson, parseImportContent, validatePlace, placeKey, mergePlaces } from './io.js';
 import { buildGeoJson, buildKml } from './archive.js';
 import { lastVisitDate, lastVisitYears, matchesLastVisit, visitCount } from './visits.js';
@@ -7,6 +7,7 @@ import { groupByNextMonth, matchesDetails, monthsLabel, priorityLabel, ratingLab
 import { STATUSES, statusLabel, statusOf } from './status.js';
 import { openNewTrip } from './trips.js';
 import { importButtons } from './import-apps.js';
+import { t, tn } from './i18n.js';
 
 const view = { query: '', type: 'all', category: 'all', lastVisit: 'all', sort: 'continent' };
 
@@ -26,8 +27,7 @@ function visitSummary(marker) {
     const count = visitCount(marker);
     const last = lastVisitDate(marker);
     if (!count) return last ? ` · ${formatDate(last)}` : '';
-    const times = count === 1 ? '1 visit' : `${count} visits`;
-    return ` · ${times}, last ${formatDate(last)}`;
+    return ` · ${tn(count, '{count} visit, last {date}', '{count} visits, last {date}', { date: formatDate(last) })}`;
 }
 
 function chipGroup(label, key, options, onChange) {
@@ -48,7 +48,7 @@ function placeItem(marker, country, ctx) {
     const tags = marker.tags || [];
     const status = statusOf(marker);
     return h('li', { class: `place place-${status}` },
-        h('button', { type: 'button', class: 'place-main', onclick: () => ctx.showMarker(marker), title: 'Show on map' },
+        h('button', { type: 'button', class: 'place-main', onclick: () => ctx.showMarker(marker), title: t('Show on map') },
             // The traveler's emoji stands in for the flag or city pin.
             h('span', { class: 'place-flag', 'aria-hidden': 'true' }, marker.emoji || (marker.category === 'City' ? '📍' : country?.flag || '🏳️')),
             h('span', { class: 'place-text' },
@@ -57,7 +57,7 @@ function placeItem(marker, country, ctx) {
                     statusLabel(status),
                     visitSummary(marker),
                     marker.photoUrl || marker.visits?.some(visit => visit.photoUrl) ? ' · 📷' : '',
-                    marker.hideFromPublic ? ' · 🔒 Not on public map' : ''
+                    marker.hideFromPublic ? ` · ${t('🔒 Not on public map')}` : ''
                 ),
                 marker.type === 'wishlist' && (marker.priority || marker.bestMonths?.length) ? h('small', {},
                     [priorityLabel(marker.priority), marker.bestMonths?.length ? `Best ${monthsLabel(marker.bestMonths)}` : '']
@@ -73,16 +73,16 @@ function placeItem(marker, country, ctx) {
             status === 'wishlist' ? h('button', {
                 type: 'button',
                 class: 'icon-btn',
-                'aria-label': `Plan a trip to ${marker.name}`,
-                title: 'Plan a trip',
+                'aria-label': t('Plan a trip to {name}', { name: marker.name }),
+                title: t('Plan a trip'),
                 onclick: () => openNewTrip(ctx, marker.name.split(',')[0])
             }, '🗓️') : null,
-            h('button', { type: 'button', class: 'icon-btn', 'aria-label': `Edit ${marker.name}`, title: 'Edit', onclick: () => ctx.editPlace(marker) }, '✏️'),
+            h('button', { type: 'button', class: 'icon-btn', 'aria-label': t('Edit {name}', { name: marker.name }), title: t('Edit'), onclick: () => ctx.editPlace(marker) }, '✏️'),
             h('button', {
                 type: 'button',
                 class: 'icon-btn',
-                'aria-label': `Remove ${marker.name}`,
-                title: 'Remove',
+                'aria-label': t('Remove {name}', { name: marker.name }),
+                title: t('Remove'),
                 onclick: () => ctx.removePlace(marker).catch(ctx.handleError)
             }, '🗑️')
         )
@@ -91,35 +91,35 @@ function placeItem(marker, country, ctx) {
 
 function sortMarkers(markers, ctx) {
     const byName = (a, b) => a.name.localeCompare(b.name);
-    if (view.sort === 'name') return [['All places', [...markers].sort(byName)]];
+    if (view.sort === 'name') return [[t('All places'), [...markers].sort(byName)]];
     // The wishlist by the next month that suits each place (only wishlist places are listed).
     if (view.sort === 'season') return groupByNextMonth(markers, new Date().getMonth() + 1);
     if (view.sort === 'date') {
         const sorted = [...markers].sort((a, b) => lastVisitDate(b).localeCompare(lastVisitDate(a)) || byName(a, b));
-        return [['Most recent visit first', sorted]];
+        return [[t('Most recent visit first'), sorted]];
     }
     const groups = new Map([...CONTINENTS, 'Elsewhere'].map(name => [name, []]));
     for (const marker of markers) {
         const continent = ctx.state.stats.markerCountry.get(marker.id)?.continent;
         groups.get(groups.has(continent) ? continent : 'Elsewhere').push(marker);
     }
-    return [...groups.entries()].filter(([, items]) => items.length).map(([name, items]) => [name, items.sort(byName)]);
+    return [...groups.entries()].filter(([, items]) => items.length).map(([name, items]) => [regionName(name), items.sort(byName)]);
 }
 
 function renderList(list, summary, ctx) {
     const { state } = ctx;
     const filtered = state.markers.filter(marker => matches(marker, state.stats.markerCountry.get(marker.id), state.filters)
         && (view.sort !== 'season' || marker.type === 'wishlist'));
-    summary.textContent = `${filtered.length} of ${state.markers.length} places`;
+    summary.textContent = tn(state.markers.length, '{shown} of {count} place', '{shown} of {count} places', { shown: filtered.length });
     if (!state.markers.length) {
         list.replaceChildren(h('div', { class: 'empty' },
             h('p', { class: 'empty-emoji', 'aria-hidden': 'true' }, '🧳'),
-            h('p', {}, 'No places yet. Click a country on the map to start your collection.')
+            h('p', {}, t('No places yet. Click a country on the map to start your collection.'))
         ));
         return;
     }
     if (!filtered.length) {
-        list.replaceChildren(h('div', { class: 'empty' }, h('p', {}, 'Nothing matches those filters.')));
+        list.replaceChildren(h('div', { class: 'empty' }, h('p', {}, t('Nothing matches those filters.'))));
         return;
     }
     list.replaceChildren(...sortMarkers(filtered, ctx).map(([title, markers]) => h('section', { class: 'place-group' },
@@ -138,7 +138,7 @@ async function importFile(file, ctx, status) {
         let skipped = records.length - valid.length;
         const places = merged.filter(place => !existing.has(placeKey(place)));
         skipped += merged.length - places.length;
-        status.textContent = `Importing ${places.length} ${places.length === 1 ? 'place' : 'places'}…`;
+        status.textContent = tn(places.length, 'Importing {count} place…', 'Importing {count} places…');
         let imported = 0;
         if (places.length) {
             const result = await ctx.api.importMarkers(places);
@@ -146,11 +146,13 @@ async function importFile(file, ctx, status) {
             skipped += result.skipped;
         }
         await ctx.reloadMarkers();
-        const message = `Imported ${imported} ${imported === 1 ? 'place' : 'places'}${skipped ? `, skipped ${skipped} invalid or duplicate` : ''}.`;
+        const message = skipped
+            ? `${tn(imported, 'Imported {count} place', 'Imported {count} places')}, ${tn(skipped, 'skipped {count} invalid or duplicate', 'skipped {count} invalid or duplicate')}.`
+            : `${tn(imported, 'Imported {count} place', 'Imported {count} places')}.`;
         status.textContent = message;
         toast(message, { tone: imported ? 'success' : 'info' });
     } catch (error) {
-        status.textContent = error.message || 'Unable to import that file.';
+        status.textContent = error.message || t('Unable to import that file.');
     }
 }
 
@@ -177,25 +179,25 @@ function dataSection(ctx) {
     const exportAs = format => {
         const { markers } = ctx.state;
         if (!markers.length) {
-            status.textContent = 'No saved places to export yet.';
+            status.textContent = t('No saved places to export yet.');
             return;
         }
         const date = new Date().toISOString().slice(0, 10);
         const [build, type, label] = EXPORTS[format];
         downloadFile(`travelmapster-places-${date}.${format}`, build(markers), type);
-        status.textContent = `Exported ${markers.length} ${markers.length === 1 ? 'place' : 'places'} as ${label}.`;
+        status.textContent = tn(markers.length, 'Exported {count} place as {label}.', 'Exported {count} places as {label}.', { label });
     };
     return h('section', { class: 'data-section' },
-        h('h3', { class: 'section-title' }, 'Backup & move your data'),
+        h('h3', { class: 'section-title' }, t('Backup & move your data')),
         h('div', { class: 'row' },
-            h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => exportAs('json') }, '⬇️ JSON'),
-            h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => exportAs('csv') }, '⬇️ CSV'),
-            h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => exportAs('geojson') }, '⬇️ GeoJSON'),
-            h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => exportAs('kml') }, '⬇️ KML'),
-            h('label', { class: 'btn btn-ghost btn-sm', for: 'import-file' }, '⬆️ Import'),
+            h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => exportAs('json') }, t('⬇️ JSON')),
+            h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => exportAs('csv') }, t('⬇️ CSV')),
+            h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => exportAs('geojson') }, t('⬇️ GeoJSON')),
+            h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => exportAs('kml') }, t('⬇️ KML')),
+            h('label', { class: 'btn btn-ghost btn-sm', for: 'import-file' }, t('⬆️ Import')),
             fileInput
         ),
-        h('p', { class: 'muted small' }, 'Coming from another app? Bring your trips from a Polarsteps data export, or paste your countries from Been, Visited or any list.'),
+        h('p', { class: 'muted small' }, t('Coming from another app? Bring your trips from a Polarsteps data export, or paste your countries from Been, Visited or any list.')),
         h('div', { class: 'row' }, importButtons(ctx, status)),
         status
     );
@@ -204,17 +206,17 @@ function dataSection(ctx) {
 // A whole continent in one step, or countries picked on the map; both can be undone.
 function bulkSection(ctx) {
     const continent = h('select', { id: 'bulk-continent' },
-        CONTINENTS.map(name => h('option', { value: name }, `${CONTINENT_EMOJI[name]} ${name}`)));
+        CONTINENTS.map(name => h('option', { value: name }, `${CONTINENT_EMOJI[name]} ${regionName(name)}`)));
     const mark = type => () => ctx.markContinent(continent.value, type);
     return h('section', { class: 'bulk-section', 'aria-labelledby': 'bulk-title' },
-        h('h3', { class: 'section-title', id: 'bulk-title' }, 'Mark many at once'),
+        h('h3', { class: 'section-title', id: 'bulk-title' }, t('Mark many at once')),
         h('div', { class: 'row' },
-            h('label', { class: 'sort' }, 'Whole continent ', continent),
-            h('button', { type: 'button', class: 'btn btn-sm btn-visited', onclick: mark('visited') }, '✓ Been there'),
-            h('button', { type: 'button', class: 'btn btn-sm btn-wishlist', onclick: mark('wishlist') }, '♥ Wishlist')
+            h('label', { class: 'sort' }, t('Whole continent'), ' ', continent),
+            h('button', { type: 'button', class: 'btn btn-sm btn-visited', onclick: mark('visited') }, t('✓ Been there')),
+            h('button', { type: 'button', class: 'btn btn-sm btn-wishlist', onclick: mark('wishlist') }, t('♥ Wishlist'))
         ),
-        h('button', { type: 'button', id: 'bulk-pick', class: 'btn btn-ghost btn-sm', onclick: () => ctx.startSelecting() }, '☑️ Pick countries on the map'),
-        h('p', { class: 'muted small' }, 'A wishlist never replaces a country you have been to.')
+        h('button', { type: 'button', id: 'bulk-pick', class: 'btn btn-ghost btn-sm', onclick: () => ctx.startSelecting() }, t('☑️ Pick countries on the map')),
+        h('p', { class: 'muted small' }, t('A wishlist never replaces a country you have been to.'))
     );
 }
 
@@ -222,18 +224,18 @@ function lastVisitOptions(markers) {
     const years = lastVisitYears(markers);
     // Keep a chosen year selectable even after its last place is gone.
     if (/^\d{4}$/.test(view.lastVisit) && !years.includes(view.lastVisit)) years.push(view.lastVisit);
-    return [['all', 'Any time'], ...years.map(year => [year, `In ${year}`]), ['none', 'No date yet']];
+    return [['all', t('Any time')], ...years.map(year => [year, t('In {year}', { year })]), ['none', t('No date yet')]];
 }
 
 function tagOptions(markers, chosen) {
     const tags = usedTags(markers);
     // Keep a chosen tag selectable even after its last place is gone.
     if (chosen !== 'all' && !tags.includes(chosen)) tags.push(chosen);
-    return [['all', 'Any tag'], ...tags.map(tag => [tag, `#${tag}`])];
+    return [['all', t('Any tag')], ...tags.map(tag => [tag, `#${tag}`])];
 }
 
-const RATING_FILTERS = [['all', 'Any rating'], ['5', '★★★★★ only'], ['4', '★★★★ and up'], ['3', '★★★ and up'],
-    ['2', '★★ and up'], ['1', 'Rated'], ['none', 'Not rated']];
+const ratingFilters = () => [['all', t('Any rating')], ['5', t('★★★★★ only')], ['4', t('★★★★ and up')], ['3', t('★★★ and up')],
+    ['2', t('★★ and up')], ['1', t('Rated')], ['none', t('Not rated')]];
 
 // Tag and rating filters are shared with the map, so they live in the app state.
 function detailFilters(ctx) {
@@ -241,9 +243,9 @@ function detailFilters(ctx) {
     const select = (id, key, options) => h('select', { id, onchange: event => ctx.setDetailFilter({ [key]: event.target.value }) },
         options.map(([value, label]) => h('option', { value, selected: filters[key] === value }, label)));
     return h('div', { class: 'row sort-row' },
-        h('label', { class: 'sort' }, 'Tag ', select('tag-filter', 'tag', tagOptions(ctx.state.markers, filters.tag))),
-        h('label', { class: 'sort' }, 'Rating ', select('rating-filter', 'rating', RATING_FILTERS)),
-        h('small', { class: 'muted filter-note' }, 'Tag and rating filters apply to the map too.')
+        h('label', { class: 'sort' }, t('Tag'), ' ', select('tag-filter', 'tag', tagOptions(ctx.state.markers, filters.tag))),
+        h('label', { class: 'sort' }, t('Rating'), ' ', select('rating-filter', 'rating', ratingFilters())),
+        h('small', { class: 'muted filter-note' }, t('Tag and rating filters apply to the map too.'))
     );
 }
 
@@ -255,9 +257,9 @@ export function renderPlaces(container, ctx) {
 
     const searchInput = h('input', {
         type: 'search',
-        placeholder: 'Filter your places or notes…',
+        placeholder: t('Filter your places or notes…'),
         value: view.query,
-        'aria-label': 'Filter your places',
+        'aria-label': t('Filter your places'),
         oninput: event => {
             view.query = event.target.value;
             update();
@@ -265,18 +267,18 @@ export function renderPlaces(container, ctx) {
     });
 
     fill(container,
-        h('div', { class: 'section-head' }, h('h2', {}, 'Your places'), summary),
+        h('div', { class: 'section-head' }, h('h2', {}, t('Your places')), summary),
         h('div', { class: 'filters' },
             searchInput,
-            chipGroup('Status', 'type', [['all', 'All'], ...STATUSES.map(({ id, filter }) => [id, filter])], rerender),
-            chipGroup('Kind', 'category', [['all', 'All'], ['Country', 'Countries'], ['City', 'Cities']], rerender),
+            chipGroup(t('Status'), 'type', [['all', t('All')], ...STATUSES.map(({ id, filter }) => [id, filter])], rerender),
+            chipGroup(t('Kind'), 'category', [['all', t('All')], ['Country', t('Countries')], ['City', t('Cities')]], rerender),
             h('div', { class: 'row sort-row' },
-                h('label', { class: 'sort' }, 'Sort by ',
+                h('label', { class: 'sort' }, t('Sort by'), ' ',
                     h('select', { id: 'places-sort', onchange: event => { view.sort = event.target.value; update(); } },
-                        [['continent', 'Continent'], ['name', 'Name'], ['date', 'Last visit'], ['season', 'When to go (wishlist)']].map(([value, label]) =>
+                        [['continent', t('Continent')], ['name', t('Name')], ['date', t('Last visit')], ['season', t('When to go (wishlist)')]].map(([value, label]) =>
                             h('option', { value, selected: view.sort === value }, label)))
                 ),
-                h('label', { class: 'sort' }, 'Last visit ',
+                h('label', { class: 'sort' }, t('Last visit'), ' ',
                     h('select', { id: 'last-visit-filter', onchange: event => { view.lastVisit = event.target.value; update(); } },
                         lastVisitOptions(ctx.state.markers).map(([value, label]) =>
                             h('option', { value, selected: view.lastVisit === value }, label)))

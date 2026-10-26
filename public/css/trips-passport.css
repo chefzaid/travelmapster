@@ -14,7 +14,7 @@
     gap: 12px;
     width: 100%;
     padding: 12px;
-    text-align: left;
+    text-align: start;
     background: var(--paper);
     border: 2px solid var(--ink);
     border-radius: var(--radius);
@@ -72,7 +72,7 @@
 .day-card header h3 { margin: 0; }
 .day-card header small { color: var(--muted); font-weight: 700; }
 .day-card header { flex-wrap: wrap; }
-.day-actions { display: flex; gap: 2px; margin-left: auto; }
+.day-actions { display: flex; gap: 2px; margin-inline-start: auto; }
 .drag-handle { color: var(--muted); font-size: 1.1rem; cursor: grab; user-select: none; }
 .slot > span[draggable] { cursor: grab; }
 .day-card.drop-target,
@@ -107,7 +107,7 @@
 .trip-stops { margin: 4px 0 8px; }
 fieldset.trip-stops { padding: 8px 10px; border: 2px solid var(--ink); border-radius: var(--radius); }
 .trip-stops legend { font-size: 0.85rem; font-weight: 800; }
-.stop-list { display: grid; gap: 6px; margin: 0 0 8px; padding-left: 1.4em; }
+.stop-list { display: grid; gap: 6px; margin: 0 0 8px; padding-inline-start: 1.4em; }
 .stop { display: flex; align-items: center; gap: 6px; }
 .stop .stop-destination { flex: 1; min-width: 0; }
 .stop .rate { margin: 0; }
@@ -200,7 +200,7 @@ fieldset.trip-stops { padding: 8px 10px; border: 2px solid var(--ink); border-ra
 
 .rates { margin: 8px 0; padding: 6px 10px; border: 1px solid var(--line); border-radius: 10px; }
 .rates legend { font-size: 0.82rem; font-weight: 800; }
-.rate { display: inline-flex; align-items: center; gap: 6px; margin: 4px 12px 4px 0; font-size: 0.85rem; font-weight: 700; }
+.rate { display: inline-flex; align-items: center; gap: 6px; margin-block: 4px; margin-inline: 0 12px; font-size: 0.85rem; font-weight: 700; }
 .rate span { white-space: nowrap; }
 .rate input[type='number'] { flex: 0 0 7rem; }
 
@@ -301,7 +301,7 @@ fieldset.trip-stops { padding: 8px 10px; border: 2px solid var(--ink); border-ra
     transition: width 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.2);
 }
 
-.bar-count { color: var(--muted); text-align: right; }
+.bar-count { color: var(--muted); text-align: end; }
 
 .stamps {
     display: grid;

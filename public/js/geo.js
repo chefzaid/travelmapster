@@ -2,8 +2,45 @@
 import { computeCollections } from './collections.js';
 import { statusOf } from './status.js';
 import { countedCountries, countryList } from './lists.js';
+import { t, tk } from './i18n.js';
 
 export const CONTINENTS = ['Africa', 'Asia', 'Europe', 'North America', 'Oceania', 'South America'];
+
+// Continents and UN subregions as the map data names them, for the catalogs (ADR 0031).
+const REGION_NAMES = {
+    'Africa': tk('Africa'),
+    'Asia': tk('Asia'),
+    'Europe': tk('Europe'),
+    'North America': tk('North America'),
+    'Oceania': tk('Oceania'),
+    'South America': tk('South America'),
+    'Elsewhere': tk('Elsewhere'),
+    'Australia and New Zealand': tk('Australia and New Zealand'),
+    'Caribbean': tk('Caribbean'),
+    'Central America': tk('Central America'),
+    'Central Asia': tk('Central Asia'),
+    'Eastern Africa': tk('Eastern Africa'),
+    'Eastern Asia': tk('Eastern Asia'),
+    'Eastern Europe': tk('Eastern Europe'),
+    'Melanesia': tk('Melanesia'),
+    'Micronesia': tk('Micronesia'),
+    'Middle Africa': tk('Middle Africa'),
+    'Northern Africa': tk('Northern Africa'),
+    'Northern America': tk('Northern America'),
+    'Northern Europe': tk('Northern Europe'),
+    'Polynesia': tk('Polynesia'),
+    'Seven seas (open ocean)': tk('Seven seas (open ocean)'),
+    'South-Eastern Asia': tk('South-Eastern Asia'),
+    'Southern Africa': tk('Southern Africa'),
+    'Southern Asia': tk('Southern Asia'),
+    'Southern Europe': tk('Southern Europe'),
+    'Western Africa': tk('Western Africa'),
+    'Western Asia': tk('Western Asia'),
+    'Western Europe': tk('Western Europe')
+};
+
+/** A continent or subregion of the map data in the interface's language. */
+export const regionName = name => (Object.hasOwn(REGION_NAMES, name) ? t(REGION_NAMES[name]) : name);
 
 export const CONTINENT_EMOJI = {
     Africa: '🦁',
@@ -49,11 +86,12 @@ const EXTRA_ALIASES = {
 export function normalizeName(value) {
     return String(value ?? '')
         .normalize('NFD')
-        .replace(/[̀-ͯ]/g, '')
+        // Accents, and the vowel marks of Arabic names (ADR 0031).
+        .replace(/[\u0300-\u036f\u064b-\u065f\u0670]/g, '')
         .toLowerCase()
         .replace(/[.'’]/g, '')
         .replace(/&/g, ' and ')
-        .replace(/[^a-z0-9]+/g, ' ')
+        .replace(/[^\p{L}\p{N}]+/gu, ' ')
         .trim();
 }
 
@@ -110,16 +148,25 @@ export function geometryContains(geometry, lat, lng) {
     );
 }
 
-export function createCountryIndex(geojson) {
+/**
+ * The countries of the map data, named in `locale` (ADR 0031) and found by their name or
+ * aliases in English or in any language the app speaks; English names win where two clash.
+ */
+export function createCountryIndex(geojson, { locale = 'en' } = {}) {
     const byId = new Map();
     const byName = new Map();
     const countries = [];
+    const addName = (name, country) => {
+        const key = normalizeName(name);
+        if (key && !byName.has(key)) byName.set(key, country);
+    };
 
     for (const feature of geojson.features) {
         const p = feature.properties;
         const country = {
             id: p.id,
-            name: p.name,
+            name: p.names?.[locale] || p.name,
+            englishName: p.name,
             iso2: p.iso2,
             flag: flagEmoji(p.iso2),
             continent: p.continent,
@@ -134,11 +181,10 @@ export function createCountryIndex(geojson) {
         };
         countries.push(country);
         byId.set(country.id, country);
-        const names = [p.name, ...(p.aliases || []), ...(EXTRA_ALIASES[p.id] || [])];
-        for (const name of names) {
-            const key = normalizeName(name);
-            if (key && !byName.has(key)) byName.set(key, country);
-        }
+        for (const name of [p.name, ...(p.aliases || []), ...(EXTRA_ALIASES[p.id] || [])]) addName(name, country);
+    }
+    for (const country of countries) {
+        for (const name of Object.values(country.feature.properties.names || {})) addName(name, country);
     }
 
     function findByName(name) {
@@ -221,31 +267,31 @@ const completed = (stats, id) => {
 };
 
 export const ACHIEVEMENTS = [
-    { id: 'first-stamp', icon: '🛂', title: 'First stamp', description: 'Visit your first country', test: s => s.visitedCountries >= 1 },
-    { id: 'explorer', icon: '🧭', title: 'Explorer', description: 'Visit 5 countries', test: s => s.visitedCountries >= 5 },
-    { id: 'globetrotter', icon: '🌍', title: 'Globetrotter', description: 'Visit 15 countries', test: s => s.visitedCountries >= 15 },
-    { id: 'world-citizen', icon: '🏅', title: 'World citizen', description: 'Visit 30 countries', test: s => s.visitedCountries >= 30 },
-    { id: 'legend', icon: '👑', title: 'Legend', description: 'Visit 50 countries', test: s => s.visitedCountries >= 50 },
-    { id: 'continent-hopper', icon: '✈️', title: 'Continent hopper', description: 'Visit 3 continents', test: s => s.visitedContinents >= 3 },
-    { id: 'six-for-six', icon: '🌐', title: 'Six for six', description: 'Visit every inhabited continent', test: s => s.visitedContinents >= CONTINENTS.length },
-    { id: 'city-slicker', icon: '🏙️', title: 'City slicker', description: 'Visit 10 cities', test: s => s.visitedCities >= 10 },
-    { id: 'dreamer', icon: '💭', title: 'Dreamer', description: 'Add 10 places to your wishlist', test: s => s.wishlistPlaces >= 10 },
-    { id: 'storyteller', icon: '📝', title: 'Storyteller', description: 'Write notes on 5 places', test: s => s.placesWithNotes >= 5 },
-    { id: 'shutterbug', icon: '📸', title: 'Shutterbug', description: 'Add photos to 5 places', test: s => s.placesWithPhotos >= 5 },
-    { id: 'planner', icon: '🗓️', title: 'Planner', description: 'Plan your first trip', test: s => s.trips >= 1 },
-    { id: 'expat', icon: '🔑', title: 'Expat', description: 'Live in two countries', test: s => s.livedCountries >= 2 },
-    { id: 'capital-collector', icon: '🏛️', title: 'Capital collector', description: 'Visit 10 capitals', test: s => collected(s, 'capitals') >= 10 },
-    { id: 'capital-connoisseur', icon: '🗝️', title: 'Capital connoisseur', description: 'Visit 50 capitals', test: s => collected(s, 'capitals') >= 50 },
-    { id: 'european', icon: '🇪🇺', title: 'European', description: 'Visit every country of the European Union', test: s => completed(s, 'eu') }
+    { id: 'first-stamp', icon: '🛂', get title() { return t('First stamp'); }, get description() { return t('Visit your first country'); }, test: s => s.visitedCountries >= 1 },
+    { id: 'explorer', icon: '🧭', get title() { return t('Explorer'); }, get description() { return t('Visit 5 countries'); }, test: s => s.visitedCountries >= 5 },
+    { id: 'globetrotter', icon: '🌍', get title() { return t('Globetrotter'); }, get description() { return t('Visit 15 countries'); }, test: s => s.visitedCountries >= 15 },
+    { id: 'world-citizen', icon: '🏅', get title() { return t('World citizen'); }, get description() { return t('Visit 30 countries'); }, test: s => s.visitedCountries >= 30 },
+    { id: 'legend', icon: '👑', get title() { return t('Legend'); }, get description() { return t('Visit 50 countries'); }, test: s => s.visitedCountries >= 50 },
+    { id: 'continent-hopper', icon: '✈️', get title() { return t('Continent hopper'); }, get description() { return t('Visit 3 continents'); }, test: s => s.visitedContinents >= 3 },
+    { id: 'six-for-six', icon: '🌐', get title() { return t('Six for six'); }, get description() { return t('Visit every inhabited continent'); }, test: s => s.visitedContinents >= CONTINENTS.length },
+    { id: 'city-slicker', icon: '🏙️', get title() { return t('City slicker'); }, get description() { return t('Visit 10 cities'); }, test: s => s.visitedCities >= 10 },
+    { id: 'dreamer', icon: '💭', get title() { return t('Dreamer'); }, get description() { return t('Add 10 places to your wishlist'); }, test: s => s.wishlistPlaces >= 10 },
+    { id: 'storyteller', icon: '📝', get title() { return t('Storyteller'); }, get description() { return t('Write notes on 5 places'); }, test: s => s.placesWithNotes >= 5 },
+    { id: 'shutterbug', icon: '📸', get title() { return t('Shutterbug'); }, get description() { return t('Add photos to 5 places'); }, test: s => s.placesWithPhotos >= 5 },
+    { id: 'planner', icon: '🗓️', get title() { return t('Planner'); }, get description() { return t('Plan your first trip'); }, test: s => s.trips >= 1 },
+    { id: 'expat', icon: '🔑', get title() { return t('Expat'); }, get description() { return t('Live in two countries'); }, test: s => s.livedCountries >= 2 },
+    { id: 'capital-collector', icon: '🏛️', get title() { return t('Capital collector'); }, get description() { return t('Visit 10 capitals'); }, test: s => collected(s, 'capitals') >= 10 },
+    { id: 'capital-connoisseur', icon: '🗝️', get title() { return t('Capital connoisseur'); }, get description() { return t('Visit 50 capitals'); }, test: s => collected(s, 'capitals') >= 50 },
+    { id: 'european', icon: '🇪🇺', get title() { return t('European'); }, get description() { return t('Visit every country of the European Union'); }, test: s => completed(s, 'eu') }
 ];
 
 const RANKS = [
-    { min: 0, title: 'Armchair traveler' },
-    { min: 1, title: 'Day tripper' },
-    { min: 5, title: 'Wanderer' },
-    { min: 15, title: 'Explorer' },
-    { min: 30, title: 'Globetrotter' },
-    { min: 50, title: 'Legend of the map' }
+    { min: 0, get title() { return t('Armchair traveler'); } },
+    { min: 1, get title() { return t('Day tripper'); } },
+    { min: 5, get title() { return t('Wanderer'); } },
+    { min: 15, get title() { return t('Explorer'); } },
+    { min: 30, get title() { return t('Globetrotter'); } },
+    { min: 50, get title() { return t('Legend of the map'); } }
 ];
 
 export function rankFor(visitedCountries) {

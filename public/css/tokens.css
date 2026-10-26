@@ -266,7 +266,7 @@ textarea {
 
 .skip-link {
     position: absolute;
-    left: 12px;
+    inset-inline-start: 12px;
     top: -60px;
     z-index: 2000;
     padding: 8px 14px;

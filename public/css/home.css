@@ -28,7 +28,7 @@
     border-bottom: 3px solid var(--ink);
 }
 
-.home-bar .brand { margin-right: auto; }
+.home-bar .brand { margin-inline-end: auto; }
 
 .home-nav { display: flex; gap: 4px; }
 

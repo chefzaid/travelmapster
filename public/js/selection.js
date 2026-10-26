@@ -3,20 +3,21 @@
 import { $, $all, toast } from './ui.js';
 import { applyBulkResult, bulkRequest, bulkSummary, planBulkMark, undoRequest } from './bulk.js';
 import { collapsePanelOnPhones } from './timeline-bar.js';
+import { t, tn } from './i18n.js';
 
 async function bulkMark(ctx, countries, type) {
     const { state } = ctx;
     const { visitedIds, transitIds, homeId } = state.stats;
     const plan = planBulkMark({ countries, type, countryMarkerOf: ctx.countryMarker, visitedIds, transitIds, homeId });
     if (!plan.create.length && !plan.update.length) {
-        toast(type === 'visited' ? 'Those countries are already colored in.' : 'Those countries are already on your wishlist or visited.');
+        toast(type === 'visited' ? t('Those countries are already colored in.') : t('Those countries are already on your wishlist or visited.'));
         return false;
     }
     try {
         const result = await ctx.api.bulkMarkers(bulkRequest(plan));
         state.markers = applyBulkResult(state.markers, result);
         ctx.refresh();
-        toast(bulkSummary(plan, type), { tone: 'success', action: { label: 'Undo', run: () => undoBulkMark(ctx, plan, result) } });
+        toast(bulkSummary(plan, type), { tone: 'success', action: { label: t('Undo'), run: () => undoBulkMark(ctx, plan, result) } });
         return true;
     } catch (error) {
         ctx.handleError(error);
@@ -28,7 +29,7 @@ async function undoBulkMark(ctx, plan, result) {
     try {
         ctx.state.markers = applyBulkResult(ctx.state.markers, await ctx.api.bulkMarkers(undoRequest(plan, result)));
         ctx.refresh({ celebrateNew: false });
-        toast('Undone: those countries are back as they were.');
+        toast(t('Undone: those countries are back as they were.'));
     } catch (error) {
         ctx.handleError(error);
     }
@@ -41,8 +42,8 @@ export function markContinent(ctx, continent, type) {
 function updateSelection(ctx) {
     const count = ctx.state.selection.size;
     $('#select-count').textContent = count
-        ? `${count} ${count === 1 ? 'country' : 'countries'} selected`
-        : 'Click countries on the map, or search for them, to select them.';
+        ? tn(count, '{count} country selected', '{count} countries selected')
+        : t('Click countries on the map, or search for them, to select them.');
     for (const button of $all('#select-bar [data-bulk]')) button.disabled = !count;
     ctx.map.setSelection(ctx.state.selection);
 }

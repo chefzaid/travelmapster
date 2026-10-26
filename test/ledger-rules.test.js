@@ -16,6 +16,8 @@ test('rules and planned stays are checked the way the API checks them', async ()
     assert.deepEqual(parseCountryList('Schengen area, Narnia', find).unknown, ['Narnia']);
     assert.equal(parseCountryList('schengen', find).ids.length, SCHENGEN_AREA.length);
     assert.deepEqual(parseCountryList('', find), { ids: [], unknown: [] });
+    assert.deepEqual(parseCountryList('France، Spain؛ fra', find), { ids: ['FRA', 'ESP'], unknown: [] }, 'Arabic separators');
+    for (const area of ['espace Schengen', 'Schengen-Raum', 'منطقة شنغن']) assert.equal(parseCountryList(area, find).ids.length, SCHENGEN_AREA.length, area);
 
     const stay = { id: 'a', kind: 'stay', name: ' Visa ', maxDays: '30', windowDays: '60', warnDays: '', dayRule: 'midnight' };
     assert.deepEqual(checkRule(stay, ['FRA']).rule, { id: 'a', kind: 'stay', name: 'Visa', countries: ['FRA'], maxDays: 30, windowDays: 60, warnDays: 0, dayRule: 'midnight' });

@@ -10,8 +10,8 @@ import { placesFromSightings, timelineSightings } from './auto-import.js';
 import { photoMetadata } from './exif.js';
 import { createTownFinder } from './towns.js';
 import { readZipText, zipEntries } from './zip-read.js';
+import { t, tn } from './i18n.js';
 
-const plural = (count, one, many) => `${count} ${count === 1 ? one : many}`;
 
 // The trips in the chosen files: a whole export as a ZIP, or trip.json files.
 async function polarstepsTrips(files) {
@@ -23,7 +23,7 @@ async function polarstepsTrips(files) {
             trips.push(JSON.parse(await file.text()));
         }
     }
-    if (!trips.length) throw new Error('No Polarsteps trips were found. Choose the ZIP file from “Download my data”, or the trip.json files in it.');
+    if (!trips.length) throw new Error(t('No Polarsteps trips were found. Choose the ZIP file from “Download my data”, or the trip.json files in it.'));
     return trips;
 }
 
@@ -65,18 +65,18 @@ export async function savePlaces(ctx, picked) {
 }
 
 async function importPlaces(ctx, picked, status) {
-    status.textContent = `Importing ${plural(picked.length, 'place', 'places')}…`;
+    status.textContent = tn(picked.length, 'Importing {count} place…', 'Importing {count} places…');
     try {
         const { places, visits } = await savePlaces(ctx, picked);
         const parts = [
-            places || !visits ? plural(places, 'new place', 'new places') : '',
-            visits ? `${plural(visits, 'visit', 'visits')} to places you had` : ''
+            places || !visits ? tn(places, '{count} new place', '{count} new places') : '',
+            visits ? tn(visits, '{count} visit to places you had', '{count} visits to places you had') : ''
         ].filter(Boolean);
-        const message = `Imported ${parts.join(' and ')}.`;
+        const message = t('Imported {what}.', { what: parts.join(` ${t('and')} `) });
         status.textContent = message;
         toast(message, { tone: 'success' });
     } catch (error) {
-        status.textContent = error.message || 'The import did not finish.';
+        status.textContent = error.message || t('The import did not finish.');
         ctx.handleError(error);
     }
 }
@@ -84,19 +84,22 @@ async function importPlaces(ctx, picked, status) {
 /** Shows the places found, all ticked, and saves the ticked ones. */
 async function previewAndImport(ctx, found, status, note = '') {
     if (!found.length) {
-        status.textContent = `Nothing to import.${note ? ` ${note}` : ''}`;
+        status.textContent = [t('Nothing to import.'), note].filter(Boolean).join(' ');
         return;
     }
     const byKey = markersByKey(ctx);
     const visits = found.reduce((sum, place) => sum + place.visits.length, 0);
     const values = await formDialog({
-        title: 'Import these places?',
-        message: `${plural(found.length, 'place', 'places')}${visits ? ` with ${plural(visits, 'visit', 'visits')}` : ''}. `
-            + `Untick any you do not want; places already on your map only get the visits they lack.${note ? ` ${note}` : ''}`,
-        submitLabel: 'Import',
+        title: t('Import these places?'),
+        message: [
+            visits ? t('{places} with {visits}.', { places: tn(found.length, '{count} place', '{count} places'), visits: tn(visits, '{count} visit', '{count} visits') })
+                : `${tn(found.length, '{count} place', '{count} places')}.`,
+            t('Untick any you do not want; places already on your map only get the visits they lack.'), note
+        ].filter(Boolean).join(' '),
+        submitLabel: t('Import'),
         fields: [{
-            name: 'places', label: 'Places', type: 'choices', value: found.map(placeKey),
-            options: found.map(place => ({ value: placeKey(place), label: `${place.name}${byKey.has(placeKey(place)) ? ' (on your map)' : ''}` }))
+            name: 'places', label: t('Places'), type: 'choices', value: found.map(placeKey),
+            options: found.map(place => ({ value: placeKey(place), label: byKey.has(placeKey(place)) ? t('{name} (on your map)', { name: place.name }) : place.name }))
         }]
     });
     if (!values) return;
@@ -113,18 +116,20 @@ const stayLabel = ({ startDate, endDate }) => (endDate && endDate !== startDate
  */
 async function reviewVisits(ctx, found, status, note) {
     if (!found.length) {
-        status.textContent = `No places found. ${note}`;
+        status.textContent = t('No places found. {note}', { note });
         return;
     }
     const byKey = markersByKey(ctx);
     const visits = found.reduce((sum, place) => sum + place.visits.length, 0);
     const values = await formDialog({
-        title: 'Import these visits?',
-        message: `${plural(visits, 'visit', 'visits')} to ${plural(found.length, 'place', 'places')}, by the nearest town. ${note} `
-            + 'Untick any you do not want; places already on your map only get the visits they lack.',
-        submitLabel: 'Import',
+        title: t('Import these visits?'),
+        message: [
+            t('{visits} to {places}, by the nearest town.', { visits: tn(visits, '{count} visit', '{count} visits'), places: tn(found.length, '{count} place', '{count} places') }),
+            note, t('Untick any you do not want; places already on your map only get the visits they lack.')
+        ].filter(Boolean).join(' '),
+        submitLabel: t('Import'),
         fields: found.map((place, i) => ({
-            name: `place-${i}`, type: 'choices', label: `${place.name}${byKey.has(placeKey(place)) ? ' (on your map)' : ''}`,
+            name: `place-${i}`, type: 'choices', label: byKey.has(placeKey(place)) ? t('{name} (on your map)', { name: place.name }) : place.name,
             value: place.visits.map(visit => visit.startDate),
             options: place.visits.map(visit => ({ value: visit.startDate, label: stayLabel(visit) }))
         }))
@@ -135,7 +140,7 @@ async function reviewVisits(ctx, found, status, note) {
         return { ...place, visits: place.visits.filter(visit => chosen.has(visit.startDate)) };
     }).filter(place => place.visits.length);
     if (picked.length) await importPlaces(ctx, picked, status);
-    else status.textContent = 'Nothing imported.';
+    else status.textContent = t('Nothing imported.');
 }
 
 // Towns from the bundled data: the base list now, region tiles as points need them.
@@ -164,14 +169,17 @@ async function importPhotos(ctx, files, status) {
     const sightings = [];
     let unplaced = 0;
     for (const [i, file] of files.entries()) {
-        if (i % 25 === 0) status.textContent = `Reading photo ${i + 1} of ${files.length}…`;
+        if (i % 25 === 0) status.textContent = t('Reading photo {number} of {total}…', { number: i + 1, total: files.length });
         const found = await photoMetadata(file).catch(() => null);
         if (Number.isFinite(found?.lat) && found.date) sightings.push({ lat: found.lat, lng: found.lng, startDate: found.date, endDate: found.date });
         else unplaced += 1;
     }
-    status.textContent = 'Finding the towns…';
-    const places = await placesFromSightings(sightings, { ...(await findTowns(ctx)), source: 'From photos' });
-    await reviewVisits(ctx, places, status, `From ${plural(sightings.length, 'photo', 'photos')}${unplaced ? `; ${plural(unplaced, 'photo has', 'photos have')} no place or date` : ''}.`);
+    status.textContent = t('Finding the towns…');
+    const places = await placesFromSightings(sightings, { ...(await findTowns(ctx)), source: t('From photos') });
+    await reviewVisits(ctx, places, status, [
+        tn(sightings.length, 'From {count} photo.', 'From {count} photos.'),
+        unplaced ? tn(unplaced, '{count} photo has no place or date.', '{count} photos have no place or date.') : ''
+    ].filter(Boolean).join(' '));
 }
 
 // Location history files: JSON files, or the .json entries of a Takeout ZIP. Raw location
@@ -190,7 +198,7 @@ async function historyFiles(files) {
 
 async function importLocationHistory(ctx, files, status) {
     try {
-        status.textContent = 'Reading your location history…';
+        status.textContent = t('Reading your location history…');
         const sightings = [];
         for (const text of await historyFiles(files)) {
             try {
@@ -199,34 +207,34 @@ async function importLocationHistory(ctx, files, status) {
                 // Other JSON files in an export, such as settings, are not location history.
             }
         }
-        status.textContent = 'Finding the towns…';
-        const places = await placesFromSightings(sightings, { ...(await findTowns(ctx)), source: 'From location history' });
-        await reviewVisits(ctx, places, status, `From ${plural(sightings.length, 'stay', 'stays')} in your location history.`);
+        status.textContent = t('Finding the towns…');
+        const places = await placesFromSightings(sightings, { ...(await findTowns(ctx)), source: t('From location history') });
+        await reviewVisits(ctx, places, status, tn(sightings.length, 'From {count} stay in your location history.', 'From {count} stays in your location history.'));
     } catch (error) {
-        status.textContent = error.message || 'That file could not be read.';
+        status.textContent = error.message || t('That file could not be read.');
     }
 }
 
 async function importPolarsteps(ctx, files, status) {
     try {
-        status.textContent = 'Reading your Polarsteps trips…';
+        status.textContent = t('Reading your Polarsteps trips…');
         const trips = await polarstepsTrips(files);
-        await previewAndImport(ctx, mergeByName(trips.flatMap(polarstepsPlaces)), status, `From ${plural(trips.length, 'trip', 'trips')}.`);
+        await previewAndImport(ctx, mergeByName(trips.flatMap(polarstepsPlaces)), status, tn(trips.length, 'From {count} trip.', 'From {count} trips.'));
     } catch (error) {
-        status.textContent = error instanceof SyntaxError ? 'That file is not a Polarsteps trip.' : error.message;
+        status.textContent = error instanceof SyntaxError ? t('That file is not a Polarsteps trip.') : error.message;
     }
 }
 
 async function importCountryList(ctx, status) {
     const values = await formDialog({
-        title: 'Paste your countries',
-        message: 'From Been, Visited or any list: one country per line, or separated by commas.',
-        submitLabel: 'Preview',
-        fields: [{ name: 'list', label: 'Countries', type: 'textarea', required: true, maxlength: 20_000, placeholder: 'France\nJapan\nPortugal' }]
+        title: t('Paste your countries'),
+        message: t('From Been, Visited or any list: one country per line, or separated by commas.'),
+        submitLabel: t('Preview'),
+        fields: [{ name: 'list', label: t('Countries'), type: 'textarea', required: true, maxlength: 20_000, placeholder: t('France\nJapan\nPortugal') }]
     });
     if (!values) return;
     const { places, unknown } = countryListPlaces(values.list, ctx.state.index);
-    await previewAndImport(ctx, places, status, unknown.length ? `Not recognized: ${unknown.slice(0, 10).join(', ')}${unknown.length > 10 ? '…' : ''}.` : '');
+    await previewAndImport(ctx, places, status, unknown.length ? t('Not recognized: {names}.', { names: `${unknown.slice(0, 10).join(', ')}${unknown.length > 10 ? '…' : ''}` }) : '');
 }
 
 // A button that opens the file picker and hands the chosen files to `read`.
@@ -247,8 +255,8 @@ function fileButton(id, label, accept, read) {
 export function importButtons(ctx, status) {
     return [
         ...fileButton('polarsteps-file', '⬆️ Polarsteps', '.zip,.json,application/zip,application/json', files => importPolarsteps(ctx, files, status)),
-        h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => importCountryList(ctx, status) }, '📋 Paste countries'),
-        ...fileButton('photos-file', '📷 Photos', 'image/jpeg,image/heic,image/heif,.jpg,.jpeg,.heic,.heif', files => importPhotos(ctx, files, status)),
-        ...fileButton('history-file', '🧭 Location history', '.zip,.json,application/zip,application/json', files => importLocationHistory(ctx, files, status))
+        h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => importCountryList(ctx, status) }, t('📋 Paste countries')),
+        ...fileButton('photos-file', t('📷 Photos'), 'image/jpeg,image/heic,image/heif,.jpg,.jpeg,.heic,.heif', files => importPhotos(ctx, files, status)),
+        ...fileButton('history-file', t('🧭 Location history'), '.zip,.json,application/zip,application/json', files => importLocationHistory(ctx, files, status))
     ];
 }

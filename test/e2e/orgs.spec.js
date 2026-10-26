@@ -47,7 +47,7 @@ test('an admin invites a traveler, whose business days count against the employe
     const link = await page.locator('.invitation-link').textContent();
     expect(link).toMatch(/\/#join=[\w-]{32}$/);
     await page.getByRole('button', { name: 'Done' }).click();
-    await expect(manage.locator('#org-invitations-title + .dialog-list')).toContainText('For a traveler');
+    await expect(manage.locator('#org-invitations-title + .dialog-list')).toContainText('Role: Traveler');
 
     // The traveler opens the link signed out, signs up and agrees to join.
     const other = await browser.newPage();

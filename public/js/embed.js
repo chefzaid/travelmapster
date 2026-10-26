@@ -5,11 +5,13 @@ import { $ } from './ui.js';
 import { computeStats } from './geo.js';
 import { createTravelMap } from './map.js';
 import { loadMapData } from './map-data.js';
+import { loadLocale, preferredLocale, translateDom, t, tn } from './i18n.js';
 
-const plural = (count, one, many) => `${count} ${count === 1 ? one : many}`;
 const ignore = () => {};
 
 async function init() {
+    await loadLocale(preferredLocale()).catch(() => {});
+    translateDom();
     const username = decodeURIComponent(location.pathname.split('/')[2] || '');
     const { index, cities } = await loadMapData();
     const travelMap = createTravelMap($('#map'), { index, cities, onCountryClick: ignore, onCityClick: ignore, onPinClick: ignore });
@@ -17,21 +19,21 @@ async function init() {
     try {
         data = await api.getPublicMap(username);
     } catch {
-        $('#embed-title').textContent = 'Travel map';
-        $('#embed-stats').textContent = 'This map is private, or does not exist.';
+        $('#embed-title').textContent = t('Travel map');
+        $('#embed-stats').textContent = t('This map is private, or does not exist.');
         return;
     }
     const stats = computeStats(data.markers, index, { countryList: data.countryList, capitals: cities.filter(city => city.capital) });
     travelMap.setCountryStatus(stats);
     travelMap.setPins(data.markers);
-    const title = `${data.username}'s travel map`;
+    const title = t('{username}\'s travel map', { username: data.username });
     $('#embed-title').textContent = title;
-    document.title = `${title} · TravelMapster`;
-    $('#embed-stats').textContent = `${plural(stats.visitedCountries, 'country', 'countries')}, ${plural(stats.visitedCities, 'city', 'cities')}`;
+    document.title = t('{title} · TravelMapster', { title });
+    $('#embed-stats').textContent = `${tn(stats.visitedCountries, '{count} country', '{count} countries')}, ${tn(stats.visitedCities, '{count} city', '{count} cities')}`;
     $('#embed-link').href = `/?u=${encodeURIComponent(data.username)}`;
 }
 
 init().catch(error => {
     console.error(error);
-    $('#embed-stats').textContent = 'The map could not load.';
+    $('#embed-stats').textContent = t('The map could not load.');
 });

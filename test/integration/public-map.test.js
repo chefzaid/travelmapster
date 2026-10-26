@@ -32,14 +32,14 @@ test('a public map gets its own link preview, and private or missing maps get th
     const privatePage = await request(ctx.server).get('/?u=previewer').set('Host', 'travel.test');
     assert.equal(privatePage.headers['x-robots-tag'], 'noindex');
     assert.doesNotMatch(privatePage.text, /og:image/);
-    assert.match(privatePage.text, /<title>TravelMapster: travel map and Schengen day ledger<\/title>/);
+    assert.match(privatePage.text, /<title[^>]*>TravelMapster: travel map and Schengen day ledger<\/title>/);
     assert.equal((await request(ctx.server).get('/og/previewer.png')).status, 404);
 
     await client.patch('/api/profile', { profileVisibility: 'public' });
     const page = await request(ctx.server).get('/?u=previewer').set('Host', 'travel.test');
     assert.equal(page.status, 200);
     assert.equal(page.headers['x-robots-tag'], 'noindex', 'not indexed until the owner opts in');
-    assert.match(page.text, /<title>previewer&#39;s travel map · TravelMapster<\/title>/);
+    assert.match(page.text, /<title[^>]*>previewer&#39;s travel map · TravelMapster<\/title>/);
     assert.match(page.text, /<meta property="og:description" content="2 countries been to \([\d.]+% of the world\), 2 cities\./);
     assert.match(page.text, /<meta property="og:image" content="http:\/\/travel\.test\/og\/previewer\.png">/);
     assert.match(page.text, /<meta property="og:url" content="http:\/\/travel\.test\/\?u=previewer">/);

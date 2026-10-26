@@ -134,6 +134,7 @@ JSON under `/api`, described in full in [OpenAPI](api/openapi.json) and kept bac
 | `public/js/print-view.js` | The full page printed on its own, shared by the evidence report and printable itineraries |
 | `public/js/goals.js`, `passport-goals.js` | Yearly goals and the progress toward them (pure, unit tested), and their passport section and celebration |
 | `public/js/passport.js`, `travel-stats.js` | Passport tab, and its travel statistics: days abroad per year, the longest trip, the distance traveled and countries per year (pure, unit tested) |
+| `public/js/i18n.js`, `public/locales/` | Translations ([ADR 0031](adr/0031-localization.md)): `t()`, `tn()` with each language's plural forms, `tParts()` for sentences holding elements, the pages' marked text, the language choice and direction; one catalog per language, keyed by the English text (pure, unit tested; `scripts/i18n.js` checks every key is translated) |
 | `public/js/api.js`, `ui.js`, `confetti.js` | API client with CSRF handling, DOM helpers (dialogs, toasts, the clipboard), celebration |
 | `public/css/` | Styles by area, loaded in order: `tokens.css` (fonts, design tokens and map palettes for light and dark themes), `layout.css` (layout, panel, buttons), `tabs.css` (tabs, Explore and Places), `trips-passport.css`, `map.css` (legend, timeline, map and its cards), `ledger.css` (dialogs, toasts, the day ledger and print styles for the map and the evidence report) and `pages.css` (landing and public pages, responsive rules) |
 
@@ -227,5 +228,6 @@ number (`NNNN-short-title.md`) and the template below. Statuses: **Proposed**, *
 - [ADR 0028: Friends follow public maps, and trips are planned together](adr/0028-friends-and-shared-trips.md)
 - [ADR 0029: Organizations, business visits and employer rules](adr/0029-organizations-and-business-days.md)
 - [ADR 0030: Pre-trip checklists from the organization](adr/0030-pre-trip-checklists.md)
+- [ADR 0031: Localization](adr/0031-localization.md)
 
 Superseded: [ADR 0007: Draw towns on a canvas layer](adr/0007-canvas-towns.md).

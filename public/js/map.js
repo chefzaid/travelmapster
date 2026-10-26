@@ -8,6 +8,7 @@ import {
     onlyCountries, patternImage, readTheme, toMapZoom
 } from './map-style.js';
 import { createItinerary, createJourneyLines } from './map-journeys.js';
+import { t, isRtl } from './i18n.js';
 
 /**
  * The travel map in `element`, drawing `index` countries and `cities`; the callbacks get clicks
@@ -44,8 +45,8 @@ export function createTravelMap(element, { index, cities, onCountryClick, onCity
         attributionControl: {
             compact: false,
             customAttribution: '<a href="https://maplibre.org" target="_blank" rel="noopener">MapLibre</a>'
-                + ' · Borders: <a href="https://www.naturalearthdata.com" target="_blank" rel="noopener">Natural Earth</a>'
-                + ' · Places: <a href="https://www.geonames.org" target="_blank" rel="noopener">GeoNames</a> (CC BY 4.0)'
+                + ` · ${t('Borders:')} <a href="https://www.naturalearthdata.com" target="_blank" rel="noopener">Natural Earth</a>`
+                + ` · ${t('Places:')} <a href="https://www.geonames.org" target="_blank" rel="noopener">GeoNames</a> (CC BY 4.0)`
         }
     });
     map.touchZoomRotate.disableRotation();
@@ -72,7 +73,7 @@ export function createTravelMap(element, { index, cities, onCountryClick, onCity
             const group = document.createElement('div');
             group.className = 'maplibregl-ctrl zoom-control';
             /** @type {Array<[string, string, () => void]>} */
-            const buttons = [['Zoom in', '+', () => map.zoomIn()], ['Zoom out', '−', () => map.zoomOut()]];
+            const buttons = [[t('Zoom in'), '+', () => map.zoomIn()], [t('Zoom out'), '−', () => map.zoomOut()]];
             for (const [label, text, action] of buttons) {
                 const button = document.createElement('button');
                 button.type = 'button';
@@ -192,11 +193,11 @@ export function createTravelMap(element, { index, cities, onCountryClick, onCity
         ready.then(() => {
             const started = performance.now();
             const frame = now => {
-                const t = Math.min((now - started) / 1100, 1);
+                const progress = Math.min((now - started) / 1100, 1);
                 // Swell quickly, then settle, like the old CSS pulse.
-                const value = t < 0.3 ? t / 0.3 : 1 - (t - 0.3) / 0.7;
+                const value = progress < 0.3 ? progress / 0.3 : 1 - (progress - 0.3) / 0.7;
                 map.setFeatureState({ source: 'countries', id: countryId }, { pulse: Math.max(value, 0) });
-                if (t < 1) requestAnimationFrame(frame);
+                if (progress < 1) requestAnimationFrame(frame);
             };
             requestAnimationFrame(frame);
         });
@@ -304,10 +305,13 @@ export function createTravelMap(element, { index, cities, onCountryClick, onCity
         const bottom = timeBar && !timeBar.hidden
             ? Math.max(80, element.getBoundingClientRect().bottom - timeBar.getBoundingClientRect().top + 16)
             : 80;
+        // The panel sits at the start of the line: the right in right-to-left languages.
+        const beside = !panel || panel.hidden || narrow ? 40
+            : (isRtl() ? window.innerWidth - panel.getBoundingClientRect().left : panel.getBoundingClientRect().right) + 40;
         return {
             top: top + 16,
-            left: !panel || panel.hidden || narrow ? 40 : panel.getBoundingClientRect().right + 40,
-            right: 40,
+            left: isRtl() ? 40 : beside,
+            right: isRtl() ? beside : 40,
             bottom
         };
     }

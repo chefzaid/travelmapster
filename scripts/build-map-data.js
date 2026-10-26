@@ -169,6 +169,12 @@ function splitTerritories(feature, subunits) {
     return [home, ...territories];
 }
 
+const LOCALES = ['fr', 'es', 'de', 'ar'];
+
+function localNames(p) {
+    return Object.fromEntries(LOCALES.map(locale => [locale, p[`NAME_${locale.toUpperCase()}`]]).filter(([, name]) => name));
+}
+
 const countriesSource = readGeoJson('ne_50m_admin_0_countries.geojson');
 const subunits = readGeoJson('ne_50m_admin_0_map_subunits.geojson').features;
 const countries = {
@@ -191,7 +197,9 @@ const countries = {
                     labelZoom: p.MIN_LABEL,
                     label: [round(p.LABEL_Y), round(p.LABEL_X)],
                     aliases: uniqueNames(p.NAME_LONG, p.ADMIN, p.NAME_EN, p.FORMAL_EN, p.NAME_SORT, p.NAME_CIAWF, p.GEOUNIT, p.SUBUNIT)
-                        .filter(name => name !== p.NAME)
+                        .filter(name => name !== p.NAME),
+                    // The name in each language the app is translated into (ADR 0031).
+                    names: localNames(p)
                 },
                 geometry: simplifyGeometry(feature.geometry)
             };

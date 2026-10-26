@@ -32,7 +32,7 @@
 .tabs .tab-badge {
     position: absolute;
     top: 0;
-    right: 4px;
+    inset-inline-end: 4px;
     display: grid;
     place-items: center;
     min-width: 20px;
@@ -124,7 +124,7 @@ button.chip { cursor: pointer; }
 }
 
 .onboarding { background: #e6f7ff; }
-.onboarding ol { margin: 0; padding-left: 1.2em; }
+.onboarding ol { margin: 0; padding-inline-start: 1.2em; }
 .dream-card { background: #fff1c2; }
 .share-card { background: #e8f9f6; }
 
@@ -173,7 +173,7 @@ button.chip { cursor: pointer; }
     gap: 10px;
     width: 100%;
     padding: 8px;
-    text-align: left;
+    text-align: start;
     background: none;
     border: 0;
     border-radius: 10px;
@@ -197,7 +197,7 @@ button.chip { cursor: pointer; }
 
 .idea-group ul {
     margin: 0 0 10px;
-    padding-left: 1.1em;
+    padding-inline-start: 1.1em;
     font-size: 0.88rem;
 }
 
@@ -278,17 +278,17 @@ button.chip { cursor: pointer; }
     display: flex;
     align-items: flex-start;
     gap: 4px;
-    padding: 8px 6px 8px 10px;
+    padding-block: 8px; padding-inline: 10px 6px;
     background: var(--paper);
     border: 2px solid var(--ink);
-    border-left-width: 8px;
+    border-inline-start-width: 8px;
     border-radius: var(--radius-sm);
 }
 
-.place-visited { border-left-color: var(--visited); }
-.place-wishlist { border-left-color: var(--wishlist); }
-.place-lived { border-left-color: var(--lived-ink); }
-.place-transit { border-left-color: var(--transit-ink); border-left-style: dotted; }
+.place-visited { border-inline-start-color: var(--visited); }
+.place-wishlist { border-inline-start-color: var(--wishlist); }
+.place-lived { border-inline-start-color: var(--lived-ink); }
+.place-transit { border-inline-start-color: var(--transit-ink); border-inline-start-style: dotted; }
 
 .place-main {
     display: flex;
@@ -296,7 +296,7 @@ button.chip { cursor: pointer; }
     gap: 10px;
     min-width: 0;
     padding: 0;
-    text-align: left;
+    text-align: start;
     background: none;
     border: 0;
     cursor: pointer;
@@ -389,4 +389,4 @@ button.chip { cursor: pointer; }
 .friend small { color: var(--muted); font-weight: 700; }
 .compare-columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; max-height: 50vh; overflow-y: auto; }
 .compare-columns h4 { margin: 0 0 4px; }
-.compare-list { margin: 0; padding-left: 0; list-style: none; font-size: 0.88rem; }
+.compare-list { margin: 0; padding-inline-start: 0; list-style: none; font-size: 0.88rem; }

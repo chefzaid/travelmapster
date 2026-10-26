@@ -4,6 +4,7 @@
 import { csvField } from './ledger-evidence.js';
 import { addDays } from './days.js';
 import { PACKING_MAX_ITEMS } from './trip-budget.js';
+import { t } from './i18n.js';
 
 const TOKEN = /^[A-Za-z0-9_-]{20,64}$/;
 
@@ -43,13 +44,13 @@ export function buildReportCsv(report) {
 /** Checks a checklist item from the admin's form the way the API does: { item } or { error }. */
 export function checkChecklistItem(record, countries) {
     const task = String(record?.task ?? '').trim();
-    if (!task || task.length > 80) return { error: 'Name the task in 1 to 80 characters.' };
-    if (!countries.length) return { error: 'Name at least one country it is for.' };
-    if (countries.length > 80) return { error: 'An item is for at most 80 countries.' };
+    if (!task || task.length > 80) return { error: t('Name the task in 1 to 80 characters.') };
+    if (!countries.length) return { error: t('Name at least one country it is for.') };
+    if (countries.length > 80) return { error: t('An item is for at most 80 countries.') };
     const daysBefore = Number(String(record?.daysBefore ?? '').trim() || '0');
-    if (!Number.isInteger(daysBefore) || daysBefore < 0 || daysBefore > 365) return { error: 'Days before the trip must be a whole number from 0 to 365.' };
+    if (!Number.isInteger(daysBefore) || daysBefore < 0 || daysBefore > 365) return { error: t('Days before the trip must be a whole number from 0 to 365.') };
     const link = String(record?.link ?? '').trim();
-    if (link && (link.length > 2048 || !/^https?:\/\/[^\s]+$/i.test(link))) return { error: 'The link must be an HTTP or HTTPS address.' };
+    if (link && (link.length > 2048 || !/^https?:\/\/[^\s]+$/i.test(link))) return { error: t('The link must be an HTTP or HTTPS address.') };
     return { item: { id: record.id, task, countries, daysBefore, link: link || null } };
 }
 

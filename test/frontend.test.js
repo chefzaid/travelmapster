@@ -202,7 +202,7 @@ test('the calculator page lists every Schengen member by its map name', async ()
     const { SCHENGEN_MEMBERS, SCHENGEN_OPEN_BORDERS } = await load('days.js');
     const index = createCountryIndex(countries);
     const html = fs.readFileSync(path.join(publicDir, 'schengen-calculator.html'), 'utf8');
-    const listed = [...html.match(/<ul class="member-list">([\s\S]*?)<\/ul>/)[1].matchAll(/<li>([^<]+)<\/li>/g)].map(match => match[1]);
+    const listed = [...html.match(/<ul class="member-list">([\s\S]*?)<\/ul>/)[1].matchAll(/<li[^>]*>([^<]+)<\/li>/g)].map(match => match[1]);
     assert.deepEqual(listed, SCHENGEN_MEMBERS.map(id => index.byId.get(id).name).sort());
     assert.match(html, new RegExp(`has ${SCHENGEN_MEMBERS.length} members`));
     for (const id of SCHENGEN_OPEN_BORDERS) assert.match(html, new RegExp(index.byId.get(id).name));

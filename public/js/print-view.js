@@ -1,6 +1,7 @@
 // A full page printed on its own (see the print styles in css/ledger.css): the evidence report
 // and printable itineraries. Escape or Close goes back to the button that opened it.
 import { h, $ } from './ui.js';
+import { t } from './i18n.js';
 
 export function closePrintView(opener) {
     $('#report-view')?.remove();
@@ -20,9 +21,9 @@ export function openPrintView({ eyebrow, title, actions = [], content, opener })
     },
         h('article', { class: 'report' },
             h('div', { class: 'report-actions' },
-                h('button', { type: 'button', class: 'btn btn-primary btn-sm', onclick: () => window.print() }, '🖨️ Print or save as PDF'),
+                h('button', { type: 'button', class: 'btn btn-primary btn-sm', onclick: () => window.print() }, t('🖨️ Print or save as PDF')),
                 actions,
-                h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: close }, 'Close')
+                h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: close }, t('Close'))
             ),
             h('p', { class: 'eyebrow' }, eyebrow),
             h('h1', { id: 'report-title', tabindex: '-1' }, title),

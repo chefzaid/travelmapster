@@ -1,8 +1,9 @@
 // Small pieces the Ledger tab's sections share: a rule's status chip and a days-used meter.
 import { h } from './ui.js';
+import { t } from './i18n.js';
 
 export function statusChip(status) {
-    const labels = { ok: ['chip-ok', '✓ On track'], warning: ['chip-warn', '⚠ Getting close'], reached: ['chip-over', '⛔ Reached'] };
+    const labels = { ok: ['chip-ok', t('✓ On track')], warning: ['chip-warn', t('⚠ Getting close')], reached: ['chip-over', t('⛔ Reached')] };
     const [tone, label] = labels[status];
     return h('span', { class: `chip ${tone}` }, label);
 }

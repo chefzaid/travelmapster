@@ -131,6 +131,9 @@ a SHA-256 hash; each works once, for seven days, and is revoked by the admin or 
 - The image runs Node.js only, as user 10001, with a read-only root filesystem, all Linux
   capabilities dropped and no service-account token; npm is removed from the runtime image and
   Debian packages are upgraded at build time.
+- Translations ([ADR 0031](adr/0031-localization.md)) are static files of the release and are
+  always inserted as text, never as markup; a sentence with elements in it keeps the page's own
+  elements and only moves them.
 - Secrets come from Vault through External Secrets; none are committed
   ([rotation](operations.md#secret-rotation)).
 - `npm audit`, Trivy (repository and image) and Dependabot run in CI

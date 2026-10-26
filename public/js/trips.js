@@ -16,6 +16,7 @@ import { openPrintView, printTable } from './print-view.js';
 import { budgetSection, packingSection, stopsSection } from './trip-extras.js';
 import { budgetTotals, formatMoney, tidyBudget } from './trip-budget.js';
 import { checklistBadge, checklistSection, purposeField } from './trip-checklist.js';
+import { t, tn } from './i18n.js';
 
 const MAX_DAYS = 30;
 
@@ -36,13 +37,13 @@ async function ideasPlan(destination, days) {
 
 export async function openNewTrip(ctx, destination = '') {
     const values = await formDialog({
-        title: '🗓️ Plan a new trip',
-        submitLabel: 'Create trip',
+        title: t('🗓️ Plan a new trip'),
+        submitLabel: t('Create trip'),
         fields: [
-            { name: 'destination', label: 'Where to?', value: destination, required: true, maxlength: 160, placeholder: 'Lisbon, Japan, Patagonia…' },
-            { name: 'title', label: 'Trip name', value: destination ? `Adventure in ${destination}` : '', maxlength: 120, placeholder: 'Summer in Portugal' },
-            { name: 'startDate', label: 'Start date', type: 'date' },
-            { name: 'days', label: 'How many days?', type: 'number', value: 3, min: 1, max: MAX_DAYS, required: true }
+            { name: 'destination', label: t('Where to?'), value: destination, required: true, maxlength: 160, placeholder: t('Lisbon, Japan, Patagonia…') },
+            { name: 'title', label: t('Trip name'), value: destination ? t('Adventure in {destination}', { destination }) : '', maxlength: 120, placeholder: t('Summer in Portugal') },
+            { name: 'startDate', label: t('Start date'), type: 'date' },
+            { name: 'days', label: t('How many days?'), type: 'number', value: 3, min: 1, max: MAX_DAYS, required: true }
         ]
     });
     if (!values) return;
@@ -50,14 +51,14 @@ export async function openNewTrip(ctx, destination = '') {
     const place = values.destination.trim();
     const days = Math.min(MAX_DAYS, Math.max(1, Number.parseInt(values.days, 10) || 3));
     if (!place) {
-        toast('Tell us where you are going first.', { tone: 'error' });
+        toast(t('Tell us where you are going first.'), { tone: 'error' });
         return;
     }
-    const closeToast = toast('Sketching your itinerary with guide ideas…', { duration: 8000 });
+    const closeToast = toast(t('Sketching your itinerary with guide ideas…'), { duration: 8000 });
     try {
         const plan = await ideasPlan(place, days);
         const trip = await ctx.api.createTrip({
-            title: values.title.trim() || `Adventure in ${place}`,
+            title: values.title.trim() || t('Adventure in {place}', { place }),
             destination: place,
             startDate: values.startDate,
             plan
@@ -66,7 +67,7 @@ export async function openNewTrip(ctx, destination = '') {
         openTripId = trip.id;
         draft = null;
         closeToast();
-        toast(`Trip created: ${trip.title} ✈️`, { tone: 'success' });
+        toast(t('Trip created: {title} ✈️', { title: trip.title }), { tone: 'success' });
         ctx.selectTab('trips');
         ctx.refresh();
     } catch (error) {
@@ -91,10 +92,10 @@ function tripCard(trip, ctx, container) {
             h('span', { class: 'trip-flag', 'aria-hidden': 'true' }, country?.flag || '✈️'),
             h('span', { class: 'trip-text' },
                 h('strong', {}, trip.title),
-                h('small', {}, `${tripRoute(trip)} · ${trip.plan.length} ${trip.plan.length === 1 ? 'day' : 'days'}`,
+                h('small', {}, `${tripRoute(trip)} · ${tn(trip.plan.length, '{count} day', '{count} days')}`,
                     trip.startDate ? ` · ${formatDate(trip.startDate)}` : '', trip.owner ? ` · 👥 ${trip.owner}` : ''),
                 checklistBadge(ctx, trip),
-                h('span', { class: 'progress', 'aria-label': `${filled} of ${trip.plan.length * 3} slots planned` },
+                h('span', { class: 'progress', 'aria-label': t('{filled} of {total} slots planned', { filled, total: trip.plan.length * 3 }) },
                     h('span', { style: `width:${Math.round((filled / (trip.plan.length * 3)) * 100)}%` }))
             ),
             h('span', { class: 'chevron', 'aria-hidden': 'true' }, '›')
@@ -114,41 +115,41 @@ function renderList(container, ctx) {
 
     fill(container,
         h('div', { class: 'section-head' },
-            h('h2', {}, 'Trips'),
-            h('button', { type: 'button', class: 'btn btn-primary btn-sm', onclick: () => openNewTrip(ctx) }, '＋ New trip')
+            h('h2', {}, t('Trips')),
+            h('button', { type: 'button', class: 'btn btn-primary btn-sm', onclick: () => openNewTrip(ctx) }, t('＋ New trip'))
         ),
         trips.length ? null : h('div', { class: 'empty' },
             h('p', { class: 'empty-emoji', 'aria-hidden': 'true' }, '🗺️'),
-            h('p', {}, 'Plan day-by-day itineraries with morning, afternoon and evening ideas from travel guides.'),
-            h('button', { type: 'button', class: 'btn btn-primary', onclick: () => openNewTrip(ctx) }, 'Plan my first trip')
+            h('p', {}, t('Plan day-by-day itineraries with morning, afternoon and evening ideas from travel guides.')),
+            h('button', { type: 'button', class: 'btn btn-primary', onclick: () => openNewTrip(ctx) }, t('Plan my first trip'))
         ),
-        section('Upcoming & someday', upcoming),
-        section('Past trips', past)
+        section(t('Upcoming & someday'), upcoming),
+        section(t('Past trips'), past)
     );
 }
 
 // The itinerary as a page to print or save as PDF, one row per day.
 function printTrip(trip, opener) {
     openPrintView({
-        eyebrow: 'TravelMapster itinerary',
+        eyebrow: t('TravelMapster itinerary'),
         title: trip.title,
         opener,
         content: [
             h('dl', { class: 'report-facts' },
-                h('dt', {}, trip.stops?.length ? 'Route' : 'Destination'), h('dd', {}, tripRoute(trip)),
-                h('dt', {}, 'When'), h('dd', {}, trip.startDate
+                h('dt', {}, trip.stops?.length ? t('Route') : t('Destination')), h('dd', {}, tripRoute(trip)),
+                h('dt', {}, t('When')), h('dd', {}, trip.startDate
                     ? `${formatDate(trip.startDate)} – ${formatDate(tripEndDate(trip))}`
-                    : `${trip.plan.length} ${trip.plan.length === 1 ? 'day' : 'days'}, dates to choose`)
+                    : tn(trip.plan.length, '{count} day, dates to choose', '{count} days, dates to choose'))
             ),
-            printTable(['Day', ...SLOTS.map(([, , label]) => label)], trip.plan.map((day, i) => h('tr', {},
-                h('th', { scope: 'row' }, `Day ${i + 1}`, trip.startDate ? h('small', { class: 'report-edited' }, dayDate(trip.startDate, i)) : null,
+            printTable([t('Day'), ...SLOTS.map(([, , label]) => t(label))], trip.plan.map((day, i) => h('tr', {},
+                h('th', { scope: 'row' }, t('Day {number}', { number: i + 1 }), trip.startDate ? h('small', { class: 'report-edited' }, dayDate(trip.startDate, i)) : null,
                     trip.stops?.length ? h('small', { class: 'report-edited' }, stopOfDay(trip, i).destination) : null),
                 SLOTS.map(([slot]) => h('td', {}, day[slot]))
             ))),
             trip.packing?.length ? h('section', {},
-                h('h2', {}, 'Packing list'),
+                h('h2', {}, t('Packing list')),
                 h('ul', { class: 'report-checklist' }, trip.packing.map(entry => h('li', {}, `${entry.packed ? '☑' : '☐'} ${entry.item}`)))) : null,
-            trip.budget?.currency ? h('p', {}, h('strong', {}, 'Spent so far: '),
+            trip.budget?.currency ? h('p', {}, h('strong', {}, t('Spent so far:')), ' ',
                 formatMoney(budgetTotals(trip.budget).total, trip.budget.currency)) : null
         ]
     });
@@ -161,7 +162,7 @@ function exportCalendar(trip) {
         return;
     }
     downloadFile(tripFileName(trip, 'ics'), calendar, 'text/calendar');
-    toast('Calendar file downloaded: open it to add each day to your calendar.', { tone: 'success' });
+    toast(t('Calendar file downloaded: open it to add each day to your calendar.'), { tone: 'success' });
 }
 
 // ---------------------------------------------------------------- the trip in the day ledger
@@ -169,15 +170,15 @@ function exportCalendar(trip) {
 // Once a trip has begun, it can be recorded as a visit to its destination.
 function visitButton(ctx, trip, dirty) {
     if (!trip.startDate || trip.startDate > localToday()) return null;
-    if (tripRecorded(ctx, trip)) return h('button', { type: 'button', class: 'btn btn-ghost btn-sm', disabled: true }, '✓ Recorded as a visit');
+    if (tripRecorded(ctx, trip)) return h('button', { type: 'button', class: 'btn btn-ghost btn-sm', disabled: true }, t('✓ Recorded as a visit'));
     return h('button', {
         type: 'button',
         class: 'btn btn-ghost btn-sm',
         onclick: () => {
-            if (dirty()) toast('Save your changes before recording the trip as a visit.', { tone: 'error' });
+            if (dirty()) toast(t('Save your changes before recording the trip as a visit.'), { tone: 'error' });
             else completeTrip(ctx, trip);
         }
-    }, '✅ Record as a visit');
+    }, t('✅ Record as a visit'));
 }
 
 function ledgerButton(ctx, trip, dirty) {
@@ -188,10 +189,10 @@ function ledgerButton(ctx, trip, dirty) {
         'aria-pressed': String(planned),
         onclick: () => {
             // The plan follows the saved trip, so unsaved dates must be saved first.
-            if (dirty()) toast('Save your changes before planning the trip in the ledger.', { tone: 'error' });
+            if (dirty()) toast(t('Save your changes before planning the trip in the ledger.'), { tone: 'error' });
             else toggleLedgerPlan(ctx, trip);
         }
-    }, planned ? '📒 In ledger plans' : '📒 Plan in ledger');
+    }, planned ? t('📒 In ledger plans') : t('📒 Plan in ledger'));
 }
 
 // The ledger's planned stays for a trip, from its dates and the countries of its stops.
@@ -211,18 +212,18 @@ async function toggleLedgerPlan(ctx, trip) {
     try {
         if (settings.planned.some(item => isTripPlan(trip, item.id))) {
             await ctx.saveLedger({ ...settings, planned: settings.planned.filter(item => !isTripPlan(trip, item.id)) });
-            toast('Taken out of the ledger plans.');
+            toast(t('Taken out of the ledger plans.'));
             return;
         }
         const { stays, unknown } = tripStays(ctx, trip);
         if (!stays?.length) {
             toast(unknown !== undefined
-                ? `Which country is ${unknown} in? Name it in the destination, such as “Lisbon, Portugal”.`
-                : 'Choose a start date to plan this trip in the day ledger.', { tone: 'error' });
+                ? t('Which country is {unknown} in? Name it in the destination, such as “Lisbon, Portugal”.', { unknown })
+                : t('Choose a start date to plan this trip in the day ledger.'), { tone: 'error' });
             return;
         }
         await ctx.saveLedger({ ...settings, planned: [...settings.planned, ...stays] });
-        toast('Planned in the ledger: the Ledger tab checks it against your stay rules and thresholds.', { tone: 'success' });
+        toast(t('Planned in the ledger: the Ledger tab checks it against your stay rules and thresholds.'), { tone: 'success' });
     } catch (error) {
         ctx.handleError(error);
     }
@@ -234,7 +235,7 @@ async function duplicateTrip(ctx, trip, container) {
         ctx.state.trips.unshift(copy);
         openTripId = copy.id;
         draft = null;
-        toast(`Copied as “${copy.title}”. Choose new dates when you go.`, { tone: 'success' });
+        toast(t('Copied as “{title}”. Choose new dates when you go.', { title: copy.title }), { tone: 'success' });
         renderTrips(container, ctx);
     } catch (error) {
         ctx.handleError(error);
@@ -254,7 +255,7 @@ function renderEditor(container, ctx, trip) {
     // Someone who can only view a shared trip reads it, copies, prints or exports it (ADR 0028).
     const readOnly = trip.role === 'view';
     const editable = (...children) => h('fieldset', { class: 'trip-edit', disabled: readOnly }, ...children);
-    const saveButton = h('button', { type: 'button', class: 'btn btn-primary btn-sm', disabled: !dirty() }, '💾 Save');
+    const saveButton = h('button', { type: 'button', class: 'btn btn-primary btn-sm', disabled: !dirty() }, t('💾 Save'));
     const markDirty = () => { saveButton.disabled = !dirty(); };
 
     const save = async () => {
@@ -264,7 +265,7 @@ function renderEditor(container, ctx, trip) {
             Object.assign(trip, saved);
             draft = structuredClone(trip);
             await followInLedger(ctx, trip, tripStays(ctx, trip).stays);
-            toast('Trip saved.', { tone: 'success' });
+            toast(t('Trip saved.'), { tone: 'success' });
             rerender();
         } catch (error) {
             // Someone else saved meanwhile: their version replaces the draft (ADR 0028).
@@ -283,7 +284,7 @@ function renderEditor(container, ctx, trip) {
 
     const fillIdeas = async event => {
         event.target.disabled = true;
-        event.target.textContent = '✨ Thinking…';
+        event.target.textContent = t('✨ Thinking…');
         // Each stop gets ideas for its own destination.
         const plans = await Promise.all(tripStops(draft).map(stop => (stop.destination
             ? ideasPlan(stop.destination, stop.days) : Array.from({ length: stop.days }, emptyDay))));
@@ -297,7 +298,7 @@ function renderEditor(container, ctx, trip) {
                 }
             }
         });
-        toast(added ? `Added ${added} ideas. Save to keep them.` : 'No new ideas found for the empty slots.');
+        toast(added ? tn(added, 'Added {count} idea. Save to keep it.', 'Added {count} ideas. Save to keep them.') : t('No new ideas found for the empty slots.'));
         rerender();
     };
 
@@ -305,7 +306,7 @@ function renderEditor(container, ctx, trip) {
     const showStop = i => {
         const point = showItinerary(ctx, draft, tripStops(draft).findIndex(stop => i >= stop.firstDay && i < stop.firstDay + stop.days));
         if (point) ctx.map.flyTo(point.lat, point.lng);
-        else toast(`Which place is ${stopOfDay(draft, i).destination || 'this stop'}? Name a country or a town, such as “Lisbon, Portugal”.`, { tone: 'error' });
+        else toast(t('Which place is {place}? Name a country or a town, such as “Lisbon, Portugal”.', { place: stopOfDay(draft, i).destination || t('this stop') }), { tone: 'error' });
     };
     const days = dayCards(draft, { rerender, markDirty, showStop, readOnly });
 
@@ -315,43 +316,43 @@ function renderEditor(container, ctx, trip) {
                 type: 'button',
                 class: 'btn btn-ghost btn-sm',
                 onclick: async () => {
-                    if (dirty() && !(await ctx.confirmDialog({ title: 'Discard changes?', message: 'You have unsaved changes to this trip.', confirmLabel: 'Discard', danger: true }))) return;
+                    if (dirty() && !(await ctx.confirmDialog({ title: t('Discard changes?'), message: t('You have unsaved changes to this trip.'), confirmLabel: t('Discard'), danger: true }))) return;
                     openTripId = null;
                     draft = null;
                     renderTrips(container, ctx);
                 }
-            }, '‹ All trips'),
+            }, t('‹ All trips')),
             readOnly ? null : saveButton
         ),
         sharedNote(trip),
         editable(h('div', { class: 'trip-meta' },
-            h('label', { class: 'field' }, h('span', {}, 'Trip name'),
+            h('label', { class: 'field' }, h('span', {}, t('Trip name')),
                 h('input', { value: draft.title, maxlength: 120, oninput: event => { draft.title = event.target.value; markDirty(); } })),
             h('div', { class: 'row' },
                 // A trip with stops names its destinations in the stops below.
-                draft.stops?.length ? null : h('label', { class: 'field' }, h('span', {}, 'Destination'),
+                draft.stops?.length ? null : h('label', { class: 'field' }, h('span', {}, t('Destination')),
                     h('input', { value: draft.destination, maxlength: 160, oninput: event => { draft.destination = event.target.value; markDirty(); } })),
-                h('label', { class: 'field' }, h('span', {}, 'Start date'),
+                h('label', { class: 'field' }, h('span', {}, t('Start date')),
                     h('input', { type: 'date', value: draft.startDate, onchange: event => { draft.startDate = event.target.value; rerender(); } })),
                 purposeField(ctx, draft, trip, rerender)
             ),
             stopsSection(draft, { rerender, markDirty })
         )),
         h('div', { class: 'row trip-tools' },
-            readOnly ? null : h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: fillIdeas }, '✨ Fill empty slots'),
+            readOnly ? null : h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: fillIdeas }, t('✨ Fill empty slots')),
             h('button', {
                 type: 'button',
                 class: 'btn btn-ghost btn-sm',
                 onclick: () => copyText(tripAsText(draft), 'Itinerary copied to your clipboard.')
-            }, '📋 Copy'),
-            h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => ctx.showIdeas(draft.destination) }, '💡 Ideas'),
-            h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => exportCalendar(draft) }, '📅 Calendar'),
-            h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: event => printTrip(draft, event.currentTarget) }, '🖨️ Print'),
+            }, t('📋 Copy')),
+            h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => ctx.showIdeas(draft.destination) }, t('💡 Ideas')),
+            h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => exportCalendar(draft) }, t('📅 Calendar')),
+            h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: event => printTrip(draft, event.currentTarget) }, t('🖨️ Print')),
             h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => {
                 // The copy is made from the saved trip, so unsaved edits are not left behind unseen.
-                if (dirty()) toast('Save your changes before duplicating the trip.', { tone: 'error' });
+                if (dirty()) toast(t('Save your changes before duplicating the trip.'), { tone: 'error' });
                 else duplicateTrip(ctx, trip, container);
-            } }, '⧉ Duplicate'),
+            } }, t('⧉ Duplicate')),
             ledgerButton(ctx, trip, dirty),
             visitButton(ctx, trip, dirty),
             shareButton(ctx, trip, dirty)
@@ -371,25 +372,25 @@ function renderEditor(container, ctx, trip) {
                     addTripDay(draft);
                     rerender();
                 }
-            }, '＋ Add a day'),
+            }, t('＋ Add a day')),
             ownsTrip(trip) ? h('button', {
                 type: 'button',
                 class: 'btn btn-danger-ghost btn-sm',
                 onclick: async () => {
-                    if (!(await ctx.confirmDialog({ title: `Delete “${trip.title}”?`, message: 'This itinerary will be gone for good.', confirmLabel: 'Delete trip', danger: true }))) return;
+                    if (!(await ctx.confirmDialog({ title: t('Delete “{title}”?', { title: trip.title }), message: t('This itinerary will be gone for good.'), confirmLabel: t('Delete trip'), danger: true }))) return;
                     try {
                         await ctx.api.deleteTrip(trip.id);
                         ctx.state.trips = ctx.state.trips.filter(item => item.id !== trip.id);
                         await followInLedger(ctx, trip, []);
                         openTripId = null;
                         draft = null;
-                        toast('Trip deleted.');
+                        toast(t('Trip deleted.'));
                         ctx.refresh();
                     } catch (error) {
                         ctx.handleError(error);
                     }
                 }
-            }, '🗑️ Delete trip') : h('button', {
+            }, t('🗑️ Delete trip')) : h('button', {
                 type: 'button',
                 class: 'btn btn-danger-ghost btn-sm',
                 onclick: async () => {
@@ -400,7 +401,7 @@ function renderEditor(container, ctx, trip) {
                     draft = null;
                     ctx.refresh();
                 }
-            }, '🚪 Leave trip')
+            }, t('🚪 Leave trip'))
         )
     );
     showItinerary(ctx, draft);

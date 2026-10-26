@@ -3,7 +3,7 @@
 .legend {
     position: absolute;
     z-index: 800;
-    right: 76px;
+    inset-inline-end: 76px;
     bottom: 16px;
     display: flex;
     gap: 6px;
@@ -53,7 +53,7 @@ button.legend-filter:hover { background: var(--wishlist); }
 .compass {
     position: absolute;
     z-index: 700;
-    right: 22px;
+    inset-inline-end: 22px;
     top: 84px;
     width: 64px;
     height: 64px;
@@ -77,8 +77,8 @@ button.legend-filter:hover { background: var(--wishlist); }
 .select-bar {
     position: absolute;
     z-index: 850;
-    left: calc(var(--panel-width) + 40px);
-    right: 96px;
+    inset-inline-start: calc(var(--panel-width) + 40px);
+    inset-inline-end: 96px;
     bottom: 76px;
     display: flex;
     flex-wrap: wrap;
@@ -102,8 +102,8 @@ button.legend-filter:hover { background: var(--wishlist); }
 .time-bar {
     position: absolute;
     z-index: 850;
-    left: calc(var(--panel-width) + 40px);
-    right: 96px;
+    inset-inline-start: calc(var(--panel-width) + 40px);
+    inset-inline-end: 96px;
     bottom: 76px;
     display: grid;
     gap: 8px;
@@ -118,7 +118,7 @@ button.legend-filter:hover { background: var(--wishlist); }
 
 .time-bar[hidden] { display: none; }
 .time-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
-.time-title { margin: 0 auto 0 0; font-size: 1.05rem; }
+.time-title { margin-block: 0; margin-inline: 0 auto; font-size: 1.05rem; }
 
 .time-modes {
     display: inline-flex;
@@ -278,7 +278,7 @@ button.legend-timeline[aria-expanded='true'] { color: var(--paper); background: 
 .zoom-control {
     display: grid;
     overflow: hidden;
-    margin: 0 16px 30px 0;
+    margin-block: 0 30px; margin-inline: 0 16px;
     border: 3px solid var(--ink);
     border-radius: 16px;
     box-shadow: var(--shadow);
@@ -298,6 +298,10 @@ button.legend-timeline[aria-expanded='true'] { color: var(--paper); background: 
 
 .zoom-control button + button { border-top: 2px solid var(--ink); }
 .zoom-control button:hover { color: var(--ink-dark); background: var(--sunny); }
+
+/* Right to left, the panel takes the right: the map's own controls move to the left (ADR 0031). */
+[dir="rtl"] .maplibregl-ctrl-bottom-right { right: auto; left: 0; }
+[dir="rtl"] .maplibregl-ctrl-bottom-right .maplibregl-ctrl { float: left; clear: left; }
 
 .maplibregl-ctrl-attrib {
     font-size: 10px;
@@ -326,7 +330,7 @@ button.legend-timeline[aria-expanded='true'] { color: var(--paper); background: 
 /* A comfortable touch target (WCAG 2.2 asks for at least 24px). */
 .card-popup .maplibregl-popup-close-button {
     top: 6px;
-    right: 6px;
+    inset-inline-end: 6px;
     width: 32px;
     height: 32px;
     font-size: 22px;
@@ -344,7 +348,7 @@ button.legend-timeline[aria-expanded='true'] { color: var(--paper); background: 
     align-items: center;
     gap: 12px;
     margin-bottom: 10px;
-    padding-right: 32px;
+    padding-inline-end: 32px;
 }
 
 .card-header h3 { margin: 0; font-size: 1.3rem; }
@@ -430,10 +434,10 @@ button.legend-timeline[aria-expanded='true'] { color: var(--paper); background: 
     display: flex;
     align-items: flex-start;
     gap: 4px;
-    padding: 6px 4px 6px 10px;
+    padding-block: 6px; padding-inline: 10px 4px;
     background: var(--paper-2);
     border: 2px solid var(--ink);
-    border-left: 6px solid var(--visited);
+    border-inline-start: 6px solid var(--visited);
     border-radius: var(--radius-sm);
 }
 

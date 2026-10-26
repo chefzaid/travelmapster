@@ -1,18 +1,19 @@
 // A trip's packing list and budget. The budget totals its expenses in its own currency (the
 // traveler's home currency) with the exchange rate the traveler enters for each other currency:
 // the rate they actually got, with no rate service to depend on. Pure, unit tested in Node.
+import { locale as interfaceLocale, tk, t } from './i18n.js';
 
 export const EXPENSE_CATEGORIES = [
-    ['transport', '🚆', 'Transport'],
-    ['stay', '🛏️', 'Stay'],
-    ['food', '🍜', 'Food and drink'],
-    ['activities', '🎟️', 'Activities'],
-    ['other', '🧾', 'Other']
+    ['transport', '🚆', tk('Transport')],
+    ['stay', '🛏️', tk('Stay')],
+    ['food', '🍜', tk('Food and drink')],
+    ['activities', '🎟️', tk('Activities')],
+    ['other', '🧾', tk('Other')]
 ];
 
 export const STARTER_PACKING = [
-    'Passport or ID', 'Tickets and bookings', 'Bank cards and some cash', 'Phone charger',
-    'Plug adapter', 'Medicines', 'Toiletries', 'Clothes for each day', 'Comfortable shoes', 'Travel insurance details'
+    tk('Passport or ID'), tk('Tickets and bookings'), tk('Bank cards and some cash'), tk('Phone charger'),
+    tk('Plug adapter'), tk('Medicines'), tk('Toiletries'), tk('Clothes for each day'), tk('Comfortable shoes'), tk('Travel insurance details')
 ];
 
 export const PACKING_MAX_ITEMS = 200;
@@ -27,7 +28,7 @@ export function packingProgress(packing = []) {
 /** The list with the starter items it does not have yet (compared without case), unpacked. */
 export function withStarterItems(packing = []) {
     const known = new Set(packing.map(entry => entry.item.toLowerCase()));
-    const added = STARTER_PACKING.filter(item => !known.has(item.toLowerCase())).map(item => ({ item, packed: false }));
+    const added = STARTER_PACKING.map(item => t(item)).filter(item => !known.has(item.toLowerCase())).map(item => ({ item, packed: false }));
     return [...packing, ...added].slice(0, PACKING_MAX_ITEMS);
 }
 
@@ -60,7 +61,7 @@ export function budgetTotals(budget) {
 }
 
 /** An amount with its currency, such as "€1,234.50" or "¥1,200". */
-export function formatMoney(amount, currency, locale) {
+export function formatMoney(amount, currency, locale = interfaceLocale()) {
     try {
         return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(amount);
     } catch {
