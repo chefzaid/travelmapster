@@ -68,7 +68,9 @@ Invalid integers stop startup with a clear error. Production values come from
 ## Adding A Capability
 
 - **API**: add limits to `validation.js`, SQL to `repositories.js` (scoped to `req.user.id`),
-  a route under `src/routes/`, integration tests, and a new migration if the schema changes.
+  a route under `src/routes/`, integration tests, a new migration if the schema changes, and the
+  route in [`docs/api/openapi.json`](api/openapi.json), keeping version 1 compatible
+  ([ADR 0019](adr/0019-api-description-and-versioning.md)).
 - **Frontend**: add an ES module under `public/js/`; keep logic that can be pure in `geo.js`
   or `io.js` so it is unit tested; use the colour tokens in `css/tokens.css` so both themes keep
   [AA contrast](features.md#product-principles).

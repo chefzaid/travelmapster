@@ -46,7 +46,8 @@ PostgreSQL, including sessions, so any replica can serve any request.
 
 ## API
 
-JSON under `/api`; errors are `{ "error": "…" }` with a matching status. All routes except
+JSON under `/api`, described in full in [OpenAPI](api/openapi.json) and kept backward compatible
+([ADR 0019](adr/0019-api-description-and-versioning.md)); errors are `{ "error": "…" }` with a matching status. All routes except
 `csrf-token`, `auth` and `public` need a session, and writes need the CSRF header
 ([security](security.md#request-protection)). Field rules are in the [data model](data-model.md#tables).
 
@@ -184,5 +185,6 @@ number (`NNNN-short-title.md`) and the template below. Statuses: **Proposed**, *
 - [ADR 0016: Map timeline, journey lines and palettes](adr/0016-timeline-journeys-and-palettes.md)
 - [ADR 0017: Product principles for the ledger, keepsakes and paid tiers](adr/0017-product-principles.md)
 - [ADR 0018: Product metrics without third-party analytics](adr/0018-product-metrics.md)
+- [ADR 0019: Describe the API in OpenAPI and keep version 1 compatible](adr/0019-api-description-and-versioning.md)
 
 Superseded: [ADR 0007: Draw towns on a canvas layer](adr/0007-canvas-towns.md).
