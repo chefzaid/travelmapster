@@ -54,11 +54,11 @@ async function request(method, path, body, retried = false) {
 }
 
 // The API stores empty optional fields as null; the UI works with strings.
-function toClientVisit(visit) {
+export function toClientVisit(visit) {
     return { ...visit, endDate: visit.endDate || '', notes: visit.notes || '', photoUrl: visit.photoUrl || '', ongoing: Boolean(visit.ongoing) };
 }
 
-function toClientMarker(marker) {
+export function toClientMarker(marker) {
     return {
         ...marker,
         photoUrl: marker.photoUrl || '',
@@ -131,3 +131,14 @@ export const api = {
     searchPlaces: query => request('GET', `/places?${new URLSearchParams({ q: query, limit: '6' })}`),
     geocodeCity: query => request('GET', `/geocode?${new URLSearchParams({ q: query, kind: 'city', limit: '1' })}`)
 };
+
+// The server's answers, so guest mode can stand in for them and step aside again.
+const serverApi = Object.freeze({ ...api });
+
+/**
+ * Answers from `methods` instead of the server (a guest map, ADR 0026), or from the server
+ * again with null. Every module holds the same `api` object, so they all follow.
+ */
+export function useApi(methods) {
+    Object.assign(api, serverApi, methods || {});
+}

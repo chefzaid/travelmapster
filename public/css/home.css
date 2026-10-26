@@ -125,6 +125,17 @@
     cursor: pointer;
 }
 
+/* The note a guest sees above the tabs (ADR 0026). */
+.guest-note {
+    margin: 0 0 10px;
+    padding: 6px 10px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    background: var(--paper-2);
+    border: 2px dashed var(--line);
+    border-radius: var(--radius-sm);
+}
+
 @media (max-width: 640px) {
     .home-nav { display: none; }
     .home-hero { padding: 18px 16px; }
@@ -137,3 +148,7 @@
     .feature-trips { background: #4a2a26; }
     .feature-journeys { background: #352c55; }
 }
+
+/* Guest-only and account-only controls keep their display rules but hide when told to. */
+[data-guest-only][hidden],
+[data-account-only][hidden] { display: none; }

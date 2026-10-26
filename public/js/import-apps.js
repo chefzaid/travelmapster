@@ -40,27 +40,37 @@ function mergeByName(places) {
 
 const markersByKey = ctx => new Map(ctx.state.markers.map(marker => [placeKey(marker), marker]));
 
-/** Saves places: new ones with their visits; places already on the map get the visits they lack. */
-async function importPlaces(ctx, picked, status) {
+const IMPORT_BATCH = 1000;
+
+/**
+ * Saves places: new ones with their visits, a thousand at a time; places already on the map get
+ * the visits they lack. Resolves to how many places and visits were added.
+ */
+export async function savePlaces(ctx, picked) {
     const byKey = markersByKey(ctx);
     const fresh = picked.filter(place => !byKey.has(placeKey(place)));
     let addedVisits = 0;
+    for (let i = 0; i < fresh.length; i += IMPORT_BATCH) await ctx.api.importMarkers(fresh.slice(i, i + IMPORT_BATCH));
+    for (const place of picked.filter(item => byKey.has(placeKey(item)))) {
+        const marker = byKey.get(placeKey(place));
+        const known = new Set((marker.visits || []).map(visit => visit.startDate));
+        for (const visit of place.visits.filter(item => !known.has(item.startDate))) {
+            await ctx.api.addVisit(marker.id, visit);
+            known.add(visit.startDate);
+            addedVisits += 1;
+        }
+    }
+    await ctx.reloadMarkers();
+    return { places: fresh.length, visits: addedVisits };
+}
+
+async function importPlaces(ctx, picked, status) {
     status.textContent = `Importing ${plural(picked.length, 'place', 'places')}…`;
     try {
-        if (fresh.length) await ctx.api.importMarkers(fresh);
-        for (const place of picked.filter(item => byKey.has(placeKey(item)))) {
-            const marker = byKey.get(placeKey(place));
-            const known = new Set((marker.visits || []).map(visit => visit.startDate));
-            for (const visit of place.visits.filter(item => !known.has(item.startDate))) {
-                await ctx.api.addVisit(marker.id, visit);
-                known.add(visit.startDate);
-                addedVisits += 1;
-            }
-        }
-        await ctx.reloadMarkers();
+        const { places, visits } = await savePlaces(ctx, picked);
         const parts = [
-            fresh.length || !addedVisits ? plural(fresh.length, 'new place', 'new places') : '',
-            addedVisits ? `${plural(addedVisits, 'visit', 'visits')} to places you had` : ''
+            places || !visits ? plural(places, 'new place', 'new places') : '',
+            visits ? `${plural(visits, 'visit', 'visits')} to places you had` : ''
         ].filter(Boolean);
         const message = `Imported ${parts.join(' and ')}.`;
         status.textContent = message;

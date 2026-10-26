@@ -156,8 +156,12 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   Schengen days live; nothing is saved. Signed-in visitors land on their own map, and shared
   maps open read-only as before.
 - **Presentation page**: signed-out visitors at `/` first see what TravelMapster does, feature
-  by feature, with the plans and the ways in (sign up, log in, explore the demo map); travelers
-  signed in on this browser go straight to their map.
+  by feature, with the plans and the ways in (sign up, log in, explore the demo map, try it
+  without an account); travelers signed in on this browser go straight to their map.
+- **Guest mode**: "Try it without an account" opens a real map kept in this browser, with
+  places, visits, trips, the ledger, the passport, imports and exports; only sharing, a
+  password and the date history need an account. Signing up or logging in moves the guest map
+  into the account ([ADR 0026](adr/0026-guest-mode.md)).
 - **Free Schengen 90/180 calculator** at `/schengen-calculator`, without an account: past and
   planned stays (or "still there"), days used and left on any day, overstays with the stays
   that cause them, and the latest day you can stay. It counts with the same rules as the Ledger

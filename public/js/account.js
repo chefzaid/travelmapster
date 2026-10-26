@@ -89,6 +89,7 @@ export function setupAuth(ctx) {
     });
 
     $('#logout-btn').addEventListener('click', async () => {
+        const guest = Boolean(ctx.state.user?.guest);
         try {
             await ctx.api.logout();
         } catch {
@@ -96,7 +97,7 @@ export function setupAuth(ctx) {
         }
         closeAccountMenu();
         ctx.showSignedOut();
-        toast('See you on your next trip! ✈️');
+        toast(guest ? 'Your guest map stays in this browser. See you soon! ✈️' : 'See you on your next trip! ✈️');
     });
 }
 
@@ -122,11 +123,14 @@ async function openSettings(ctx) {
                 options: PALETTES.map(palette => ({ value: palette.id, label: palette.label })),
                 hint: 'Color-blind safe colors keep every status apart for all kinds of color vision; print-friendly colors '
                     + 'suit paper and grayscale printers. Patterns and outlines stay the same.' },
-            { name: 'publicJourneys', label: 'Show journey lines on my public map', type: 'checkbox', value: user.publicJourneys,
-                hint: 'Visitors already see your visit dates; with this on, the timeline also draws the order you traveled in.' },
-            { name: 'publicIndexing', label: 'Let search engines list my public map', type: 'checkbox', value: user.publicIndexing,
-                hint: 'Only while your map is public. Off, your shared link still works and shows a preview, but asks search '
-                    + 'engines not to list it. Search engines can take a few weeks to drop a page.' }
+            // A guest map is never public.
+            ...(user.guest ? [] : [
+                { name: 'publicJourneys', label: 'Show journey lines on my public map', type: 'checkbox', value: user.publicJourneys,
+                    hint: 'Visitors already see your visit dates; with this on, the timeline also draws the order you traveled in.' },
+                { name: 'publicIndexing', label: 'Let search engines list my public map', type: 'checkbox', value: user.publicIndexing,
+                    hint: 'Only while your map is public. Off, your shared link still works and shows a preview, but asks search '
+                        + 'engines not to list it. Search engines can take a few weeks to drop a page.' }
+            ])
         ]
     });
     if (!values) return;
@@ -134,8 +138,10 @@ async function openSettings(ctx) {
     if ((values.homeCountry || null) !== (user.homeCountry || null)) changes.homeCountry = values.homeCountry || null;
     if (values.countryList !== (user.countryList || 'all')) changes.countryList = values.countryList;
     if (values.mapPalette !== paletteId(user.mapPalette)) changes.mapPalette = values.mapPalette;
-    if ((values.publicJourneys === 'on') !== Boolean(user.publicJourneys)) changes.publicJourneys = values.publicJourneys === 'on';
-    if ((values.publicIndexing === 'on') !== Boolean(user.publicIndexing)) changes.publicIndexing = values.publicIndexing === 'on';
+    if (!user.guest) {
+        if ((values.publicJourneys === 'on') !== Boolean(user.publicJourneys)) changes.publicJourneys = values.publicJourneys === 'on';
+        if ((values.publicIndexing === 'on') !== Boolean(user.publicIndexing)) changes.publicIndexing = values.publicIndexing === 'on';
+    }
     if (!Object.keys(changes).length) return;
     await ctx.saveSettings(changes, 'Settings saved.');
 }
