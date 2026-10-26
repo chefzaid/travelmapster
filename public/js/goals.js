@@ -2,11 +2,12 @@
 // their country list, new cities, or visits begun that year. Pure, unit tested in Node.
 import { statusOf } from './status.js';
 import { countriesByYear } from './travel-stats.js';
+import { t, tn } from './i18n.js';
 
 export const GOAL_KINDS = {
-    countries: { one: 'new country', many: 'new countries', icon: '🌍' },
-    cities: { one: 'new city', many: 'new cities', icon: '🏙️' },
-    visits: { one: 'trip', many: 'trips', icon: '🧳' }
+    countries: { get name() { return t('New countries'); }, label: count => tn(count, '{count} new country', '{count} new countries'), icon: '🌍' },
+    cities: { get name() { return t('New cities'); }, label: count => tn(count, '{count} new city', '{count} new cities'), icon: '🏙️' },
+    visits: { get name() { return t('Trips'); }, label: count => tn(count, '{count} trip', '{count} trips'), icon: '🧳' }
 };
 
 const firstVisitYear = marker => (marker.visits || []).reduce((first, visit) => {
@@ -42,5 +43,5 @@ export const goalKey = goal => `${goal.year}:${goal.kind}`;
 /** "3 new countries in 2027". */
 export function goalLabel(goal) {
     const words = GOAL_KINDS[goal.kind] || GOAL_KINDS.visits;
-    return `${goal.target} ${goal.target === 1 ? words.one : words.many} in ${goal.year}`;
+    return t('{goal} in {year}', { goal: words.label(goal.target), year: goal.year });
 }

@@ -4,6 +4,7 @@ import { h, toast, formDialog, formatDate } from './ui.js';
 import { checkVisit, formatVisitDates, sortVisits, lastVisitDate, visitCountLabel, visitDays } from './visits.js';
 import { statusOf } from './status.js';
 import { purposeValue, readPurpose } from './org-data.js';
+import { t, tn } from './i18n.js';
 
 function setVisits(ctx, marker, visits, reopenCard) {
     marker.visits = sortVisits(visits);
@@ -18,9 +19,9 @@ function purposeFields(ctx, draft) {
     const orgs = ctx.state.orgs || [];
     if (!orgs.length) return [];
     return [{
-        name: 'purpose', label: 'Trip for', type: 'select', value: purposeValue(draft),
-        options: [{ value: 'personal', label: 'Personal' }, ...orgs.map(org => ({ value: `business:${org.id}`, label: `Business: ${org.name}` }))],
-        hint: 'Its managers see business days per country, never this place or its notes.'
+        name: 'purpose', label: t('Trip for'), type: 'select', value: purposeValue(draft),
+        options: [{ value: 'personal', label: t('Personal') }, ...orgs.map(org => ({ value: `business:${org.id}`, label: t('Business: {name}', { name: org.name }) }))],
+        hint: t('Its managers see business days per country, never this place or its notes.')
     }];
 }
 
@@ -29,14 +30,14 @@ async function visitDialog(ctx, marker, visit) {
     let draft = visit;
     for (;;) {
         const values = await formDialog({
-            title: visit ? `Edit visit to ${marker.name}` : `Add a visit to ${marker.name}`,
-            submitLabel: visit ? 'Save visit' : 'Add visit',
+            title: visit ? t('Edit visit to {name}', { name: marker.name }) : t('Add a visit to {name}', { name: marker.name }),
+            submitLabel: visit ? t('Save visit') : t('Add visit'),
             fields: [
-                { name: 'startDate', label: 'First day', type: 'date', value: draft?.startDate || '', required: true },
-                { name: 'endDate', label: 'Last day', type: 'date', value: draft?.endDate || '', hint: 'Optional. Without it, the day ledger counts the first day only.' },
-                { name: 'ongoing', label: 'I\'m still there', type: 'checkbox', value: draft?.ongoing, hint: 'Leave the last day empty: the day ledger counts every day up to today.' },
-                { name: 'notes', label: 'What happened', type: 'textarea', value: draft?.notes || '', maxlength: 2000, placeholder: 'Favorite memory, who you went with…' },
-                { name: 'photoUrl', label: 'Photo link', type: 'url', value: draft?.photoUrl || '', placeholder: 'https://…', hint: 'Link to a photo or album hosted anywhere (HTTP or HTTPS).' },
+                { name: 'startDate', label: t('First day'), type: 'date', value: draft?.startDate || '', required: true },
+                { name: 'endDate', label: t('Last day'), type: 'date', value: draft?.endDate || '', hint: t('Optional. Without it, the day ledger counts the first day only.') },
+                { name: 'ongoing', label: t('I\'m still there'), type: 'checkbox', value: draft?.ongoing, hint: t('Leave the last day empty: the day ledger counts every day up to today.') },
+                { name: 'notes', label: t('What happened'), type: 'textarea', value: draft?.notes || '', maxlength: 2000, placeholder: t('Favorite memory, who you went with…') },
+                { name: 'photoUrl', label: t('Photo link'), type: 'url', value: draft?.photoUrl || '', placeholder: 'https://…', hint: t('Link to a photo or album hosted anywhere (HTTP or HTTPS).') },
                 ...purposeFields(ctx, draft)
             ]
         });
@@ -67,7 +68,7 @@ async function editVisit(ctx, marker, visit, reopenCard) {
     try {
         const updated = await ctx.api.updateVisit(visit.id, values);
         setVisits(ctx, marker, marker.visits.map(item => (item.id === visit.id ? updated : item)), reopenCard);
-        toast('Visit saved.', { tone: 'success' });
+        toast(t('Visit saved.'), { tone: 'success' });
     } catch (error) {
         ctx.handleError(error);
     }
@@ -77,9 +78,9 @@ async function removeVisit(ctx, marker, visit, reopenCard) {
     try {
         await ctx.api.deleteVisit(visit.id);
         setVisits(ctx, marker, marker.visits.filter(item => item.id !== visit.id), reopenCard);
-        toast(`Removed the visit of ${formatDate(visit.startDate)}.`, {
+        toast(t('Removed the visit of {startDate}.', { startDate: formatDate(visit.startDate) }), {
             action: {
-                label: 'Undo',
+                label: t('Undo'),
                 run: () => {
                     const { id, ...restored } = visit;
                     ctx.api.addVisit(marker.id, restored)
@@ -100,15 +101,15 @@ function visitItem(ctx, marker, visit, reopenCard) {
     return h('li', { class: 'visit' },
         h('div', { class: 'visit-text' },
             h('strong', {}, h('span', { 'aria-hidden': 'true' }, '📅 '), dates),
-            days ? h('small', { class: 'visit-days' }, days === 1 ? '1 day' : `${days} days`) : null,
-            !visit.endDate && !visit.ongoing ? h('small', { class: 'visit-days' }, 'Last day not recorded') : null,
-            business ? h('small', { class: 'visit-days' }, `💼 Business${business.name ? `: ${business.name}` : ''}`) : null,
+            days ? h('small', { class: 'visit-days' }, tn(days, '{count} day', '{count} days')) : null,
+            !visit.endDate && !visit.ongoing ? h('small', { class: 'visit-days' }, t('Last day not recorded')) : null,
+            business ? h('small', { class: 'visit-days' }, business.name ? t('💼 Business: {name}', { name: business.name }) : t('💼 Business')) : null,
             visit.notes ? h('p', { class: 'visit-notes' }, visit.notes) : null,
-            visit.photoUrl ? h('a', { href: visit.photoUrl, target: '_blank', rel: 'noopener noreferrer', class: 'visit-photo', 'aria-label': `Photo of the visit of ${dates} (opens in a new tab)` }, '📷 Photo') : null
+            visit.photoUrl ? h('a', { href: visit.photoUrl, target: '_blank', rel: 'noopener noreferrer', class: 'visit-photo', 'aria-label': t('Photo of the visit of {dates} (opens in a new tab)', { dates }) }, t('📷 Photo')) : null
         ),
         ctx.state.user ? h('div', { class: 'visit-actions' },
-            h('button', { type: 'button', class: 'icon-btn', 'aria-label': `Edit the visit of ${dates}`, title: 'Edit visit', onclick: () => editVisit(ctx, marker, visit, reopenCard) }, '✏️'),
-            h('button', { type: 'button', class: 'icon-btn', 'aria-label': `Remove the visit of ${dates}`, title: 'Remove visit', onclick: () => removeVisit(ctx, marker, visit, reopenCard) }, '🗑️')
+            h('button', { type: 'button', class: 'icon-btn', 'aria-label': t('Edit the visit of {dates}', { dates }), title: t('Edit visit'), onclick: () => editVisit(ctx, marker, visit, reopenCard) }, '✏️'),
+            h('button', { type: 'button', class: 'icon-btn', 'aria-label': t('Remove the visit of {dates}', { dates }), title: t('Remove visit'), onclick: () => removeVisit(ctx, marker, visit, reopenCard) }, '🗑️')
         ) : null
     );
 }
@@ -127,6 +128,6 @@ export function visitsSection(ctx, marker, reopenCard) {
         h('h4', { id: headingId, class: 'visits-title' }, visitCountLabel(visits.length, status)),
         visits.length ? h('ol', { class: 'visit-list' }, visits.map(visit => visitItem(ctx, marker, visit, reopenCard))) : null,
         ctx.state.user ? h('button', { type: 'button', class: 'btn btn-sm btn-ghost visit-add', onclick: () => addVisit(ctx, marker, reopenCard) },
-            ADD_VISIT_LABELS[status] || '＋ Add a visit') : null
+            ADD_VISIT_LABELS[status] || t('＋ Add a visit')) : null
     );
 }

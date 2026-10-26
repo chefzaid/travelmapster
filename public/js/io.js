@@ -1,6 +1,7 @@
 // Import and export helpers for saved places and their visits. Pure functions, unit tested in Node.
 import { checkVisit, isHttpUrl, isValidDate, lastVisitDate, sortVisits } from './visits.js';
 import { checkDetails } from './details.js';
+import { t } from './i18n.js';
 
 export { isHttpUrl, isValidDate };
 
@@ -88,7 +89,7 @@ export function parseCsv(text) {
     }
 
     if (inQuotes) {
-        throw new Error('CSV contains an unterminated quoted field.');
+        throw new Error(t('CSV contains an unterminated quoted field.'));
     }
     if (field || row.length) {
         row.push(field);
@@ -102,7 +103,7 @@ export function parseCsv(text) {
     const lowerHeaders = headers.map(header => header.toLowerCase());
     const requiredHeaders = ['lat', 'lng', 'type', 'name', 'category'];
     if (requiredHeaders.some(header => !lowerHeaders.includes(header))) {
-        throw new Error('CSV must include lat, lng, type, name, and category columns.');
+        throw new Error(t('CSV must include lat, lng, type, name, and category columns.'));
     }
     // Map case-insensitive headers back to the camelCase export fields.
     const keys = lowerHeaders.map(header => CSV_FIELDS.find(field => field.toLowerCase() === header) || header);
@@ -118,14 +119,14 @@ export function parseImportContent(fileName, content) {
         const parsed = JSON.parse(content);
         const records = Array.isArray(parsed) ? parsed : parsed?.markers;
         if (!Array.isArray(records)) {
-            throw new Error('The import file must contain an array of saved places.');
+            throw new Error(t('The import file must contain an array of saved places.'));
         }
         return records;
     }
     if (extension === 'csv') {
         return parseCsv(content);
     }
-    throw new Error('Choose a .json or .csv file.');
+    throw new Error(t('Choose a .json or .csv file.'));
 }
 
 function text(value) {

@@ -41,7 +41,7 @@ function pageWithMeta(html, { title, description, url, image, imageAlt, indexed 
     ].filter(Boolean).map(tag => `    ${tag}\n`).join('');
     const content = (pattern, text) => page => page.replace(pattern, (_, start) => `${start}${escapeXml(text)}`);
     return [
-        content(/(<title>)[^<]*/, title),
+        content(/(<title[^>]*>)[^<]*/, title),
         content(/(<meta name="description" content=")[^"]*/, description),
         content(/(<meta property="og:title" content=")[^"]*/, title),
         content(/(<meta property="og:description" content=")[^"]*/, description),

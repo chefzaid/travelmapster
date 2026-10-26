@@ -1,6 +1,7 @@
 // Visits of a saved place: each one is a span of plain calendar dates (YYYY-MM-DD, no
 // time zone) with optional notes and a photo link. Without an end date a visit is either
 // still going on (`ongoing`) or its end was not recorded. Pure functions, unit tested in Node.
+import { t, tk, tn } from './i18n.js';
 
 const NOTES_MAX_LENGTH = 2000;
 const PHOTO_URL_MAX_LENGTH = 2048;
@@ -43,16 +44,14 @@ export function visitCount(marker) {
 
 // How often the traveler has been, in the words of the place's status (ADR 0014).
 const COUNT_WORDS = {
-    visited: ['No visits recorded yet', 'Visited'],
-    lived: ['No dates recorded yet', 'Lived here'],
-    transit: ['No layovers recorded yet', 'Passed through']
+    visited: [tk('No visits recorded yet'), count => tn(count, 'Visited once', 'Visited {count} times')],
+    lived: [tk('No dates recorded yet'), count => tn(count, 'Lived here once', 'Lived here {count} times')],
+    transit: [tk('No layovers recorded yet'), count => tn(count, 'Passed through once', 'Passed through {count} times')]
 };
 
 export function visitCountLabel(count, status = 'visited') {
-    const [none, verb] = COUNT_WORDS[status] || COUNT_WORDS.visited;
-    if (!count) return none;
-    if (count === 1) return `${verb} once`;
-    return `${verb} ${count} times`;
+    const [none, times] = COUNT_WORDS[status] || COUNT_WORDS.visited;
+    return count ? times(count) : t(none);
 }
 
 /** Inclusive calendar days of a visit, or null when it has no end date. */
@@ -66,7 +65,7 @@ export function visitDays(visit) {
 }
 
 export function formatVisitDates(visit, formatDate) {
-    if (!visit.endDate && visit.ongoing) return `${formatDate(visit.startDate)} – still there`;
+    if (!visit.endDate && visit.ongoing) return t('{date} – still there', { date: formatDate(visit.startDate) });
     if (!visit.endDate || visit.endDate === visit.startDate) return formatDate(visit.startDate);
     return `${formatDate(visit.startDate)} – ${formatDate(visit.endDate)}`;
 }
@@ -81,13 +80,13 @@ export function checkVisit(record) {
         // A form checkbox sends "on"; CSV files say "yes".
         ongoing: record?.ongoing === true || /^(on|true|yes|1)$/i.test(text(record?.ongoing))
     };
-    if (!isValidDate(visit.startDate)) return { error: 'Choose the day the visit started.' };
-    if (visit.endDate && !isValidDate(visit.endDate)) return { error: 'The end date is not a real date.' };
-    if (visit.endDate && visit.ongoing) return { error: 'A visit you are still on has no last day yet.' };
-    if (visit.endDate && visit.endDate < visit.startDate) return { error: 'The visit must end on or after the day it started.' };
-    if (visit.notes.length > NOTES_MAX_LENGTH) return { error: `Notes must be ${NOTES_MAX_LENGTH} characters or fewer.` };
+    if (!isValidDate(visit.startDate)) return { error: t('Choose the day the visit started.') };
+    if (visit.endDate && !isValidDate(visit.endDate)) return { error: t('The end date is not a real date.') };
+    if (visit.endDate && visit.ongoing) return { error: t('A visit you are still on has no last day yet.') };
+    if (visit.endDate && visit.endDate < visit.startDate) return { error: t('The visit must end on or after the day it started.') };
+    if (visit.notes.length > NOTES_MAX_LENGTH) return { error: t('Notes must be {NOTES_MAX_LENGTH} characters or fewer.', { NOTES_MAX_LENGTH }) };
     if (visit.photoUrl && (visit.photoUrl.length > PHOTO_URL_MAX_LENGTH || !isHttpUrl(visit.photoUrl))) {
-        return { error: 'The photo link must be an HTTP or HTTPS address.' };
+        return { error: t('The photo link must be an HTTP or HTTPS address.') };
     }
     return { visit };
 }

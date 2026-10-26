@@ -16,7 +16,7 @@ test('only the public/ directory is served', async () => {
         assert.equal(res.status, 404, `${path} must not be served`);
     }
     const index = await http.get('/').expect(200);
-    assert.match(index.text, /<title>[^<]*TravelMapster[^<]*<\/title>/);
+    assert.match(index.text, /<title[^>]*>[^<]*TravelMapster[^<]*<\/title>/);
     await http.get('/js/app.js').expect(200);
     await http.get('/data/countries.geojson').expect(200);
     await http.get('/vendor/maplibre/maplibre-gl.mjs').expect(200);
@@ -27,9 +27,9 @@ test('the Schengen calculator is a public page with its own title and descriptio
     const page = await http.get('/schengen-calculator').expect(200);
     assert.equal(page.headers['cache-control'], 'no-cache');
     assert.match(page.headers['content-security-policy'], /script-src 'self'/);
-    assert.match(page.text, /<title>[^<]*Schengen 90\/180 calculator[^<]*<\/title>/);
-    assert.match(page.text, /<meta name="description" content="[^"]{50,160}">/);
-    assert.match(page.text, /<h1>/);
+    assert.match(page.text, /<title[^>]*>[^<]*Schengen 90\/180 calculator[^<]*<\/title>/);
+    assert.match(page.text, /<meta name="description" content="[^"]{50,160}"[^>]*>/);
+    assert.match(page.text, /<h1[\s>]/);
     assert.ok(!page.text.includes('__assets__'), 'every placeholder is rewritten');
     assert.match(page.text, /src="\/a\/[0-9a-f]{12}\/js\/calculator\.js"/);
     const old = await http.get('/schengen-calculator.html').expect(301);

@@ -1,11 +1,12 @@
 // Itineraries: their stops, and the trip outside the app: as text, as an iCalendar file with an
 // all-day event per day, as a template copy without dates, and as planned stays in the day
 // ledger. Pure, unit tested in Node.
+import { locale, t, tk } from './i18n.js';
 
 export const SLOTS = [
-    ['morning', '🌅', 'Morning'],
-    ['afternoon', '☀️', 'Afternoon'],
-    ['evening', '🌙', 'Evening']
+    ['morning', '🌅', tk('Morning')],
+    ['afternoon', '☀️', tk('Afternoon')],
+    ['evening', '🌙', tk('Evening')]
 ];
 
 const TITLE_MAX_LENGTH = 120;
@@ -56,7 +57,7 @@ export function tripRoute(trip) {
 /** "Mon, Jun 2" for day `offset` of a trip, or '' without a start date. */
 export function dayDate(startDate, offset) {
     if (!startDate) return '';
-    return shiftDate(startDate, offset).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
+    return shiftDate(startDate, offset).toLocaleDateString(locale(), { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
 }
 
 /** The trip's last day (YYYY-MM-DD), or '' without a start date. */
@@ -69,9 +70,9 @@ export function tripAsText(trip) {
     const several = trip.stops?.length > 1;
     trip.plan.forEach((day, i) => {
         const date = dayDate(trip.startDate, i);
-        lines.push(`Day ${i + 1}${date ? `, ${date}` : ''}${several ? `, ${stopOfDay(trip, i).destination}` : ''}`);
+        lines.push([t('Day {number}', { number: i + 1 }), date, several ? stopOfDay(trip, i).destination : ''].filter(Boolean).join(', '));
         for (const [slot, , label] of SLOTS) {
-            if (day[slot]) lines.push(`  ${label}: ${day[slot]}`);
+            if (day[slot]) lines.push(`  ${t(label)}: ${day[slot]}`);
         }
         lines.push('');
     });
@@ -187,7 +188,7 @@ function fold(line) {
  * Needs a start date; `now` stamps the events.
  */
 export function tripCalendar(trip, now = new Date()) {
-    if (!trip.startDate) return { error: 'Choose a start date to add this trip to a calendar.' };
+    if (!trip.startDate) return { error: t('Choose a start date to add this trip to a calendar.') };
     const stamp = `${now.toISOString().slice(0, 19).replace(/[-:]/g, '')}Z`;
     const lines = [
         'BEGIN:VCALENDAR',
@@ -198,14 +199,14 @@ export function tripCalendar(trip, now = new Date()) {
         `X-WR-CALNAME:${escapeText(trip.title)}`
     ];
     trip.plan.forEach((day, i) => {
-        const plans = SLOTS.filter(([slot]) => day[slot]).map(([slot, , label]) => `${label}: ${day[slot]}`);
+        const plans = SLOTS.filter(([slot]) => day[slot]).map(([slot, , label]) => `${t(label)}: ${day[slot]}`);
         lines.push(
             'BEGIN:VEVENT',
             `UID:trip-${trip.id ?? 'new'}-${trip.startDate}-day-${i + 1}@travelmapster`,
             `DTSTAMP:${stamp}`,
             `DTSTART;VALUE=DATE:${compactDate(shiftDate(trip.startDate, i))}`,
             `DTEND;VALUE=DATE:${compactDate(shiftDate(trip.startDate, i + 1))}`,
-            `SUMMARY:${escapeText(`Day ${i + 1}: ${trip.title}`)}`,
+            `SUMMARY:${escapeText(`${t('Day {number}', { number: i + 1 })}: ${trip.title}`)}`,
             `LOCATION:${escapeText(stopOfDay(trip, i).destination)}`,
             ...(plans.length ? [`DESCRIPTION:${escapeText(plans.join('\n'))}`] : []),
             'TRANSP:TRANSPARENT',

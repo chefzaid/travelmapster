@@ -8,8 +8,9 @@ import { destinationPlace } from './trip-visits.js';
 import { ownsTrip } from './trip-share.js';
 import { localToday } from './days.js';
 import { section } from './trip-extras.js';
+import { t, tk, tn } from './i18n.js';
 
-const STATE_LABELS = { done: 'Done', listed: 'On your packing list', missing: 'Not on your list yet' };
+const STATE_LABELS = { done: tk('Done'), listed: tk('On your packing list'), missing: tk('Not on your list yet') };
 
 /** The checklist of a trip, from its countries and the traveler's organizations. */
 export function checklistOf(ctx, trip) {
@@ -21,15 +22,15 @@ export function checklistOf(ctx, trip) {
 export function purposeField(ctx, draft, trip, rerender) {
     const orgs = ctx.state.orgs || [];
     if (!ownsTrip(trip) || !orgs.length) return null;
-    return h('label', { class: 'field' }, h('span', {}, 'Trip for'),
+    return h('label', { class: 'field' }, h('span', {}, t('Trip for')),
         h('select', {
             onchange: event => {
                 draft.organizationId = event.target.value ? Number(event.target.value) : null;
                 rerender();
             }
         },
-            h('option', { value: '', selected: !draft.organizationId }, 'Personal'),
-            orgs.map(org => h('option', { value: org.id, selected: draft.organizationId === org.id }, `Business: ${org.name}`))));
+            h('option', { value: '', selected: !draft.organizationId }, t('Personal')),
+            orgs.map(org => h('option', { value: org.id, selected: draft.organizationId === org.id }, t('Business: {name}', { name: org.name })))));
 }
 
 function itemLine({ item, state, due, overdue }) {
@@ -37,8 +38,8 @@ function itemLine({ item, state, due, overdue }) {
         h('span', { 'aria-hidden': 'true' }, state === 'done' ? '✅' : overdue ? '⏰' : '⬜'),
         h('span', {},
             h('strong', {}, item.task),
-            h('small', {}, [STATE_LABELS[state], due ? `${overdue ? 'overdue since' : 'due'} ${formatDate(due)}` : null].filter(Boolean).join(' · ')),
-            item.link ? h('a', { href: item.link, target: '_blank', rel: 'noopener noreferrer', 'aria-label': `About ${item.task} (opens in a new tab)` }, 'How to') : null));
+            h('small', {}, [t(STATE_LABELS[state]), due ? (overdue ? t('overdue since {date}', { date: formatDate(due) }) : t('due {date}', { date: formatDate(due) })) : null].filter(Boolean).join(' · ')),
+            item.link ? h('a', { href: item.link, target: '_blank', rel: 'noopener noreferrer', 'aria-label': t('About {task} (opens in a new tab)', { task: item.task }) }, t('How to')) : null));
 }
 
 /** What the trip's organization asks before going, with a button that lists it to pack. */
@@ -47,17 +48,17 @@ export function checklistSection(ctx, draft, { rerender, readOnly }) {
     if (!checklist) return null;
     const done = checklist.items.filter(entry => entry.state === 'done').length;
     const missing = checklist.items.some(entry => entry.state === 'missing');
-    return section('checklist', `🏢 Before you go: ${checklist.org.name}`, h('small', {}, `${done} of ${checklist.items.length} done`),
-        h('p', { class: 'hint' }, 'Your organization asks for these before a business trip to these countries. Tick them off on your packing list.'),
+    return section('checklist', t('🏢 Before you go: {name}', { name: checklist.org.name }), h('small', {}, t('{done} of {total} done', { done, total: checklist.items.length })),
+        h('p', { class: 'hint' }, t('Your organization asks for these before a business trip to these countries. Tick them off on your packing list.')),
         h('ul', { class: 'checklist' }, checklist.items.map(itemLine)),
         missing && !readOnly ? h('button', {
             type: 'button', class: 'btn btn-ghost btn-sm',
             onclick: () => {
                 draft.packing = withChecklistItems(draft.packing || [], checklist.items);
-                toast('Added to your packing list. Save to keep them.');
+                toast(t('Added to your packing list. Save to keep them.'));
                 rerender();
             }
-        }, '＋ Add to packing list') : null);
+        }, t('＋ Add to packing list')) : null);
 }
 
 /** How many of an upcoming business trip's tasks are not done yet, for the trips list. */
@@ -66,5 +67,5 @@ export function checklistBadge(ctx, trip) {
     const left = checklistOf(ctx, trip)?.items.filter(entry => entry.state !== 'done') || [];
     if (!left.length) return null;
     return h('small', { class: `checklist-badge${left.some(entry => entry.overdue) ? ' is-overdue' : ''}` },
-        `📋 ${left.length} to do before you go`);
+        tn(left.length, '📋 {count} to do before you go', '📋 {count} to do before you go'));
 }

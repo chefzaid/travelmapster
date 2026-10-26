@@ -1,6 +1,7 @@
 // Marking several countries at once, and undoing it, as one bulk change of places
 // (POST /api/markers/bulk). Pure functions, unit tested in Node.
 import { statusOf } from './status.js';
+import { tn } from './i18n.js';
 
 /**
  * The changes that give every chosen country the status `type`. A country already saved
@@ -56,8 +57,12 @@ export function applyBulkResult(markers, { created = [], updated = [], removed =
 
 export function bulkSummary(plan, type) {
     const count = plan.create.length + plan.update.length;
-    const what = count === 1 ? '1 country' : `${count} countries`;
-    const status = type === 'visited' ? 'been there' : 'wishlist';
-    const already = plan.unchanged ? ` (${plan.unchanged} already ${type === 'visited' ? 'colored in' : 'set or visited'})` : '';
-    return `Marked ${what} as ${status}${already}.`;
+    const marked = type === 'visited'
+        ? tn(count, 'Marked {count} country as been there', 'Marked {count} countries as been there')
+        : tn(count, 'Marked {count} country as wishlist', 'Marked {count} countries as wishlist');
+    if (!plan.unchanged) return `${marked}.`;
+    const already = type === 'visited'
+        ? tn(plan.unchanged, '{count} already colored in', '{count} already colored in')
+        : tn(plan.unchanged, '{count} already set or visited', '{count} already set or visited');
+    return `${marked} (${already}).`;
 }

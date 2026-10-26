@@ -47,7 +47,7 @@ export function polarstepsPlaces(trip) {
  * places at each country's label. Names the map does not know are returned apart.
  */
 export function countryListPlaces(text, index) {
-    const names = [...new Set(String(text || '').split(/[\n,;]+/).map(name => name.replace(/^[\s•*\-\d.)]+/, '').trim()).filter(Boolean))];
+    const names = [...new Set(String(text || '').split(/[\n,;،؛]+/).map(name => name.replace(/^[\s•*\-\d.)]+/, '').trim()).filter(Boolean))];
     const places = [];
     const unknown = [];
     const seen = new Set();

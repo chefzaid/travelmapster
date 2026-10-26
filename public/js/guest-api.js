@@ -4,6 +4,7 @@
 // tested in Node with any Storage.
 import { lastVisitDate, sortVisits } from './visits.js';
 import { toClientMarker, toClientVisit } from './api.js';
+import { t } from './i18n.js';
 
 const KEY = 'travelmapster.guest';
 const VERSION = 1;
@@ -41,12 +42,13 @@ export function clearGuestMap(storage) {
     }
 }
 
-function notFound(what) {
-    return Object.assign(new Error(`${what} not found.`), { status: 404 });
+function notFound(message) {
+    return Object.assign(new Error(message), { status: 404 });
 }
 
-function needsAccount(what) {
-    return () => Promise.reject(Object.assign(new Error(`${what} needs an account. Sign up to keep your map and use it everywhere.`), { status: 400 }));
+// `message` names what needs the account; the reason follows.
+function needsAccount(message) {
+    return () => Promise.reject(Object.assign(new Error(`${message} ${t('Sign up to keep your map and use it everywhere.')}`), { status: 400 }));
 }
 
 /** @returns {Record<string, any>} */
@@ -62,7 +64,7 @@ export function createGuestApi(storage, now = () => new Date().toISOString()) {
         try {
             storage.setItem(KEY, JSON.stringify(data));
         } catch {
-            throw new Error('This browser has no room left for your guest map. Sign up to keep it in an account.');
+            throw new Error(t('This browser has no room left for your guest map. Sign up to keep it in an account.'));
         }
     };
     // Reads, changes and saves the guest's data in one step; answers with a copy.
@@ -90,7 +92,7 @@ export function createGuestApi(storage, now = () => new Date().toISOString()) {
     };
     const markerOf = (data, id) => {
         const marker = data.markers.find(item => item.id === Number(id));
-        if (!marker) throw notFound('Place');
+        if (!marker) throw notFound(t('Place not found.'));
         return marker;
     };
     const visitById = (data, id) => {
@@ -98,7 +100,7 @@ export function createGuestApi(storage, now = () => new Date().toISOString()) {
             const visit = marker.visits.find(item => item.id === Number(id));
             if (visit) return { marker, visit };
         }
-        throw notFound('Visit');
+        throw notFound(t('Visit not found.'));
     };
     const sortedTrips = trips => [...trips].sort((a, b) =>
         (b.startDate || b.createdAt).localeCompare(a.startDate || a.createdAt) || b.id - a.id);
@@ -173,12 +175,12 @@ export function createGuestApi(storage, now = () => new Date().toISOString()) {
         }),
         updateTrip: (id, trip) => change(data => {
             const stored = data.trips.find(item => item.id === Number(id));
-            if (!stored) throw notFound('Trip');
+            if (!stored) throw notFound(t('Trip not found.'));
             Object.assign(stored, pick(trip, TRIP_FIELDS), { updatedAt: now() });
             return { ...stored, startDate: stored.startDate || '' };
         }),
         deleteTrip: id => change(data => {
-            if (!data.trips.some(trip => trip.id === Number(id))) throw notFound('Trip');
+            if (!data.trips.some(trip => trip.id === Number(id))) throw notFound(t('Trip not found.'));
             data.trips = data.trips.filter(trip => trip.id !== Number(id));
         }),
 
@@ -190,19 +192,19 @@ export function createGuestApi(storage, now = () => new Date().toISOString()) {
 
         // What a guest map cannot do without the server.
         logout: async () => null,
-        changePassword: needsAccount('A password'),
-        deleteAccount: needsAccount('Deleting an account'),
-        geocodeCity: needsAccount('Searching every town in the world'),
-        getPublicMap: needsAccount('A shared map'),
+        changePassword: needsAccount(t('A password needs an account.')),
+        deleteAccount: needsAccount(t('A guest map has no account to delete; clear it from the menu instead.')),
+        geocodeCity: needsAccount(t('Searching every town in the world needs an account.')),
+        getPublicMap: needsAccount(t('A shared map needs an account.')),
         getFollows: async () => [],
-        follow: needsAccount('Following friends\' maps'),
-        unfollow: needsAccount('Following friends\' maps'),
+        follow: needsAccount(t('Following friends\' maps needs an account.')),
+        unfollow: needsAccount(t('Following friends\' maps needs an account.')),
         getTripMembers: async () => [],
-        shareTrip: needsAccount('Planning a trip together'),
-        unshareTrip: needsAccount('Planning a trip together'),
+        shareTrip: needsAccount(t('Planning a trip together needs an account.')),
+        unshareTrip: needsAccount(t('Planning a trip together needs an account.')),
         getOrgs: async () => [],
         getOrgAudit: async () => [],
-        createOrg: needsAccount('An organization'),
-        joinOrg: needsAccount('Joining an organization')
+        createOrg: needsAccount(t('An organization needs an account.')),
+        joinOrg: needsAccount(t('Joining an organization needs an account.'))
     };
 }

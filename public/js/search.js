@@ -4,6 +4,7 @@
 import { h, $, toast } from './ui.js';
 import { searchCities } from './geo.js';
 import { showCityCard, showCountryCard } from './cards.js';
+import { t } from './i18n.js';
 
 const search = {
     input: null,
@@ -46,7 +47,7 @@ function resultContent(result) {
     if (result.kind === 'city') {
         return [h('span', { class: 'result-icon' }, result.city.capital ? '★' : '●'), h('span', {}, result.city.name), h('small', {}, result.city.country)];
     }
-    return [h('span', { class: 'result-icon' }, '🌐'), h('span', {}, `Search the world for “${result.query}”`)];
+    return [h('span', { class: 'result-icon' }, '🌐'), h('span', {}, t('Search the world for “{query}”', { query: result.query }))];
 }
 
 function renderSearchResults(ctx) {
@@ -69,7 +70,7 @@ function renderSearchResults(ctx) {
 async function searchWorld(ctx, query) {
     // The server-side geocoder covers towns that are not in the built-in city list.
     const [result] = await ctx.api.geocodeCity(query);
-    if (!result) throw new Error(`No place called “${query}” was found.`);
+    if (!result) throw new Error(t('No place called “{query}” was found.', { query }));
     const name = result.city || result.name || query;
     const lat = Number(result.lat);
     const lng = Number(result.lng);

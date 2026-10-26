@@ -1,11 +1,12 @@
 // Map cards for countries and cities: status buttons, saved details, visits, the home country
 // and links to travel ideas and trip planning.
 import { h, toast } from './ui.js';
-import { countryLook, countryStatus, formatPopulation, CONTINENT_EMOJI } from './geo.js';
+import { countryLook, countryStatus, formatPopulation, CONTINENT_EMOJI, regionName } from './geo.js';
 import { monthsLabel, priorityLabel, ratingLabel, stars } from './details.js';
 import { HOME, STATUSES, statusFields, statusLabel, statusOf } from './status.js';
 import { openNewTrip } from './trips.js';
 import { visitsSection } from './card-visits.js';
+import { t } from './i18n.js';
 
 // ---------------------------------------------------------------- saved places on the map
 
@@ -32,10 +33,10 @@ export function cityMarkerFor(ctx, city) {
 // ---------------------------------------------------------------- statuses
 
 const STATUS_TOASTS = {
-    visited: name => `${name}: been there! 🎉`,
-    lived: name => `${name}: lived there! 🔑`,
-    transit: name => `${name}: transit only, not counted as a visit.`,
-    wishlist: name => `${name} moved to your wishlist.`
+    visited: name => t('{name}: been there! 🎉', { name }),
+    lived: name => t('{name}: lived there! 🔑', { name }),
+    transit: name => t('{name}: transit only, not counted as a visit.', { name }),
+    wishlist: name => t('{name} moved to your wishlist.', { name })
 };
 
 // Marks a country or city with a status (ADR 0014), toggling off when it already has it.
@@ -56,14 +57,14 @@ async function setStatus(ctx, existing, place, status) {
 
 export function statusChip(status) {
     if (status === 'home') return h('span', { class: 'chip chip-home' }, `${HOME.icon} ${HOME.label}`);
-    if (!status) return h('span', { class: 'chip' }, 'Not yet');
+    if (!status) return h('span', { class: 'chip' }, t('Not yet'));
     return h('span', { class: `chip chip-${status}` }, statusLabel(status));
 }
 
 function statusButtons(ctx, existing, place) {
     const { state } = ctx;
     if (state.publicUser) return null;
-    if (!state.user && !state.demo) return h('p', { class: 'card-note' }, 'Log in to color this in on your map.');
+    if (!state.user && !state.demo) return h('p', { class: 'card-note' }, t('Log in to color this in on your map.'));
     const current = existing ? statusOf(existing) : null;
     const button = ({ id }) => h('button', {
         type: 'button',
@@ -76,7 +77,7 @@ function statusButtons(ctx, existing, place) {
     }, statusLabel(id));
     return [
         h('div', { class: 'card-actions' }, STATUSES.map(button)),
-        state.demo ? h('p', { class: 'card-note' }, 'Demo map: nothing is saved. Sign up to keep your own.') : null
+        state.demo ? h('p', { class: 'card-note' }, t('Demo map: nothing is saved. Sign up to keep your own.')) : null
     ];
 }
 
@@ -90,12 +91,12 @@ function detailsRow(marker) {
     if (!marker.rating && !marker.emoji && !tags.length && !months && !priority) return null;
     return h('div', { class: 'card-details' },
         priority ? h('span', { class: 'chip chip-wishlist' }, priority) : null,
-        months ? h('span', { class: 'card-months' }, h('span', { 'aria-hidden': 'true' }, '📅 '), `Best ${months}`) : null,
-        marker.emoji ? h('span', { class: 'card-emoji', title: 'Pin emoji' }, marker.emoji) : null,
+        months ? h('span', { class: 'card-months' }, h('span', { 'aria-hidden': 'true' }, '📅 '), t('Best {months}', { months })) : null,
+        marker.emoji ? h('span', { class: 'card-emoji', title: t('Pin emoji') }, marker.emoji) : null,
         marker.rating ? h('span', { class: 'stars' },
             h('span', { 'aria-hidden': 'true' }, stars(marker.rating)),
             h('span', { class: 'visually-hidden' }, ratingLabel(marker.rating))) : null,
-        tags.length ? h('ul', { class: 'tag-list', 'aria-label': 'Tags' }, tags.map(tag => h('li', { class: 'tag' }, `#${tag}`))) : null
+        tags.length ? h('ul', { class: 'tag-list', 'aria-label': t('Tags') }, tags.map(tag => h('li', { class: 'tag' }, `#${tag}`))) : null
     );
 }
 
@@ -107,20 +108,20 @@ function savedDetails(ctx, marker) {
         visitsSection(ctx, marker, reopenCard),
         marker.notes ? h('p', { class: 'card-notes' }, marker.notes) : null,
         marker.photoUrl ? h('a', { href: marker.photoUrl, target: '_blank', rel: 'noopener noreferrer', class: 'card-photo' },
-            h('img', { src: marker.photoUrl, alt: `Photo of ${marker.name}`, loading: 'lazy', referrerpolicy: 'no-referrer', onerror: event => event.target.replaceWith('📷 View photo') })
+            h('img', { src: marker.photoUrl, alt: t('Photo of {name}', { name: marker.name }), loading: 'lazy', referrerpolicy: 'no-referrer', onerror: event => event.target.replaceWith(t('📷 View photo')) })
         ) : null,
-        signedIn && marker.hideFromPublic ? h('p', { class: 'card-note' }, h('span', { 'aria-hidden': 'true' }, '🔒 '), 'Hidden from your public map') : null,
+        signedIn && marker.hideFromPublic ? h('p', { class: 'card-note' }, h('span', { 'aria-hidden': 'true' }, '🔒 '), t('Hidden from your public map')) : null,
         signedIn ? h('div', { class: 'card-links' },
-            h('button', { type: 'button', class: 'link-btn', onclick: () => ctx.editPlace(marker) }, '✏️ Edit details'),
-            h('button', { type: 'button', class: 'link-btn danger', onclick: () => { ctx.map.closePopup(); ctx.removePlace(marker).catch(ctx.handleError); } }, '🗑️ Remove')
+            h('button', { type: 'button', class: 'link-btn', onclick: () => ctx.editPlace(marker) }, t('✏️ Edit details')),
+            h('button', { type: 'button', class: 'link-btn danger', onclick: () => { ctx.map.closePopup(); ctx.removePlace(marker).catch(ctx.handleError); } }, t('🗑️ Remove'))
         ) : null
     );
 }
 
 function ideaButtons(ctx, destination) {
     return h('div', { class: 'card-links' },
-        h('button', { type: 'button', class: 'link-btn', onclick: () => ctx.showIdeas(destination) }, '💡 Travel ideas'),
-        ctx.state.user ? h('button', { type: 'button', class: 'link-btn', onclick: () => { ctx.map.closePopup(); openNewTrip(ctx, destination); } }, '🗓️ Plan a trip') : null
+        h('button', { type: 'button', class: 'link-btn', onclick: () => ctx.showIdeas(destination) }, t('💡 Travel ideas')),
+        ctx.state.user ? h('button', { type: 'button', class: 'link-btn', onclick: () => { ctx.map.closePopup(); openNewTrip(ctx, destination); } }, t('🗓️ Plan a trip')) : null
     );
 }
 
@@ -159,10 +160,10 @@ function homeButton(ctx, country) {
         class: 'link-btn',
         onclick: async () => {
             await ctx.saveSettings({ homeCountry: isHome ? null : country.id },
-                isHome ? 'Home country cleared.' : `${country.name} is your home country. 🏠`);
+                isHome ? t('Home country cleared.') : t('{name} is your home country. 🏠', { name: country.name }));
             reopenCard();
         }
-    }, isHome ? '🏠 Not my home country any more' : '🏠 Make this my home country'));
+    }, isHome ? t('🏠 Not my home country any more') : t('🏠 Make this my home country')));
 }
 
 function cardHeader(flag, title, sub) {
@@ -183,14 +184,14 @@ export function showCountryCard(ctx, country, latlng) {
     const place = { lat: country.label[0], lng: country.label[1], name: country.name, category: 'Country' };
 
     const card = h('article', { class: 'card' },
-        cardHeader(country.flag, country.name, `${CONTINENT_EMOJI[country.continent] || ''} ${country.subregion || country.continent}`),
+        cardHeader(country.flag, country.name, `${CONTINENT_EMOJI[country.continent] || ''} ${regionName(country.subregion || country.continent)}`),
         countryStatusRow(ctx, country, existing),
         h('dl', { class: 'card-facts' },
-            capital ? [h('dt', {}, 'Capital'), h('dd', {}, h('button', { type: 'button', class: 'link-btn', onclick: () => showCityCard(ctx, capital) }, `★ ${capital.name}`))] : null,
-            h('dt', {}, 'Population'), h('dd', {}, formatPopulation(country.population))
+            capital ? [h('dt', {}, t('Capital')), h('dd', {}, h('button', { type: 'button', class: 'link-btn', onclick: () => showCityCard(ctx, capital) }, `★ ${capital.name}`))] : null,
+            h('dt', {}, t('Population')), h('dd', {}, formatPopulation(country.population))
         ),
         cities.length ? h('div', { class: 'card-cities' },
-            h('p', { class: 'muted small' }, 'Your cities here'),
+            h('p', { class: 'muted small' }, t('Your cities here')),
             h('div', { class: 'chip-row' }, cities.map(marker => h('button', {
                 type: 'button',
                 class: `chip chip-${statusOf(marker)}`,
@@ -215,7 +216,7 @@ export function showCityCard(ctx, city) {
         cardHeader(country?.flag || '📍', city.name,
             [country ? countryLink(ctx, country, city.country) : city.country, city.capital ? ' · ★ Capital' : '']),
         h('div', { class: 'card-status' }, statusChip(existing ? statusOf(existing) : null)),
-        h('dl', { class: 'card-facts' }, h('dt', {}, 'Population'), h('dd', {}, formatPopulation(city.population))),
+        h('dl', { class: 'card-facts' }, h('dt', {}, t('Population')), h('dd', {}, formatPopulation(city.population))),
         statusButtons(ctx, existing, place),
         savedDetails(ctx, existing),
         ideaButtons(ctx, city.name)

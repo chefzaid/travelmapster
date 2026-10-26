@@ -8,6 +8,7 @@ import { accountArchive } from './archive.js';
 import { SCHENGEN_RULE } from './days.js';
 import { COUNTRY_LISTS, countedCountries } from './lists.js';
 import { PALETTES, paletteId } from './palettes.js';
+import { LOCALES, locale, rememberLocale, t, tParts, tn } from './i18n.js';
 
 // ---------------------------------------------------------------- landing
 
@@ -16,11 +17,10 @@ export function renderDemoLedger(ctx) {
     const schengen = ctx.currentLedger().stays.find(item => item.rule.id === SCHENGEN_RULE.id);
     fill($('#demo-ledger'),
         h('span', { 'aria-hidden': 'true' }, '🧮 '),
-        'The sample traveler is in Lisbon and has used ',
-        h('strong', {}, `${schengen.used} of 90`),
-        ' Schengen days, so ',
-        h('strong', {}, `${schengen.remaining} days`),
-        ' are left today.'
+        tParts('The sample traveler is in Lisbon and has used {used} Schengen days, so {left} are left today.', {
+            used: h('strong', {}, t('{used} of 90', { used: schengen.used })),
+            left: h('strong', {}, tn(schengen.remaining, '{count} day', '{count} days'))
+        })
     );
 }
 
@@ -48,7 +48,7 @@ function setAuthMode(mode) {
     authMode = mode;
     $('#tab-login').setAttribute('aria-selected', String(mode === 'login'));
     $('#tab-register').setAttribute('aria-selected', String(mode === 'register'));
-    $('#auth-submit').textContent = mode === 'login' ? 'Log in' : 'Create my map';
+    $('#auth-submit').textContent = mode === 'login' ? t('Log in') : t('Create my map');
     $('#auth-password').autocomplete = mode === 'login' ? 'current-password' : 'new-password';
     $('#auth-hint').hidden = mode === 'login';
     $('#auth-error').hidden = true;
@@ -70,11 +70,11 @@ function showSecondStep(show) {
 
 function setRecoveryMode(on) {
     recoveryMode = on;
-    $('#second-step-intro').textContent = on ? 'Enter one of your recovery codes. Each works once.' : 'Enter the 6-digit code from your authenticator app.';
-    $('#second-step-label').textContent = on ? 'Recovery code' : 'Code';
+    $('#second-step-intro').textContent = on ? t('Enter one of your recovery codes. Each works once.') : t('Enter the 6-digit code from your authenticator app.');
+    $('#second-step-label').textContent = on ? t('Recovery code') : t('Code');
     $('#second-step-code').inputMode = on ? 'text' : 'numeric';
     $('#second-step-code').autocomplete = on ? 'off' : 'one-time-code';
-    $('#second-step-recovery').textContent = on ? 'Use a code from the app instead' : 'Use a recovery code instead';
+    $('#second-step-recovery').textContent = on ? t('Use a code from the app instead') : t('Use a recovery code instead');
     $('#second-step-code').focus();
 }
 
@@ -101,7 +101,7 @@ function setupSecondStep(ctx) {
             const user = await ctx.api.secondStep(recoveryMode ? { recoveryCode: answer } : { code: answer });
             setRecoveryMode(false);
             showSecondStep(false);
-            await finishSignIn(ctx, `Welcome back, ${user.username}!`);
+            await finishSignIn(ctx, t('Welcome back, {username}!', { username: user.username }));
         } catch (error) {
             $('#second-step-error').textContent = error.message;
             $('#second-step-error').hidden = false;
@@ -118,7 +118,7 @@ function setupSecondStep(ctx) {
             const response = await usePasskey(await ctx.api.passkeyLoginOptions());
             if (!response) return;
             const user = await ctx.api.passkeyLogin(response);
-            await finishSignIn(ctx, `Welcome back, ${user.username}!`);
+            await finishSignIn(ctx, t('Welcome back, {username}!', { username: user.username }));
         } catch (error) {
             errorBox.textContent = error.message;
             errorBox.hidden = false;
@@ -140,7 +140,7 @@ export function setupAuth(ctx) {
         const errorBox = $('#auth-error');
         errorBox.hidden = true;
         if (!/^[A-Za-z0-9_.-]{3,32}$/.test(username) || password.length < 8) {
-            errorBox.textContent = 'Usernames need 3 to 32 letters, digits, dots, dashes or underscores, and passwords 8+ characters.';
+            errorBox.textContent = t('Usernames need 3 to 32 letters, digits, dots, dashes or underscores, and passwords 8+ characters.');
             errorBox.hidden = false;
             return;
         }
@@ -158,7 +158,7 @@ export function setupAuth(ctx) {
                 showSecondStep(true);
                 return;
             }
-            await finishSignIn(ctx, authMode === 'register' ? 'Welcome aboard! Your map is ready. 🗺️' : `Welcome back, ${username}!`);
+            await finishSignIn(ctx, authMode === 'register' ? t('Welcome aboard! Your map is ready. 🗺️') : t('Welcome back, {username}!', { username }));
         } catch (error) {
             errorBox.textContent = error.message;
             errorBox.hidden = false;
@@ -176,7 +176,7 @@ export function setupAuth(ctx) {
         }
         closeAccountMenu();
         ctx.showSignedOut();
-        toast(guest ? 'Your guest map stays in this browser. See you soon! ✈️' : 'See you on your next trip! ✈️');
+        toast(guest ? t('Your guest map stays in this browser. See you soon! ✈️') : t('See you on your next trip! ✈️'));
     });
 }
 
@@ -187,28 +187,26 @@ async function openSettings(ctx) {
     const { user, index } = ctx.state;
     const countries = [...index.countries].sort((a, b) => a.name.localeCompare(b.name));
     const values = await formDialog({
-        title: 'Settings',
-        submitLabel: 'Save settings',
+        title: t('Settings'),
+        submitLabel: t('Save settings'),
         fields: [
-            { name: 'homeCountry', label: 'Home country', type: 'select', value: user.homeCountry || '',
-                options: [{ value: '', label: 'No home country' }, ...countries.map(country => ({ value: country.id, label: `${country.flag} ${country.name}` }))],
-                hint: 'Shown with its own color and counted as a country you have been to and lived in. It is never shown on your public map.' },
-            { name: 'countryList', label: 'Count countries from', type: 'select', value: user.countryList || 'all',
+            { name: 'locale', label: t('Language'), type: 'select', value: locale(),
+                options: Object.entries(LOCALES).map(([value, { name }]) => ({ value, label: name })) },
+            { name: 'homeCountry', label: t('Home country'), type: 'select', value: user.homeCountry || '',
+                options: [{ value: '', label: t('No home country') }, ...countries.map(country => ({ value: country.id, label: `${country.flag} ${country.name}` }))],
+                hint: t('Shown with its own color and counted as a country you have been to and lived in. It is never shown on your public map.') },
+            { name: 'countryList', label: t('Count countries from'), type: 'select', value: user.countryList || 'all',
                 options: COUNTRY_LISTS.map(list => ({ value: list.id, label: `${list.label} (${countedCountries(index, list.id).length})` })),
-                hint: 'Your passport, ranks and share of the world count only this list; the map still colors in every '
-                    + 'territory. Places such as Kosovo, Taiwan or Greenland are not UN members or observers, so they count '
-                    + 'only on the full list.' },
-            { name: 'mapPalette', label: 'Map colors', type: 'select', value: paletteId(user.mapPalette),
+                hint: t('Your passport, ranks and share of the world count only this list; the map still colors in every territory. Places such as Kosovo, Taiwan or Greenland are not UN members or observers, so they count only on the full list.') },
+            { name: 'mapPalette', label: t('Map colors'), type: 'select', value: paletteId(user.mapPalette),
                 options: PALETTES.map(palette => ({ value: palette.id, label: palette.label })),
-                hint: 'Color-blind safe colors keep every status apart for all kinds of color vision; print-friendly colors '
-                    + 'suit paper and grayscale printers. Patterns and outlines stay the same.' },
+                hint: t('Color-blind safe colors keep every status apart for all kinds of color vision; print-friendly colors suit paper and grayscale printers. Patterns and outlines stay the same.') },
             // A guest map is never public.
             ...(user.guest ? [] : [
-                { name: 'publicJourneys', label: 'Show journey lines on my public map', type: 'checkbox', value: user.publicJourneys,
-                    hint: 'Visitors already see your visit dates; with this on, the timeline also draws the order you traveled in.' },
-                { name: 'publicIndexing', label: 'Let search engines list my public map', type: 'checkbox', value: user.publicIndexing,
-                    hint: 'Only while your map is public. Off, your shared link still works and shows a preview, but asks search '
-                        + 'engines not to list it. Search engines can take a few weeks to drop a page.' }
+                { name: 'publicJourneys', label: t('Show journey lines on my public map'), type: 'checkbox', value: user.publicJourneys,
+                    hint: t('Visitors already see your visit dates; with this on, the timeline also draws the order you traveled in.') },
+                { name: 'publicIndexing', label: t('Let search engines list my public map'), type: 'checkbox', value: user.publicIndexing,
+                    hint: t('Only while your map is public. Off, your shared link still works and shows a preview, but asks search engines not to list it. Search engines can take a few weeks to drop a page.') }
             ])
         ]
     });
@@ -221,29 +219,33 @@ async function openSettings(ctx) {
         if ((values.publicJourneys === 'on') !== Boolean(user.publicJourneys)) changes.publicJourneys = values.publicJourneys === 'on';
         if ((values.publicIndexing === 'on') !== Boolean(user.publicIndexing)) changes.publicIndexing = values.publicIndexing === 'on';
     }
-    if (!Object.keys(changes).length) return;
-    await ctx.saveSettings(changes, 'Settings saved.');
+    if (Object.keys(changes).length) await ctx.saveSettings(changes, t('Settings saved.'));
+    // A new language redraws the whole page in it (ADR 0031).
+    if (values.locale !== locale()) {
+        rememberLocale(values.locale);
+        location.reload();
+    }
 }
 
 async function changePassword(ctx) {
     const values = await formDialog({
-        title: 'Change password',
-        message: 'Other devices will be signed out.',
-        submitLabel: 'Change password',
+        title: t('Change password'),
+        message: t('Other devices will be signed out.'),
+        submitLabel: t('Change password'),
         fields: [
-            { name: 'currentPassword', label: 'Current password', type: 'password', required: true, autocomplete: 'current-password' },
-            { name: 'newPassword', label: 'New password', type: 'password', required: true, minlength: 8, autocomplete: 'new-password', hint: 'At least 8 characters.' },
-            { name: 'confirmPassword', label: 'Repeat new password', type: 'password', required: true, minlength: 8, autocomplete: 'new-password' }
+            { name: 'currentPassword', label: t('Current password'), type: 'password', required: true, autocomplete: 'current-password' },
+            { name: 'newPassword', label: t('New password'), type: 'password', required: true, minlength: 8, autocomplete: 'new-password', hint: t('At least 8 characters.') },
+            { name: 'confirmPassword', label: t('Repeat new password'), type: 'password', required: true, minlength: 8, autocomplete: 'new-password' }
         ]
     });
     if (!values) return;
     if (values.newPassword !== values.confirmPassword) {
-        toast('The new passwords do not match.', { tone: 'error' });
+        toast(t('The new passwords do not match.'), { tone: 'error' });
         return;
     }
     try {
         await ctx.api.changePassword(values.currentPassword, values.newPassword);
-        toast('Password changed.', { tone: 'success' });
+        toast(t('Password changed.'), { tone: 'success' });
     } catch (error) {
         ctx.handleError(error);
     }
@@ -251,13 +253,13 @@ async function changePassword(ctx) {
 
 // Everything in the account as one ZIP archive (ADR 0017: a record you can keep).
 async function downloadArchive(ctx) {
-    const closeToast = toast('Packing your data…', { duration: 15000 });
+    const closeToast = toast(t('Packing your data…'), { duration: 15000 });
     try {
         const data = await ctx.api.exportAccount();
         const date = data.exportedAt.slice(0, 10);
         downloadFile(`travelmapster-${data.profile.username}-${date}.zip`, accountArchive(data), 'application/zip');
         closeToast();
-        toast('Your data archive is downloaded.', { tone: 'success' });
+        toast(t('Your data archive is downloaded.'), { tone: 'success' });
     } catch (error) {
         closeToast();
         ctx.handleError(error);
@@ -266,17 +268,17 @@ async function downloadArchive(ctx) {
 
 async function deleteAccount(ctx) {
     const values = await formDialog({
-        title: 'Delete your account?',
-        message: 'Your places, trips, day ledger and passport are deleted for good. Download all your data from the account menu first if you want to keep it.',
-        submitLabel: 'Delete account',
+        title: t('Delete your account?'),
+        message: t('Your places, trips, day ledger and passport are deleted for good. Download all your data from the account menu first if you want to keep it.'),
+        submitLabel: t('Delete account'),
         danger: true,
-        fields: [{ name: 'password', label: 'Password', type: 'password', required: true, autocomplete: 'current-password' }]
+        fields: [{ name: 'password', label: t('Password'), type: 'password', required: true, autocomplete: 'current-password' }]
     });
     if (!values) return;
     try {
         await ctx.api.deleteAccount(values.password);
         ctx.showSignedOut();
-        toast('Your account and travel data were deleted.');
+        toast(t('Your account and travel data were deleted.'));
     } catch (error) {
         ctx.handleError(error);
     }
@@ -310,7 +312,7 @@ export function setupAccountMenu(ctx) {
             await ctx.api.saveProfile({ profileVisibility: visibility });
             ctx.state.user.profileVisibility = visibility;
             for (const id of ['#copy-share-btn', '#embed-btn']) $(id).disabled = visibility !== 'public';
-            toast(visibility === 'public' ? 'Your map is public. Share the link!' : 'Your map is private again.', { tone: 'success' });
+            toast(visibility === 'public' ? t('Your map is public. Share the link!') : t('Your map is private again.'), { tone: 'success' });
         } catch (error) {
             event.target.checked = !event.target.checked;
             ctx.handleError(error);
@@ -331,12 +333,12 @@ export function setupAccountMenu(ctx) {
 
     const copy = (text, done, label) => copyText(text, done, `${label}: ${text}`);
     $('#copy-share-btn').addEventListener('click', () =>
-        copy(`${location.origin}/?u=${encodeURIComponent(ctx.state.user.username)}`, 'Share link copied!', 'Share link'));
+        copy(`${location.origin}/?u=${encodeURIComponent(ctx.state.user.username)}`, t('Share link copied!'), t('Share link')));
     // A frame for blogs and personal sites, read-only and without notes (ADR 0020).
     $('#embed-btn').addEventListener('click', () => {
         closeAccountMenu();
         const { username } = ctx.state.user;
-        copy(`<iframe src="${location.origin}/embed/${encodeURIComponent(username)}" title="${username}'s travel map" width="640" height="420" style="border:0" loading="lazy"></iframe>`,
-            'Embed code copied: paste it into your website.', 'Embed code');
+        copy(`<iframe src="${location.origin}/embed/${encodeURIComponent(username)}" title="${t('{username}\'s travel map', { username })}" width="640" height="420" style="border:0" loading="lazy"></iframe>`,
+            t('Embed code copied: paste it into your website.'), t('Embed code'));
     });
 }

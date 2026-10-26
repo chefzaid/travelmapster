@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="description" content="A playful travel map and day ledger: color in the countries you've visited, pin cities, plan trips and count your Schengen and tax-residency days.">
+    <meta name="description" content="A playful travel map and day ledger: color in the countries you've visited, pin cities, plan trips and count your Schengen and tax-residency days." data-i18n-attr="content">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="TravelMapster">
-    <meta property="og:title" content="TravelMapster: your travel map and day ledger">
-    <meta property="og:description" content="Color in the countries you've visited, plan trips and count your Schengen and tax-residency days.">
+    <meta property="og:title" content="TravelMapster: your travel map and day ledger" data-i18n-attr="content">
+    <meta property="og:description" content="Color in the countries you've visited, plan trips and count your Schengen and tax-residency days." data-i18n-attr="content">
     <meta name="theme-color" content="#7cc6e8">
-    <title>TravelMapster: travel map and Schengen day ledger</title>
+    <title data-i18n>TravelMapster: travel map and Schengen day ledger</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="manifest" href="/manifest.webmanifest">
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
@@ -26,54 +26,54 @@
     <link rel="stylesheet" href="/__assets__/css/home.css">
 </head>
 <body>
-    <a class="skip-link" href="#panel">Skip to panel</a>
+    <a class="skip-link" href="#panel" data-i18n>Skip to panel</a>
 
     <!-- Signed out at "/": the presentation, before the app (ADR 0011) -->
     <div id="home" class="home" hidden>
         <header class="home-bar">
-            <a class="brand" href="/" aria-label="TravelMapster home">
+            <a class="brand" href="/" aria-label="TravelMapster home" data-i18n-attr="aria-label">
                 <img src="/__assets__/logo.svg" alt="" width="40" height="40">
                 <span class="brand-name">Travel<span>Mapster</span></span>
             </a>
-            <nav class="home-nav" aria-label="Presentation">
-                <a href="#home-features">Features</a>
-                <a href="#home-ledger">Day ledger</a>
-                <a href="#home-plans">Plans</a>
+            <nav class="home-nav" aria-label="Presentation" data-i18n-attr="aria-label">
+                <a href="#home-features" data-i18n>Features</a>
+                <a href="#home-ledger" data-i18n>Day ledger</a>
+                <a href="#home-plans" data-i18n>Plans</a>
             </nav>
-            <button class="btn btn-ghost btn-sm" type="button" data-auth-mode="login">Log in</button>
+            <button class="btn btn-ghost btn-sm" type="button" data-auth-mode="login" data-i18n>Log in</button>
         </header>
 
         <main class="home-main">
             <section class="home-hero" aria-labelledby="home-title">
-                <p class="eyebrow">Your world, colored in</p>
-                <h1 id="home-title" tabindex="-1">Where have you <span class="scribble">been?</span></h1>
-                <p class="home-lead">TravelMapster is a playful travel atlas with a day ledger you can rely on. Color in the
+                <p class="eyebrow" data-i18n>Your world, colored in</p>
+                <h1 id="home-title" tabindex="-1" data-i18n-parts>Where have you <span class="scribble" data-i18n>been?</span></h1>
+                <p class="home-lead" data-i18n>TravelMapster is a playful travel atlas with a day ledger you can rely on. Color in the
                     countries you have visited, keep every trip with its dates, plan the next one, and always know how many
                     days you have left in the Schengen area or before a tax-residency limit.</p>
                 <div class="hero-actions">
-                    <button class="btn btn-primary" type="button" data-auth-mode="register">Sign up free</button>
-                    <button class="btn btn-ghost" type="button" data-home-demo>Explore the demo map</button>
-                    <button class="btn btn-ghost" type="button" data-guest-start>Try it without an account</button>
+                    <button class="btn btn-primary" type="button" data-auth-mode="register" data-i18n>Sign up free</button>
+                    <button class="btn btn-ghost" type="button" data-home-demo data-i18n>Explore the demo map</button>
+                    <button class="btn btn-ghost" type="button" data-guest-start data-i18n>Try it without an account</button>
                 </div>
-                <p class="home-note">Free, no card needed. No ads, no trackers: your travels are yours.</p>
+                <p class="home-note" data-i18n>Free, no card needed. No ads, no trackers: your travels are yours.</p>
             </section>
 
             <section id="home-features" class="home-features" aria-labelledby="home-features-title">
-                <h2 id="home-features-title">Everything about your travels, in one map</h2>
+                <h2 id="home-features-title" data-i18n>Everything about your travels, in one map</h2>
 
                 <article class="home-feature feature-atlas">
                     <p class="feature-icon" aria-hidden="true">🎨</p>
-                    <h3>The atlas</h3>
-                    <p>Click a country or a town and mark it <strong>been there</strong>, <strong>lived there</strong>,
-                        <strong>transit only</strong> or <strong>wishlist</strong>; the map colors itself in. Set your home
+                    <h3 data-i18n>The atlas</h3>
+                    <p data-i18n-parts>Click a country or a town and mark it <strong data-i18n>been there</strong>, <strong data-i18n>lived there</strong>,
+                        <strong data-i18n>transit only</strong> or <strong data-i18n>wishlist</strong>; the map colors itself in. Set your home
                         country, choose cheerful, color-blind safe or print-friendly colors, and count against every
                         territory on the map or the UN list.</p>
                 </article>
 
                 <article class="home-feature feature-places">
                     <p class="feature-icon" aria-hidden="true">📍</p>
-                    <h3>Places and visits</h3>
-                    <p>Every place keeps its visits with their dates, notes, photo links, ratings, tags and an emoji pin.
+                    <h3 data-i18n>Places and visits</h3>
+                    <p data-i18n>Every place keeps its visits with their dates, notes, photo links, ratings, tags and an emoji pin.
                         Bring your past with you: import a Polarsteps export, a list of countries from Been or Visited, your
                         photos or your phone's location history (read in your browser, reduced to towns), or a file from
                         another app.</p>
@@ -81,271 +81,275 @@
 
                 <article class="home-feature feature-journeys">
                     <p class="feature-icon" aria-hidden="true">🕰️</p>
-                    <h3>Journeys through time</h3>
-                    <p>Slide the timeline to see your map as it was in any year, and replay your journeys as lines drawn
+                    <h3 data-i18n>Journeys through time</h3>
+                    <p data-i18n>Slide the timeline to see your map as it was in any year, and replay your journeys as lines drawn
                         from place to place. "On this day" brings back where you were in years past.</p>
                 </article>
 
                 <article class="home-feature feature-trips">
                     <p class="feature-icon" aria-hidden="true">🗓️</p>
-                    <h3>Trips</h3>
-                    <p>Plan day-by-day itineraries to one place or several, filled with ideas from travel guides and shown
+                    <h3 data-i18n>Trips</h3>
+                    <p data-i18n>Plan day-by-day itineraries to one place or several, filled with ideas from travel guides and shown
                         as a route on the map. Keep a packing list and a budget in any currency, export the trip to your
                         calendar, print it, and record it as visits once you are back.</p>
                 </article>
 
                 <article class="home-feature feature-passport">
                     <p class="feature-icon" aria-hidden="true">🛂</p>
-                    <h3>Your passport</h3>
-                    <p>Stamps for every country, traveler ranks, badges, collections such as every EU member or every
+                    <h3 data-i18n>Your passport</h3>
+                    <p data-i18n>Stamps for every country, traveler ranks, badges, collections such as every EU member or every
                         capital, and yearly goals. Share picture cards of your count, your stamps or your year, and
                         download your map as a poster in standard print sizes.</p>
                 </article>
 
                 <article id="home-ledger" class="home-feature feature-ledger">
                     <p class="feature-icon" aria-hidden="true">📒</p>
-                    <h3>The day ledger</h3>
-                    <p>Because every visit has dates, TravelMapster counts your days in each country: the Schengen 90/180
+                    <h3 data-i18n>The day ledger</h3>
+                    <p data-i18n>Because every visit has dates, TravelMapster counts your days in each country: the Schengen 90/180
                         rule, your own visa stay limits and the 183-day tax-residency threshold, with alerts before a limit,
                         plans checked ahead of time and a printable evidence report for an adviser or a border officer.</p>
                 </article>
 
                 <article class="home-feature feature-calculator">
                     <p class="feature-icon" aria-hidden="true">🧮</p>
-                    <h3>Free Schengen calculator</h3>
-                    <p>Not ready for an account? Count your days in the Schengen area for any date, with past and planned
+                    <h3 data-i18n>Free Schengen calculator</h3>
+                    <p data-i18n>Not ready for an account? Count your days in the Schengen area for any date, with past and planned
                         stays. Nothing leaves your browser.</p>
-                    <a class="story-link" href="/schengen-calculator">Open the Schengen calculator <span aria-hidden="true">→</span></a>
+                    <a class="story-link" href="/schengen-calculator" data-i18n-parts>Open the Schengen calculator <span aria-hidden="true">→</span></a>
                 </article>
 
                 <article class="home-feature feature-sharing">
                     <p class="feature-icon" aria-hidden="true">🔗</p>
-                    <h3>Share your map</h3>
-                    <p>Make your map public and share its link, with a preview picture when you post it; embed it on your
+                    <h3 data-i18n>Share your map</h3>
+                    <p data-i18n>Make your map public and share its link, with a preview picture when you post it; embed it on your
                         blog; and choose whether search engines may list it. Notes, photos, your home country and where you
                         are now stay private.</p>
                 </article>
 
                 <article class="home-feature feature-yours">
                     <p class="feature-icon" aria-hidden="true">📦</p>
-                    <h3>Yours to keep</h3>
-                    <p>Works on any device and installs as an app that opens offline. Download all your data at any time,
+                    <h3 data-i18n>Yours to keep</h3>
+                    <p data-i18n>Works on any device and installs as an app that opens offline. Download all your data at any time,
                         as JSON, CSV, GeoJSON or KML, and delete your account whenever you like.</p>
                 </article>
             </section>
 
             <section id="home-plans" class="home-plans" aria-labelledby="home-plans-title">
-                <h2 id="home-plans-title">Plans</h2>
+                <h2 id="home-plans-title" data-i18n>Plans</h2>
                 <div class="plan-card plan-free">
-                    <h3>Free</h3>
-                    <p class="plan-tag">Available now · no card needed</p>
+                    <h3 data-i18n>Free</h3>
+                    <p class="plan-tag" data-i18n>Available now · no card needed</p>
                     <ul class="plan-points">
-                        <li>The atlas: countries, cities, wishlist, trips and passport</li>
-                        <li>The day ledger: Schengen, visa and tax-residency counting with evidence reports</li>
-                        <li>Imports, exports, posters to download and a public map to share</li>
+                        <li data-i18n>The atlas: countries, cities, wishlist, trips and passport</li>
+                        <li data-i18n>The day ledger: Schengen, visa and tax-residency counting with evidence reports</li>
+                        <li data-i18n>Imports, exports, posters to download and a public map to share</li>
                     </ul>
-                    <button class="btn btn-primary btn-block" type="button" data-auth-mode="register">Start my free map</button>
+                    <button class="btn btn-primary btn-block" type="button" data-auth-mode="register" data-i18n>Start my free map</button>
                 </div>
                 <div class="plan-card plan-soon">
-                    <h3>Keepsakes</h3>
-                    <p class="plan-tag">Coming soon</p>
-                    <p>Posters printed and delivered, and travel books made from your map. Prices will be announced before
+                    <h3 data-i18n>Keepsakes</h3>
+                    <p class="plan-tag" data-i18n>Coming soon</p>
+                    <p data-i18n>Posters printed and delivered, and travel books made from your map. Prices will be announced before
                         they launch.</p>
                 </div>
             </section>
         </main>
 
         <footer class="home-footer">
-            <p><button class="link-button" type="button" data-home-demo>Explore the demo map</button> ·
-                <a href="/schengen-calculator">Schengen calculator</a> ·
-                <button class="link-button" type="button" data-auth-mode="login">Log in</button></p>
-            <p class="muted small">Map data: Natural Earth (public domain) and GeoNames (CC BY 4.0).</p>
+            <p><button class="link-button" type="button" data-home-demo data-i18n>Explore the demo map</button> ·
+                <a href="/schengen-calculator" data-i18n>Schengen calculator</a> ·
+                <button class="link-button" type="button" data-auth-mode="login" data-i18n>Log in</button></p>
+            <p class="muted small" data-i18n>Map data: Natural Earth (public domain) and GeoNames (CC BY 4.0).</p>
+            <label class="language-picker" for="home-language"><span aria-hidden="true">🌐</span> <span data-i18n>Language</span>
+                <select id="home-language" data-language-picker></select></label>
         </footer>
     </div>
 
     <div class="app" id="app" data-state="loading">
-        <div id="map" class="map" role="application" aria-label="World map. Click a country or city to see details."></div>
+        <div id="map" class="map" role="application" aria-label="World map. Click a country or city to see details." data-i18n-attr="aria-label"></div>
 
         <header class="topbar">
-            <a class="brand" href="/" aria-label="TravelMapster home">
+            <a class="brand" href="/" aria-label="TravelMapster home" data-i18n-attr="aria-label">
                 <img src="/__assets__/logo.svg" alt="" width="40" height="40">
                 <span class="brand-name">Travel<span>Mapster</span></span>
             </a>
 
             <div class="search" role="search">
-                <label class="visually-hidden" for="global-search">Search countries and cities</label>
+                <label class="visually-hidden" for="global-search" data-i18n>Search countries and cities</label>
                 <span class="search-icon" aria-hidden="true">🔎</span>
                 <input id="global-search" type="search" autocomplete="off" spellcheck="false"
                     placeholder="Search a country or city…" role="combobox" aria-expanded="false"
-                    aria-controls="search-results" aria-autocomplete="list">
+                    aria-controls="search-results" aria-autocomplete="list" data-i18n-attr="placeholder">
                 <kbd class="search-hint" aria-hidden="true">/</kbd>
                 <ul id="search-results" class="search-results" role="listbox" hidden></ul>
             </div>
 
-            <button id="surprise-btn" class="btn btn-sunny" type="button" title="Fly somewhere you haven't been">
-                <span aria-hidden="true">🎲</span><span class="btn-label">Surprise me</span>
+            <button id="surprise-btn" class="btn btn-sunny" type="button" title="Fly somewhere you haven't been" data-i18n-attr="title">
+                <span aria-hidden="true">🎲</span><span class="btn-label" data-i18n>Surprise me</span>
             </button>
 
             <div class="account" id="account" hidden>
                 <button id="account-btn" class="avatar" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="account-menu">
                     <span id="avatar-initial" aria-hidden="true">?</span>
-                    <span class="visually-hidden">Account menu</span>
+                    <span class="visually-hidden" data-i18n>Account menu</span>
                 </button>
                 <div id="account-menu" class="menu" hidden>
-                    <p class="menu-title">Signed in as <strong id="account-name"></strong></p>
+                    <p class="menu-title" data-i18n-parts>Signed in as <strong id="account-name"></strong></p>
                     <label class="switch" data-account-only>
                         <input id="public-toggle" type="checkbox">
                         <span class="switch-track" aria-hidden="true"></span>
-                        <span>Public travel map</span>
+                        <span data-i18n>Public travel map</span>
                     </label>
-                    <button id="guest-save-btn" class="menu-item" type="button" data-guest-only data-guest-save hidden>💾 Save to a free account</button>
-                    <button id="copy-share-btn" class="menu-item" type="button" data-account-only disabled>🔗 Copy share link</button>
-                    <button id="embed-btn" class="menu-item" type="button" data-account-only disabled>🧩 Copy embed code</button>
-                    <button id="settings-btn" class="menu-item" type="button">⚙️ Settings</button>
-                    <button id="print-btn" class="menu-item" type="button">🖨️ Print my map</button>
-                    <button id="poster-btn" class="menu-item" type="button">🖼️ Make a poster</button>
-                    <button id="export-btn" class="menu-item" type="button">📦 Download all my data</button>
-                    <button id="password-btn" class="menu-item" type="button" data-account-only>🔑 Change password</button>
-                    <button id="security-btn" class="menu-item" type="button" data-account-only>🔐 Sign-in security</button>
-                    <button id="orgs-btn" class="menu-item" type="button" data-account-only>🏢 Organizations</button>
-                    <button id="logout-btn" class="menu-item" type="button">👋 Log out</button>
-                    <button id="delete-account-btn" class="menu-item menu-item-danger" type="button" data-account-only>🗑️ Delete account</button>
-                    <button id="guest-clear-btn" class="menu-item menu-item-danger" type="button" data-guest-only hidden>🧹 Clear guest map</button>
+                    <button id="guest-save-btn" class="menu-item" type="button" data-guest-only data-guest-save hidden data-i18n>💾 Save to a free account</button>
+                    <button id="copy-share-btn" class="menu-item" type="button" data-account-only disabled data-i18n>🔗 Copy share link</button>
+                    <button id="embed-btn" class="menu-item" type="button" data-account-only disabled data-i18n>🧩 Copy embed code</button>
+                    <button id="settings-btn" class="menu-item" type="button" data-i18n>⚙️ Settings</button>
+                    <button id="print-btn" class="menu-item" type="button" data-i18n>🖨️ Print my map</button>
+                    <button id="poster-btn" class="menu-item" type="button" data-i18n>🖼️ Make a poster</button>
+                    <button id="export-btn" class="menu-item" type="button" data-i18n>📦 Download all my data</button>
+                    <button id="password-btn" class="menu-item" type="button" data-account-only data-i18n>🔑 Change password</button>
+                    <button id="security-btn" class="menu-item" type="button" data-account-only data-i18n>🔐 Sign-in security</button>
+                    <button id="orgs-btn" class="menu-item" type="button" data-account-only data-i18n>🏢 Organizations</button>
+                    <button id="logout-btn" class="menu-item" type="button" data-i18n>👋 Log out</button>
+                    <button id="delete-account-btn" class="menu-item menu-item-danger" type="button" data-account-only data-i18n>🗑️ Delete account</button>
+                    <button id="guest-clear-btn" class="menu-item menu-item-danger" type="button" data-guest-only hidden data-i18n>🧹 Clear guest map</button>
                 </div>
             </div>
         </header>
 
-        <aside id="panel" class="panel" aria-label="TravelMapster panel" tabindex="-1">
-            <button class="panel-handle" id="panel-handle" type="button" aria-label="Expand or collapse panel" aria-expanded="true"></button>
+        <aside id="panel" class="panel" aria-label="TravelMapster panel" tabindex="-1" data-i18n-attr="aria-label">
+            <button class="panel-handle" id="panel-handle" type="button" aria-label="Expand or collapse panel" aria-expanded="true" data-i18n-attr="aria-label"></button>
 
             <!-- Signed out: the landing page, over a demo map of a sample traveler -->
             <section id="welcome-view" class="view landing" aria-labelledby="landing-title" hidden>
                 <div class="hero">
-                    <p class="eyebrow">Your world, colored in</p>
-                    <h1 id="landing-title">Where have you <span class="scribble">been?</span></h1>
-                    <p>TravelMapster is a playful travel atlas with a day ledger you can rely on. Color in the
+                    <p class="eyebrow" data-i18n>Your world, colored in</p>
+                    <h1 id="landing-title" data-i18n-parts>Where have you <span class="scribble" data-i18n>been?</span></h1>
+                    <p data-i18n>TravelMapster is a playful travel atlas with a day ledger you can rely on. Color in the
                         countries you've visited, record every trip with its dates, and always know how many days
                         you have left in the Schengen area or before a tax-residency limit.</p>
                     <div class="hero-actions">
-                        <button class="btn btn-primary" type="button" data-auth-mode="register">Sign up free</button>
-                        <button class="btn btn-ghost" type="button" data-auth-mode="login">Log in</button>
-                        <button class="btn btn-ghost" type="button" data-guest-start>Try it without an account</button>
+                        <button class="btn btn-primary" type="button" data-auth-mode="register" data-i18n>Sign up free</button>
+                        <button class="btn btn-ghost" type="button" data-auth-mode="login" data-i18n>Log in</button>
+                        <button class="btn btn-ghost" type="button" data-guest-start data-i18n>Try it without an account</button>
                     </div>
-                    <p><button class="link-button" type="button" data-home-show><span aria-hidden="true">←</span> What TravelMapster does</button></p>
-                    <p class="demo-note"><span aria-hidden="true">👀</span> The map shows a sample traveler. Click a
-                        country, press <strong>Been there</strong> and watch it color in. Nothing is saved.</p>
+                    <p><button class="link-button" type="button" data-home-show data-i18n-parts><span aria-hidden="true">←</span> What TravelMapster does</button></p>
+                    <p class="demo-note" data-i18n-parts><span aria-hidden="true">👀</span> The map shows a sample traveler. Click a
+                        country, press <strong data-i18n>Been there</strong> and watch it color in. Nothing is saved.</p>
                 </div>
 
                 <section class="story" aria-labelledby="story-title">
-                    <h2 id="story-title">Your travels, kept three ways</h2>
+                    <h2 id="story-title" data-i18n>Your travels, kept three ways</h2>
                     <article class="story-card story-atlas">
-                        <h3><span aria-hidden="true">🎨</span> The atlas</h3>
-                        <p>Color in countries, pin the cities you loved, keep a wishlist and plan day-by-day
+                        <h3 data-i18n-parts><span aria-hidden="true">🎨</span> The atlas</h3>
+                        <p data-i18n>Color in countries, pin the cities you loved, keep a wishlist and plan day-by-day
                             itineraries. Collect stamps, badges and traveler ranks as the map fills up.</p>
                     </article>
                     <article class="story-card story-ledger">
-                        <h3><span aria-hidden="true">📒</span> The day ledger</h3>
-                        <p>Every visit has dates, so TravelMapster counts your days in each country: Schengen
+                        <h3 data-i18n-parts><span aria-hidden="true">📒</span> The day ledger</h3>
+                        <p data-i18n>Every visit has dates, so TravelMapster counts your days in each country: Schengen
                             90/180, your own visa limits and the 183-day tax rule, with alerts before a limit and a
                             printable evidence report.</p>
                         <p id="demo-ledger" class="demo-ledger"></p>
-                        <a class="story-link" href="/schengen-calculator">Try the free Schengen calculator, no account needed <span aria-hidden="true">→</span></a>
+                        <a class="story-link" href="/schengen-calculator" data-i18n-parts>Try the free Schengen calculator, no account needed <span aria-hidden="true">→</span></a>
                     </article>
                     <article class="story-card story-keepsakes">
-                        <h3><span aria-hidden="true">🖼️</span> Keepsakes</h3>
-                        <p>Download your map as a poster in standard print sizes today. Printed posters and travel books
-                            made from your places, notes and photos are <span class="chip chip-soon">Coming soon</span></p>
+                        <h3 data-i18n-parts><span aria-hidden="true">🖼️</span> Keepsakes</h3>
+                        <p data-i18n-parts>Download your map as a poster in standard print sizes today. Printed posters and travel books
+                            made from your places, notes and photos are <span class="chip chip-soon" data-i18n>Coming soon</span></p>
                     </article>
                 </section>
 
                 <section class="plans" aria-labelledby="plans-title">
-                    <h2 id="plans-title">Plans</h2>
+                    <h2 id="plans-title" data-i18n>Plans</h2>
                     <div class="plan-card plan-free">
-                        <h3>Free</h3>
-                        <p class="plan-tag">Available now · no card needed</p>
+                        <h3 data-i18n>Free</h3>
+                        <p class="plan-tag" data-i18n>Available now · no card needed</p>
                         <ul class="plan-points">
-                            <li>The atlas: countries, cities, wishlist, trips and passport</li>
-                            <li>The day ledger: Schengen, visa and tax-residency counting with evidence reports</li>
-                            <li>Import, export and a public map to share</li>
+                            <li data-i18n>The atlas: countries, cities, wishlist, trips and passport</li>
+                            <li data-i18n>The day ledger: Schengen, visa and tax-residency counting with evidence reports</li>
+                            <li data-i18n>Import, export and a public map to share</li>
                         </ul>
-                        <button class="btn btn-primary btn-block" type="button" data-auth-mode="register">Start my free map</button>
+                        <button class="btn btn-primary btn-block" type="button" data-auth-mode="register" data-i18n>Start my free map</button>
                     </div>
                     <div class="plan-card plan-soon">
-                        <h3>Keepsakes</h3>
-                        <p class="plan-tag">Coming soon</p>
-                        <p>Posters and travel books printed from your map. Prices will be announced before they launch.</p>
+                        <h3 data-i18n>Keepsakes</h3>
+                        <p class="plan-tag" data-i18n>Coming soon</p>
+                        <p data-i18n>Posters and travel books printed from your map. Prices will be announced before they launch.</p>
                     </div>
                 </section>
 
                 <section id="account-start" class="auth-card" aria-labelledby="account-title">
-                    <h2 id="account-title">Start your own map</h2>
-                    <div class="segmented" role="tablist" aria-label="Account">
-                        <button id="tab-login" role="tab" aria-selected="true" aria-controls="auth-form" type="button">Log in</button>
-                        <button id="tab-register" role="tab" aria-selected="false" aria-controls="auth-form" type="button">Sign up</button>
+                    <h2 id="account-title" data-i18n>Start your own map</h2>
+                    <div class="segmented" role="tablist" aria-label="Account" data-i18n-attr="aria-label">
+                        <button id="tab-login" role="tab" aria-selected="true" aria-controls="auth-form" type="button" data-i18n>Log in</button>
+                        <button id="tab-register" role="tab" aria-selected="false" aria-controls="auth-form" type="button" data-i18n>Sign up</button>
                     </div>
                     <form id="auth-form" class="auth-form" novalidate>
                         <label class="field">
-                            <span>Username</span>
+                            <span data-i18n>Username</span>
                             <input id="auth-username" name="username" autocomplete="username" required minlength="3" maxlength="32" pattern="[A-Za-z0-9_.-]{3,32}">
                         </label>
                         <label class="field">
-                            <span>Password</span>
+                            <span data-i18n>Password</span>
                             <input id="auth-password" name="password" type="password" autocomplete="current-password" required minlength="8" maxlength="72">
-                            <small id="auth-hint">At least 8 characters.</small>
+                            <small id="auth-hint" data-i18n>At least 8 characters.</small>
                         </label>
                         <!-- Honeypot: hidden from people and screen readers; sign-up bots fill it in. -->
                         <div class="visually-hidden" aria-hidden="true">
-                            <label for="auth-website">Leave this field empty</label>
+                            <label for="auth-website" data-i18n>Leave this field empty</label>
                             <input id="auth-website" name="website" tabindex="-1" autocomplete="off">
                         </div>
                         <p id="auth-error" class="form-error" role="alert" hidden></p>
-                        <button id="auth-submit" class="btn btn-primary btn-block" type="submit">Log in</button>
-                        <button id="passkey-login" class="btn btn-ghost btn-block" type="button" hidden>🔑 Log in with a passkey</button>
+                        <button id="auth-submit" class="btn btn-primary btn-block" type="submit" data-i18n>Log in</button>
+                        <button id="passkey-login" class="btn btn-ghost btn-block" type="button" hidden data-i18n>🔑 Log in with a passkey</button>
                     </form>
                     <!-- Two-step sign-in (ADR 0027): after the password, a code from the app -->
                     <form id="second-step-form" class="auth-form" novalidate hidden>
-                        <p id="second-step-intro">Enter the 6-digit code from your authenticator app.</p>
+                        <p id="second-step-intro" data-i18n>Enter the 6-digit code from your authenticator app.</p>
                         <label class="field">
-                            <span id="second-step-label">Code</span>
+                            <span id="second-step-label" data-i18n>Code</span>
                             <input id="second-step-code" name="code" autocomplete="one-time-code" inputmode="numeric" maxlength="20" required>
                         </label>
                         <p id="second-step-error" class="form-error" role="alert" hidden></p>
-                        <button id="second-step-submit" class="btn btn-primary btn-block" type="submit">Continue</button>
-                        <p class="small"><button id="second-step-recovery" class="link-button" type="button">Use a recovery code instead</button> ·
-                            <button id="second-step-cancel" class="link-button" type="button">Start over</button></p>
+                        <button id="second-step-submit" class="btn btn-primary btn-block" type="submit" data-i18n>Continue</button>
+                        <p class="small"><button id="second-step-recovery" class="link-button" type="button" data-i18n>Use a recovery code instead</button> ·
+                            <button id="second-step-cancel" class="link-button" type="button" data-i18n>Start over</button></p>
                     </form>
                 </section>
-                <p class="muted small">Just looking? Explore the map: hover countries, zoom in for cities, and try 🎲 Surprise me.</p>
+                <p class="muted small" data-i18n>Just looking? Explore the map: hover countries, zoom in for cities, and try 🎲 Surprise me.</p>
+                <label class="language-picker" for="landing-language"><span aria-hidden="true">🌐</span> <span data-i18n>Language</span>
+                    <select id="landing-language" data-language-picker></select></label>
             </section>
 
             <!-- Public read-only map -->
             <section id="public-view" class="view" hidden>
-                <p class="eyebrow">Shared travel map</p>
+                <p class="eyebrow" data-i18n>Shared travel map</p>
                 <h1 id="public-title"></h1>
                 <div id="public-stats"></div>
                 <label class="field" for="public-palette">
-                    <span>Map colors</span>
+                    <span data-i18n>Map colors</span>
                     <select id="public-palette"></select>
-                    <small>Remembered in this browser.</small>
+                    <small data-i18n>Remembered in this browser.</small>
                 </label>
                 <div class="row">
-                    <button class="btn btn-ghost btn-sm" type="button" id="public-print">🖨️ Print this map</button>
-                    <button class="btn btn-ghost btn-sm" type="button" id="public-follow" hidden>＋ Follow this map</button>
+                    <button class="btn btn-ghost btn-sm" type="button" id="public-print" data-i18n>🖨️ Print this map</button>
+                    <button class="btn btn-ghost btn-sm" type="button" id="public-follow" hidden data-i18n>＋ Follow this map</button>
                 </div>
-                <p class="public-cta">Color in the countries you've been to, plan trips and count your days abroad. Free, no app to install.</p>
-                <a class="btn btn-primary btn-block" href="/">Make your own map</a>
+                <p class="public-cta" data-i18n>Color in the countries you've been to, plan trips and count your days abroad. Free, no app to install.</p>
+                <a class="btn btn-primary btn-block" href="/" data-i18n>Make your own map</a>
             </section>
 
             <!-- Signed in -->
             <section id="main-view" class="view" hidden>
-                <p class="guest-note" data-guest-only hidden><span aria-hidden="true">👤</span> Guest map: kept in this browser only.
-                    <button class="link-button" type="button" data-guest-save>Save it to a free account</button></p>
-                <nav class="tabs" role="tablist" aria-label="Sections">
-                    <button role="tab" id="tab-explore" aria-controls="explore-tab" aria-selected="true" type="button"><span aria-hidden="true">🧭</span>Explore</button>
-                    <button role="tab" id="tab-places" aria-controls="places-tab" aria-selected="false" type="button"><span aria-hidden="true">📍</span>Places</button>
-                    <button role="tab" id="tab-ledger" aria-controls="ledger-tab" aria-selected="false" type="button"><span aria-hidden="true">📒</span>Ledger<span id="ledger-alert-count" class="tab-badge" hidden><span aria-hidden="true">0</span><span class="visually-hidden"></span></span></button>
-                    <button role="tab" id="tab-trips" aria-controls="trips-tab" aria-selected="false" type="button"><span aria-hidden="true">🗓️</span>Trips</button>
-                    <button role="tab" id="tab-passport" aria-controls="passport-tab" aria-selected="false" type="button"><span aria-hidden="true">🛂</span>Passport</button>
+                <p class="guest-note" data-guest-only hidden data-i18n-parts><span aria-hidden="true">👤</span> Guest map: kept in this browser only.
+                    <button class="link-button" type="button" data-guest-save data-i18n>Save it to a free account</button></p>
+                <nav class="tabs" role="tablist" aria-label="Sections" data-i18n-attr="aria-label">
+                    <button role="tab" id="tab-explore" aria-controls="explore-tab" aria-selected="true" type="button" data-i18n-parts><span aria-hidden="true">🧭</span>Explore</button>
+                    <button role="tab" id="tab-places" aria-controls="places-tab" aria-selected="false" type="button" data-i18n-parts><span aria-hidden="true">📍</span>Places</button>
+                    <button role="tab" id="tab-ledger" aria-controls="ledger-tab" aria-selected="false" type="button" data-i18n-parts><span aria-hidden="true">📒</span>Ledger<span id="ledger-alert-count" class="tab-badge" hidden><span aria-hidden="true">0</span><span class="visually-hidden"></span></span></button>
+                    <button role="tab" id="tab-trips" aria-controls="trips-tab" aria-selected="false" type="button" data-i18n-parts><span aria-hidden="true">🗓️</span>Trips</button>
+                    <button role="tab" id="tab-passport" aria-controls="passport-tab" aria-selected="false" type="button" data-i18n-parts><span aria-hidden="true">🛂</span>Passport</button>
                 </nav>
 
                 <div id="explore-tab" class="tab-panel" role="tabpanel" aria-labelledby="tab-explore"></div>
@@ -357,26 +361,26 @@
 
             <div id="loading-view" class="view loading" aria-live="polite">
                 <span class="spinner" aria-hidden="true">🌍</span>
-                <p>Unfolding the map…</p>
+                <p data-i18n>Unfolding the map…</p>
             </div>
         </aside>
 
-        <div class="legend" id="legend" aria-label="Map legend and filters">
-            <button type="button" class="legend-item" data-filter="visited" aria-pressed="true">
+        <div class="legend" id="legend" aria-label="Map legend and filters" data-i18n-attr="aria-label">
+            <button type="button" class="legend-item" data-filter="visited" aria-pressed="true" data-i18n-parts>
                 <span class="swatch swatch-visited" aria-hidden="true"></span>Been there <strong id="legend-visited">0</strong>
             </button>
-            <button type="button" class="legend-item" data-filter="lived" aria-pressed="true" id="legend-lived-item" hidden>
+            <button type="button" class="legend-item" data-filter="lived" aria-pressed="true" id="legend-lived-item" hidden data-i18n-parts>
                 <span class="swatch swatch-lived" aria-hidden="true"></span>Lived <strong id="legend-lived">0</strong>
             </button>
-            <button type="button" class="legend-item" data-filter="transit" aria-pressed="true" id="legend-transit-item" hidden>
+            <button type="button" class="legend-item" data-filter="transit" aria-pressed="true" id="legend-transit-item" hidden data-i18n-parts>
                 <span class="swatch swatch-transit" aria-hidden="true"></span>Transit <strong id="legend-transit">0</strong>
             </button>
-            <button type="button" class="legend-item" data-filter="wishlist" aria-pressed="true">
+            <button type="button" class="legend-item" data-filter="wishlist" aria-pressed="true" data-i18n-parts>
                 <span class="swatch swatch-wishlist" aria-hidden="true"></span>Wishlist <strong id="legend-wishlist">0</strong>
             </button>
-            <span class="legend-item legend-static" id="legend-home" hidden><span class="swatch swatch-home" aria-hidden="true"></span>Home<span class="visually-hidden">: <span id="legend-home-name"></span></span></span>
-            <span class="legend-item legend-static"><span class="swatch swatch-capital" aria-hidden="true">★</span>Capital</span>
-            <button type="button" class="legend-item legend-timeline" id="timeline-btn" aria-expanded="false" aria-controls="time-bar">
+            <span class="legend-item legend-static" id="legend-home" hidden data-i18n-parts><span class="swatch swatch-home" aria-hidden="true"></span>Home<span class="visually-hidden">: <span id="legend-home-name"></span></span></span>
+            <span class="legend-item legend-static" data-i18n-parts><span class="swatch swatch-capital" aria-hidden="true">★</span>Capital</span>
+            <button type="button" class="legend-item legend-timeline" id="timeline-btn" aria-expanded="false" aria-controls="time-bar" data-i18n-parts>
                 <span aria-hidden="true">🕰️</span>Timeline
             </button>
             <button type="button" class="legend-item legend-filter" id="legend-detail-filter" hidden>
@@ -385,27 +389,27 @@
         </div>
 
         <section class="select-bar" id="select-bar" aria-labelledby="select-title" hidden>
-            <h2 class="visually-hidden" id="select-title">Mark several countries</h2>
+            <h2 class="visually-hidden" id="select-title" data-i18n>Mark several countries</h2>
             <p class="select-count" id="select-count" aria-live="polite"></p>
             <div class="select-actions">
-                <button type="button" class="btn btn-sm btn-visited" data-bulk="visited">✓ Been there</button>
-                <button type="button" class="btn btn-sm btn-wishlist" data-bulk="wishlist">♥ Wishlist</button>
-                <button type="button" class="btn btn-sm btn-ghost" id="select-cancel">Cancel</button>
+                <button type="button" class="btn btn-sm btn-visited" data-bulk="visited" data-i18n>✓ Been there</button>
+                <button type="button" class="btn btn-sm btn-wishlist" data-bulk="wishlist" data-i18n>♥ Wishlist</button>
+                <button type="button" class="btn btn-sm btn-ghost" id="select-cancel" data-i18n>Cancel</button>
             </div>
         </section>
 
         <section class="time-bar" id="time-bar" aria-labelledby="time-title" hidden>
             <div class="time-head">
-                <h2 class="time-title" id="time-title"><span aria-hidden="true">🕰️ </span>Your map year by year</h2>
+                <h2 class="time-title" id="time-title" data-i18n-parts><span aria-hidden="true">🕰️ </span>Your map year by year</h2>
                 <fieldset class="time-modes">
-                    <legend class="visually-hidden">Show places</legend>
-                    <label><input type="radio" name="time-mode" value="by" checked>Been by the end of</label>
-                    <label><input type="radio" name="time-mode" value="during">Visited during</label>
+                    <legend class="visually-hidden" data-i18n>Show places</legend>
+                    <label data-i18n-parts><input type="radio" name="time-mode" value="by" checked>Been by the end of</label>
+                    <label data-i18n-parts><input type="radio" name="time-mode" value="during">Visited during</label>
                 </fieldset>
-                <button type="button" class="icon-btn" id="time-close" aria-label="Close the timeline">✕</button>
+                <button type="button" class="icon-btn" id="time-close" aria-label="Close the timeline" data-i18n-attr="aria-label">✕</button>
             </div>
             <div class="time-range">
-                <label for="time-year">Year</label>
+                <label for="time-year" data-i18n>Year</label>
                 <input id="time-year" type="range" min="2000" max="2026" step="1" value="2026">
                 <output class="time-year" id="time-year-value" for="time-year"></output>
             </div>
@@ -414,11 +418,11 @@
                 <label class="switch">
                     <input id="journey-toggle" type="checkbox">
                     <span class="switch-track" aria-hidden="true"></span>
-                    <span>Journey lines</span>
+                    <span data-i18n>Journey lines</span>
                 </label>
-                <label class="visually-hidden" for="journey-pick">Journey to replay</label>
+                <label class="visually-hidden" for="journey-pick" data-i18n>Journey to replay</label>
                 <select id="journey-pick"></select>
-                <button type="button" class="btn btn-sm btn-primary" id="journey-replay">▶ Replay</button>
+                <button type="button" class="btn btn-sm btn-primary" id="journey-replay" data-i18n>▶ Replay</button>
             </div>
             <!-- The start and end of a replay are announced; each leg is only shown. -->
             <p class="time-now"><span id="journey-now" aria-live="polite"></span> <span id="journey-leg" aria-hidden="true"></span></p>

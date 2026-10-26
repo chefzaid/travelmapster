@@ -4,10 +4,10 @@ import { $, $all, toast } from './ui.js';
 import { api, useApi } from './api.js';
 import { clearGuestMap, createGuestApi, hasGuestMap } from './guest-api.js';
 import { savePlaces } from './import-apps.js';
+import { t, tn } from './i18n.js';
 
 const ACTIVE_KEY = 'travelmapster.guest.active';
 
-const plural = (count, one, many) => `${count} ${count === 1 ? one : many}`;
 
 function storage() {
     try {
@@ -38,7 +38,7 @@ function setGuestActive(active) {
 /** Answers from this browser's guest map from now on; resolves to the guest user. */
 export function enterGuestMode() {
     const store = storage();
-    if (!store) throw new Error('This browser does not let pages keep data, so a guest map cannot be saved. Sign up instead.');
+    if (!store) throw new Error(t('This browser does not let pages keep data, so a guest map cannot be saved. Sign up instead.'));
     useApi(createGuestApi(store));
     setGuestActive(true);
     return api.currentUser();
@@ -54,14 +54,14 @@ export function leaveGuestMode() {
 export function showGuestControls(guest) {
     for (const element of $all('[data-account-only]')) element.hidden = guest;
     for (const element of $all('[data-guest-only]')) element.hidden = !guest;
-    $('#logout-btn').textContent = guest ? '👋 Leave guest map' : '👋 Log out';
+    $('#logout-btn').textContent = guest ? t('👋 Leave guest map') : t('👋 Log out');
 }
 
 /** Labels the buttons that start guest mode, once a guest map exists in this browser. */
 export function labelGuestButtons() {
     const resume = hasGuestMap(storage() ?? { getItem: () => null });
     for (const button of $all('[data-guest-start]')) {
-        button.textContent = resume ? 'Continue your guest map' : 'Try it without an account';
+        button.textContent = resume ? t('Continue your guest map') : t('Try it without an account');
     }
 }
 
@@ -82,10 +82,11 @@ export async function moveGuestMap(ctx) {
     const { state } = ctx;
     const own = state.markers.length > 0 || state.trips.length > 0;
     if (own && !(await ctx.confirmDialog({
-        title: 'Add your guest map to this account?',
-        message: `This browser holds a guest map with ${plural(places.length, 'place', 'places')} and ${plural(trips.length, 'trip', 'trips')}. `
-            + `Add them to ${state.user.username}'s map? Places you already have only get the visits they lack.`,
-        confirmLabel: 'Add them'
+        title: t('Add your guest map to this account?'),
+        message: t('This browser holds a guest map with {places} and {trips}. Add them to {username}\'s map? Places you already have only get the visits they lack.', {
+            places: tn(places.length, '{count} place', '{count} places'), trips: tn(trips.length, '{count} trip', '{count} trips'), username: state.user.username
+        }),
+        confirmLabel: t('Add them')
     }))) return;
     try {
         await savePlaces(ctx, places);
@@ -99,31 +100,31 @@ export async function moveGuestMap(ctx) {
         }
         if (!own) {
             const { homeCountry, countryList, mapPalette, goals } = profile;
-            await ctx.saveSettings({ homeCountry, countryList, mapPalette, goals }, 'Your guest map is now saved in your account. 🎉');
+            await ctx.saveSettings({ homeCountry, countryList, mapPalette, goals }, t('Your guest map is now saved in your account. 🎉'));
         } else {
-            toast('Your guest map is now part of your account. 🎉', { tone: 'success' });
+            toast(t('Your guest map is now part of your account. 🎉'), { tone: 'success' });
         }
         clearGuestMap(store);
         ctx.refresh();
     } catch (error) {
         ctx.handleError(error);
-        toast('Your guest map stays in this browser: try again from the account menu once you are back online.', { tone: 'error' });
+        toast(t('Your guest map stays in this browser: try again from the account menu once you are back online.'), { tone: 'error' });
     }
 }
 
 /** Clears the guest map of this browser, once the guest confirms. */
 export async function clearGuest(ctx) {
     if (!(await ctx.confirmDialog({
-        title: 'Clear your guest map?',
-        message: 'Its places, visits, trips and plans are only in this browser, and will be gone for good.',
-        confirmLabel: 'Clear guest map',
+        title: t('Clear your guest map?'),
+        message: t('Its places, visits, trips and plans are only in this browser, and will be gone for good.'),
+        confirmLabel: t('Clear guest map'),
         danger: true
     }))) return;
     clearGuestMap(storage());
     leaveGuestMode();
     ctx.showSignedOut();
     labelGuestButtons();
-    toast('Guest map cleared.');
+    toast(t('Guest map cleared.'));
 }
 
 export function setupGuest(ctx) {

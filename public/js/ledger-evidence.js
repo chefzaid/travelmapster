@@ -1,31 +1,32 @@
 // Day ledger evidence (ADR 0010): one row per day, country and visit, with why the day counts
 // and the history of the visit's dates, for the report and its CSV.
 import { DAY_RULES, dayNumber, daysIn, isoDay } from './days.js';
+import { t } from './i18n.js';
 function spanText(start, end, ongoing, format) {
     if (!start) return '';
     if (end) return end === start ? format(start) : `${format(start)} – ${format(end)}`;
-    return ongoing ? `${format(start)} – still there` : `${format(start)} – end not recorded`;
+    return ongoing ? t('{date} – still there', { date: format(start) }) : t('{date} – end not recorded', { date: format(start) });
 }
 
 /** One line per change of visit dates, as the evidence report lists them (ISO dates by default). */
 export function describeChange(change, format = iso => iso) {
     const before = spanText(change.oldStartDate, change.oldEndDate, change.oldOngoing, format);
     const after = spanText(change.newStartDate, change.newEndDate, change.newOngoing, format);
-    if (change.action === 'added') return `Added ${after}`;
-    if (change.action === 'removed') return `Removed ${before}`;
-    return `Changed ${before} → ${after}`;
+    if (change.action === 'added') return t('Added {dates}', { dates: after });
+    if (change.action === 'removed') return t('Removed {dates}', { dates: before });
+    return t('Changed {before} → {after}', { before, after });
 }
 
 /** Why a day counts, from the visit behind it. */
 export function dayNote(source, date) {
-    if (source.open === 'unrecorded') return 'End not recorded: first day only';
+    if (source.open === 'unrecorded') return t('End not recorded: first day only');
     const arrival = date === source.startDate;
-    if (source.open === 'ongoing') return arrival ? 'Arrival day; still there' : 'Still there';
+    if (source.open === 'ongoing') return arrival ? t('Arrival day; still there') : t('Still there');
     const departure = date === source.endDate;
-    if (arrival && departure) return 'Arrival and departure day';
-    if (arrival) return 'Arrival day';
-    if (departure) return 'Departure day';
-    return 'During the stay';
+    if (arrival && departure) return t('Arrival and departure day');
+    if (arrival) return t('Arrival day');
+    if (departure) return t('Departure day');
+    return t('During the stay');
 }
 
 /**

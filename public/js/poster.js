@@ -1,27 +1,28 @@
 // Map posters: the traveler's map as a vector SVG in a standard print size and style, with a
 // title, a subtitle and a legend, from the bundled country borders. Equal Earth projection, so
 // every country keeps its true size. Pure, unit tested in Node.
+import { t, tk } from './i18n.js';
 
 export const POSTER_SIZES = [
-    { id: 'a4', label: 'A4 (297 × 210 mm)', width: 297, height: 210 },
-    { id: 'a3', label: 'A3 (420 × 297 mm)', width: 420, height: 297 },
-    { id: 'a2', label: 'A2 (594 × 420 mm)', width: 594, height: 420 },
-    { id: '50x70', label: '50 × 70 cm', width: 700, height: 500 },
-    { id: '18x24', label: '18 × 24 in', width: 609.6, height: 457.2 }
+    { id: 'a4', get label() { return t('A4 (297 × 210 mm)'); }, width: 297, height: 210 },
+    { id: 'a3', get label() { return t('A3 (420 × 297 mm)'); }, width: 420, height: 297 },
+    { id: 'a2', get label() { return t('A2 (594 × 420 mm)'); }, width: 594, height: 420 },
+    { id: '50x70', get label() { return t('50 × 70 cm'); }, width: 700, height: 500 },
+    { id: '18x24', get label() { return t('18 × 24 in'); }, width: 609.6, height: 457.2 }
 ];
 
 // Colours by style: background, land, borders, text and one fill per status.
 export const POSTER_STYLES = {
     cartoon: {
-        label: 'Cartoon', background: '#bfe6f5', land: '#fff7e8', border: '#1f3b57', text: '#1f3b57',
+        get label() { return t('Cartoon'); }, background: '#bfe6f5', land: '#fff7e8', border: '#1f3b57', text: '#1f3b57',
         visited: '#4fc3b8', lived: '#9b8ce0', transit: '#d7e7ef', wishlist: '#ffd166', home: '#f7a072'
     },
     ink: {
-        label: 'Ink on paper', background: '#ffffff', land: '#ffffff', border: '#222222', text: '#111111',
+        get label() { return t('Ink on paper'); }, background: '#ffffff', land: '#ffffff', border: '#222222', text: '#111111',
         visited: '#555555', lived: '#2b2b2b', transit: '#d9d9d9', wishlist: '#b3b3b3', home: '#000000'
     },
     night: {
-        label: 'Night', background: '#0f1e33', land: '#22364f', border: '#8aa0b8', text: '#f3ead8',
+        get label() { return t('Night'); }, background: '#0f1e33', land: '#22364f', border: '#8aa0b8', text: '#f3ead8',
         visited: '#e9b949', lived: '#d98b5f', transit: '#3f5875', wishlist: '#7fb3d5', home: '#f4e1a1'
     }
 };
@@ -40,7 +41,7 @@ export function mapStatusOf(stats) {
     };
 }
 
-const LEGEND = [['home', 'Home'], ['lived', 'Lived there'], ['visited', 'Been there'], ['transit', 'Transit only'], ['wishlist', 'Wishlist']];
+const LEGEND = [['home', tk('Home')], ['lived', tk('Lived there')], ['visited', tk('Been there')], ['transit', tk('Transit only')], ['wishlist', tk('Wishlist')]];
 
 const A1 = 1.340264;
 const A2 = -0.081106;
@@ -125,7 +126,7 @@ export function posterSvg({ countries, statusOf, counts = {}, cities = [], size 
     const legend = legendItems.map(([status, label], i) => {
         const x = round(legendLeft + i * itemWidth);
         return `<rect x="${x}" y="${round(legendY - legendSize * 0.85)}" width="${round(legendSize)}" height="${round(legendSize)}" fill="${colors[status]}" stroke="${colors.border}" stroke-width="${stroke}"/>`
-            + `<text x="${round(x + legendSize * 1.5)}" y="${round(legendY)}" font-size="${round(legendSize)}">${escapeXml(`${label} · ${counts[status]}`)}</text>`;
+            + `<text x="${round(x + legendSize * 1.5)}" y="${round(legendY)}" font-size="${round(legendSize)}">${escapeXml(`${t(label)} · ${counts[status]}`)}</text>`;
     });
 
     return [

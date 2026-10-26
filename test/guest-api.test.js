@@ -93,7 +93,7 @@ test('a guest map keeps trips, the ledger\'s settings and the account settings',
     const archive = await api.exportAccount();
     assert.deepEqual([archive.format, archive.trips.length, archive.ledger.settings.dayRule, archive.profile.guest], ['travelmapster-account', 1, 'midnight', true]);
     for (const needs of ['changePassword', 'deleteAccount', 'geocodeCity', 'getPublicMap']) {
-        await assert.rejects(api[needs]('x'), /needs an account/);
+        await assert.rejects(api[needs]('x'), /Sign up to keep your map/);
     }
     assert.equal(await api.logout(), null);
 });

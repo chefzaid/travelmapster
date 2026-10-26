@@ -1,6 +1,7 @@
 // QR codes (ISO/IEC 18004) for the two-step sign-in secret: byte mode, error correction level
 // M, versions 1 to 10 (up to 213 bytes, enough for an otpauth URI), drawn as SVG. Pure, unit
 // tested in Node by reading the codes back with a decoder.
+import { t } from './i18n.js';
 
 // Per version at level M: [error correction codewords per block, [blocks, data codewords]...].
 /** @type {Array<null | [number, ...Array<[number, number]>]>} */
@@ -230,7 +231,7 @@ function penalty(modules) {
 export function qrMatrix(text) {
     const bytes = [...new TextEncoder().encode(text)];
     const version = BLOCKS.findIndex((_, v) => v > 0 && dataCapacity(v) * 8 >= 4 + (v < 10 ? 8 : 16) + bytes.length * 8);
-    if (version < 1) throw new Error('Too long for a QR code here.');
+    if (version < 1) throw new Error(t('Too long for a QR code here.'));
     const matrix = baseMatrix(version);
     placeData(matrix, codewords(bytes, version));
     let best = null;

@@ -1,4 +1,5 @@
 // Thin JSON client for the TravelMapster API (/api/*) with CSRF token handling.
+import { t } from './i18n.js';
 
 let csrfToken = null;
 
@@ -8,14 +9,14 @@ async function reach(url, options) {
         return await fetch(url, options);
     } catch {
         throw new Error(navigator.onLine === false
-            ? 'You are offline: this change was not saved. Try again once you are back online.'
-            : 'TravelMapster cannot be reached right now. Please try again.');
+            ? t('You are offline: this change was not saved. Try again once you are back online.')
+            : t('TravelMapster cannot be reached right now. Please try again.'));
     }
 }
 
 async function refreshCsrfToken() {
     const response = await reach('/api/csrf-token', { credentials: 'same-origin' });
-    if (!response.ok) throw new Error('Unable to reach TravelMapster right now.');
+    if (!response.ok) throw new Error(t('Unable to reach TravelMapster right now.'));
     csrfToken = (await response.json()).csrfToken;
     return csrfToken;
 }
@@ -47,8 +48,9 @@ async function request(method, path, body, retried = false) {
         return request(method, path, body, true);
     }
     if (!response.ok) {
-        // The answer comes along, such as the newer trip of a refused save (ADR 0028).
-        throw Object.assign(new Error(data?.error || `Request failed (${response.status}).`), { status: response.status, data });
+        // The answer comes along, such as the newer trip of a refused save (ADR 0028). The
+        // server writes English; its message shows translated when the catalog has it (ADR 0031).
+        throw Object.assign(new Error(data?.error ? t(data.error) : t('Request failed ({status}).', { status: response.status })), { status: response.status, data });
     }
     if (data?.csrfToken) csrfToken = data.csrfToken;
     return data;

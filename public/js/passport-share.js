@@ -7,6 +7,7 @@ import { shareLabel } from './lists.js';
 import { goalCount } from './goals.js';
 import { countriesByYear, daysAwayByYear, longestTrip } from './travel-stats.js';
 import { CARD_SIZE, countryCountCard, stampsCard, svgDataUrl, yearRecapCard } from './share-cards.js';
+import { t, tn } from './i18n.js';
 
 // The PNG of a card: the SVG drawn on a canvas.
 async function cardPng(svg) {
@@ -17,7 +18,7 @@ async function cardPng(svg) {
     canvas.width = CARD_SIZE;
     canvas.height = CARD_SIZE;
     canvas.getContext('2d').drawImage(image, 0, 0);
-    return new Promise((resolve, reject) => canvas.toBlob(blob => (blob ? resolve(blob) : reject(new Error('The card could not be drawn.'))), 'image/png'));
+    return new Promise((resolve, reject) => canvas.toBlob(blob => (blob ? resolve(blob) : reject(new Error(t('The card could not be drawn.')))), 'image/png'));
 }
 
 // Shares the card where the device can (phones), and downloads it everywhere else.
@@ -34,9 +35,9 @@ async function shareCard(svg, fileName, title) {
             }
         }
         downloadFile(fileName, png, 'image/png');
-        toast('Picture downloaded: share it anywhere.', { tone: 'success' });
+        toast(t('Picture downloaded: share it anywhere.'), { tone: 'success' });
     } catch (error) {
-        toast(error.message || 'The picture could not be made.', { tone: 'error' });
+        toast(error.message || t('The picture could not be made.'), { tone: 'error' });
     }
 }
 
@@ -61,7 +62,7 @@ function recap(ctx) {
         newCountries: row?.newCount || 0,
         trips: goalCount({ year, kind: 'visits' }, markers, { countryOf, countedIds: stats.countedIds }),
         daysAway: daysAwayByYear(ctx.currentLedger().ledger, stats.homeId, today).find(item => item.year === year)?.count || 0,
-        longestTrip: trip ? `${trip.days} ${trip.days === 1 ? 'day' : 'days'}, ${trip.route}` : '',
+        longestTrip: trip ? `${tn(trip.days, '{count} day', '{count} days')}, ${trip.route}` : '',
         awayWord: stats.homeId ? 'abroad' : 'recorded'
     });
 }
@@ -79,12 +80,12 @@ export function shareCardsSection(ctx) {
         [`🗓️ ${date.slice(0, 4)} recap`, () => recap(ctx), `recap-${date.slice(0, 4)}`]
     ];
     return h('section', { id: 'share-pictures', 'aria-labelledby': 'share-pictures-title' },
-        h('h3', { class: 'section-title', id: 'share-pictures-title' }, 'Share a picture'),
-        h('p', { class: 'muted small' }, 'Square pictures of your counts and stamps for social networks and messages. They never show notes, photos, places or dates.'),
+        h('h3', { class: 'section-title', id: 'share-pictures-title' }, t('Share a picture')),
+        h('p', { class: 'muted small' }, t('Square pictures of your counts and stamps for social networks and messages. They never show notes, photos, places or dates.')),
         h('div', { class: 'row' }, cards.map(([label, build, name]) => h('button', {
             type: 'button',
             class: 'btn btn-sm btn-ghost',
-            onclick: () => shareCard(build(), `travelmapster-${name}-${date}.png`, `${user.username} on TravelMapster`)
+            onclick: () => shareCard(build(), `travelmapster-${name}-${date}.png`, t('{username} on TravelMapster', { username: user.username }))
         }, label)))
     );
 }

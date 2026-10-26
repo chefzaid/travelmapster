@@ -1,4 +1,5 @@
 // Small DOM helpers: safe element builder, toasts, and dialogs.
+import { locale, t } from './i18n.js';
 
 export function h(tag, attributes = {}, ...children) {
     const element = document.createElement(tag);
@@ -69,7 +70,7 @@ export function confirmDialog({ title, message, confirmLabel = 'Confirm', danger
                 h('h3', { id: 'confirm-title' }, title),
                 h('p', {}, message),
                 h('div', { class: 'dialog-actions' },
-                    h('button', { class: 'btn btn-ghost', value: 'cancel' }, 'Cancel'),
+                    h('button', { class: 'btn btn-ghost', value: 'cancel' }, t('Cancel')),
                     h('button', { class: `btn ${danger ? 'btn-danger' : 'btn-primary'}`, value: 'confirm' }, confirmLabel)
                 )
             )
@@ -105,8 +106,8 @@ function pickerField(field, id) {
         h('label', { for: id }, field.label),
         input,
         h('div', { class: 'choice-row', role: 'group', 'aria-label': field.choicesLabel },
-            field.choices.map(choice => h('button', { type: 'button', class: 'choice-pick', 'aria-label': `Use ${choice}`, onclick: pick(choice) }, choice)),
-            h('button', { type: 'button', class: 'choice-pick choice-clear', onclick: pick('') }, 'None')),
+            field.choices.map(choice => h('button', { type: 'button', class: 'choice-pick', 'aria-label': t('Use {choice}', { choice }), onclick: pick(choice) }, choice)),
+            h('button', { type: 'button', class: 'choice-pick choice-clear', onclick: pick('') }, t('None'))),
         field.hint ? h('small', {}, field.hint) : null);
 }
 
@@ -164,7 +165,7 @@ export function formDialog({ title, message, content, fields, submitLabel = 'Sav
             form.append(h('label', { class: 'field', for: id }, h('span', {}, field.label), control, field.hint ? h('small', {}, field.hint) : null));
         }
         form.append(h('div', { class: 'dialog-actions' },
-            h('button', { class: 'btn btn-ghost', value: 'cancel', formnovalidate: true }, 'Cancel'),
+            h('button', { class: 'btn btn-ghost', value: 'cancel', formnovalidate: true }, t('Cancel')),
             h('button', { class: `btn ${danger ? 'btn-danger' : 'btn-primary'}`, value: 'save' }, submitLabel)
         ));
         const dialog = h('dialog', { class: 'dialog' }, form);
@@ -217,7 +218,7 @@ export async function steppedDialog({ labelledBy, load, draw, onError }) {
 }
 
 /** Copies text to the clipboard; `fallback` shows instead when the browser does not allow it. */
-export async function copyText(text, done, fallback = 'Copying is not available in this browser.') {
+export async function copyText(text, done, fallback = t('Copying is not available in this browser.')) {
     try {
         await navigator.clipboard.writeText(text);
         toast(done, { tone: 'success' });
@@ -238,7 +239,7 @@ export function downloadFile(fileName, content, mimeType) {
 export function formatDate(value) {
     if (!value) return '';
     const [year, month, day] = value.split('-').map(Number);
-    return new Date(Date.UTC(year, month - 1, day)).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
+    return new Date(Date.UTC(year, month - 1, day)).toLocaleDateString(locale(), { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
 }
 
 // replaceChildren, skipping the null/false placeholders used for optional sections.

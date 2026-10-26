@@ -28,6 +28,7 @@ import { hideHome, offerHome, rememberSignedIn, setupHome, wasSignedIn } from '.
 import { followButton } from './friends.js';
 import { explainInvitation, joinPendingInvitation, setupInvitations, takeInvitation } from './orgs.js';
 import { enterGuestMode, guestActive, labelGuestButtons, leaveGuestMode, moveGuestMap, setupGuest, showGuestControls } from './guest.js';
+import { loadLocale, preferredLocale, translateDom, t, setupLanguagePickers } from './i18n.js';
 
 const state = {
     user: null,
@@ -109,7 +110,7 @@ function applyFilters() {
     if (filtered) {
         const description = describeDetailFilter(state.filters);
         clear.querySelector('.legend-filter-text').textContent = description;
-        clear.setAttribute('aria-label', `Map filtered to ${description}. Clear the filter`);
+        clear.setAttribute('aria-label', t('Map filtered to {description}. Clear the filter', { description }));
     }
 }
 
@@ -140,7 +141,7 @@ function refresh({ celebrateNew = true } = {}) {
         const fresh = state.stats.achievements.filter(a => a.unlocked && !state.unlocked.has(a.id));
         for (const achievement of fresh) {
             celebrate();
-            toast(`Badge unlocked: ${achievement.icon} ${achievement.title}!`, { tone: 'success', duration: 5000 });
+            toast(t('Badge unlocked: {icon} {title}!', { icon: achievement.icon, title: achievement.title }), { tone: 'success', duration: 5000 });
         }
     }
     state.unlocked = unlocked;
@@ -166,11 +167,11 @@ async function reloadMarkers() {
 
 function handleError(error) {
     if (error.status === 401) {
-        toast('Your session expired. Please log in again.', { tone: 'error' });
+        toast(t('Your session expired. Please log in again.'), { tone: 'error' });
         showSignedOut();
         return;
     }
-    toast(error.message || 'Something went wrong.', { tone: 'error' });
+    toast(error.message || t('Something went wrong.'), { tone: 'error' });
 }
 
 // Saves account settings and recounts the map and passport with them.
@@ -296,10 +297,10 @@ async function startPublicView(username) {
         state.publicJourneys = Boolean(data.showJourneys);
         state.markers = data.markers;
         refresh({ celebrateNew: false });
-        $('#public-title').textContent = `${data.username}'s travel map`;
+        $('#public-title').textContent = t('{username}\'s travel map', { username: data.username });
         renderPublicStats($('#public-stats'), state.stats);
         setView('public');
-        document.title = `${data.username}'s travel map · TravelMapster`;
+        document.title = t('{username}\'s travel map · TravelMapster', { username: data.username });
         followButton(context, data.username);
     } catch (error) {
         toast(error.message, { tone: 'error' });
@@ -396,6 +397,10 @@ async function createMap() {
 }
 
 async function init() {
+    // The interface's language first: the map data names countries in it (ADR 0031).
+    await loadLocale(preferredLocale()).catch(() => {});
+    translateDom();
+    setupLanguagePickers();
     // Start with this browser's palette; a signed-in traveler's own choice follows.
     applyPalette(context, storedPalette());
     setupOffline();
@@ -435,5 +440,5 @@ async function init() {
 init().catch(error => {
     console.error(error);
     setView('loading');
-    $('#loading-view').replaceChildren(h('p', { class: 'form-error' }, 'The map could not load. Please refresh the page.'));
+    $('#loading-view').replaceChildren(h('p', { class: 'form-error' }, t('The map could not load. Please refresh the page.')));
 });

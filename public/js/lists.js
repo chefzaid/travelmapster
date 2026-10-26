@@ -2,6 +2,7 @@
 // draws, or the members and observer states of the United Nations. A list only decides which
 // territories count, and the UN list counts a member for its overseas parts; places always
 // belong to the territory the map draws them in. Pure, unit tested in Node.
+import { t } from './i18n.js';
 
 // The 193 UN member states by map code; Natural Earth codes South Sudan SDS.
 export const UN_MEMBERS = Object.freeze(`
@@ -25,9 +26,9 @@ export const MEMBER_PARTS = Object.freeze({
 });
 
 export const COUNTRY_LISTS = Object.freeze([
-    { id: 'all', label: 'Every territory on the map', phrase: 'every territory on the map', unit: 'territories', ids: null },
+    { id: 'all', get label() { return t('Every territory on the map'); }, get phrase() { return t('every territory on the map'); }, get unit() { return t('territories'); }, ids: null },
     {
-        id: 'un', label: 'UN members and observer states', phrase: 'UN members and observer states', unit: 'UN countries',
+        id: 'un', get label() { return t('UN members and observer states'); }, get phrase() { return t('UN members and observer states'); }, get unit() { return t('UN countries'); },
         ids: Object.freeze([...UN_MEMBERS, ...UN_OBSERVERS]), partOf: MEMBER_PARTS
     }
 ]);
@@ -38,7 +39,7 @@ export function countryList(id) {
 
 /** What the share of countries been to is a share of. */
 export function shareLabel(listId) {
-    return listId === 'un' ? 'of UN countries' : 'of the world';
+    return listId === 'un' ? t('of UN countries') : t('of the world');
 }
 
 /** The countries of the map that a list counts, in map order. */

@@ -1,6 +1,7 @@
 // Image cards to share: the country count, the passport stamps and a year's recap, as square
 // SVG (1080 × 1080) that the browser turns into a PNG. Only counts, country names and flags:
 // never notes, photos, places or dates. Pure, unit tested in Node.
+import { tn } from './i18n.js';
 
 export const CARD_SIZE = 1080;
 
@@ -13,7 +14,6 @@ const EMOJI_FONT = "'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', s
 const escapeXml = value => String(value ?? '').replace(/[<>&"']/g, character =>
     ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&apos;' })[character]);
 
-const plural = (count, one, many) => `${count} ${count === 1 ? one : many}`;
 
 function text(x, y, size, content, { weight = 600, fill = COLORS.ink, anchor = 'middle', font = '' } = {}) {
     const family = font ? ` font-family="${font}"` : '';
@@ -44,10 +44,10 @@ export function countryCountCard({ username, countries, worldPercent, shareLabel
     return frame([
         text(540, 200, 46, `${username}'s travel map`, { weight: 500 }),
         text(540, 430, 230, countries),
-        text(540, 520, 64, countries === 1 ? 'country' : 'countries'),
+        text(540, 520, 64, tn(countries, 'country', 'countries')),
         bar(190, 600, 700, worldPercent / 100, COLORS.teal),
         text(540, 720, 44, `${worldPercent}% ${shareLabel}`, { weight: 500 }),
-        text(540, 800, 44, `${plural(continents, 'continent', 'continents')} · ${rank}`, { weight: 500 })
+        text(540, 800, 44, `${tn(continents, '{count} continent', '{count} continents')} · ${rank}`, { weight: 500 })
     ].join(''), 'TravelMapster');
 }
 
@@ -69,7 +69,7 @@ export function stampsCard({ username, stamps }) {
     const more = stamps.length > shown.length ? text(540, 900, 36, `and ${stamps.length - shown.length} more`, { weight: 500 }) : '';
     return frame([
         text(540, 170, 58, 'Passport stamps'),
-        text(540, 225, 38, `${username} · ${plural(stamps.length, 'country', 'countries')}`, { weight: 500 }),
+        text(540, 225, 38, `${username} · ${tn(stamps.length, '{count} country', '{count} countries')}`, { weight: 500 }),
         ...items,
         more
     ].join(''), 'TravelMapster');
@@ -78,9 +78,9 @@ export function stampsCard({ username, stamps }) {
 /** A year in travel: countries, new ones, trips, days away and the longest trip. */
 export function yearRecapCard({ username, year, countries, newCountries, trips, daysAway, longestTrip, awayWord }) {
     const rows = [
-        [plural(countries, 'country', 'countries'), newCountries ? `${newCountries} new` : 'no new ones', COLORS.teal],
-        [plural(trips, 'trip', 'trips'), 'begun this year', COLORS.sun],
-        [plural(daysAway, 'day', 'days'), awayWord, COLORS.coral]
+        [tn(countries, '{count} country', '{count} countries'), newCountries ? `${newCountries} new` : 'no new ones', COLORS.teal],
+        [tn(trips, '{count} trip', '{count} trips'), 'begun this year', COLORS.sun],
+        [tn(daysAway, '{count} day', '{count} days'), awayWord, COLORS.coral]
     ];
     const lines = rows.map(([big, small, fill], i) => {
         const y = 360 + i * 150;

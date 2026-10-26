@@ -2,6 +2,7 @@
 // whenever they change), the alert badge and toast, and the date history fetched when needed.
 import { $, toast, formatDate } from './ui.js';
 import { ledgerOverview, localToday } from './days.js';
+import { t, tn } from './i18n.js';
 
 export const emptyLedger = () => ({ settings: { dayRule: 'presence', rules: [], planned: [] }, changes: null, overview: null, alerted: false });
 
@@ -25,7 +26,7 @@ export function updateLedgerBadge(ctx) {
     const count = ctx.state.user ? currentLedger(ctx).alerts.length : 0;
     badge.hidden = !count;
     badge.querySelector('[aria-hidden]').textContent = count;
-    badge.querySelector('.visually-hidden').textContent = ` (${count} ${count === 1 ? 'alert' : 'alerts'})`;
+    badge.querySelector('.visually-hidden').textContent = ` (${tn(count, '{count} alert', '{count} alerts')})`;
 }
 
 // In-app alerts: once per session, a nudge toward the Ledger tab.
@@ -33,10 +34,10 @@ export function announceLedgerAlerts(ctx) {
     const { alerts } = currentLedger(ctx);
     if (ctx.state.ledger.alerted || !alerts.length) return;
     ctx.state.ledger.alerted = true;
-    toast(alerts.length === 1 ? `Day ledger: ${alerts[0].message}` : `Day ledger: ${alerts.length} alerts need a look.`, {
+    toast(alerts.length === 1 ? t('Day ledger: {message}', { message: alerts[0].message }) : tn(alerts.length, 'Day ledger: {count} alert needs a look.', 'Day ledger: {count} alerts need a look.'), {
         tone: 'error',
         duration: 8000,
-        action: { label: 'Open ledger', run: () => ctx.selectTab('ledger') }
+        action: { label: t('Open ledger'), run: () => ctx.selectTab('ledger') }
     });
 }
 

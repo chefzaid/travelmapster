@@ -1,6 +1,7 @@
 // "On this day": visits that began on today's calendar day in an earlier year, shown on the
 // Explore tab. Pure, unit tested in Node.
 import { statusOf } from './status.js';
+import { tn } from './i18n.js';
 
 const isLeapYear = year => (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
 
@@ -28,6 +29,8 @@ export function onThisDay(markers, today) {
 }
 
 export function memoryLabel({ marker, yearsAgo }) {
-    const when = yearsAgo === 1 ? 'A year ago today' : `${yearsAgo} years ago today`;
-    return `${when}, you ${statusOf(marker) === 'lived' ? 'moved to' : 'arrived in'} ${marker.name.split(',')[0]}`;
+    const place = marker.name.split(',')[0];
+    return statusOf(marker) === 'lived'
+        ? tn(yearsAgo, 'A year ago today, you moved to {place}', '{count} years ago today, you moved to {place}', { place })
+        : tn(yearsAgo, 'A year ago today, you arrived in {place}', '{count} years ago today, you arrived in {place}', { place });
 }

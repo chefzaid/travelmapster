@@ -6,6 +6,7 @@ import { sortVisits, lastVisitDate } from './visits.js';
 import { statusFields, statusOf } from './status.js';
 import { resolveDestination, tripEndDate, tripStops } from './itinerary.js';
 import { cityMarkerFor, countryMarker } from './cards.js';
+import { t, tn } from './i18n.js';
 
 // Where a destination is: a country, or a town of the map data by its exact name.
 export function destinationPlace(ctx, destination) {
@@ -78,21 +79,21 @@ async function addTripVisit(ctx, { where, visit }) {
 export async function completeTrip(ctx, trip) {
     const { visits, unknown } = tripVisits(ctx, trip);
     if (unknown !== undefined) {
-        toast(`Which place is ${unknown}? Name a country or a town, such as “Lisbon, Portugal”.`, { tone: 'error' });
+        toast(t('Which place is {unknown}? Name a country or a town, such as “Lisbon, Portugal”.', { unknown }), { tone: 'error' });
         return false;
     }
     const wishes = visits.some(({ existing }) => existing && statusOf(existing) === 'wishlist');
     const confirmed = await ctx.confirmDialog({
-        title: visits.length > 1 ? 'Record this trip as visits?' : 'Record this trip as a visit?',
+        title: visits.length > 1 ? t('Record this trip as visits?') : t('Record this trip as a visit?'),
         message: `${visits.map(({ place, visit }) => `${place.name}: a visit from ${formatDate(visit.startDate)} to ${formatDate(visit.endDate)}`).join('; ')}`
             + `${wishes ? ', and wishes move from your wishlist to the places you have been' : ''}. You can edit visits on the place's card.`,
-        confirmLabel: visits.length > 1 ? 'Add the visits' : 'Add the visit'
+        confirmLabel: visits.length > 1 ? t('Add the visits') : t('Add the visit')
     });
     if (!confirmed) return false;
     try {
         for (const item of visits) await addTripVisit(ctx, item);
         ctx.refresh();
-        toast(visits.length > 1 ? `${visits.length} visits added. 🎉` : `Visit added to ${visits[0].place.name}. 🎉`, { tone: 'success' });
+        toast(visits.length > 1 ? tn(visits.length, '{count} visit added. 🎉', '{count} visits added. 🎉') : t('Visit added to {name}. 🎉', { name: visits[0].place.name }), { tone: 'success' });
         return true;
     } catch (error) {
         ctx.handleError(error);

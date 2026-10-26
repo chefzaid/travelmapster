@@ -1,4 +1,5 @@
 // Travel ideas from Wikivoyage (CC BY-SA). Parsing is pure so it can be unit tested.
+import { t } from './i18n.js';
 
 const WIKIVOYAGE_API = 'https://en.wikivoyage.org/w/api.php';
 const LISTING_TYPES = ['see', 'do', 'eat', 'drink', 'buy'];
@@ -63,7 +64,7 @@ export function parseWikivoyageListings(wikitext) {
 async function wikivoyage(params) {
     const url = `${WIKIVOYAGE_API}?${new URLSearchParams({ format: 'json', formatversion: '2', origin: '*', ...params })}`;
     const response = await fetch(url);
-    if (!response.ok) throw new Error('Travel guides are unavailable right now.');
+    if (!response.ok) throw new Error(t('Travel guides are unavailable right now.'));
     return response.json();
 }
 

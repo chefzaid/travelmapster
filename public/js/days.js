@@ -3,6 +3,7 @@
 // stays; the evidence is in ledger-evidence.js and rule checks in ledger-rules.js. Pure
 // functions over plain calendar dates (YYYY-MM-DD, local at the destination), unit tested in
 // Node. The rules are explained in ADR 0010.
+import { t, tn } from './i18n.js';
 
 export const DAY_MS = 86_400_000;
 
@@ -28,12 +29,12 @@ export function localToday(now = new Date()) {
 
 export const DAY_RULES = {
     presence: {
-        label: 'Any part of a day',
-        description: 'A day counts in every country you were in at any time that day, including the days you arrive and leave. Schengen and most visa rules count this way.'
+        get label() { return t('Any part of a day'); },
+        get description() { return t('A day counts in every country you were in at any time that day, including the days you arrive and leave. Schengen and most visa rules count this way.'); }
     },
     midnight: {
-        label: 'Midnight rule',
-        description: 'A day counts where you are at midnight, so the day you leave does not count and a day trip counts none. Some tax rules, such as the UK\'s, count this way.'
+        get label() { return t('Midnight rule'); },
+        get description() { return t('A day counts where you are at midnight, so the day you leave does not count and a day trip counts none. Some tax rules, such as the UK\'s, count this way.'); }
     }
 };
 
@@ -55,7 +56,7 @@ export const SCHENGEN_RULE = Object.freeze({
 
 // Applied to each country on its own, under the traveler's day rule.
 export const TAX_RESIDENCY_RULE = Object.freeze({
-    id: 'tax-183', kind: 'threshold', name: '183 days in a calendar year', countries: null,
+    id: 'tax-183', kind: 'threshold', get name() { return t('183 days in a calendar year'); }, countries: null,
     maxDays: 183, period: 'year', yearStart: '01-01', warnDays: 30, builtIn: true
 });
 
@@ -140,7 +141,7 @@ export function buildLedger(markers, countryOf, { dayRule = 'presence', today, p
         const span = visitSpan(stay, { dayRule, today });
         if (!span) continue;
         add(stay.countryId, span, {
-            kind: 'planned', countryId: stay.countryId, plannedId: stay.id, place: 'Planned stay',
+            kind: 'planned', countryId: stay.countryId, plannedId: stay.id, place: t('Planned stay'),
             startDate: stay.startDate, endDate: stay.endDate, ongoing: false, open: null
         });
     }
@@ -387,19 +388,20 @@ export function ledgerOverview({ markers, countryOf, settings, today, nameOf = i
     for (const item of stays) {
         const level = stayRuleStatus(item);
         if (item.recentBreach !== null) {
-            alerts.push({ level, ruleId: item.rule.id, message: `${item.rule.name}: over the limit on ${formatDay(isoDay(item.recentBreach))}, within the current window.` });
+            alerts.push({ level, ruleId: item.rule.id, message: t('{name}: over the limit on {date}, within the current window.', { name: item.rule.name, date: formatDay(isoDay(item.recentBreach)) }) });
         } else if (level !== 'ok') {
-            alerts.push({ level, ruleId: item.rule.id, message: `${item.rule.name}: ${item.remaining} of ${item.rule.maxDays} days left today.` });
+            alerts.push({ level, ruleId: item.rule.id, message: t('{name}: {remaining} of {maxDays} days left today.', { name: item.rule.name, remaining: item.remaining, maxDays: item.rule.maxDays }) });
         }
     }
     for (const item of thresholds) {
         if (item.status === 'ok') continue;
-        const label = item.rule.builtIn ? `${nameOf(item.countries[0])}: ${item.rule.maxDays} days` : item.rule.name;
+        const label = item.rule.builtIn ? t('{country}: {maxDays} days', { country: nameOf(item.countries[0]), maxDays: item.rule.maxDays }) : item.rule.name;
+        const values = { label, count: item.count, since: formatDay(item.period.from), date: formatDay(item.reachDate), remaining: item.remaining };
         let message;
-        const since = formatDay(item.period.from);
-        if (item.status === 'reached') message = `${label} reached (${item.count} days since ${since}).`;
-        else if (item.reachDate) message = `${label} would be reached on ${formatDay(item.reachDate)}${item.stillThere ? ' if you stay on' : ''} (${item.count} days so far).`;
-        else message = `${label}: ${item.remaining} days to go (${item.count} days since ${since}).`;
+        if (item.status === 'reached') message = tn(item.count, '{label} reached ({count} day since {since}).', '{label} reached ({count} days since {since}).', values);
+        else if (item.reachDate && item.stillThere) message = tn(item.count, '{label} would be reached on {date} if you stay on ({count} day so far).', '{label} would be reached on {date} if you stay on ({count} days so far).', values);
+        else if (item.reachDate) message = tn(item.count, '{label} would be reached on {date} ({count} day so far).', '{label} would be reached on {date} ({count} days so far).', values);
+        else message = tn(item.remaining, '{label}: {count} day to go ({days} since {since}).', '{label}: {count} days to go ({days} since {since}).', { ...values, days: tn(item.count, '{count} day', '{count} days') });
         alerts.push({ level: item.status, ruleId: item.rule.id, countries: item.countries, message });
     }
 

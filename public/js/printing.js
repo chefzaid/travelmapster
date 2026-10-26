@@ -3,6 +3,7 @@ import { h, $, formDialog, downloadFile, toast } from './ui.js';
 import { POSTER_SIZES, POSTER_STYLES, mapStatusOf, posterSvg } from './poster.js';
 import { PALETTES, paletteId } from './palettes.js';
 import { timelineView } from './timeline-bar.js';
+import { t, tn } from './i18n.js';
 
 const PALETTE_KEY = 'travelmapster.palette';
 
@@ -33,7 +34,7 @@ export function applyPalette(ctx, id) {
 
 function printTitle(ctx) {
     const owner = ctx.state.user?.username || ctx.state.publicUser;
-    const title = owner ? `${owner}'s travel map` : 'A sample TravelMapster map';
+    const title = owner ? t('{username}\'s travel map', { username: owner }) : t('A sample TravelMapster map');
     const view = timelineView(ctx);
     if (!view) return title;
     return `${title}, ${view.mode === 'during' ? 'places visited during' : 'by the end of'} ${view.year}`;
@@ -62,13 +63,13 @@ async function printMap(ctx) {
 async function makePoster(ctx) {
     const { stats, index, markers, user } = ctx.state;
     const values = await formDialog({
-        title: 'Make a poster',
-        message: 'A vector file (SVG) of your map, sharp at any size: print it at home, or send it to any print shop.',
-        submitLabel: 'Download poster',
+        title: t('Make a poster'),
+        message: t('A vector file (SVG) of your map, sharp at any size: print it at home, or send it to any print shop.'),
+        submitLabel: t('Download poster'),
         fields: [
-            { name: 'title', label: 'Title', value: `${user.username}'s travel map`, required: true, maxlength: 80 },
-            { name: 'size', label: 'Size', type: 'select', value: 'a3', options: POSTER_SIZES.map(size => ({ value: size.id, label: size.label })) },
-            { name: 'style', label: 'Style', type: 'select', value: 'cartoon', options: Object.entries(POSTER_STYLES).map(([value, style]) => ({ value, label: style.label })) }
+            { name: 'title', label: t('Title'), value: t('{username}\'s travel map', { username: user.username }), required: true, maxlength: 80 },
+            { name: 'size', label: t('Size'), type: 'select', value: 'a3', options: POSTER_SIZES.map(size => ({ value: size.id, label: size.label })) },
+            { name: 'style', label: t('Style'), type: 'select', value: 'cartoon', options: Object.entries(POSTER_STYLES).map(([value, style]) => ({ value, label: style.label })) }
         ]
     });
     if (!values) return;
@@ -83,10 +84,10 @@ async function makePoster(ctx) {
     const svg = posterSvg({
         countries: index.countries.map(country => country.feature), statusOf: status, counts, cities,
         size: values.size, style: values.style, title: values.title.trim(),
-        subtitle: `${stats.visitedCountries} ${stats.visitedCountries === 1 ? 'country' : 'countries'} · ${new Date().getFullYear()}`
+        subtitle: `${tn(stats.visitedCountries, '{count} country', '{count} countries')} · ${new Date().getFullYear()}`
     });
     downloadFile(`travelmapster-poster-${values.size}.svg`, svg, 'image/svg+xml');
-    toast('Poster downloaded.', { tone: 'success' });
+    toast(t('Poster downloaded.'), { tone: 'success' });
 }
 
 export function setupPrinting(ctx) {

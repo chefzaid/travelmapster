@@ -5,8 +5,8 @@ import { countryStatus } from './geo.js';
 import { localToday } from './days.js';
 import { placesInYear, timelineYears } from './timeline.js';
 import { groupTrips, journeyArc, journeyLegs, journeyStops, routeLabel } from './journeys.js';
+import { t, tn } from './i18n.js';
 
-const plural = (count, one, many) => `${count} ${count === 1 ? one : many}`;
 
 const countryOf = ctx => marker => ctx.state.stats.markerCountry.get(marker.id);
 
@@ -47,8 +47,8 @@ export function renderTimeline(ctx, view, visible) {
         $('#time-year-value').textContent = '';
         range.removeAttribute('aria-valuetext');
         summary.textContent = state.user
-            ? 'Add dates to your visits to see your map year by year.'
-            : 'No visit on this map has dates yet.';
+            ? t('Add dates to your visits to see your map year by year.')
+            : t('No visit on this map has dates yet.');
         map.setJourneys([]);
         return;
     }
@@ -56,15 +56,15 @@ export function renderTimeline(ctx, view, visible) {
     range.max = view.years.last;
     range.value = view.year;
     const during = view.mode === 'during';
-    const words = during ? `During ${view.year}` : `By the end of ${view.year}`;
+    const words = during ? t('During {year}', { year: view.year }) : t('By the end of {year}', { year: view.year });
     range.setAttribute('aria-valuetext', words);
     $('#time-year-value').textContent = view.year;
     // Countries been to, on the traveler's country list; the home country has no dates, so it
     // is always drawn but counted only by the end of a year.
     const been = countryStatus(view.markers, countryOf(ctx), { homeId: during ? null : state.stats.homeId }).visitedIds;
     const count = [...been].filter(id => state.stats.countedIds.has(id)).length;
-    const text = `${words}: ${plural(count, 'country', 'countries')} ${during ? 'visited' : 'been to'}.`
-        + (view.undated ? ` ${plural(view.undated, 'place', 'places')} without dates ${view.undated === 1 ? 'is' : 'are'} not shown.` : '');
+    const text = `${words}: ${during ? tn(count, '{count} country visited.', '{count} countries visited.') : tn(count, '{count} country been to.', '{count} countries been to.')}`
+        + (view.undated ? ` ${tn(view.undated, '{count} place without dates is not shown.', '{count} places without dates are not shown.')}` : '');
     // The summary is a live region: only a change is announced.
     if (summary.textContent !== text) summary.textContent = text;
     renderJourneys(ctx, view, visible);
@@ -80,7 +80,7 @@ function renderJourneys(ctx, view, visible) {
     const yearStops = stopsOf(ctx, placesInYear(visible, { year: view.year, mode: 'during', today: localToday() }).markers);
     const trips = groupTrips(yearStops);
     const choices = new Map([['year', yearStops]]);
-    const options = [h('option', { value: 'year' }, `Every journey in ${view.year}`)];
+    const options = [h('option', { value: 'year' }, t('Every journey in {year}', { year: view.year }))];
     for (const trip of trips) {
         const key = `${trip.startDate}:${trip.stops[0].markerId}`;
         choices.set(key, trip.stops);
@@ -119,8 +119,8 @@ function toggleReplay(ctx) {
     const now = $('#journey-now');
     const leg = $('#journey-leg');
     const route = routeLabel(stops, 8);
-    button.textContent = '■ Stop';
-    now.textContent = `Replaying ${plural(legs.length, 'journey', 'journeys')}: ${route}.`;
+    button.textContent = t('■ Stop');
+    now.textContent = tn(legs.length, 'Replaying {count} journey: {route}.', 'Replaying {count} journeys: {route}.', { route });
     timeline.replaying = true;
     const stop = ctx.map.replayJourneys(legs.map(({ from, to }) => journeyArc(from, to)), {
         reduceMotion: Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches),
@@ -130,8 +130,8 @@ function toggleReplay(ctx) {
         onDone: finished => {
             timeline.replaying = false;
             timeline.stopReplay = null;
-            button.textContent = '▶ Replay';
-            now.textContent = finished ? `Replay finished: ${route}.` : 'Replay stopped.';
+            button.textContent = t('▶ Replay');
+            now.textContent = finished ? t('Replay finished: {route}.', { route }) : t('Replay stopped.');
             if (!finished) leg.textContent = '';
         }
     });
