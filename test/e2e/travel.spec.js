@@ -411,6 +411,21 @@ test('a traveler plans a trip that is saved to their account', async ({ page }) 
     await expect(page.locator('.trip-card')).toHaveCount(1);
     await page.click('#tab-ledger');
     await expect(page.locator('#ledger-tab')).not.toContainText('Pastel de nata tour');
+
+    // A trip that has begun is recorded as a visit to its destination, once confirmed.
+    await page.click('#tab-trips');
+    await page.getByRole('button', { name: '＋ New trip' }).click();
+    await page.getByLabel('Where to?').fill('Kyoto');
+    await page.getByLabel('Start date').fill('2024-03-01');
+    await page.getByLabel('How many days?').fill('2');
+    await page.getByRole('button', { name: 'Create trip' }).click();
+    await trips.getByRole('button', { name: '✅ Record as a visit' }).click();
+    await expect(page.locator('dialog.dialog')).toContainText('Kyoto, Japan: a visit from');
+    await page.getByRole('button', { name: 'Add the visit' }).click();
+    await expect(trips.getByRole('button', { name: '✓ Recorded as a visit' })).toBeDisabled();
+    await expect(page.locator('#legend-visited')).toHaveText('1');
+    await page.click('#tab-places');
+    await expect(page.locator('#places-tab .place', { hasText: 'Kyoto' })).toContainText('1 visit');
     expect(errors).toEqual([]);
 });
 

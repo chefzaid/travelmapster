@@ -21,7 +21,7 @@ function capitalOf(ctx, country) {
     return ctx.state.cities.find(city => city.capital && city.countryId === country.id);
 }
 
-function cityMarkerFor(ctx, city) {
+export function cityMarkerFor(ctx, city) {
     const label = `${city.name}, ${city.country}`.toLowerCase();
     return ctx.state.markers.find(marker => marker.category === 'City' && (
         marker.name.toLowerCase() === label ||

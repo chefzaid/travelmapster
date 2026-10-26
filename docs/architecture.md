@@ -100,6 +100,7 @@ JSON under `/api`; errors are `{ "error": "…" }` with a matching status. All r
 | `public/js/ledger.js`, `ledger-report.js` | Ledger tab, and its date history and printable evidence report |
 | `public/js/trips.js`, `ideas.js` | Trip planner and Wikivoyage ideas |
 | `public/js/itinerary.js` | An itinerary as text, as an iCalendar file, as a template copy without dates, and as the day ledger's planned stay that follows the trip (pure, unit tested) |
+| `public/js/trip-visits.js` | Where a trip goes (a country or a town of the map data), and recording a trip as a visit to it |
 | `public/js/print-view.js` | The full page printed on its own, shared by the evidence report and printable itineraries |
 | `public/js/passport.js`, `travel-stats.js` | Passport tab, and its travel statistics: days abroad per year, the longest trip, the distance traveled and countries per year (pure, unit tested) |
 | `public/js/api.js`, `ui.js`, `confetti.js` | API client with CSRF handling, DOM helpers, celebration |

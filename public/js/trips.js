@@ -3,10 +3,11 @@
 import { h, fill, toast, formDialog, formatDate, downloadFile } from './ui.js';
 import { fetchIdeas, buildItinerary } from './ideas.js';
 import {
-    SLOTS, dayDate, destinationCountry, syncPlannedStays, tripAsText, tripCalendar, tripEndDate, tripFileName, tripPlanId,
+    SLOTS, dayDate, syncPlannedStays, tripAsText, tripCalendar, tripEndDate, tripFileName, tripPlanId,
     tripPlannedStay, tripTemplate
 } from './itinerary.js';
-import { normalizeName, searchCities, splitPlaceQuery } from './geo.js';
+import { completeTrip, tripPlace, tripRecorded } from './trip-visits.js';
+import { localToday } from './days.js';
 import { openPrintView, printTable } from './print-view.js';
 
 const MAX_DAYS = 30;
@@ -99,7 +100,7 @@ function tripCard(trip, ctx, container) {
 
 function renderList(container, ctx) {
     const { trips } = ctx.state;
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localToday();
     const upcoming = trips.filter(trip => !trip.startDate || tripEndDate(trip) >= today);
     const past = trips.filter(trip => trip.startDate && tripEndDate(trip) < today);
     const section = (title, items) => items.length ? h('section', {},
@@ -155,6 +156,20 @@ function exportCalendar(trip) {
 
 // ---------------------------------------------------------------- the trip in the day ledger
 
+// Once a trip has begun, it can be recorded as a visit to its destination.
+function visitButton(ctx, trip, dirty) {
+    if (!trip.startDate || trip.startDate > localToday()) return null;
+    if (tripRecorded(ctx, trip)) return h('button', { type: 'button', class: 'btn btn-ghost btn-sm', disabled: true }, '✓ Recorded as a visit');
+    return h('button', {
+        type: 'button',
+        class: 'btn btn-ghost btn-sm',
+        onclick: () => {
+            if (dirty()) toast('Save your changes before recording the trip as a visit.', { tone: 'error' });
+            else completeTrip(ctx, trip);
+        }
+    }, '✅ Record as a visit');
+}
+
 function ledgerButton(ctx, trip, dirty) {
     const planned = ctx.state.ledger.settings.planned.some(item => item.id === tripPlanId(trip));
     return h('button', {
@@ -171,12 +186,7 @@ function ledgerButton(ctx, trip, dirty) {
 
 // The ledger's planned stay for a trip, from its dates and the country of its destination.
 function tripStay(ctx, trip) {
-    const { index, cities } = ctx.state;
-    const countryId = destinationCountry(trip.destination, {
-        findCountry: name => index.findByName(name),
-        findCity: name => searchCities(cities, name, 1).find(city => normalizeName(city.name) === splitPlaceQuery(name)[0])
-    });
-    return tripPlannedStay(trip, countryId);
+    return tripPlannedStay(trip, tripPlace(ctx, trip)?.countryId);
 }
 
 // A trip planned in the ledger keeps its planned stay in step when it is saved or deleted.
@@ -338,7 +348,8 @@ function renderEditor(container, ctx, trip) {
                 if (dirty()) toast('Save your changes before duplicating the trip.', { tone: 'error' });
                 else duplicateTrip(ctx, trip, container);
             } }, '⧉ Duplicate'),
-            ledgerButton(ctx, trip, dirty)
+            ledgerButton(ctx, trip, dirty),
+            visitButton(ctx, trip, dirty)
         ),
         h('div', { class: 'days' }, days),
         h('div', { class: 'row trip-footer' },
