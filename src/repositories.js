@@ -1,7 +1,8 @@
 'use strict';
 
-// The legacy travel date is derived from the visits; markers.travel_date only mirrors it
-// for the previous release until the contract step (ADR 0009).
+// The legacy travel date is derived from the visits. The app no longer reads or writes
+// markers.travel_date; triggers keep it in step for the previous release until the column
+// is dropped (ADR 0009).
 const MARKER_COLUMNS = `m.id, m.lat, m.lng, m.type, m.name, m.category,
     m.photo_url AS "photoUrl", m.notes, m.rating, m.tags, m.emoji, m.hide_from_public AS "hideFromPublic",
     m.priority, m.best_months AS "bestMonths",
@@ -140,19 +141,19 @@ function createMarkerRepository(db) {
 
         /**
          * Creates a place with its visits; run it in a transaction when it has visits.
-         * Without a visits list, a legacy travel date becomes the first visit (migration 004).
+         * Without a visits list, a legacy travel date becomes the first visit.
          */
         async create(userId, marker, client = db) {
-            const travelDate = marker.visits ? null : marker.travelDate ?? null;
             const details = DETAIL_COLUMNS.map(([field, , fallback]) => marker[field] ?? fallback);
             const { rows } = await client.query(
-                `INSERT INTO markers (lat, lng, type, name, category, photo_url, notes, travel_date, user_id,
+                `INSERT INTO markers (lat, lng, type, name, category, photo_url, notes, user_id,
                     ${DETAIL_COLUMNS.map(([, column]) => column).join(', ')})
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, ${details.map((_, i) => `$${i + 10}`).join(', ')})
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, ${details.map((_, i) => `$${i + 9}`).join(', ')})
                  RETURNING id`,
-                [...markerValues(marker), travelDate, userId, ...details]
+                [...markerValues(marker), userId, ...details]
             );
-            for (const visit of marker.visits || []) {
+            const legacyVisit = marker.travelDate ? [{ startDate: marker.travelDate, endDate: null, notes: null, photoUrl: null, ongoing: false }] : [];
+            for (const visit of marker.visits || legacyVisit) {
                 await client.query(
                     `INSERT INTO visits (marker_id, start_date, end_date, notes, photo_url, ongoing)
                      VALUES ($1, $2, $3, $4, $5, $6)`,
@@ -163,14 +164,13 @@ function createMarkerRepository(db) {
         },
 
         /**
-         * Fields left out keep what is stored: a travel date left out keeps the visits, and one
-         * sent the legacy way may add a visit.
+         * Fields left out keep what is stored. A travel date sent the legacy way only ever adds
+         * a visit, unless one already starts that day; clearing it keeps every visit.
          */
         async update(userId, markerId, marker) {
             const values = [...markerValues(marker), markerId, userId];
             let setOptional = '';
-            const optional = [['travelDate', 'travel_date'], ...DETAIL_COLUMNS];
-            for (const [field, column] of optional) {
+            for (const [field, column] of DETAIL_COLUMNS) {
                 if (marker[field] === undefined) continue;
                 values.push(marker[field]);
                 setOptional += `, ${column} = $${values.length}`;
@@ -181,7 +181,15 @@ function createMarkerRepository(db) {
                  WHERE id = $8 AND user_id = $9`,
                 values
             );
-            return rowCount ? find(userId, markerId) : null;
+            if (!rowCount) return null;
+            if (marker.travelDate) {
+                await db.query(
+                    `INSERT INTO visits (marker_id, start_date) SELECT $1, $2
+                     WHERE NOT EXISTS (SELECT 1 FROM visits WHERE marker_id = $1 AND start_date = $2)`,
+                    [markerId, marker.travelDate]
+                );
+            }
+            return find(userId, markerId);
         },
 
         async remove(userId, markerId) {

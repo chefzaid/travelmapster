@@ -39,7 +39,7 @@ erDiagram
         text priority "high | medium | low, optional"
         smallint_array best_months "1-12"
         text stay "visit | lived | transit"
-        date travel_date "mirror of the latest visit until the contract step"
+        date travel_date "mirror for the previous release, kept by triggers; dropped next release"
     }
     visits {
         bigint id PK
@@ -106,8 +106,10 @@ end was not recorded. The [day ledger](#day-ledger) counts days per country from
 Migration 004 is the expand step of an expand-and-contract change: it backfilled one visit for
 every place that had a `travel_date`, and keeps that column as a mirror of the latest visit with
 triggers, so the previous release can keep reading and writing it. A date written the old way
-only ever adds a visit. A later release drops the mirror and the triggers
-([roadmap](../TODO.md)).
+only ever adds a visit. Since 1.10.0 the app itself never reads or writes the column: a
+`travelDate` sent by an old tab or found in a file becomes a visit in the app, by the same rule.
+The release after it drops the mirror and the triggers ([roadmap](../TODO.md),
+[ADR 0009](adr/0009-places-and-visits.md)).
 
 Migration 006 added `rating`, `tags` and `emoji` to `markers` with defaults; the previous
 release never writes them, and the API changes them only when a request sends them, so its
