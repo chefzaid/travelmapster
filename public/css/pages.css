@@ -291,6 +291,9 @@ input[aria-invalid='true'] { border-color: var(--danger); }
     .continent-bars li { grid-template-columns: 110px 1fr 40px; }
 }
 
+/* The call to action under a shared map */
+.public-cta { margin: 16px 0 10px; font-weight: 700; }
+
 @media (prefers-reduced-motion: reduce) {
     *,
     *::before,

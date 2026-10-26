@@ -59,7 +59,9 @@ their owner chose `public`; private and missing profiles return the same 404.
   Places the traveler hid from the public map are left out by the query itself, with their
   visits; a replica of a release before that change would list them, so rollbacks below it
   are avoided ([ADR 0013](adr/0013-hidden-places.md)). Shared maps are sent with `X-Robots-Tag: noindex` and left out of the
-  sitemap, so search engines do not list them. Whether a stay is still going on is never shared either, as it would tell
+  sitemap, so search engines do not list them, unless the owner opts in
+  ([ADR 0023](adr/0023-shared-map-previews-and-indexing.md)); their link previews and preview
+  pictures show only what the public map shows, never the home country. Whether a stay is still going on is never shared either, as it would tell
   where the traveler is now, and neither are the home country ([ADR 0014](adr/0014-home-lived-and-transit.md)),
   ledger settings or the date history. Whether a shared place was lived in or a layover is shown,
   like its status. Journey lines, which make the order of trips obvious, are drawn for visitors

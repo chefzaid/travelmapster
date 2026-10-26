@@ -413,13 +413,17 @@ function parseProfile(body) {
         if (typeof body.publicJourneys !== 'boolean') return { error: 'Public journeys must be true or false.' };
         profile.publicJourneys = body.publicJourneys;
     }
+    if (body.publicIndexing !== undefined) {
+        if (typeof body.publicIndexing !== 'boolean') return { error: 'Public indexing must be true or false.' };
+        profile.publicIndexing = body.publicIndexing;
+    }
     if (body.goals !== undefined) {
         const { goals, error } = parseGoals(body.goals);
         if (error) return { error };
         profile.goals = goals;
     }
     if (!Object.keys(profile).length) {
-        return { error: 'Send profileVisibility, homeCountry, countryList, mapPalette, publicJourneys or goals.' };
+        return { error: 'Send profileVisibility, homeCountry, countryList, mapPalette, publicJourneys, publicIndexing or goals.' };
     }
     return { profile };
 }
