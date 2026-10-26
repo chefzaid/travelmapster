@@ -8,6 +8,16 @@ Everything below is implemented. Planned work lives in [TODO.md](../TODO.md).
 - Show country borders only: no regions, subdivisions, terrain, roads or tiles.
 - Reveal city detail progressively as the user zooms in.
 - Be fun and cartoonish, but usable, accessible (WCAG 2.2 AA contrast) and polished.
+- Keep ledger, keepsake and team features off the map, in their own tabs, dialogs and pages.
+- Make every count reproducible from dated visits and a stated rule, explain each counted day,
+  and flag missing dates instead of guessing; the app is a record, not legal or tax advice.
+- Let people keep their record: every plan, free included, can take all its data away in open
+  formats, and precise coordinates are reduced to a city and country before they are stored.
+- Keep the atlas free: paid plans add capacity, records and keepsakes, never ads, third-party
+  trackers or map services, and never lock away data a user already has.
+- In Teams, an employer sees business-travel day counts only, never personal trips.
+
+The reasoning and what each rule rules out are in [ADR 0017](adr/0017-product-principles.md).
 
 ## The Map
 
