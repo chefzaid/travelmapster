@@ -86,6 +86,7 @@ JSON under `/api`, described in full in [OpenAPI](api/openapi.json) and kept bac
 | `public/js/search.js`, `explore.js`, `selection.js` | Place search and "Surprise me", the Explore tab and travel ideas, and picking several countries to mark at once |
 | `public/js/account.js` | Landing page sign-up and log-in (with the honeypot field), the account menu and settings |
 | `public/js/panel.js`, `offline.js` | The side panel and the legend's filters, and registering the service worker |
+| `public/js/share-cards.js`, `passport-share.js` | Picture cards of the country count, stamps and the year's recap as SVG (pure, unit tested), and turning them into PNG to share or download |
 | `public/js/poster.js` | Map posters as vector SVG in print sizes and styles, in the Equal Earth projection (pure, unit tested) |
 | `public/js/timeline-bar.js`, `printing.js`, `ledger-store.js` | The timeline bar and journey replay, map palettes and printing, and the day ledger's overview, alerts and date history in the app |
 | `public/js/embed.js`, `map-data.js` | The embeddable map page, and loading the bundled map data, shared with the app |
