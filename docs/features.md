@@ -145,6 +145,10 @@ counting rules are in [ADR 0010](adr/0010-day-ledger.md).
   ([ADR 0017](adr/0017-product-principles.md)), and the tab states how ledger data is kept:
   places at town or country level, counting and reports on the device, and the server's copy
   never public and deleted with the account.
+- **Travel history for visa forms**: every stay abroad of the last 5 or 10 years with its entry
+  and exit days, length, purpose (tourism or personal, business, transit or residence, from the
+  visits behind it) and towns, as UK, US, Canadian and Australian visa applications ask for it;
+  the home country and planned stays are left out. A printable page or CSV.
 - **Date history**: every visit date added, changed or removed is kept, with when, even after the
   visit or place is gone.
 

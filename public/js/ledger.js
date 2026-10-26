@@ -13,6 +13,7 @@ import { meter, statusChip, countryLabel } from './ledger-parts.js';
 import { orgRulesSections } from './ledger-org.js';
 import { t, tn } from './i18n.js';
 import { whereSection } from './ledger-where.js';
+import { travelHistorySection } from './ledger-history.js';
 
 const view = { entry: '', period: '', showAllStays: false };
 const STAYS_SHOWN = 12;
@@ -456,6 +457,7 @@ export function renderLedger(container, ctx) {
         timelineSection(ctx, overview),
         whereSection(ctx, overview),
         reportSection(ctx, overview),
+        travelHistorySection(ctx, overview),
         history,
         dayRuleSection(ctx)
     );
