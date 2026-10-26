@@ -6,6 +6,7 @@ const { Passport } = require('passport');
 const { Strategy: LocalStrategy } = require('passport-local');
 const { parseCredentials, parsePasswordChange, readPassword } = require('../validation');
 const { getOrCreateToken } = require('../middleware/csrf');
+const { checkSecondStep, needsSecondStep } = require('./security');
 
 const BCRYPT_ROUNDS = 12;
 
@@ -71,7 +72,7 @@ function login(req, user) {
     });
 }
 
-function createAuthRouter({ passport, users, authLimiter, registerLimiter, metrics, logger }) {
+function createAuthRouter({ passport, users, security, config, authLimiter, registerLimiter, metrics, logger }) {
     const router = express.Router();
 
     router.post('/register', authLimiter, registerLimiter, async (req, res) => {
@@ -106,6 +107,8 @@ function createAuthRouter({ passport, users, authLimiter, registerLimiter, metri
                 return res.status(401).json({ error: 'Invalid username or password.' });
             }
             try {
+                // With two-step sign-in on, the session opens only after the code (ADR 0027).
+                if (await needsSecondStep(req, user, security)) return res.json({ secondStep: true });
                 await login(req, user);
             } catch (loginErr) {
                 return next(loginErr);
@@ -113,6 +116,17 @@ function createAuthRouter({ passport, users, authLimiter, registerLimiter, metri
             metrics.authEvents.inc({ event: 'login', outcome: 'success' });
             return res.json({ user: publicUser(user), csrfToken: getOrCreateToken(req) });
         })(req, res, next);
+    });
+
+    router.post('/login/second-step', authLimiter, async (req, res) => {
+        const { user, status, error } = await checkSecondStep(req, { config, users, security });
+        if (!user) {
+            metrics.authEvents.inc({ event: 'second_step', outcome: 'failure' });
+            return res.status(status).json({ error });
+        }
+        await login(req, user);
+        metrics.authEvents.inc({ event: 'login', outcome: 'success' });
+        return res.json({ user: publicUser(user), csrfToken: getOrCreateToken(req) });
     });
 
     router.post('/logout', (req, res, next) => {

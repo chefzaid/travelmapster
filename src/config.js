@@ -56,6 +56,8 @@ function loadConfig(env = process.env) {
         logLevel: env.LOG_LEVEL || (nodeEnv === 'test' ? 'silent' : 'info'),
         trustProxy: readTrustProxy(env.TRUST_PROXY),
         publicUrl: readPublicUrl(env.PUBLIC_URL),
+        // Two-step sign-in secrets are encrypted under this (ADR 0027).
+        totpKey: env.TOTP_ENCRYPTION_KEY || sessionSecret || DEV_SESSION_SECRET,
         session: {
             secret: sessionSecret || DEV_SESSION_SECRET,
             cookieName: env.SESSION_COOKIE_NAME || 'travelmapster.sid',

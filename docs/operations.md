@@ -76,6 +76,7 @@ live is still open ([roadmap](../TODO.md)).
 | A traveler is locked out by 429 | Wait for the window, or clear their counters: `DELETE FROM rate_limits WHERE key LIKE '%<client-ip>'` in the `travelmapster` database. |
 | Import returns 413 | The file exceeds the JSON limit (3 MB) or the Traefik limit (4 MiB). |
 | Everyone was logged out | `SESSION_SECRET` changed or the `sessions` table was cleared. |
+| Two-step codes are refused for everyone | The key that encrypts the secrets changed (`TOTP_ENCRYPTION_KEY`, or `SESSION_SECRET` when it is not set). Restore it; meanwhile travelers sign in with a recovery code or a passkey. |
 | A manual `kubectl` change reverts | Argo CD self-heal; change the manifests in Git instead. |
 | `02-deploy` times out | Inspect the Application's sync status and pod events (image pull uses `travelmapster-registry-auth`). |
 | GitHub and GitLab differ | Run the "Sync GitHub and GitLab" workflow on GitHub; see [delivery](deployment.md#delivery-flow). |

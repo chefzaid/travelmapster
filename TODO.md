@@ -116,7 +116,7 @@ The field splits into scratch-map atlases (Been, Visited, Skratch), travel journ
 
 - [x] Guest mode: visitors without an account can pin places and use every feature, with everything saved in the browser's local storage; signing in stays optional. Today a signed-out visitor's changes to the demo map are never saved ([ADR 0011](docs/adr/0011-public-pages.md)), so this needs an ADR.
 - [ ] Email address with verification and password reset; today a forgotten password locks the user out for good. Needs a transactional email provider ([ADR](docs/architecture.md#adr-process): new external dependency). *(waiting: see Needs Input › Transactional email provider)*
-- [ ] Passkeys (WebAuthn) and optional TOTP two-factor sign-in, required for Teams administrators.
+- [x] Passkeys (WebAuthn) and optional TOTP two-factor sign-in, required for Teams administrators (requiring them follows with the Teams tier).
 - [x] Full account export as one archive (places, visits, trips, albums, ledger) plus GeoJSON and KML export of places; the "record you can keep" promise depends on it.
 - [ ] Terms of service, privacy policy and a GDPR access request flow, published before the first paid plan. *(waiting: see Needs Input › Legal texts)*
 - [x] Sign-up abuse protection without third-party captchas (honeypot field and per-IP limits on registration).

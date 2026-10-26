@@ -12,6 +12,9 @@ erDiagram
     users ||--o| ledger_settings : counts
     users ||--o{ visit_changes : "date history"
     users ||--o{ trips : plans
+    users ||--o{ passkeys : "signs in with"
+    users ||--o| totp_secrets : "two-step"
+    users ||--o{ recovery_codes : "recovers with"
     users {
         bigint id PK
         text username "unique, case-insensitive"
@@ -92,6 +95,9 @@ erDiagram
 | `ledger_settings` | One row per traveler once they save: `day_rule`, and JSON arrays `rules` (at most 20 stay rules and thresholds, each with an id, name, 1–80 three-letter country codes, day counts and a warning margin) and `planned` (at most 30 stays with a country and first and last day). Validated in `ledger-validation.js`. |
 | `visit_changes` | Append-only history of visit dates written by triggers: old and new `start_date`, `end_date` and `ongoing` of each added, changed or removed visit, with the place name and time. Kept after the visit or place is removed. |
 | `trips` | `title` 1–120 and `destination` 1–160 characters, optional `start_date`. `plan` is a JSON array of 1–30 days, each with `morning`, `afternoon` and `evening` text of up to 500 characters. `stops` is `[]` for a trip to its one destination, or a JSON list of 2–10 stops in order, each with a `destination` (1–160 characters) and its `days` (1–30); the first stop's destination is also the trip's. `packing` is a JSON list of at most 200 items (`item` 1–80 characters, `packed`). `budget` is `{}` or `{ currency, planned, rates, expenses }`: ISO 4217 codes, an optional planned amount, at most 30 exchange rates (units of `currency` for one unit of another) and 300 expenses (`label` 1–80 characters, `amount` 0–1,000,000,000, `currency`, `category` `transport`, `stay`, `food`, `activities` or `other`). An update that leaves out the stops, the packing list or the budget keeps the stored ones. |
+| `passkeys` | WebAuthn credentials ([ADR 0027](adr/0027-passkeys-and-two-step-sign-in.md)): the credential `id` (base64url), the public key, the signature `counter`, `transports`, a `name` of 1–60 characters, and when it was added and last used. At most 10 per account. |
+| `totp_secrets` | One per account: the two-step secret, encrypted (AES-256-GCM); `enabled_at` once the first code matched; `last_step`, the latest time step used, so a code works once. |
+| `recovery_codes` | SHA-256 hashes of the ten recovery codes, with `used_at` once spent. |
 | `sessions` | Server-side sessions for `connect-pg-simple`; expired rows are pruned every 15 minutes. |
 | `rate_limits` | Unlogged rate-limit counters per limiter and client IP, shared by replicas; expired rows are swept every 10 minutes. |
 | `geocoder_throttle` | One row with the earliest start time of the next Nominatim request. |
@@ -219,4 +225,5 @@ category, latest travel date and visit dates of each place, and whether journey 
 drawn between them, never the map palette, the home country, the notes or
 photo links of places or visits, ratings, tags, emoji or wishlist plans, nor anything of the places hidden from it, whether a stay is still going on, ledger settings or date history
 ([security](security.md#privacy)). Deleting an account removes the user, their
-places, visits, ledger settings, date history, trips and sessions at once.
+places, visits, ledger settings, date history, trips, passkeys, two-step secrets, recovery codes
+and sessions at once.

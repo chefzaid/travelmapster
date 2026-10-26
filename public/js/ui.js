@@ -113,12 +113,13 @@ function pickerField(field, id) {
 /**
  * Opens a modal containing a form; resolves with FormData values or null when cancelled.
  * Fields of type 'choices' resolve to the list of checked values.
- * @param {{ title: string, message?: string, fields: Record<string, any>[], submitLabel?: string, danger?: boolean }} options
+ * `content` goes between the message and the fields, such as a picture.
+ * @param {{ title: string, message?: string, content?: Node | Node[], fields: Record<string, any>[], submitLabel?: string, danger?: boolean }} options
  * @returns {Promise<Record<string, any> | null>}
  */
-export function formDialog({ title, message, fields, submitLabel = 'Save', danger = false }) {
+export function formDialog({ title, message, content, fields, submitLabel = 'Save', danger = false }) {
     return new Promise(resolve => {
-        const form = h('form', { method: 'dialog', class: 'dialog-body' }, h('h3', {}, title), message ? h('p', {}, message) : null);
+        const form = h('form', { method: 'dialog', class: 'dialog-body' }, h('h3', {}, title), message ? h('p', {}, message) : null, content);
         for (const field of fields) {
             const id = `dialog-${field.name}`;
             if (field.type === 'choices') {
@@ -155,7 +156,9 @@ export function formDialog({ title, message, fields, submitLabel = 'Save', dange
                     placeholder: field.placeholder,
                     minlength: field.minlength,
                     maxlength: field.maxlength,
-                    autocomplete: field.autocomplete
+                    autocomplete: field.autocomplete,
+                    inputmode: field.inputmode,
+                    pattern: field.pattern
                 });
             }
             form.append(h('label', { class: 'field', for: id }, h('span', {}, field.label), control, field.hint ? h('small', {}, field.hint) : null));

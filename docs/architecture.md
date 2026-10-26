@@ -202,5 +202,6 @@ number (`NNNN-short-title.md`) and the template below. Statuses: **Proposed**, *
 - [ADR 0024: Overseas territories outside the Schengen area are territories of their own](adr/0024-overseas-territories.md)
 - [ADR 0025: Imports from photos and location history stay in the browser](adr/0025-imports-from-photos-and-location-history.md)
 - [ADR 0026: Guest mode, a map kept in the browser](adr/0026-guest-mode.md)
+- [ADR 0027: Passkeys and two-step sign-in](adr/0027-passkeys-and-two-step-sign-in.md)
 
 Superseded: [ADR 0007: Draw towns on a canvas layer](adr/0007-canvas-towns.md).

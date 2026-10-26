@@ -1,6 +1,8 @@
-// Signing up and in from the landing page, the account menu, settings, password change,
-// account deletion and sharing.
+// Signing up and in from the landing page (with a passkey or a second step, ADR 0027), the
+// account menu, settings, password change, account deletion and sharing.
 import { h, $, $all, fill, toast, formDialog, downloadFile } from './ui.js';
+import { passkeysSupported, usePasskey } from './webauthn.js';
+import { openSecurity } from './security.js';
 import { accountArchive } from './archive.js';
 import { SCHENGEN_RULE } from './days.js';
 import { COUNTRY_LISTS, countedCountries } from './lists.js';
@@ -49,12 +51,85 @@ function setAuthMode(mode) {
     $('#auth-password').autocomplete = mode === 'login' ? 'current-password' : 'new-password';
     $('#auth-hint').hidden = mode === 'login';
     $('#auth-error').hidden = true;
+    $('#passkey-login').hidden = mode !== 'login' || !passkeysSupported();
+    showSecondStep(false);
+}
+
+// ---------------------------------------------------------------- second step and passkeys
+
+let recoveryMode = false;
+
+function showSecondStep(show) {
+    $('#auth-form').hidden = show;
+    $('#second-step-form').hidden = !show;
+    $('#second-step-error').hidden = true;
+    $('#second-step-code').value = '';
+    if (show) $('#second-step-code').focus();
+}
+
+function setRecoveryMode(on) {
+    recoveryMode = on;
+    $('#second-step-intro').textContent = on ? 'Enter one of your recovery codes. Each works once.' : 'Enter the 6-digit code from your authenticator app.';
+    $('#second-step-label').textContent = on ? 'Recovery code' : 'Code';
+    $('#second-step-code').inputMode = on ? 'text' : 'numeric';
+    $('#second-step-code').autocomplete = on ? 'off' : 'one-time-code';
+    $('#second-step-recovery').textContent = on ? 'Use a code from the app instead' : 'Use a recovery code instead';
+    $('#second-step-code').focus();
+}
+
+async function finishSignIn(ctx, message) {
+    if (AUTH_HASHES[location.hash]) history.replaceState(null, '', location.pathname + location.search);
+    await ctx.startSession();
+    toast(message, { tone: 'success' });
+}
+
+function setupSecondStep(ctx) {
+    $('#second-step-recovery').addEventListener('click', () => setRecoveryMode(!recoveryMode));
+    $('#second-step-cancel').addEventListener('click', () => {
+        setRecoveryMode(false);
+        showSecondStep(false);
+        $('#auth-password').focus();
+    });
+    $('#second-step-form').addEventListener('submit', async event => {
+        event.preventDefault();
+        const answer = $('#second-step-code').value.trim();
+        if (!answer) return;
+        const submit = $('#second-step-submit');
+        submit.disabled = true;
+        try {
+            const user = await ctx.api.secondStep(recoveryMode ? { recoveryCode: answer } : { code: answer });
+            setRecoveryMode(false);
+            showSecondStep(false);
+            await finishSignIn(ctx, `Welcome back, ${user.username}!`);
+        } catch (error) {
+            $('#second-step-error').textContent = error.message;
+            $('#second-step-error').hidden = false;
+            // The attempt expired: back to the password.
+            if (error.status === 401) showSecondStep(false);
+        } finally {
+            submit.disabled = false;
+        }
+    });
+    $('#passkey-login').addEventListener('click', async () => {
+        const errorBox = $('#auth-error');
+        errorBox.hidden = true;
+        try {
+            const response = await usePasskey(await ctx.api.passkeyLoginOptions());
+            if (!response) return;
+            const user = await ctx.api.passkeyLogin(response);
+            await finishSignIn(ctx, `Welcome back, ${user.username}!`);
+        } catch (error) {
+            errorBox.textContent = error.message;
+            errorBox.hidden = false;
+        }
+    });
 }
 
 export function setupAuth(ctx) {
     setupLanding();
     $('#tab-login').addEventListener('click', () => setAuthMode('login'));
     $('#tab-register').addEventListener('click', () => setAuthMode('register'));
+    setupSecondStep(ctx);
     setAuthMode('login');
 
     $('#auth-form').addEventListener('submit', async event => {
@@ -75,11 +150,14 @@ export function setupAuth(ctx) {
                 // The hidden field stays empty for people; sign-up bots fill it in.
                 await ctx.api.register(username, password, $('#auth-website').value);
             }
-            await ctx.api.login(username, password);
+            const result = await ctx.api.login(username, password);
             $('#auth-password').value = '';
-            if (AUTH_HASHES[location.hash]) history.replaceState(null, '', location.pathname + location.search);
-            await ctx.startSession();
-            toast(authMode === 'register' ? 'Welcome aboard! Your map is ready. 🗺️' : `Welcome back, ${username}!`, { tone: 'success' });
+            // Two-step sign-in is on: the session opens after the code.
+            if (result?.secondStep) {
+                showSecondStep(true);
+                return;
+            }
+            await finishSignIn(ctx, authMode === 'register' ? 'Welcome aboard! Your map is ready. 🗺️' : `Welcome back, ${username}!`);
         } catch (error) {
             errorBox.textContent = error.message;
             errorBox.hidden = false;
@@ -245,6 +323,7 @@ export function setupAccountMenu(ctx) {
     });
     menuItem('#settings-btn', openSettings);
     menuItem('#password-btn', changePassword);
+    menuItem('#security-btn', openSecurity);
     menuItem('#export-btn', downloadArchive);
     menuItem('#delete-account-btn', deleteAccount);
 

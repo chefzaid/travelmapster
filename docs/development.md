@@ -51,6 +51,7 @@ startup. The compose database also creates `travelmapster_test` for the
 | `DATABASE_POOL_MAX` | `10` | Connections per process |
 | `DATABASE_SSL`, `DATABASE_SSL_REJECT_UNAUTHORIZED` | off, `true` | TLS to PostgreSQL |
 | `SESSION_SECRET` | development value | Required, 32+ characters, when `NODE_ENV=production` |
+| `TOTP_ENCRYPTION_KEY` | `SESSION_SECRET` | Optional key that encrypts two-step sign-in secrets ([ADR 0027](adr/0027-passkeys-and-two-step-sign-in.md)); set it to rotate `SESSION_SECRET` without affecting them |
 | `SESSION_MAX_AGE_HOURS` | `168` | Rolling session lifetime |
 | `SESSION_COOKIE_NAME`, `SESSION_SECURE_COOKIE` | `travelmapster.sid`, production only | |
 | `PORT`, `METRICS_PORT` | `3000`, `9464` | |
