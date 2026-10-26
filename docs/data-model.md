@@ -171,6 +171,7 @@ changes compatible with the previous release while both may run during a rollout
 | `countries.geojson` | 1:50m country borders simplified to 0.02°, with name, aliases, continent, population and label placement |
 | `cities.json` | The base list loaded with the page: about 4,900 places shown by zoom 6, as objects with name, country, capital flag, population, `minZoom` and coordinates |
 | `cities/index.json`, `cities/<tile>.json` | About 220,000 smaller places in region tiles of up to 4,000, as rows `[name, countryId, capital, population, minZoom, lat, lng]` |
+| `*.br` beside each file | The same file compressed with Brotli at the best quality (11.5 MB down to 3.1 MB), sent to browsers that accept it |
 
 Every GeoNames place of 500+ people is included, except city districts, historical and
 abandoned places. `minZoom` is the first half zoom step at which the place's dot and name fit

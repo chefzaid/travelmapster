@@ -24,6 +24,7 @@ PostgreSQL, including sessions, so any replica can serve any request.
 | `src/server.js` | Startup: config, migrations with retry, HTTP and metrics servers, graceful shutdown |
 | `src/app.js` | Express wiring: probes, logging, metrics, security headers, pages and static files, sessions, rate limits, CSRF, routers, error handling |
 | `src/assets.js` | Release fingerprint and the HTML pages with their asset links rewritten |
+| `src/precompressed.js` | Brotli for static text files: map data from its `.br` copies on disk, scripts and styles compressed once and kept in memory |
 | `src/seo.js` | `robots.txt` and the sitemap of public pages ([ADR 0011](adr/0011-public-pages.md)) |
 | `src/config.js` | Validated configuration from environment variables ([reference](development.md#configuration)) |
 | `src/routes/` | `auth`, `markers` (places and their visits), `visits`, `ledger` (day-ledger settings and date history), `trips`, `profile` (incl. public maps), `export` (the account archive), `places` and `geocode` routers |
