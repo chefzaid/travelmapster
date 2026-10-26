@@ -31,6 +31,8 @@ const state = {
     stats: null,
     index: null,
     cities: [],
+    // The capital cities of the map data, for the capitals collection.
+    capitals: [],
     publicUser: null,
     // The shared map owner's country list, so visitors see the same counts, and whether they
     // let visitors see journey lines (ADR 0016).
@@ -67,6 +69,7 @@ async function loadMapData() {
     ]);
     state.index = createCountryIndex(countries);
     state.cities = cities;
+    state.capitals = cities.filter(city => city.capital);
 }
 
 // The traveler's home country (ADR 0014); the demo traveler has one too. Public maps never share it.
@@ -115,7 +118,7 @@ function setDetailFilter(changes) {
 
 function refresh({ celebrateNew = true } = {}) {
     state.stats = computeStats(state.markers, state.index, {
-        trips: state.trips.length, homeId: homeCountryId(), countryList: countryListId()
+        trips: state.trips.length, homeId: homeCountryId(), countryList: countryListId(), capitals: state.capitals
     });
     applyFilters();
     $('#legend-visited').textContent = state.stats.visitedCountries;
