@@ -54,16 +54,20 @@ export function tripTemplate(trip) {
 // ---------------------------------------------------------------- day ledger
 
 /**
- * The country a destination such as "Lisbon, Portugal", "Japan" or "Kyoto" lies in, or null:
- * a country named last, then the whole destination as a country, then a town of that name.
+ * Where a destination such as "Japan", "Lisbon, Portugal" or "Kyoto" is: `{ country }` when it
+ * names a country, `{ city, countryId }` for a town of that name (in the country named after
+ * it, if any), else `{ country }` for a country named last; null when nothing matches.
  */
-export function destinationCountry(destination, { findCountry, findCity }) {
+export function resolveDestination(destination, { findCountry, findCity }) {
     const parts = String(destination ?? '').split(',').map(part => part.trim()).filter(Boolean);
-    for (const name of [parts.at(-1), parts.join(', ')]) {
-        const country = name ? findCountry(name) : null;
-        if (country) return country.id;
-    }
-    return parts.length ? findCity(parts.join(', '))?.countryId || null : null;
+    if (!parts.length) return null;
+    const whole = parts.join(', ');
+    const country = findCountry(whole);
+    if (country) return { country, countryId: country.id };
+    const city = findCity(whole);
+    if (city) return { city, countryId: city.countryId };
+    const last = parts.length > 1 ? findCountry(parts.at(-1)) : null;
+    return last ? { country: last, countryId: last.id } : null;
 }
 
 /** The id of the ledger's planned stay that follows a trip. */

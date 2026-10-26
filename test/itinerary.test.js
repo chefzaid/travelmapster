@@ -93,18 +93,19 @@ test('trip text, end dates and file names', async () => {
 });
 
 test('a trip destination resolves to a country, then becomes a planned stay that follows the trip', async () => {
-    const { destinationCountry, tripPlannedStay, syncPlannedStays, tripPlanId } = await load();
+    const { resolveDestination, tripPlannedStay, syncPlannedStays, tripPlanId } = await load();
     const countries = { portugal: { id: 'PRT' }, japan: { id: 'JPN' } };
-    const towns = { kyoto: { countryId: 'JPN' } };
+    const towns = { kyoto: { name: 'Kyoto', countryId: 'JPN' }, 'lisbon, portugal': { name: 'Lisbon', countryId: 'PRT' } };
     const lookups = {
         findCountry: name => countries[name.toLowerCase()] || null,
         findCity: name => towns[name.toLowerCase()] || null
     };
-    assert.equal(destinationCountry('Lisbon, Portugal', lookups), 'PRT');
-    assert.equal(destinationCountry('Japan', lookups), 'JPN');
-    assert.equal(destinationCountry('Kyoto', lookups), 'JPN');
-    assert.equal(destinationCountry('Atlantis', lookups), null);
-    assert.equal(destinationCountry('', lookups), null);
+    assert.deepEqual(resolveDestination('Lisbon, Portugal', lookups), { city: towns['lisbon, portugal'], countryId: 'PRT' });
+    assert.deepEqual(resolveDestination('Japan', lookups), { country: countries.japan, countryId: 'JPN' });
+    assert.deepEqual(resolveDestination('Kyoto', lookups), { city: towns.kyoto, countryId: 'JPN' });
+    assert.deepEqual(resolveDestination('Algarve coast, Portugal', lookups), { country: countries.portugal, countryId: 'PRT' });
+    assert.equal(resolveDestination('Atlantis', lookups), null);
+    assert.equal(resolveDestination(' , ', lookups), null);
 
     assert.equal(tripPlanId(trip), 'trip-7');
     const stay = tripPlannedStay(trip, 'PRT');

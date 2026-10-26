@@ -159,6 +159,9 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   destination ("Lisbon, Portugal", "Japan" or a town such as "Kyoto"), so the Ledger tab checks
   it against every stay rule and threshold. The planned stay follows the trip when its dates
   change and goes when the trip is deleted.
+- **Record as a visit**: once a trip has begun, its destination gets a visit with the trip's
+  dates, after the traveler confirms: on the saved town or country (a wishlist place becomes
+  "been there") or on a new place. The trip then shows it is recorded.
 
 ## Passport
 
