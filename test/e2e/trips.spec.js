@@ -183,3 +183,55 @@ test('a trip goes to several places, each planned in the ledger and recorded as 
     await expect(page.locator('.trip-card')).toContainText('Lisbon, Portugal → Madrid, Spain · 4 days');
     expect(errors).toEqual([]);
 });
+
+// Drags with the mouse in small steps onto the top of the target, which must be in view with
+// the source once the source is centered.
+async function dragOnto(page, source, target) {
+    await source.evaluate(element => element.scrollIntoView({ block: 'center' }));
+    const from = await source.boundingBox();
+    const to = await target.boundingBox();
+    await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(from.x + from.width / 2 + 5, from.y + from.height / 2 + 5, { steps: 3 });
+    await page.mouse.move(to.x + to.width / 2, to.y + Math.min(20, to.height / 2), { steps: 8 });
+    await page.mouse.up();
+}
+
+test('the open trip shows its route on the map, and days and plans move by dragging', async ({ page }) => {
+    const errors = trackErrors(page);
+    await signUp(page, `e2e_route_${Date.now()}`);
+    await page.click('#tab-trips');
+    await page.getByRole('button', { name: 'Plan my first trip' }).click();
+    await page.getByLabel('Where to?').fill('Lisbon, Portugal');
+    await page.getByLabel('How many days?').fill('2');
+    await page.getByRole('button', { name: 'Create trip' }).click();
+    const trips = page.locator('#trips-tab');
+    await trips.getByRole('button', { name: '＋ Add another destination' }).click();
+    await trips.getByLabel('Stop 2', { exact: true }).fill('Madrid, Spain');
+    await trips.getByLabel('Stop 2', { exact: true }).dispatchEvent('change');
+
+    // Numbered stops on the map, the route between them, and nothing once the trip is closed.
+    const mapData = source => page.evaluate(id => globalThis.document.getElementById('map').travelMap.getSource(id).serialize().data.features.length, source);
+    await expect.poll(() => mapData('itinerary-stops')).toBe(2);
+    await expect.poll(() => mapData('itinerary')).toBe(1);
+    await trips.locator('.day-card').nth(2).getByRole('button', { name: '📍 Madrid, Spain' }).click();
+
+    // Plans move between days with the arrows or by dragging, and swap between slots.
+    const morning = day => trips.locator('.day-card').nth(day).getByPlaceholder('Morning plans…');
+    await morning(0).fill('Belém tower');
+    await morning(1).fill('Sintra');
+    await trips.getByRole('button', { name: 'Move day 1 later' }).click();
+    await expect(morning(1)).toHaveValue('Belém tower');
+    await expect(morning(0)).toHaveValue('Sintra');
+    await dragOnto(page, trips.locator('.day-card').nth(1).locator('.drag-handle'), trips.locator('.day-card').nth(0).locator('.slot', { hasText: 'Evening' }));
+    await expect(morning(0)).toHaveValue('Belém tower');
+    const evening = trips.locator('.day-card').nth(0).getByPlaceholder('Evening plans…');
+    await dragOnto(page, trips.locator('.day-card').nth(0).locator('.slot', { hasText: 'Morning' }).locator('span[draggable]'),
+        trips.locator('.day-card').nth(0).locator('.slot', { hasText: 'Evening' }));
+    await expect(evening).toHaveValue('Belém tower');
+    await expect(morning(0)).toHaveValue('');
+
+    await page.click('#tab-places');
+    await expect.poll(() => mapData('itinerary-stops')).toBe(0);
+    expect(errors).toEqual([]);
+});

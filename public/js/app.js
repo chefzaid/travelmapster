@@ -234,6 +234,8 @@ const TAB_RENDERERS = {
 
 function selectTab(name) {
     state.activeTab = name;
+    // The open trip's route shows only on the Trips tab.
+    if (name !== 'trips') travelMap?.setItinerary([]);
     for (const tab of $all('.tabs [role="tab"]')) {
         const selected = tab.id === `tab-${name}`;
         tab.setAttribute('aria-selected', String(selected));
@@ -294,6 +296,7 @@ function showSignedOut() {
     stopSelecting(context);
     setTimelineOpen(context, false);
     travelMap.closePopup();
+    travelMap.setItinerary([]);
     refresh({ celebrateNew: false });
     setView('welcome');
     if (AUTH_HASHES[location.hash]) openAuth(AUTH_HASHES[location.hash]);

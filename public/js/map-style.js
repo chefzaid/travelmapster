@@ -202,7 +202,9 @@ export function buildStyle(theme, countries, labels) {
             },
             cities: { type: 'geojson', data: EMPTY },
             journeys: { type: 'geojson', data: EMPTY },
-            'journey-head': { type: 'geojson', data: EMPTY }
+            'journey-head': { type: 'geojson', data: EMPTY },
+            itinerary: { type: 'geojson', data: EMPTY },
+            'itinerary-stops': { type: 'geojson', data: EMPTY }
         },
         layers: [
             // No background layer: the dotted ocean is the container's CSS background.
@@ -274,6 +276,30 @@ export function buildStyle(theme, countries, labels) {
             {
                 id: 'journey-head', type: 'circle', source: 'journey-head',
                 paint: { 'circle-radius': 7, 'circle-color': theme.journey, 'circle-stroke-color': theme.journeyCasing, 'circle-stroke-width': 3 }
+            },
+            // The open trip's route: a solid line between its numbered stops, the chosen one bigger.
+            {
+                id: 'itinerary-casing', type: 'line', source: 'itinerary', layout: { 'line-join': 'round', 'line-cap': 'round' },
+                paint: { 'line-color': theme.journeyCasing, 'line-width': 8, 'line-opacity': 0.9 }
+            },
+            {
+                id: 'itinerary-route', type: 'line', source: 'itinerary', layout: { 'line-join': 'round', 'line-cap': 'round' },
+                paint: { 'line-color': theme.capital, 'line-width': 4 }
+            },
+            {
+                id: 'itinerary-stops', type: 'circle', source: 'itinerary-stops',
+                paint: {
+                    'circle-radius': ['case', ['get', 'focus'], 15, 11], 'circle-color': theme.capital,
+                    'circle-stroke-color': theme.journeyCasing, 'circle-stroke-width': 3
+                }
+            },
+            {
+                id: 'itinerary-numbers', type: 'symbol', source: 'itinerary-stops',
+                layout: {
+                    'text-field': ['get', 'n'], 'text-font': ['Fredoka SemiBold'], 'text-size': 13,
+                    'text-allow-overlap': true, 'text-ignore-placement': true
+                },
+                paint: { 'text-color': '#fff' }
             },
             {
                 id: 'atlas-labels', type: 'symbol', source: 'atlas', filter: ['==', ['geometry-type'], 'Point'],

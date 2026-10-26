@@ -97,3 +97,18 @@ test('editing stops keeps the plan\'s days and the stops\' days in step', async 
     assert.deepEqual(single.stops, []);
     assert.equal(single.plan.length, 4);
 });
+
+test('days move to another position and slots swap their plans', async () => {
+    const { moveDay, swapSlots } = await load('trip-stops.js');
+    const draft = tour();
+    assert.equal(moveDay(draft, 2, 0), true);
+    assert.deepEqual(draft.plan.map(item => item.morning), ['Prado', 'Belém', 'Sintra']);
+    assert.deepEqual(draft.stops, tour().stops, 'stops keep their days');
+    for (const [from, to] of [[1, 1], [-1, 0], [0, 3]]) assert.equal(moveDay(draft, from, to), false);
+
+    assert.equal(swapSlots(draft, { day: 0, slot: 'morning' }, { day: 2, slot: 'evening' }), true);
+    assert.deepEqual([draft.plan[0].morning, draft.plan[2].evening], ['', 'Prado']);
+    assert.equal(swapSlots(draft, { day: 0, slot: 'morning' }, { day: 0, slot: 'morning' }), false);
+    assert.equal(swapSlots(draft, { day: 0, slot: 'night' }, { day: 1, slot: 'morning' }), false);
+    assert.equal(swapSlots(draft, { day: 9, slot: 'morning' }, { day: 1, slot: 'morning' }), false);
+});

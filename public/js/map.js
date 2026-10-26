@@ -7,7 +7,7 @@ import {
     DEFAULT_VIEW, MAX_ZOOM, PATTERNS, STATUS_LAYERS, ZOOM_OFFSET, arrowImage, buildStyle, dataUrl, dotImage, lngLat,
     onlyCountries, patternImage, readTheme, toMapZoom
 } from './map-style.js';
-import { createJourneyLines } from './map-journeys.js';
+import { createItinerary, createJourneyLines } from './map-journeys.js';
 
 /**
  * The travel map in `element`, drawing `index` countries and `cities`; the callbacks get clicks
@@ -373,6 +373,7 @@ export function createTravelMap(element, { index, cities, onCountryClick, onCity
     // ---- journey lines and their replay (ADR 0016)
 
     const journeys = createJourneyLines({ map, ready, afterMove, safeArea });
+    const itinerary = createItinerary({ map, ready, afterMove, safeArea });
 
     // ---- theme, palettes and printing
 
@@ -391,6 +392,7 @@ export function createTravelMap(element, { index, cities, onCountryClick, onCity
                 applySelection();
                 updateCities();
                 journeys.redraw();
+                itinerary.redraw();
             });
         });
     }
@@ -435,6 +437,7 @@ export function createTravelMap(element, { index, cities, onCountryClick, onCity
 
     return {
         map, setPins, setCountryStatus, setSelection, flyToCountry, flyTo, flyToView, pulseCountry, openPopup, closePopup,
-        setJourneys: journeys.setJourneys, replayJourneys: journeys.replayJourneys, refreshTheme, snapshot
+        setJourneys: journeys.setJourneys, replayJourneys: journeys.replayJourneys, setItinerary: itinerary.setItinerary,
+        refreshTheme, snapshot
     };
 }

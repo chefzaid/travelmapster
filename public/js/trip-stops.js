@@ -1,7 +1,8 @@
-// Editing a trip's stops in its draft: adding and removing stops, changing how many days each
-// lasts, and adding or removing days, keeping the plan's days and the stops' days in step. The
-// trip's destination stays its first stop's. Pure, unit tested in Node.
-import { emptyDay, tripStops } from './itinerary.js';
+// Editing a trip's days and stops in its draft: adding and removing stops, changing how many
+// days each lasts, adding, removing and reordering days, and moving plans between slots, keeping
+// the plan's days and the stops' days in step. The trip's destination stays its first stop's.
+// Pure, unit tested in Node.
+import { SLOTS, emptyDay, tripStops } from './itinerary.js';
 
 export const MAX_DAYS = 30;
 export const MAX_STOPS = 10;
@@ -68,4 +69,26 @@ export function removeTripDay(draft, day) {
     draft.plan.splice(day, 1);
     stop.days -= 1;
     if (draft.stops?.length) setStops(draft, stops.filter(item => item.days > 0));
+}
+
+/**
+ * Moves a day's plans to another position; the days after it shift. Stops keep their days, so a
+ * day's plans can move to another stop.
+ */
+export function moveDay(draft, from, to) {
+    const { length } = draft.plan;
+    if (from === to || from < 0 || to < 0 || from >= length || to >= length) return false;
+    const [day] = draft.plan.splice(from, 1);
+    draft.plan.splice(to, 0, day);
+    return true;
+}
+
+/** Swaps the plans of two slots, such as a day's morning and another day's evening. */
+export function swapSlots(draft, from, to) {
+    const slots = new Set(SLOTS.map(([slot]) => slot));
+    const a = draft.plan[from.day];
+    const b = draft.plan[to.day];
+    if (!a || !b || !slots.has(from.slot) || !slots.has(to.slot) || (from.day === to.day && from.slot === to.slot)) return false;
+    [a[from.slot], b[to.slot]] = [b[to.slot], a[from.slot]];
+    return true;
 }

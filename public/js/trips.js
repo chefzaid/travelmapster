@@ -8,7 +8,8 @@ import {
     tripPlannedStays, tripRoute, tripStops, tripTemplate
 } from './itinerary.js';
 import { completeTrip, destinationPlace, tripRecorded } from './trip-visits.js';
-import { addTripDay, removeTripDay } from './trip-stops.js';
+import { addTripDay } from './trip-stops.js';
+import { dayCards } from './trip-days.js';
 import { localToday } from './days.js';
 import { openPrintView, printTable } from './print-view.js';
 import { budgetSection, packingSection, stopsSection } from './trip-extras.js';
@@ -286,35 +287,13 @@ function renderEditor(container, ctx, trip) {
         rerender();
     };
 
-    const days = draft.plan.map((day, i) => h('section', { class: 'day-card' },
-        h('header', {},
-            h('h3', {}, `Day ${i + 1}`),
-            draft.startDate ? h('small', {}, dayDate(draft.startDate, i)) : null,
-            draft.stops?.length ? h('small', { class: 'day-stop' }, `📍 ${stopOfDay(draft, i).destination || 'New stop'}`) : null,
-            draft.plan.length > 1 ? h('button', {
-                type: 'button',
-                class: 'icon-btn',
-                'aria-label': `Remove day ${i + 1}`,
-                title: 'Remove day',
-                onclick: () => {
-                    removeTripDay(draft, i);
-                    rerender();
-                }
-            }, '✕') : null
-        ),
-        SLOTS.map(([slot, icon, label]) => h('label', { class: 'slot' },
-            h('span', {}, h('span', { 'aria-hidden': 'true' }, icon), ` ${label}`),
-            h('textarea', {
-                rows: 2,
-                maxlength: 500,
-                placeholder: `${label} plans…`,
-                oninput: event => {
-                    day[slot] = event.target.value;
-                    markDirty();
-                }
-            }, day[slot])
-        ))
-    ));
+    // A day's stop on the map, or a word when it is no known place.
+    const showStop = i => {
+        const point = showItinerary(ctx, draft, tripStops(draft).findIndex(stop => i >= stop.firstDay && i < stop.firstDay + stop.days));
+        if (point) ctx.map.flyTo(point.lat, point.lng);
+        else toast(`Which place is ${stopOfDay(draft, i).destination || 'this stop'}? Name a country or a town, such as “Lisbon, Portugal”.`, { tone: 'error' });
+    };
+    const days = dayCards(draft, { rerender, markDirty, showStop });
 
     fill(container,
         h('div', { class: 'section-head' },
@@ -400,10 +379,26 @@ function renderEditor(container, ctx, trip) {
             }, '🗑️ Delete trip')
         )
     );
+    showItinerary(ctx, draft);
+}
+
+// The stops of the open trip on the map, where they are known places, with `focus` bigger.
+function showItinerary(ctx, trip, focus = -1) {
+    const points = tripStops(trip).map(stop => {
+        const where = destinationPlace(ctx, stop.destination);
+        if (where?.city) return { lat: where.city.lat, lng: where.city.lng };
+        return where ? { lat: where.country.label[0], lng: where.country.label[1] } : null;
+    });
+    const known = points.filter(Boolean);
+    ctx.map?.setItinerary(known, focus < 0 || !points[focus] ? -1 : known.indexOf(points[focus]));
+    return points[focus] || null;
 }
 
 export function renderTrips(container, ctx) {
     const trip = ctx.state.trips.find(item => item.id === openTripId);
     if (trip) renderEditor(container, ctx, trip);
-    else renderList(container, ctx);
+    else {
+        ctx.map?.setItinerary([]);
+        renderList(container, ctx);
+    }
 }

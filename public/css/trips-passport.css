@@ -71,7 +71,12 @@
 
 .day-card header h3 { margin: 0; }
 .day-card header small { color: var(--muted); font-weight: 700; }
-.day-card header .icon-btn { margin-left: auto; }
+.day-card header { flex-wrap: wrap; }
+.day-actions { display: flex; gap: 2px; margin-left: auto; }
+.drag-handle { color: var(--muted); font-size: 1.1rem; cursor: grab; user-select: none; }
+.slot > span[draggable] { cursor: grab; }
+.day-card.drop-target,
+.slot.drop-target { outline: 3px dashed var(--primary-strong); outline-offset: 2px; }
 
 .slot {
     display: grid;
@@ -97,7 +102,19 @@ fieldset.trip-stops { padding: 8px 10px; border: 2px solid var(--ink); border-ra
 .stop .stop-destination { flex: 1; min-width: 0; }
 .stop .rate { margin: 0; }
 .stop .rate input[type='number'] { flex: 0 0 4.5rem; }
-.day-card header .day-stop { font-weight: 800; }
+.day-card header .day-stop {
+    min-height: 32px;
+    padding: 0 6px;
+    color: var(--muted);
+    background: none;
+    border: 0;
+    border-radius: 8px;
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+.day-card header .day-stop:hover { color: var(--ink); text-decoration: underline; }
 
 /* Packing list and budget */
 .trip-extra {
