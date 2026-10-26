@@ -272,7 +272,7 @@ export function budgetSection(draft, { rerender, markDirty, trips }) {
     ensureCurrencyList();
     if (!budget.currency) {
         let currency = homeCurrency(trips);
-        return section('budget', '🧾 Budget', null,
+        return section('budget', t('🧾 Budget'), null,
             h('p', { class: 'hint' }, t('Note what the trip costs in any currency and see the total in your home currency.')),
             h('div', { class: 'row extra-add' },
                 h('label', { class: 'rate' }, h('span', {}, t('Home currency')), currencyInput(currency, t('Home currency'), code => { currency = code; })),

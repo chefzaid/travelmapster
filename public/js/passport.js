@@ -57,8 +57,8 @@ function tilt(id) {
 
 // The home country and countries lived in carry a ribbon on their stamp (ADR 0014).
 function stampRibbon(stats, id) {
-    if (id === stats.homeId) return `${HOME.icon} Home`;
-    return stats.livedIds.has(id) ? '🔑 Lived' : '';
+    if (id === stats.homeId) return `${HOME.icon} ${t('Home')}`;
+    return stats.livedIds.has(id) ? t('🔑 Lived') : '';
 }
 
 function stamps(stats, index, onPick) {

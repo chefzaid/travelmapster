@@ -50,7 +50,7 @@ async function openSharing(ctx, trip) {
             }, '✕'))) : [h('li', { class: 'muted small' }, t('Not shared with anyone yet.'))]));
     }
     const name = h('input', { name: 'username', maxlength: 32, autocomplete: 'off', placeholder: t('Their username'), 'aria-label': t('Username to share with'), required: true });
-    const role = roleSelect('edit', 'Role', () => {});
+    const role = roleSelect('edit', t('Role'), () => {});
     const add = h('form', {
         class: 'row share-add',
         onsubmit: event => {

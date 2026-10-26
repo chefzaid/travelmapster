@@ -343,7 +343,7 @@ function renderEditor(container, ctx, trip) {
             h('button', {
                 type: 'button',
                 class: 'btn btn-ghost btn-sm',
-                onclick: () => copyText(tripAsText(draft), 'Itinerary copied to your clipboard.')
+                onclick: () => copyText(tripAsText(draft), t('Itinerary copied to your clipboard.'))
             }, t('📋 Copy')),
             h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => ctx.showIdeas(draft.destination) }, t('💡 Ideas')),
             h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => exportCalendar(draft) }, t('📅 Calendar')),
