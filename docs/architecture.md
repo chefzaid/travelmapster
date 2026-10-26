@@ -93,6 +93,7 @@ JSON under `/api`; errors are `{ "error": "…" }` with a matching status. All r
 | `public/js/bulk.js` | Marking several countries at once: the bulk change, its undo and the updated places (pure, unit tested) |
 | `public/js/details.js` | Ratings, tags, emoji and wishlist plans of a place, the tag and rating filter shared by the list and the map, and the wishlist by next good month (pure, unit tested) |
 | `public/js/visits.js` | Visit dates, counts, last-visit filter and validation (pure, unit tested) |
+| `public/js/memories.js` | "On this day": visits that began on today's date in earlier years (pure, unit tested) |
 | `public/js/days.js` | Day ledger: day rules, days per country, Schengen 90/180 and stay rules, thresholds, planned stays, alerts and evidence reports (pure, unit and property tested) |
 | `public/js/ledger.js`, `ledger-report.js` | Ledger tab, and its date history and printable evidence report |
 | `public/js/trips.js`, `ideas.js` | Trip planner and Wikivoyage ideas |
