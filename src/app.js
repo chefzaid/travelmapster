@@ -114,6 +114,14 @@ function createApp({ config, pool, logger, metrics, geocoder, places, state = { 
         sendPage(res, 'index.html');
     });
     app.get('/schengen-calculator', (req, res) => sendPage(res, 'schengen-calculator.html'));
+    // A public map other websites may frame (ADR 0020): only this page relaxes framing, and it
+    // stays out of search results like shared maps.
+    app.get('/embed/:username', (req, res) => {
+        res.set('Content-Security-Policy', res.get('Content-Security-Policy').replace("frame-ancestors 'none'", 'frame-ancestors *'));
+        res.removeHeader('X-Frame-Options');
+        res.set('X-Robots-Tag', 'noindex');
+        sendPage(res, 'embed.html');
+    });
     app.get('/schengen-calculator.html', (req, res) => res.redirect(301, '/schengen-calculator'));
     app.get('/robots.txt', (req, res) => {
         res.set('Cache-Control', 'no-cache').type('text/plain').send(robotsTxt(siteOrigin(config, req)));

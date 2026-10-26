@@ -220,6 +220,11 @@ for (const colorScheme of ['light', 'dark']) {
         await page.click('#timeline-btn');
         await expect(page.locator('#time-journeys')).toBeVisible();
         await expectAccessible(page, 'public map with the timeline');
+
+        // The same map embedded in another site.
+        await page.goto(`/embed/${username}`);
+        await expect(page.locator('#embed-stats')).toContainText('countr');
+        await expectAccessible(page, 'embeddable map');
     });
 }
 

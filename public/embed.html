@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel map · TravelMapster</title>
+    <meta name="robots" content="noindex">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <!-- The server rewrites /__assets__/ to this release's cacheable /a/<fingerprint>/ path. -->
+    <link rel="stylesheet" href="/__assets__/vendor/maplibre/maplibre-gl.css">
+    <link rel="stylesheet" href="/__assets__/css/tokens.css">
+    <link rel="stylesheet" href="/__assets__/css/layout.css">
+    <link rel="stylesheet" href="/__assets__/css/map.css">
+    <link rel="stylesheet" href="/__assets__/css/embed.css">
+</head>
+<body class="embed">
+    <!-- A shared travel map for other websites to frame: read-only, without notes or photos. -->
+    <main class="app">
+        <div id="map" class="map" role="application" aria-label="World map of the countries and cities on this travel map."></div>
+        <header class="embed-card">
+            <h1 id="embed-title">Travel map</h1>
+            <p id="embed-stats" class="embed-stats" aria-live="polite">Loading the map…</p>
+            <a id="embed-link" class="embed-link" href="/" target="_blank" rel="noopener">Open on TravelMapster ↗</a>
+        </header>
+    </main>
+    <script type="module" src="/__assets__/js/embed.js"></script>
+</body>
+</html>

@@ -220,7 +220,7 @@ export function setupAccountMenu(ctx) {
         try {
             await ctx.api.saveProfile({ profileVisibility: visibility });
             ctx.state.user.profileVisibility = visibility;
-            $('#copy-share-btn').disabled = visibility !== 'public';
+            for (const id of ['#copy-share-btn', '#embed-btn']) $(id).disabled = visibility !== 'public';
             toast(visibility === 'public' ? 'Your map is public. Share the link!' : 'Your map is private again.', { tone: 'success' });
         } catch (error) {
             event.target.checked = !event.target.checked;
@@ -238,13 +238,21 @@ export function setupAccountMenu(ctx) {
     menuItem('#export-btn', downloadArchive);
     menuItem('#delete-account-btn', deleteAccount);
 
-    $('#copy-share-btn').addEventListener('click', async () => {
-        const shareUrl = `${location.origin}/?u=${encodeURIComponent(ctx.state.user.username)}`;
+    const copy = async (text, done, label) => {
         try {
-            await navigator.clipboard.writeText(shareUrl);
-            toast('Share link copied!', { tone: 'success' });
+            await navigator.clipboard.writeText(text);
+            toast(done, { tone: 'success' });
         } catch {
-            toast(`Share link: ${shareUrl}`);
+            toast(`${label}: ${text}`);
         }
+    };
+    $('#copy-share-btn').addEventListener('click', () =>
+        copy(`${location.origin}/?u=${encodeURIComponent(ctx.state.user.username)}`, 'Share link copied!', 'Share link'));
+    // A frame for blogs and personal sites, read-only and without notes (ADR 0020).
+    $('#embed-btn').addEventListener('click', () => {
+        closeAccountMenu();
+        const { username } = ctx.state.user;
+        copy(`<iframe src="${location.origin}/embed/${encodeURIComponent(username)}" title="${username}'s travel map" width="640" height="420" style="border:0" loading="lazy"></iframe>`,
+            'Embed code copied: paste it into your website.', 'Embed code');
     });
 }

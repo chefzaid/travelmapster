@@ -9,6 +9,12 @@ import {
 } from './map-style.js';
 import { createJourneyLines } from './map-journeys.js';
 
+/**
+ * The travel map in `element`, drawing `index` countries and `cities`; the callbacks get clicks
+ * on a country, a town or a pin, and the opening of a card.
+ * @param {HTMLElement & { travelMap?: unknown }} element
+ * @param {{ index: any, cities: any[], onCountryClick: Function, onCityClick: Function, onPinClick: Function, onPopupOpen?: Function }} options
+ */
 export function createTravelMap(element, { index, cities, onCountryClick, onCityClick, onPinClick, onPopupOpen }) {
     const countries = {
         type: 'FeatureCollection',

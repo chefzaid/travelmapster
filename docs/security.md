@@ -44,7 +44,8 @@ their owner chose `public`; private and missing profiles return the same 404.
 - **Sign-up bots**: the sign-up form carries a honeypot field that is hidden from people and
   screen readers; a sign-up that fills it in is refused without creating an account. There is
   no third-party captcha.
-- **Headers** (helmet): CSP allowing only same-origin scripts and styles (no inline), no framing,
+- **Headers** (helmet): CSP allowing only same-origin scripts and styles (no inline), no framing
+  except the read-only embeddable map ([ADR 0020](adr/0020-embeddable-map.md)),
   HSTS in production, no `X-Powered-By`. API responses are `Cache-Control: no-store`.
 - Only `public/` is served statically; source, configuration and dependencies are never reachable.
 - Public pages (the landing page and the Schengen calculator) run under the same CSP; the

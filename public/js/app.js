@@ -1,7 +1,8 @@
 // App shell: state, loading and saving places, the map filters, tabs, the signed-in,
 // signed-out and public views, and the context handed to every feature module.
 import { api } from './api.js';
-import { createCountryIndex, computeStats, countryStatus } from './geo.js';
+import { computeStats, countryStatus } from './geo.js';
+import { loadMapData as loadData } from './map-data.js';
 import { createTravelMap } from './map.js';
 import { h, $, $all, toast, confirmDialog } from './ui.js';
 import { describeDetailFilter, detailFilterActive, matchesDetails } from './details.js';
@@ -62,12 +63,8 @@ let travelMap;
 // ---------------------------------------------------------------- data
 
 async function loadMapData() {
-    const [countries, cities] = await Promise.all([
-        // Relative to this module, so data comes from the same release as the code.
-        fetch(new URL('../data/countries.geojson', import.meta.url)).then(res => res.json()),
-        fetch(new URL('../data/cities.json', import.meta.url)).then(res => res.json())
-    ]);
-    state.index = createCountryIndex(countries);
+    const { index, cities } = await loadData();
+    state.index = index;
     state.cities = cities;
     state.capitals = cities.filter(city => city.capital);
 }
@@ -313,7 +310,7 @@ async function startSession() {
     $('#account-name').textContent = user.username;
     $('#avatar-initial').textContent = user.username.slice(0, 1).toUpperCase();
     $('#public-toggle').checked = user.profileVisibility === 'public';
-    $('#copy-share-btn').disabled = user.profileVisibility !== 'public';
+    for (const id of ['#copy-share-btn', '#embed-btn']) $(id).disabled = user.profileVisibility !== 'public';
 
     // A replica of the previous release has no ledger yet during a rollout: start with the defaults.
     const [markers, trips, ledgerSettings] = await Promise.all([

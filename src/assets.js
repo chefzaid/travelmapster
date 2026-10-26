@@ -21,7 +21,7 @@ function fingerprint(directory) {
 }
 
 // The HTML pages, by the file in public/ that holds them.
-const PAGES = ['index.html', 'schengen-calculator.html'];
+const PAGES = ['index.html', 'schengen-calculator.html', 'embed.html'];
 
 /**
  * The pages link their scripts, styles and data under /a/<fingerprint>/. Those URLs can be
