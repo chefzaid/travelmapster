@@ -17,7 +17,8 @@ const overlaps = (a, b) => a.startDate <= b.endDate && b.startDate <= a.endDate;
  * Stops in the order they happened: one per visit, at the city, or at the country's label
  * point for a visit to a whole country. A country visit that overlaps a city visit in the same
  * country adds no stop, as the city says more, and back-to-back visits to one place are one
- * stop. Visits on the same first day go shortest first, so a layover comes before the stay.
+ * stop (a return after more than `TRIP_GAP_DAYS` is a new stop). Visits on the same first day go
+ * shortest first, so a layover comes before the stay.
  */
 export function journeyStops(markers, { countryOf, today }) {
     const stops = [];
@@ -42,7 +43,7 @@ export function journeyStops(markers, { countryOf, today }) {
     const merged = [];
     for (const stop of kept) {
         const previous = merged[merged.length - 1];
-        if (previous?.markerId === stop.markerId) {
+        if (previous?.markerId === stop.markerId && dayNumber(stop.startDate) - dayNumber(previous.endDate) <= TRIP_GAP_DAYS) {
             if (stop.endDate > previous.endDate) previous.endDate = stop.endDate;
         } else {
             merged.push({ ...stop });
@@ -63,10 +64,10 @@ export function journeyLegs(stops) {
 }
 
 /**
- * Trips: runs of stops with at most `gapDays` days between leaving the last place and reaching
- * the next. Only runs of two stops or more are trips.
+ * Runs of stops with at most `gapDays` days between leaving the last place and reaching the
+ * next, each with its first and last day.
  */
-export function groupTrips(stops, gapDays = TRIP_GAP_DAYS) {
+export function groupRuns(stops, gapDays = TRIP_GAP_DAYS) {
     const runs = [];
     let current = null;
     for (const stop of stops) {
@@ -77,7 +78,12 @@ export function groupTrips(stops, gapDays = TRIP_GAP_DAYS) {
         current.stops.push(stop);
         if (stop.endDate > current.endDate) current.endDate = stop.endDate;
     }
-    return runs.filter(run => journeyLegs(run.stops).length > 0);
+    return runs;
+}
+
+/** Trips to replay: runs that go somewhere, from one place to another. */
+export function groupTrips(stops, gapDays = TRIP_GAP_DAYS) {
+    return groupRuns(stops, gapDays).filter(run => journeyLegs(run.stops).length > 0);
 }
 
 /**
