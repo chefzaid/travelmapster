@@ -117,7 +117,7 @@ The field splits into scratch-map atlases (Been, Visited, Skratch), travel journ
 - [ ] Contract step, second release: a migration that drops the `markers.travel_date` mirror and its three sync triggers and functions (`test/integration/contract.test.js` already runs the app without them). *(blocked: ships only in a release after 1.10.0, once no running release writes the column)*
 - [ ] Background jobs in PostgreSQL (`FOR UPDATE SKIP LOCKED` queue) for imports, poster rendering, emails and scheduled threshold alerts, keeping the single service ([ADR 0002](docs/adr/0002-single-service-build-free-frontend.md)).
 - [x] OpenAPI description of the JSON API and a versioning rule, needed before mobile apps or Teams integrations.
-- [ ] Type checking of server and browser modules with JSDoc and `tsc --noEmit` in CI, without adding a build step.
+- [x] Type checking of server and browser modules with JSDoc and `tsc --noEmit` in CI, without adding a build step.
 - [ ] Performance budget in CI: page weight, map data payload and Web Vitals on a mid-range phone profile; precompressed (Brotli) map data.
 - [ ] Recovery for paying users: stated RPO and RTO, a scheduled restore drill from the platform backup, and a logical dump before risky migrations. *(waiting: see Needs Input › Recovery targets)*
 - [x] Service level objectives for availability and API latency, with their queries in the [runbook](docs/operations.md#service-level-objectives), plus business metrics (places saved by source, account exports; evidence reports stay on the device and are not counted).

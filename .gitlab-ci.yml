@@ -61,6 +61,7 @@ variables:
     - npm ci --no-audit --no-fund
   script:
     - npm run lint
+    - npm run typecheck
     - mkdir -p coverage
     - npm run test:coverage
     - npm audit --omit=dev --audit-level=high

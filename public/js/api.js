@@ -10,6 +10,7 @@ async function refreshCsrfToken() {
 }
 
 async function request(method, path, body, retried = false) {
+    /** @type {RequestInit & { headers: Record<string, string> }} */
     const options = { method, headers: { Accept: 'application/json' }, credentials: 'same-origin' };
     if (method !== 'GET') {
         options.headers['X-CSRF-Token'] = csrfToken || await refreshCsrfToken();
@@ -35,9 +36,7 @@ async function request(method, path, body, retried = false) {
         return request(method, path, body, true);
     }
     if (!response.ok) {
-        const error = new Error(data?.error || `Request failed (${response.status}).`);
-        error.status = response.status;
-        throw error;
+        throw Object.assign(new Error(data?.error || `Request failed (${response.status}).`), { status: response.status });
     }
     if (data?.csrfToken) csrfToken = data.csrfToken;
     return data;

@@ -21,7 +21,8 @@ function searchResults(ctx, query, cities = searchCities(ctx.state.cities, query
 
 // Big cities are matched instantly in the browser; every smaller town comes from the
 // server's index a moment later, replacing the city results if the query is unchanged.
-let placeSearchTimer = 0;
+/** @type {ReturnType<typeof setTimeout> | undefined} */
+let placeSearchTimer;
 function searchAllPlaces(ctx, query) {
     clearTimeout(placeSearchTimer);
     if (query.trim().length < 2) return;
@@ -148,7 +149,8 @@ export function setupSearch(ctx) {
         }, 100);
     });
     document.addEventListener('keydown', event => {
-        const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName) || document.activeElement?.isContentEditable;
+        const active = /** @type {HTMLElement | null} */ (document.activeElement);
+        const typing = /INPUT|TEXTAREA|SELECT/.test(active?.tagName) || active?.isContentEditable;
         if (event.key === '/' && !typing) {
             event.preventDefault();
             search.input.focus();

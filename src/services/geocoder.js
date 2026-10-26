@@ -48,9 +48,7 @@ function createGeocoder({ baseUrl, userAgent, minIntervalMs, timeoutMs, cacheSiz
         const wait = await reserveSlot();
         // A long queue means Nominatim is saturated; fail fast rather than hold the request.
         if (wait > timeoutMs) {
-            const error = new Error('Geocoder is busy');
-            error.status = 503;
-            throw error;
+            throw Object.assign(new Error('Geocoder is busy'), { status: 503 });
         }
         if (wait > 0) await new Promise(resolve => setTimeout(resolve, wait));
         return task();
@@ -96,9 +94,7 @@ function createGeocoder({ baseUrl, userAgent, minIntervalMs, timeoutMs, cacheSiz
                 signal: AbortSignal.timeout(timeoutMs)
             });
             if (!response.ok) {
-                const error = new Error(`Geocoder responded with HTTP ${response.status}`);
-                error.status = 502;
-                throw error;
+                throw Object.assign(new Error(`Geocoder responded with HTTP ${response.status}`), { status: 502 });
             }
             const body = await response.json();
             return (Array.isArray(body) ? body : [])

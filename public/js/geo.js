@@ -320,6 +320,7 @@ export function computeStats(markers, index, { trips = 0, homeId = null, country
     const hasVisitWith = (marker, field) => (marker.visits || []).some(visit => visit[field]);
     const beenCities = markers.filter(m => m.category === 'City' && ['visited', 'lived'].includes(statusOf(m)));
 
+    /** @type {Record<string, any>} */
     const stats = {
         visitedCountries: visited.size,
         livedCountries: inList(status.livedIds).size,

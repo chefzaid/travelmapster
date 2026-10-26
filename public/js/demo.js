@@ -8,6 +8,7 @@ import { statusFields } from './status.js';
 export const DEMO_HOME = 'CAN';
 
 // [status, category, name, lat, lng, visits as [first, last] day offsets from today, or 'now'].
+/** @type {Array<[string, string, string, number, number, Array<[number, number | 'now']>, ...any[]]>} */
 const SAMPLE = [
     ['visited', 'City', 'Lisbon, Portugal', 38.725, -9.15, [[-9, 'now']]],
     ['visited', 'City', 'Porto, Portugal', 41.149, -8.611, [[-30, -26]]],
