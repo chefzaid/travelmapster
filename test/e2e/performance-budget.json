@@ -1,6 +1,6 @@
 {
   "pageWeightKB": 1000,
   "mapDataKB": 350,
-  "lcpMs": 9000,
+  "lcpMs": 4000,
   "cls": 0.1
 }
