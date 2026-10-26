@@ -53,6 +53,7 @@
                 <div class="hero-actions">
                     <button class="btn btn-primary" type="button" data-auth-mode="register">Sign up free</button>
                     <button class="btn btn-ghost" type="button" data-home-demo>Explore the demo map</button>
+                    <button class="btn btn-ghost" type="button" data-guest-start>Try it without an account</button>
                 </div>
                 <p class="home-note">Free, no card needed. No ads, no trackers: your travels are yours.</p>
             </section>
@@ -192,20 +193,22 @@
                 </button>
                 <div id="account-menu" class="menu" hidden>
                     <p class="menu-title">Signed in as <strong id="account-name"></strong></p>
-                    <label class="switch">
+                    <label class="switch" data-account-only>
                         <input id="public-toggle" type="checkbox">
                         <span class="switch-track" aria-hidden="true"></span>
                         <span>Public travel map</span>
                     </label>
-                    <button id="copy-share-btn" class="menu-item" type="button" disabled>🔗 Copy share link</button>
-                    <button id="embed-btn" class="menu-item" type="button" disabled>🧩 Copy embed code</button>
+                    <button id="guest-save-btn" class="menu-item" type="button" data-guest-only data-guest-save hidden>💾 Save to a free account</button>
+                    <button id="copy-share-btn" class="menu-item" type="button" data-account-only disabled>🔗 Copy share link</button>
+                    <button id="embed-btn" class="menu-item" type="button" data-account-only disabled>🧩 Copy embed code</button>
                     <button id="settings-btn" class="menu-item" type="button">⚙️ Settings</button>
                     <button id="print-btn" class="menu-item" type="button">🖨️ Print my map</button>
                     <button id="poster-btn" class="menu-item" type="button">🖼️ Make a poster</button>
                     <button id="export-btn" class="menu-item" type="button">📦 Download all my data</button>
-                    <button id="password-btn" class="menu-item" type="button">🔑 Change password</button>
+                    <button id="password-btn" class="menu-item" type="button" data-account-only>🔑 Change password</button>
                     <button id="logout-btn" class="menu-item" type="button">👋 Log out</button>
-                    <button id="delete-account-btn" class="menu-item menu-item-danger" type="button">🗑️ Delete account</button>
+                    <button id="delete-account-btn" class="menu-item menu-item-danger" type="button" data-account-only>🗑️ Delete account</button>
+                    <button id="guest-clear-btn" class="menu-item menu-item-danger" type="button" data-guest-only hidden>🧹 Clear guest map</button>
                 </div>
             </div>
         </header>
@@ -224,6 +227,7 @@
                     <div class="hero-actions">
                         <button class="btn btn-primary" type="button" data-auth-mode="register">Sign up free</button>
                         <button class="btn btn-ghost" type="button" data-auth-mode="login">Log in</button>
+                        <button class="btn btn-ghost" type="button" data-guest-start>Try it without an account</button>
                     </div>
                     <p><button class="link-button" type="button" data-home-show><span aria-hidden="true">←</span> What TravelMapster does</button></p>
                     <p class="demo-note"><span aria-hidden="true">👀</span> The map shows a sample traveler. Click a
@@ -318,6 +322,8 @@
 
             <!-- Signed in -->
             <section id="main-view" class="view" hidden>
+                <p class="guest-note" data-guest-only hidden><span aria-hidden="true">👤</span> Guest map: kept in this browser only.
+                    <button class="link-button" type="button" data-guest-save>Save it to a free account</button></p>
                 <nav class="tabs" role="tablist" aria-label="Sections">
                     <button role="tab" id="tab-explore" aria-controls="explore-tab" aria-selected="true" type="button"><span aria-hidden="true">🧭</span>Explore</button>
                     <button role="tab" id="tab-places" aria-controls="places-tab" aria-selected="false" type="button"><span aria-hidden="true">📍</span>Places</button>

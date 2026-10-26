@@ -66,6 +66,9 @@ their owner chose `public`; private and missing profiles return the same 404.
   ledger settings or the date history. Whether a shared place was lived in or a layover is shown,
   like its status. Journey lines, which make the order of trips obvious, are drawn for visitors
   only when the owner turns them on ([ADR 0016](adr/0016-timeline-journeys-and-palettes.md)).
+- A guest map is kept only in the browser's storage and never sent, until the guest signs up and
+  it moves into the account; anyone using the same browser profile can see it
+  ([ADR 0026](adr/0026-guest-mode.md)).
 - Photos and location history files chosen for an import are read in the browser and never
   uploaded; only the nearest town (or country) and the visit dates are sent, after the traveler
   reviews them ([ADR 0025](adr/0025-imports-from-photos-and-location-history.md)).

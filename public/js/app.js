@@ -26,6 +26,7 @@ import { setupSearch } from './search.js';
 import { renderExplore, showIdeas } from './explore.js';
 import { AUTH_HASHES, closeAccountMenu, openAuth, renderDemoLedger, setupAccountMenu, setupAuth } from './account.js';
 import { hideHome, offerHome, rememberSignedIn, setupHome, wasSignedIn } from './home.js';
+import { enterGuestMode, guestActive, labelGuestButtons, leaveGuestMode, moveGuestMap, setupGuest, showGuestControls } from './guest.js';
 
 const state = {
     user: null,
@@ -286,6 +287,9 @@ function setView(name) {
 
 function showSignedOut() {
     rememberSignedIn(false);
+    // Leaving a guest map keeps it in this browser for next time.
+    if (state.user?.guest) leaveGuestMode();
+    labelGuestButtons();
     state.user = null;
     state.demo = true;
     state.markers = demoMarkers(localToday());
@@ -317,6 +321,7 @@ async function startSession(known) {
     state.user = user;
     state.demo = false;
     rememberSignedIn(true);
+    showGuestControls(Boolean(user.guest));
     setTimelineOpen(context, false);
     // A replica of the previous release sends no palette: keep this browser's.
     if (user.mapPalette) applyPalette(context, user.mapPalette);
@@ -350,6 +355,25 @@ async function startSession(known) {
     refresh({ celebrateNew: false });
     selectTab(state.activeTab);
     announceLedgerAlerts(context);
+    // An account opened in a browser used as a guest takes the guest map along.
+    if (!user.guest) await moveGuestMap(context);
+}
+
+/** Opens this browser's guest map, kept in its storage (ADR 0026). */
+async function startGuest() {
+    try {
+        hideHome();
+        await startSession(await enterGuestMode());
+    } catch (error) {
+        toast(error.message, { tone: 'error' });
+    }
+}
+
+// A guest who wants an account signs up; the guest map moves into it.
+function saveGuestMap() {
+    closeAccountMenu();
+    showSignedOut();
+    openAuth('register');
 }
 
 async function startPublicView(username) {
@@ -403,7 +427,9 @@ const context = {
     loadVisitChanges: () => loadVisitChanges(context),
     closeAccountMenu,
     startSession,
-    showSignedOut
+    showSignedOut,
+    startGuest,
+    saveGuestMap
 };
 
 // ---------------------------------------------------------------- boot
@@ -425,6 +451,11 @@ async function boot(signedIn = api.currentUser().catch(() => null)) {
         } catch {
             // Signed out in the meantime: the landing page follows.
         }
+    }
+    // A browser last used as a guest opens its guest map again.
+    if (guestActive()) {
+        await startGuest();
+        return;
     }
     showSignedOut();
 }
@@ -460,6 +491,7 @@ async function init() {
     // the app before the form takes the focus.
     setupHome();
     setupAuth(context);
+    setupGuest(context);
     const publicMap = new URLSearchParams(location.search).has('u');
     const signedIn = publicMap ? Promise.resolve(null) : api.currentUser().catch(() => null);
     // Visitors see the presentation first; a browser signed in recently waits for the session.
