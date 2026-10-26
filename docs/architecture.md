@@ -172,5 +172,6 @@ number (`NNNN-short-title.md`) and the template below. Statuses: **Proposed**, *
 - [ADR 0014: Home country, lived-there and transit-only places](adr/0014-home-lived-and-transit.md)
 - [ADR 0015: Choose the country list to count against](adr/0015-country-lists.md)
 - [ADR 0016: Map timeline, journey lines and palettes](adr/0016-timeline-journeys-and-palettes.md)
+- [ADR 0017: Product principles for the ledger, keepsakes and paid tiers](adr/0017-product-principles.md)
 
 Superseded: [ADR 0007: Draw towns on a canvas layer](adr/0007-canvas-towns.md).

@@ -33,10 +33,11 @@ Differentiators:
 
 ### Principles
 
-- [ ] **ADR — product principles:** extend the [product principles](docs/features.md#product-principles) to cover the day ledger, keepsakes and paid tiers while keeping the map itself simple (country borders and towns only, no tiles).
+- [x] **ADR — product principles:** extend the [product principles](docs/features.md#product-principles) to cover the day ledger, keepsakes and paid tiers while keeping the map itself simple (country borders and towns only, no tiles).
 
 ### Day ledger (builds on the Ledger tab, [ADR 0010](docs/adr/0010-day-ledger.md))
 
+- [ ] A short "a guide, not legal or tax advice" note on the Ledger tab and the evidence report, like the Schengen calculator's ([ADR 0017](docs/adr/0017-product-principles.md)).
 - [ ] Email alerts before thresholds and stay limits are reached; alerts are in-app only until email exists (see [Accounts and trust](#accounts-and-trust-added-2026-10-23)), and scheduled checks need the background jobs below.
 - [ ] Overseas territories drawn as part of a country on the map (French Guiana, Réunion, Svalbard, Caribbean Netherlands) counted on their own, so they stop counting as Schengen days.
 - [ ] Automatic import from location-history exports and photo metadata (dates and GPS), processed in the browser and reduced to country and city before upload; the user reviews every visit before it is saved.
