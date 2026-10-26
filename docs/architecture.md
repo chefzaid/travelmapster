@@ -27,7 +27,7 @@ PostgreSQL, including sessions, so any replica can serve any request.
 | `src/seo.js` | `robots.txt` and the sitemap of public pages ([ADR 0011](adr/0011-public-pages.md)) |
 | `src/config.js` | Validated configuration from environment variables ([reference](development.md#configuration)) |
 | `src/routes/` | `auth`, `markers` (places and their visits), `visits`, `ledger` (day-ledger settings and date history), `trips`, `profile` (incl. public maps), `export` (the account archive), `places` and `geocode` routers |
-| `src/validation.js` | Every request-body rule and limit |
+| `src/validation.js`, `ledger-validation.js`, `validation-text.js` | Every request-body rule and limit; the day ledger's settings in their own module |
 | `src/rate-limit-store.js` | Rate-limit counters in PostgreSQL, shared by every replica |
 | `src/repositories.js` | SQL access, always scoped to the signed-in user (visits through their place) |
 | `src/db/migrations/005_day_ledger.sql` | Ledger tables and the triggers that record every change to visit dates ([ADR 0010](adr/0010-day-ledger.md)) |
@@ -85,7 +85,7 @@ JSON under `/api`, described in full in [OpenAPI](api/openapi.json) and kept bac
 | `public/js/timeline-bar.js`, `printing.js`, `ledger-store.js` | The timeline bar and journey replay, map palettes and printing, and the day ledger's overview, alerts and date history in the app |
 | `public/js/demo.js` | The landing page's sample traveler, with dates relative to today (pure, unit tested) |
 | `public/js/schengen.js`, `calculator.js` | Free Schengen calculator: stay checks and results over `days.js` (pure, unit and property tested), and the page that draws them |
-| `public/js/map.js` | MapLibre GL map ([ADR 0008](adr/0008-maplibre-gl.md)): cartoon style from the CSS tokens (redrawn when the palette or theme changes), country states, towns and tile loading, pins, journey lines and their replay, cards, camera and the picture printed |
+| `public/js/map.js`, `map-style.js`, `map-journeys.js` | MapLibre GL map ([ADR 0008](adr/0008-maplibre-gl.md)): country states, towns and tile loading, pins, cards, camera and the picture printed; its cartoon style from the CSS tokens (redrawn when the palette or theme changes); and journey lines with their replay |
 | `public/js/timeline.js`, `journeys.js` | The map by the end of a year or during it, and journey stops, legs, trips and arcs ([ADR 0016](adr/0016-timeline-journeys-and-palettes.md)) (pure, unit tested) |
 | `public/js/palettes.js` | The map palettes offered in Settings; their colors are token overrides in `css/tokens.css` (pure, unit tested) |
 | `public/js/geo.js` | Country index, city search, country statuses and how the map draws them, stats, ranks and badges (pure, unit tested) |

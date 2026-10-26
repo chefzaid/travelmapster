@@ -27,6 +27,11 @@ export function $all(selector, root = document) {
     return [...root.querySelectorAll(selector)];
 }
 
+/**
+ * Shows a short message; returns a function that closes it early.
+ * @param {string} message
+ * @param {{ tone?: string, action?: { label: string, run: () => void }, duration?: number }} [options]
+ */
 export function toast(message, { tone = 'info', action, duration = 4000 } = {}) {
     const region = $('#toasts');
     const icons = { info: '💬', success: '🎉', error: '⚠️' };
@@ -105,8 +110,12 @@ function pickerField(field, id) {
         field.hint ? h('small', {}, field.hint) : null);
 }
 
-// Opens a modal containing a form; resolves with FormData values or null when cancelled.
-// Fields of type 'choices' resolve to the list of checked values.
+/**
+ * Opens a modal containing a form; resolves with FormData values or null when cancelled.
+ * Fields of type 'choices' resolve to the list of checked values.
+ * @param {{ title: string, message?: string, fields: Record<string, any>[], submitLabel?: string, danger?: boolean }} options
+ * @returns {Promise<Record<string, any> | null>}
+ */
 export function formDialog({ title, message, fields, submitLabel = 'Save', danger = false }) {
     return new Promise(resolve => {
         const form = h('form', { method: 'dialog', class: 'dialog-body' }, h('h3', {}, title), message ? h('p', {}, message) : null);

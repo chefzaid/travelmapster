@@ -5,6 +5,7 @@ const { withTransaction } = require('../db/pool');
 const { IMPORT_MAX_MARKERS, parseBulkChanges, parseMarkerId, parseMarkerPayload, parseVisitPayload } = require('../validation');
 
 // Funnel steps reached when a traveler's number of places first crosses them.
+/** @type {Array<[number, string]>} */
 const PLACE_STEPS = [[1, 'first_place'], [10, 'ten_places']];
 
 function createMarkerRouter({ pool, markers, visits, metrics }) {

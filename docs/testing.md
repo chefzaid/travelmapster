@@ -29,6 +29,7 @@ Tests use `TEST_DATABASE_URL`, then `DATABASE_URL`, then
 
 ```bash
 npm run lint            # ESLint
+npm run typecheck       # TypeScript checks the JavaScript and its JSDoc, emitting nothing
 npm test                # unit, frontend and integration tests
 npm run test:unit       # unit tests only, no database
 npm run test:coverage   # same as npm test with an 80% line-coverage gate and coverage/lcov.info
@@ -43,8 +44,8 @@ auth rate limit, whose counters persist between runs.
 
 | Where | What runs |
 |---|---|
-| GitHub Actions ([ci.yml](../.github/workflows/ci.yml)), every push to `main` and pull request | Lint, coverage, `npm audit`, Playwright journeys and accessibility, then an image build scanned by Trivy (HIGH/CRITICAL fail) |
-| GitLab `01-test`, every branch | Lint, coverage (artifact for Sonar) and `npm audit` |
+| GitHub Actions ([ci.yml](../.github/workflows/ci.yml)), every push to `main` and pull request | Lint, type check, coverage, `npm audit`, Playwright journeys and accessibility, then an image build scanned by Trivy (HIGH/CRITICAL fail) |
+| GitLab `01-test`, every branch | Lint, type check, coverage (artifact for Sonar) and `npm audit` |
 | GitLab `02-package` | Builds the image without pushing |
 | GitLab `01-quality`, `02-security` | Sonar and Trivy reports; non-blocking ([code quality](code-quality.md)) |
 

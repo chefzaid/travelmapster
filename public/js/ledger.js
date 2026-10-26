@@ -158,6 +158,7 @@ function schengenSection(ctx, overview) {
 
 async function plannedStayDialog(ctx) {
     const countries = [...ctx.state.index.countries].sort((a, b) => a.name.localeCompare(b.name));
+    /** @type {Record<string, any>} */
     let draft = { startDate: addDays(localToday(), 7), endDate: addDays(localToday(), 14), countryId: '' };
     for (;;) {
         const values = await formDialog({

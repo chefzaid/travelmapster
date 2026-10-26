@@ -2,10 +2,10 @@
 
 const path = require('node:path');
 const express = require('express');
-const helmet = require('helmet');
+const { default: helmet } = require('helmet');
 const session = require('express-session');
 const PgSession = require('connect-pg-simple')(session);
-const pinoHttp = require('pino-http');
+const { pinoHttp } = require('pino-http');
 const { rateLimit } = require('express-rate-limit');
 
 const { csrfProtection, csrfTokenRoute } = require('./middleware/csrf');

@@ -120,6 +120,7 @@ function markerValues(marker) {
 
 // Optional place details (ADR 0012, 0013) by API field, column and default. An update writes
 // only the fields it was sent, so older clients that do not know them keep what is stored.
+/** @type {Array<[string, string, null | boolean | string | any[]]>} */
 const DETAIL_COLUMNS = [
     ['rating', 'rating', null], ['tags', 'tags', []], ['emoji', 'emoji', null], ['hideFromPublic', 'hide_from_public', false],
     ['priority', 'priority', null], ['bestMonths', 'best_months', []], ['stay', 'stay', 'visit']

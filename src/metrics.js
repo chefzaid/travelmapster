@@ -8,6 +8,7 @@ const ACTIVITY_WINDOWS = ['total', 'active_1d', 'active_7d', 'active_30d', 'retu
 /**
  * Prometheus metrics. With `users` (the user repository), the scrape also reports how many
  * accounts exist and how recently they were used; nothing identifies a person.
+ * @param {{ users?: { activity(): Promise<Record<string, number>> }, logger?: { warn: Function } }} [options]
  */
 function createMetrics({ users, logger } = {}) {
     const registry = new client.Registry();

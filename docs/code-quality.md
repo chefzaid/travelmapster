@@ -1,7 +1,18 @@
 # Code Quality
 
-Tests and coverage are described in the [testing guide](testing.md). This guide covers the two
-report-only analyses in GitLab: SonarQube and Trivy. Neither blocks a release.
+Tests and coverage are described in the [testing guide](testing.md). This guide covers type
+checking, which blocks a release, and the two report-only analyses in GitLab, SonarQube and
+Trivy, which do not.
+
+## Type Checking
+
+`npm run typecheck` runs the TypeScript compiler over `src/` and `public/js/` as JavaScript
+([tsconfig.json](../tsconfig.json): `checkJs`, `noEmit`), so there is still no build step
+([ADR 0002](adr/0002-single-service-build-free-frontend.md)). Types come from the code and its
+JSDoc: annotate an object or option bag with `/** @type {…} */` or `@param` where inference
+falls short. The vendored MapLibre bundle is read through a small declaration file beside it
+(`public/vendor/maplibre/maplibre-gl.d.mts`) rather than checked. Both CI pipelines fail on a
+type error ([testing](testing.md#continuous-integration)).
 
 ## SonarQube
 
