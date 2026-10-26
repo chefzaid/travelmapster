@@ -3,7 +3,6 @@
 import { api } from './api.js';
 import { computeStats, countryStatus } from './geo.js';
 import { loadMapData as loadData } from './map-data.js';
-import { createTravelMap } from './map.js';
 import { h, $, $all, toast, confirmDialog } from './ui.js';
 import { describeDetailFilter, detailFilterActive, matchesDetails } from './details.js';
 import { renderPlaces } from './places.js';
@@ -298,8 +297,10 @@ function showSignedOut() {
     if (AUTH_HASHES[location.hash]) openAuth(AUTH_HASHES[location.hash]);
 }
 
-async function startSession() {
-    const user = await api.currentUser();
+// Starts the signed-in view, for `known` user or the session's; it waits for the map.
+async function startSession(known) {
+    const user = known || await api.currentUser();
+    await mapReady;
     state.user = user;
     state.demo = false;
     setTimelineOpen(context, false);
@@ -415,23 +416,31 @@ const context = {
 
 // ---------------------------------------------------------------- boot
 
-async function boot() {
+// `signedIn` resolves with the session's user, or null when signed out.
+async function boot(signedIn = api.currentUser().catch(() => null)) {
     const username = new URLSearchParams(location.search).get('u');
     if (username) {
         await startPublicView(username);
         return;
     }
-    try {
-        await startSession();
-    } catch {
-        showSignedOut();
+    const user = await signedIn;
+    if (user) {
+        try {
+            await startSession(user);
+            return;
+        } catch {
+            // Signed out in the meantime: the landing page follows.
+        }
     }
+    showSignedOut();
 }
 
-async function init() {
-    // Start with this browser's palette; a signed-in traveler's own choice follows.
-    applyPalette(context, storedPalette());
-    await loadMapData();
+// Resolves once the map and its data are ready; whatever draws places waits for it.
+let mapReady;
+
+async function createMap() {
+    // MapLibre is the largest download: it loads beside the map data, not before the app runs.
+    const [{ createTravelMap }] = await Promise.all([import('./map.js'), loadMapData()]);
     travelMap = createTravelMap($('#map'), {
         index: state.index,
         cities: state.cities,
@@ -447,19 +456,36 @@ async function init() {
         // Map cards need the room the bottom sheet takes on phones.
         onPopupOpen: collapsePanelOnPhones
     });
+}
+
+async function init() {
+    // Start with this browser's palette; a signed-in traveler's own choice follows.
+    applyPalette(context, storedPalette());
+    // The landing page's forms work before the map has loaded.
+    setupAuth(context);
+    const publicMap = new URLSearchParams(location.search).has('u');
+    const signedIn = publicMap ? Promise.resolve(null) : api.currentUser().catch(() => null);
+    mapReady = createMap();
+    // A signed-out visitor reads the landing page while the map is still loading.
+    if (!publicMap) {
+        signedIn.then(user => {
+            if (!user && $('#app').dataset.state === 'loading') setView('welcome');
+        });
+    }
+    await mapReady;
     setupSearch(context);
     setupTabs();
-    setupAuth(context);
     setupAccountMenu(context);
     setupPanel();
     setupLegend();
     setupSelectBar(context);
     setupTimeline(context);
     setupPrinting(context);
-    await boot();
+    await boot(signedIn);
 }
 
 init().catch(error => {
     console.error(error);
+    setView('loading');
     $('#loading-view').replaceChildren(h('p', { class: 'form-error' }, 'The map could not load. Please refresh the page.'));
 });

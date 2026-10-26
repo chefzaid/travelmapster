@@ -80,7 +80,7 @@ JSON under `/api`, described in full in [OpenAPI](api/openapi.json) and kept bac
 
 | Module | Responsibility |
 |---|---|
-| `public/js/app.js` | App shell: state, saving places, map filters, tabs, the signed-in, signed-out (demo map) and public views, and the context every feature module receives |
+| `public/js/app.js` | App shell: state, saving places, map filters, tabs, the signed-in, signed-out (demo map) and public views, and the context every feature module receives. A signed-out visitor sees the landing panel while MapLibre (loaded on demand) and the map data arrive |
 | `public/js/cards.js`, `card-visits.js`, `place-form.js` | Map cards for countries and cities, the visits on them, and the form that edits a saved place |
 | `public/js/search.js`, `explore.js`, `selection.js` | Place search and "Surprise me", the Explore tab and travel ideas, and picking several countries to mark at once |
 | `public/js/account.js` | Landing page sign-up and log-in (with the honeypot field), the account menu and settings |
