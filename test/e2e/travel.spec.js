@@ -143,6 +143,14 @@ test('a traveler records several visits to the same city', async ({ page }) => {
     await expect(page.locator('#memories')).toContainText('4 years ago today, you arrived in Lisbon');
     await page.locator('#memories button').click();
     await expect(card.locator('h3')).toHaveText('Lisbon');
+
+    // The passport sums the dated visits up.
+    await page.click('#tab-passport');
+    const travel = page.locator('#travel-stats');
+    await expect(travel.locator('.stat', { hasText: 'longest trip' })).toContainText('4');
+    await expect(travel).toContainText('Longest trip: Lisbon');
+    await expect(travel).toContainText('Set a home country');
+    await expect(page.locator('#passport-tab')).toContainText('Countries by year');
     expect(errors).toEqual([]);
 });
 

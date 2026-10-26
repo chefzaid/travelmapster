@@ -83,6 +83,17 @@ test('journey stops follow visits in order, at the city or the country label poi
     assert.equal(groupTrips(stops, 30).length, 1, 'a wider gap joins the trips');
     assert.equal(routeLabel(['A', 'B', 'B', 'C', 'D', 'E', 'F'].map(name => ({ name }))), 'A → B → C → … → F');
     assert.equal(journeyStops([place(7, 'Nowhere', 'City', 'visited', [visit('2020-01-01')], { lat: 'x' })], { countryOf: () => null, today: TODAY }).length, 0);
+
+    // A return to the same place months later is a new stop, so it starts a trip of its own.
+    const returns = journeyStops([
+        { ...place(8, 'Paris, France', 'City', 'visited', [visit('2023-01-02', '2023-01-05'), visit('2023-12-01', '2023-12-05')]), lat: 48.9, lng: 2.4 },
+        { ...place(9, 'Lyon, France', 'City', 'visited', [visit('2023-12-07', '2023-12-08')]), lat: 45.8, lng: 4.8 }
+    ], { countryOf: () => null, today: TODAY });
+    assert.deepEqual(returns.map(stop => [stop.name, stop.startDate, stop.endDate]), [
+        ['Paris', '2023-01-02', '2023-01-05'], ['Paris', '2023-12-01', '2023-12-05'], ['Lyon', '2023-12-07', '2023-12-08']
+    ]);
+    assert.equal(journeyLegs(returns).length, 1, 'no leg from a place to itself');
+    assert.deepEqual(groupTrips(returns).map(trip => [trip.startDate, routeLabel(trip.stops)]), [['2023-12-01', 'Paris → Lyon']]);
 });
 
 test('journey arcs bend to the left of the way traveled, from stop to stop', async () => {

@@ -1,6 +1,10 @@
-import { h, $, fill } from './ui.js';
+// Passport tab: rank, counts, continents, stamps, badges and travel statistics; and the
+// counts shown on a public map.
+import { h, $, fill, formatDate } from './ui.js';
 import { HOME } from './status.js';
 import { countryList, shareLabel } from './lists.js';
+import { localToday } from './days.js';
+import { EARTH_CIRCUMFERENCE_KM, countriesByYear, daysAwayByYear, distanceTraveled, longestTrip } from './travel-stats.js';
 
 function statTile(value, label, tone = '') {
     return h('div', { class: `stat ${tone}` }, h('strong', {}, value), h('small', {}, label));
@@ -68,16 +72,54 @@ function transitNote(stats, index) {
         `Transit only, not counted: ${names.join(', ')}.`);
 }
 
-function yearChart(stats) {
-    if (!stats.years.length) return null;
-    const max = Math.max(...stats.years.map(year => year.count));
+const plural = (count, one, many) => `${count} ${count === 1 ? one : many}`;
+
+// A bar per year ({ year, count }), described in full by its title.
+function yearChart(title, rows, describe) {
+    if (!rows.length) return null;
+    const max = Math.max(...rows.map(row => row.count));
     return h('section', {},
-        h('h3', { class: 'section-title' }, 'Visits by year'),
-        h('ul', { class: 'year-chart' }, stats.years.map(({ year, count }) => h('li', { title: `${year}: ${count} ${count === 1 ? 'visit' : 'visits'}` },
-            h('span', { class: 'year-bar', style: `height:${Math.max(8, Math.round((count / max) * 100))}%` }, h('span', {}, count)),
-            h('small', {}, `’${year.slice(2)}`)
+        h('h3', { class: 'section-title' }, title),
+        h('ul', { class: 'year-chart' }, rows.map(row => h('li', { title: describe(row) },
+            h('span', { class: 'year-bar', style: `height:${Math.max(8, Math.round((row.count / max) * 100))}%` }, h('span', {}, row.count)),
+            h('small', {}, `’${row.year.slice(2)}`)
         )))
     );
+}
+
+// Days away from home, the longest trip, the distance between places and countries per year,
+// all from dated visits; days count by the ledger's day rule.
+function travelSections(ctx) {
+    const { markers, stats } = ctx.state;
+    const countryOf = marker => stats.markerCountry.get(marker.id);
+    const today = localToday();
+    const home = Boolean(stats.homeId);
+    const trip = longestTrip(markers, { countryOf, homeId: stats.homeId, today });
+    const km = distanceTraveled(markers, { countryOf, today });
+    const away = daysAwayByYear(ctx.currentLedger().ledger, stats.homeId, today);
+    const perYear = countriesByYear(markers, { countryOf, countedIds: stats.countedIds });
+    const awayWord = home ? 'abroad' : 'recorded';
+    if (!trip && !away.length) {
+        return h('section', {}, h('h3', { class: 'section-title' }, 'On the road'),
+            h('p', { class: 'muted small' }, 'Add dates to your visits to see your days abroad, your longest trip and how far you have traveled.'));
+    }
+    return [
+        h('section', { id: 'travel-stats' },
+            h('h3', { class: 'section-title' }, 'On the road'),
+            h('div', { class: 'stat-grid' },
+                statTile(away.find(row => row.year === today.slice(0, 4))?.count || 0, `days ${awayWord} this year`),
+                trip ? statTile(trip.days, `${trip.days === 1 ? 'day' : 'days'}, longest trip`) : null,
+                statTile(`≈ ${km.toLocaleString('en')} km`, 'between your places')
+            ),
+            trip ? h('p', { class: 'muted small' }, `Longest trip: ${trip.route}, ${formatDate(trip.startDate)} – ${formatDate(trip.endDate)}.`) : null,
+            h('p', { class: 'muted small' }, km
+                ? `About ${(km / EARTH_CIRCUMFERENCE_KM).toFixed(1)} times around the Earth, in straight lines between your places in the order you visited them.`
+                : 'Visit a second place to start counting the distance between them.',
+            home ? '' : ' Set a home country in ⚙️ Settings to count days abroad.')
+        ),
+        yearChart(`Days ${awayWord} by year`, away, row => `${row.year}: ${plural(row.count, 'day', 'days')} ${awayWord}`),
+        yearChart('Countries by year', perYear, row => `${row.year}: ${plural(row.count, 'country', 'countries')}, ${row.newCount} new`)
+    ];
 }
 
 export function renderPublicStats(container, stats) {
@@ -147,7 +189,8 @@ export function renderPassport(container, ctx) {
                 h('span', { class: 'visually-hidden' }, badge.unlocked ? 'Unlocked' : 'Locked')
             )))
         ),
-        yearChart(stats),
+        yearChart('Visits by year', stats.years, row => `${row.year}: ${plural(row.count, 'visit', 'visits')}`),
+        travelSections(ctx),
         h('section', { class: 'share-card' },
             h('h3', {}, '🔗 Share your map'),
             h('p', { class: 'muted small' }, isPublic

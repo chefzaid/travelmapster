@@ -158,6 +158,12 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
 - A stamp for every country been to, marked "Home" or "Lived" where it applies, 13 badges with
   a confetti celebration, and a visits-by-year chart counting every visit (stays where you lived
   and layovers are not visits).
+- **On the road**, from dated visits: days abroad this year and per year (days outside the home
+  country, counted by the ledger's day rule; every recorded day when no home country is set), the
+  longest trip (stays away from home no more than three days apart, layovers included, places
+  lived in left out), the approximate distance traveled (straight lines between every place been
+  to, in the order of the visits, also told as times around the Earth) and countries per year
+  with how many were new.
 
 ## Accounts And Sharing
 
