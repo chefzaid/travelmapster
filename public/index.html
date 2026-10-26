@@ -206,6 +206,7 @@
                     <button id="poster-btn" class="menu-item" type="button">🖼️ Make a poster</button>
                     <button id="export-btn" class="menu-item" type="button">📦 Download all my data</button>
                     <button id="password-btn" class="menu-item" type="button" data-account-only>🔑 Change password</button>
+                    <button id="security-btn" class="menu-item" type="button" data-account-only>🔐 Sign-in security</button>
                     <button id="logout-btn" class="menu-item" type="button">👋 Log out</button>
                     <button id="delete-account-btn" class="menu-item menu-item-danger" type="button" data-account-only>🗑️ Delete account</button>
                     <button id="guest-clear-btn" class="menu-item menu-item-danger" type="button" data-guest-only hidden>🧹 Clear guest map</button>
@@ -298,6 +299,19 @@
                         </div>
                         <p id="auth-error" class="form-error" role="alert" hidden></p>
                         <button id="auth-submit" class="btn btn-primary btn-block" type="submit">Log in</button>
+                        <button id="passkey-login" class="btn btn-ghost btn-block" type="button" hidden>🔑 Log in with a passkey</button>
+                    </form>
+                    <!-- Two-step sign-in (ADR 0027): after the password, a code from the app -->
+                    <form id="second-step-form" class="auth-form" novalidate hidden>
+                        <p id="second-step-intro">Enter the 6-digit code from your authenticator app.</p>
+                        <label class="field">
+                            <span id="second-step-label">Code</span>
+                            <input id="second-step-code" name="code" autocomplete="one-time-code" inputmode="numeric" maxlength="20" required>
+                        </label>
+                        <p id="second-step-error" class="form-error" role="alert" hidden></p>
+                        <button id="second-step-submit" class="btn btn-primary btn-block" type="submit">Continue</button>
+                        <p class="small"><button id="second-step-recovery" class="link-button" type="button">Use a recovery code instead</button> ·
+                            <button id="second-step-cancel" class="link-button" type="button">Start over</button></p>
                     </form>
                 </section>
                 <p class="muted small">Just looking? Explore the map: hover countries, zoom in for cities, and try 🎲 Surprise me.</p>

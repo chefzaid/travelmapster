@@ -22,6 +22,17 @@
   sign-in rate limit. A password change starts a new session and ends all others; deletion ends
   every session.
 - Production refuses to start without a `SESSION_SECRET` of at least 32 characters.
+- **Passkeys** (WebAuthn, [ADR 0027](adr/0027-passkeys-and-two-step-sign-in.md)) must be
+  discoverable and verify the user; registrations and sign-ins are checked by
+  `@simplewebauthn/server` against a one-use challenge kept in the session for five minutes, the
+  origin and the relying party (`PUBLIC_URL`'s host), and the signature counter is stored. The
+  authenticator gets an opaque user handle, never the account number. A passkey sign-in needs no
+  second step.
+- **Two-step sign-in**: TOTP (RFC 6238, six digits, 30 seconds, one step either side, each step
+  used once) after the password, for at most five minutes and five tries before the session
+  opens; the secret is stored encrypted with AES-256-GCM under a key derived from
+  `TOTP_ENCRYPTION_KEY` (or `SESSION_SECRET`), and the ten recovery codes as SHA-256 hashes.
+  Turning it off needs the password; every route shares the sign-in rate limit.
 
 ## Authorization
 

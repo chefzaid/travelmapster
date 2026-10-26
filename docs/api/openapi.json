@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "TravelMapster API",
-    "version": "1.4.0",
+    "version": "1.5.0",
     "description": "The JSON API the TravelMapster app uses. It is version 1 and changes only in backward-compatible ways ([ADR 0019](../adr/0019-api-description-and-versioning.md)). Errors are `{ \"error\": \"…\" }` with a matching status; every response is `Cache-Control: no-store` unless stated."
   },
   "servers": [
@@ -138,7 +138,14 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AuthResult"
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/AuthResult"
+                    },
+                    {
+                      "$ref": "#/components/schemas/SecondStepRequired"
+                    }
+                  ]
                 }
               }
             }
@@ -1552,6 +1559,562 @@
           }
         ]
       }
+    },
+    "/api/auth/login/second-step": {
+      "post": {
+        "summary": "Second step of a password sign-in: a code from the authenticator app or a recovery code",
+        "tags": [
+          "Account"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "pattern": "^[0-9 ]{6,7}$"
+                  },
+                  "recoveryCode": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Wrong code, or a recovery code unknown or used",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No password sign-in waiting, or it expired after five minutes or five tries",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/CsrfRejected"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "security": [
+          {
+            "csrf": []
+          }
+        ]
+      }
+    },
+    "/api/security": {
+      "get": {
+        "summary": "Passkeys and two-step sign-in of the signed-in traveler",
+        "tags": [
+          "Account"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SecurityStatus"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      }
+    },
+    "/api/security/passkeys/options": {
+      "post": {
+        "summary": "Options to create a passkey (discoverable, user verification required)",
+        "tags": [
+          "Account"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebAuthnOptions"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/CsrfRejected"
+          },
+          "409": {
+            "description": "Ten passkeys already",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "security": [
+          {
+            "session": [],
+            "csrf": []
+          }
+        ]
+      }
+    },
+    "/api/security/passkeys": {
+      "post": {
+        "summary": "Add the passkey just created",
+        "tags": [
+          "Account"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "response"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 60
+                  },
+                  "response": {
+                    "$ref": "#/components/schemas/WebAuthnResponse"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Passkey"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Expired challenge, a name too long or a registration that does not verify",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/CsrfRejected"
+          },
+          "409": {
+            "description": "Passkey already registered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "security": [
+          {
+            "session": [],
+            "csrf": []
+          }
+        ]
+      }
+    },
+    "/api/security/passkeys/{id}": {
+      "delete": {
+        "summary": "Remove a passkey",
+        "tags": [
+          "Account"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Credential id, base64url"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Removed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/CsrfRejected"
+          },
+          "404": {
+            "description": "No such passkey on this account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "security": [
+          {
+            "session": [],
+            "csrf": []
+          }
+        ]
+      }
+    },
+    "/api/security/passkey-login/options": {
+      "post": {
+        "summary": "Options to sign in with a passkey, without a username",
+        "tags": [
+          "Account"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebAuthnOptions"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/CsrfRejected"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "security": [
+          {
+            "csrf": []
+          }
+        ]
+      }
+    },
+    "/api/security/passkey-login": {
+      "post": {
+        "summary": "Sign in with a passkey; no second step",
+        "tags": [
+          "Account"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "response"
+                ],
+                "properties": {
+                  "response": {
+                    "$ref": "#/components/schemas/WebAuthnResponse"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unknown passkey, expired challenge or a signature that does not verify",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/CsrfRejected"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "security": [
+          {
+            "csrf": []
+          }
+        ]
+      }
+    },
+    "/api/security/two-step/setup": {
+      "post": {
+        "summary": "Start two-step sign-in: a new secret, as text and an otpauth URI",
+        "tags": [
+          "Account"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "secret": {
+                      "type": "string",
+                      "description": "Base32"
+                    },
+                    "uri": {
+                      "type": "string",
+                      "format": "uri"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/CsrfRejected"
+          },
+          "409": {
+            "description": "Already on",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "security": [
+          {
+            "session": [],
+            "csrf": []
+          }
+        ]
+      }
+    },
+    "/api/security/two-step/enable": {
+      "post": {
+        "summary": "Turn two-step sign-in on with a first code; returns ten recovery codes, once",
+        "tags": [
+          "Account"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "code"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "recoveryCodes": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "minItems": 10,
+                      "maxItems": 10
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No setup started, or a code that does not match",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/CsrfRejected"
+          },
+          "409": {
+            "description": "Already on",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "security": [
+          {
+            "session": [],
+            "csrf": []
+          }
+        ]
+      }
+    },
+    "/api/security/two-step/disable": {
+      "post": {
+        "summary": "Turn two-step sign-in off; needs the password",
+        "tags": [
+          "Account"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "password"
+                ],
+                "properties": {
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Off"
+          },
+          "400": {
+            "description": "Wrong password",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/CsrfRejected"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "security": [
+          {
+            "session": [],
+            "csrf": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -2677,6 +3240,37 @@
                 }
               }
             }
+          },
+          "security": {
+            "type": "object",
+            "description": "How the account signs in, without keys or secrets (ADR 0027).",
+            "properties": {
+              "passkeys": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "lastUsedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    }
+                  }
+                }
+              },
+              "twoStep": {
+                "type": "boolean"
+              }
+            }
           }
         }
       },
@@ -2815,6 +3409,80 @@
             "maximum": 30
           }
         }
+      },
+      "SecondStepRequired": {
+        "type": "object",
+        "required": [
+          "secondStep"
+        ],
+        "properties": {
+          "secondStep": {
+            "const": true,
+            "description": "Two-step sign-in is on: send a code to POST /api/auth/login/second-step to open the session."
+          }
+        }
+      },
+      "Passkey": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Credential id, base64url"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 60
+          },
+          "transports": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastUsedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "SecurityStatus": {
+        "type": "object",
+        "properties": {
+          "passkeys": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Passkey"
+            }
+          },
+          "twoStep": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean"
+              },
+              "recoveryCodesLeft": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "WebAuthnOptions": {
+        "type": "object",
+        "description": "PublicKeyCredentialCreationOptionsJSON or PublicKeyCredentialRequestOptionsJSON (WebAuthn Level 3), binary fields in base64url.",
+        "additionalProperties": true
+      },
+      "WebAuthnResponse": {
+        "type": "object",
+        "description": "The credential as RegistrationResponseJSON or AuthenticationResponseJSON (WebAuthn Level 3), binary fields in base64url.",
+        "additionalProperties": true
       }
     }
   }

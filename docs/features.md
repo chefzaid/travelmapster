@@ -242,6 +242,10 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
 - Username and password accounts ([security](security.md#authentication-and-sessions)); change
   the password (signing out other devices) or delete the account and all its data from the
   account menu.
+- **Sign-in security** in the account menu ([ADR 0027](adr/0027-passkeys-and-two-step-sign-in.md)):
+  passkeys, to log in with a fingerprint, face or screen lock instead of the password (up to 10,
+  named, removable), and two-step sign-in, where a password sign-in also asks for a code from an
+  authenticator app, set up from a QR code, with ten single-use recovery codes.
 - **Download all my data** in the account menu: one ZIP archive with everything the account
   holds (`account.json`: profile and settings, places and visits, trips, ledger settings and the
   whole date history) and the places as CSV, GeoJSON and KML, with a README

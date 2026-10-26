@@ -43,6 +43,7 @@ test('the account export holds everything the account has, and only its own', as
     assert.deepEqual(archive.places[0].visits.map(visit => visit.startDate), ['2025-02-01', '2024-05-12']);
     assert.equal(archive.trips.length, 1);
     assert.equal(archive.trips[0].plan[0].morning, 'Ribeira');
+    assert.deepEqual(archive.security, { passkeys: [], twoStep: false }, 'how the account signs in, without keys or secrets');
     assert.equal(archive.ledger.settings.dayRule, 'midnight');
     // Every change to visit dates, written by the database triggers.
     assert.equal(archive.ledger.changes.length, 2);

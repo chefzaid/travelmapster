@@ -88,6 +88,17 @@ for (const colorScheme of ['light', 'dark']) {
         await expectAccessible(page, 'settings dialog');
         await page.getByRole('button', { name: 'Save settings' }).click();
         await expect(page.locator('dialog.dialog')).toHaveCount(0);
+        // Sign-in security, and the QR code that turns on two-step sign-in (ADR 0027).
+        await page.click('#account-btn');
+        await page.click('#security-btn');
+        await expect(page.locator('dialog.dialog', { hasText: 'Sign-in security' })).toBeVisible();
+        await expectAccessible(page, 'sign-in security dialog');
+        await page.locator('dialog.dialog').getByRole('button', { name: 'Turn on' }).click();
+        await expect(page.locator('dialog.dialog img.qr-code')).toBeVisible();
+        await expectAccessible(page, 'two-step setup dialog');
+        await page.locator('dialog.dialog').getByRole('button', { name: 'Cancel' }).click();
+        await page.locator('dialog.dialog').getByRole('button', { name: 'Done' }).click();
+        await expect(page.locator('dialog.dialog')).toHaveCount(0);
 
         for (const tab of ['explore', 'places', 'ledger', 'trips', 'passport']) {
             await page.click(`#tab-${tab}`);

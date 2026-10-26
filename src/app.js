@@ -17,7 +17,9 @@ const { PgRateLimitStore } = require('./rate-limit-store');
 const {
     createUserRepository, createMarkerRepository, createVisitRepository, createLedgerRepository, createTripRepository
 } = require('./repositories');
-const { createAuthRouter, createPassport, requireAuth } = require('./routes/auth');
+const { createAuthRouter, createPassport, publicUser, requireAuth } = require('./routes/auth');
+const { createSecurityRouter } = require('./routes/security');
+const { createSecurityRepository } = require('./security-repository');
 const { createMarkerRouter } = require('./routes/markers');
 const { createVisitRouter } = require('./routes/visits');
 const { createLedgerRouter } = require('./routes/ledger');
@@ -52,6 +54,7 @@ function createApp({ config, pool, logger, metrics, geocoder, places, state = { 
     const visits = createVisitRepository(pool);
     const ledger = createLedgerRepository(pool);
     const trips = createTripRepository(pool);
+    const security = createSecurityRepository(pool);
     const passport = createPassport(users, logger);
     const assets = createAssets(PUBLIC_DIR);
     const publicMaps = createPublicMaps({ users, markers, publicDir: PUBLIC_DIR });
@@ -195,7 +198,8 @@ function createApp({ config, pool, logger, metrics, geocoder, places, state = { 
         'Too many attempts, please try again later.');
     const registerLimiter = jsonLimiter(pool, 'register', config.rateLimit.registerPerHour, 60 * 60_000,
         'Too many new accounts from this network, please try again later.');
-    api.use('/auth', createAuthRouter({ passport, users, authLimiter, registerLimiter, metrics, logger }));
+    api.use('/auth', createAuthRouter({ passport, users, security, config, authLimiter, registerLimiter, metrics, logger }));
+    api.use('/security', createSecurityRouter({ config, users, security, authLimiter, requireAuth, publicUser, metrics, logger }));
     api.use('/public', createPublicProfileRouter({ users, markers }));
     api.use('/places', createPlacesRouter({ places }));
     api.use('/geocode', requireAuth,
@@ -206,7 +210,7 @@ function createApp({ config, pool, logger, metrics, geocoder, places, state = { 
     api.use('/visits', requireAuth, createVisitRouter({ visits }));
     api.use('/ledger', requireAuth, createLedgerRouter({ ledger, metrics }));
     api.use('/trips', requireAuth, createTripRouter({ trips }));
-    api.use('/export', requireAuth, createExportRouter({ markers, trips, ledger, metrics }));
+    api.use('/export', requireAuth, createExportRouter({ markers, trips, ledger, security, metrics }));
     api.use((req, res) => res.status(404).json({ error: 'Not found.' }));
     app.use('/api', api);
 

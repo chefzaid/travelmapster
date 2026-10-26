@@ -90,7 +90,18 @@ function placeFields(marker) {
 
 export const api = {
     currentUser: async () => (await request('GET', '/auth/me')).user,
-    login: async (username, password) => (await request('POST', '/auth/login', { username, password })).user,
+    // The user, or `{ secondStep: true }` when two-step sign-in asks for a code next (ADR 0027).
+    login: (username, password) => request('POST', '/auth/login', { username, password }),
+    secondStep: async answer => (await request('POST', '/auth/login/second-step', answer)).user,
+    passkeyLoginOptions: () => request('POST', '/security/passkey-login/options', {}),
+    passkeyLogin: async response => (await request('POST', '/security/passkey-login', { response })).user,
+    security: () => request('GET', '/security'),
+    passkeyOptions: () => request('POST', '/security/passkeys/options', {}),
+    addPasskey: (name, response) => request('POST', '/security/passkeys', { name, response }),
+    removePasskey: id => request('DELETE', `/security/passkeys/${encodeURIComponent(id)}`),
+    twoStepSetup: () => request('POST', '/security/two-step/setup', {}),
+    twoStepEnable: code => request('POST', '/security/two-step/enable', { code }),
+    twoStepDisable: password => request('POST', '/security/two-step/disable', { password }),
     register: async (username, password, website = '') => (await request('POST', '/auth/register', { username, password, website })).user,
     logout: () => request('POST', '/auth/logout', {}),
     // Sends only the settings that change: profileVisibility, homeCountry.
