@@ -76,6 +76,11 @@ Invalid integers stop startup with a clear error. Production values come from
   [AA contrast](features.md#product-principles).
 - **Third-party calls** need a CSP change in `src/app.js` and a [security](security.md) review.
 
+## App Icons
+
+`node scripts/build-icons.js` renders the installable app's icons in `public/icons/` from
+`public/logo.svg` with the bundled Chromium; run it after changing the logo.
+
 ## Rebuilding Map Data
 
 Download `ne_50m_admin_0_countries.geojson` and `ne_10m_populated_places_simple.geojson` from

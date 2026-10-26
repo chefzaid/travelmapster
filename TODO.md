@@ -12,6 +12,7 @@ material design changes as an [ADR](docs/architecture.md#adr-process).
 Bugs, failing checks, security findings and code smells found while working on another task. Each entry names the file or area, what is wrong, and how to reproduce it.
 
 - [ ] Container image findings. The 2026-10-04 platform Trivy scan found 4 critical Debian bookworm findings in image `1.8.1` (Perl, zlib minizip). The runtime base is still `node:22.22.2-bookworm-slim` (`Dockerfile`, `NODE_IMAGE`), so `1.10.0` probably still carries them: rescan, and clear them with a base that drops those packages (for example an Alpine or distroless Node image) or record why they are not exploitable here. The database setup Job (`infra/k8s/database-setup-job.yaml`) renders the same PostgreSQL image as the other applications: `postgres:18.6-bookworm@sha256:b939b3851e2c…` is an amd64-only build from 2026-08-13; the tag now points to `sha256:bbf83594798e…` (rebuilt 2026-10-21) and the platform runs `sha256:3725f4e2499e…` (2026-09-19). The 2026-10-04 platform Trivy scan found critical Debian bookworm findings in this image (Perl, zlib minizip) with no Debian fix; the platform accepted them for its own PostgreSQL until 2026-11-04 ([swirl-cloud security](https://github.com/chefzaid/swirl-cloud/blob/main/docs/security.md#vulnerability-triage)), not for this repository. Recheck on the platform's Grafana **Trivy Security Reports** dashboard or with `trivy image --severity CRITICAL <image>`, then move to the current digest or a variant without the affected packages, or record an exception here. *(found by: Infra Agent, swirl-cloud TODO §21)* *(waiting: see Needs Input › Container image base)*
+- [ ] Intermittent browser test failure: `test/e2e/travel.spec.js` › "a traveler records several visits to the same city" failed once in four full `npx playwright test` runs on 2026-10-26 (two workers) and passed in six repeats on its own; the failure output was not kept. Next time, keep `test-results/` (trace retained on failure) and look at the step that failed; the test adds visits, checks the Explore tab's "On this day" list and the passport's travel statistics and goals, all after toasts and card re-renders. *(found by: Coding Agent)*
 - [x] Slow first paint on phones: the landing page's Largest Contentful Paint on a mid-range phone was about 6.5 s; the landing panel now shows while MapLibre and the map data load (about 2.7 s), and the budget is 4 s. *(found by: Coding Agent)*
 
 ## Needs Input
@@ -75,7 +76,7 @@ Differentiators:
 - [ ] Yearly travel recap and a printable travel book from places, notes and photos (builds on travel albums). *(waiting: see Needs Input › Photo storage)*
 - [ ] Shareable image cards (passport stamps, country count, yearly recap) without exposing private notes.
 - [ ] Friends: follow public maps, compare countries visited, and plan an itinerary together with edit or view roles.
-- [ ] Installable offline app (PWA) using the bundled map data.
+- [x] Installable offline app (PWA) using the bundled map data.
 
 ### Teams tier
 

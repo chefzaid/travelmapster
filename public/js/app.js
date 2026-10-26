@@ -458,9 +458,17 @@ async function createMap() {
     });
 }
 
+// The installable app works offline with what was last loaded (ADR 0021).
+function setupOffline() {
+    navigator.serviceWorker?.register('/sw.js').catch(error => console.warn('Offline mode is unavailable', error));
+    window.addEventListener('offline', () => toast('You are offline: your map shows as last loaded, and changes will not save until you are back online.', { duration: 8000 }));
+    window.addEventListener('online', () => toast('Back online.', { tone: 'success' }));
+}
+
 async function init() {
     // Start with this browser's palette; a signed-in traveler's own choice follows.
     applyPalette(context, storedPalette());
+    setupOffline();
     // The landing page's forms work before the map has loaded.
     setupAuth(context);
     const publicMap = new URLSearchParams(location.search).has('u');
