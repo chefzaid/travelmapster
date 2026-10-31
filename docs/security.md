@@ -148,8 +148,13 @@ a SHA-256 hash; each works once, for seven days, and is revoked by the admin or 
   which the member reads in the app and in their data download, and is sent with
   `Cache-Control: no-store`. The report's CSV defuses formula cells like the evidence CSV.
 - Travelers can download everything their account holds as one archive (`GET /api/export`,
-  only ever the caller's own data, never the password hash) and delete their account, which
-  removes all their data at once ([data model](data-model.md#privacy)).
+  only ever the caller's own data, never the password hash) and delete their account. Deleting
+  signs out every session and hides the account at once: lookups by username (public map,
+  following, sharing a trip, inviting to an organization), the sitemap, the calendar feed and
+  family links all treat it as gone. Signing in within 30 days restores it (both steps noted in
+  the security activity); after that an hourly sweep in the app deletes it and all its data
+  ([data model](data-model.md#privacy)). Its username stays taken until then. An organization
+  it belongs to still counts its business days during the 30 days.
 
 ## Runtime And Supply Chain
 

@@ -1,6 +1,6 @@
 // Signing up and in from the landing page (with a passkey or a second step, ADR 0027), the
 // account menu, settings, password change, account deletion and sharing.
-import { h, $, $all, fill, toast, formDialog, downloadFile, copyText } from './ui.js';
+import { h, $, $all, fill, toast, formDialog, formatDate, downloadFile, copyText } from './ui.js';
 import { passkeysSupported, usePasskey } from './webauthn.js';
 import { openOrgs } from './orgs.js';
 import { SCHENGEN_RULE } from './days.js';
@@ -14,6 +14,11 @@ import { DISTANCE_UNITS, distanceUnit, rememberDistanceUnit } from './units.js';
 import { THEMES, applyTheme, rememberTheme, storedTheme } from './theme.js';
 
 // ---------------------------------------------------------------- landing
+
+// Signing in during the deletion grace period keeps the account, and says so.
+const welcome = user => (user.restored
+    ? t('Welcome back, {username}! Your account is restored and will not be deleted.', { username: user.username })
+    : t('Welcome back, {username}!', { username: user.username }));
 
 // The ledger story counts the sample traveler's Schengen days live, as the Ledger tab would.
 export function renderDemoLedger(ctx) {
@@ -104,7 +109,7 @@ function setupSecondStep(ctx) {
             const user = await ctx.api.secondStep(recoveryMode ? { recoveryCode: answer } : { code: answer });
             setRecoveryMode(false);
             showSecondStep(false);
-            await finishSignIn(ctx, t('Welcome back, {username}!', { username: user.username }));
+            await finishSignIn(ctx, welcome(user));
         } catch (error) {
             $('#second-step-error').textContent = error.message;
             $('#second-step-error').hidden = false;
@@ -121,7 +126,7 @@ function setupSecondStep(ctx) {
             const response = await usePasskey(await ctx.api.passkeyLoginOptions());
             if (!response) return;
             const user = await ctx.api.passkeyLogin(response);
-            await finishSignIn(ctx, t('Welcome back, {username}!', { username: user.username }));
+            await finishSignIn(ctx, welcome(user));
         } catch (error) {
             errorBox.textContent = error.message;
             errorBox.hidden = false;
@@ -161,7 +166,7 @@ export function setupAuth(ctx) {
                 showSecondStep(true);
                 return;
             }
-            await finishSignIn(ctx, authMode === 'register' ? t('Welcome aboard! Your map is ready. 🗺️') : t('Welcome back, {username}!', { username }));
+            await finishSignIn(ctx, authMode === 'register' ? t('Welcome aboard! Your map is ready. 🗺️') : welcome(result.user));
         } catch (error) {
             errorBox.textContent = error.message;
             errorBox.hidden = false;
@@ -290,16 +295,16 @@ async function downloadArchive(ctx) {
 async function deleteAccount(ctx) {
     const values = await formDialog({
         title: t('Delete your account?'),
-        message: t('Your places, trips, day ledger and passport are deleted for good. Download all your data from the account menu first if you want to keep it.'),
+        message: t('Your places, trips, day ledger and passport are deleted for good after 30 days. Until then the account is hidden and signing in again restores everything. Download all your data from the account menu first if you want to keep it.'),
         submitLabel: t('Delete account'),
         danger: true,
         fields: [{ name: 'password', label: t('Password'), type: 'password', required: true, autocomplete: 'current-password' }]
     });
     if (!values) return;
     try {
-        await ctx.api.deleteAccount(values.password);
+        const { deleteAfter } = await ctx.api.deleteAccount(values.password);
         ctx.showSignedOut();
-        toast(t('Your account and travel data were deleted.'));
+        toast(t('Your account will be deleted for good on {date}. Sign in before then to keep it.', { date: formatDate(String(deleteAfter).slice(0, 10)) }), { duration: 8000 });
     } catch (error) {
         ctx.handleError(error);
     }

@@ -320,7 +320,7 @@
     },
     "/api/auth/account": {
       "delete": {
-        "summary": "Delete the account and all its data",
+        "summary": "Delete the account and all its data after a 30-day grace period",
         "tags": [
           "Account"
         ],
@@ -330,7 +330,21 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CsrfToken"
+                  "type": "object",
+                  "required": [
+                    "deleteAfter",
+                    "csrfToken"
+                  ],
+                  "properties": {
+                    "deleteAfter": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "When the account is deleted for good unless its owner signs in before."
+                    },
+                    "csrfToken": {
+                      "type": "string"
+                    }
+                  }
                 }
               }
             }
@@ -378,7 +392,8 @@
             "session": [],
             "csrf": []
           }
-        ]
+        ],
+        "description": "Signs out everywhere and hides the account at once (public map, follows, sharing, calendar feed and family links); signing in within 30 days restores it, and after that it is deleted for good with everything it holds."
       }
     },
     "/api/profile": {
@@ -4322,6 +4337,10 @@
               "$ref": "#/components/schemas/PackingTemplate"
             },
             "description": "Packing list templates to start a trip's list from, each with its own name; never on the public map."
+          },
+          "restored": {
+            "type": "boolean",
+            "description": "Sign-in answers only: true when signing in ended the deletion grace period and kept the account."
           }
         }
       },
@@ -5731,7 +5750,9 @@
               "passkey_added",
               "passkey_removed",
               "two_step_on",
-              "two_step_off"
+              "two_step_off",
+              "deletion_requested",
+              "account_restored"
             ]
           },
           "method": {

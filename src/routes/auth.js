@@ -35,7 +35,7 @@ function createPassport(users, logger) {
 
     passport.use(new LocalStrategy(async (username, password, done) => {
         try {
-            const user = await users.findByUsername(String(username).trim());
+            const user = await users.findForSignIn(String(username).trim());
             const matches = await bcrypt.compare(String(password), user ? user.password_hash : dummyHash);
             return done(null, user && matches ? user : false);
         } catch (err) {
@@ -104,12 +104,12 @@ function createAuthRouter({ passport, users, security, config, authLimiter, regi
             try {
                 // With two-step sign-in on, the session opens only after the code (ADR 0027).
                 if (await needsSecondStep(req, user, security)) return res.json({ secondStep: true });
-                await login(req, user, { security, method: 'password' });
+                const { restored } = await login(req, user, { security, method: 'password', users });
+                metrics.authEvents.inc({ event: 'login', outcome: 'success' });
+                return res.json({ user: { ...publicUser(user), restored }, csrfToken: getOrCreateToken(req) });
             } catch (loginErr) {
                 return next(loginErr);
             }
-            metrics.authEvents.inc({ event: 'login', outcome: 'success' });
-            return res.json({ user: publicUser(user), csrfToken: getOrCreateToken(req) });
         })(req, res, next);
     });
 
@@ -119,9 +119,9 @@ function createAuthRouter({ passport, users, security, config, authLimiter, regi
             metrics.authEvents.inc({ event: 'second_step', outcome: 'failure' });
             return res.status(status).json({ error });
         }
-        await login(req, user, { security, method });
+        const { restored } = await login(req, user, { security, method, users });
         metrics.authEvents.inc({ event: 'login', outcome: 'success' });
-        return res.json({ user: publicUser(user), csrfToken: getOrCreateToken(req) });
+        return res.json({ user: { ...publicUser(user), restored }, csrfToken: getOrCreateToken(req) });
     });
 
     router.post('/logout', (req, res, next) => {
@@ -162,13 +162,16 @@ function createAuthRouter({ passport, users, security, config, authLimiter, regi
             return res.status(400).json({ error: 'Password is incorrect.' });
         }
 
+        // Deleted for good after 30 days; signing in before then restores it. Meanwhile it is
+        // hidden from everyone and signed out everywhere.
         const userId = req.user.id;
-        await users.remove(userId);
+        const deleteAfter = await users.requestDeletion(userId);
+        await recordChange(security, req, 'deletion_requested');
         await users.endSessions(userId);
         await logout(req);
         metrics.authEvents.inc({ event: 'account_delete', outcome: 'success' });
-        logger.info({ userId }, 'Account deleted');
-        return res.json({ csrfToken: getOrCreateToken(req) });
+        logger.info({ userId }, 'Account deletion requested');
+        return res.json({ deleteAfter, csrfToken: getOrCreateToken(req) });
     });
 
     router.get('/me', (req, res) => {

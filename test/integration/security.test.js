@@ -3,7 +3,7 @@
 // Sign-in security (ADR 0027): two-step sign-in with codes and recovery codes, and passkeys.
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { createClient, createTestContext } = require('../helpers');
+const { createClient, createTestContext, purgeDeletedAccounts } = require('../helpers');
 const { createAuthenticator } = require('../fixtures/authenticator');
 const totp = require('../../src/totp');
 
@@ -148,6 +148,7 @@ test('a passkey sign-in needs no second step, and an account holds at most ten p
     assert.equal((await device.post('/api/security/passkey-login', { response: keys[3].signIn(challenge.body) })).status, 200);
     // Deleting the account removes its passkeys and secrets.
     assert.equal((await client.delete('/api/auth/account', { password: 'belt and braces' })).status, 200);
+    await purgeDeletedAccounts(ctx.pool);
     const { rows } = await ctx.pool.query('SELECT (SELECT count(*) FROM passkeys)::int AS keys, (SELECT count(*) FROM totp_secrets)::int AS secrets');
     assert.deepEqual(rows[0], { keys: 0, secrets: 0 });
 });

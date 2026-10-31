@@ -44,7 +44,7 @@ function createFamilyLinkRepository(db) {
             const { rows } = await db.query(
                 `SELECT t.title, t.destination, t.start_date AS "startDate", t.plan, t.stops, t.updated_at AS "updatedAt", u.username
                  FROM trip_family_links f JOIN trips t ON t.id = f.trip_id JOIN users u ON u.id = t.user_id
-                 WHERE f.token_hash = $1`,
+                 WHERE f.token_hash = $1 AND u.deletion_requested_at IS NULL`,
                 [tokenHash]
             );
             return rows[0] || null;

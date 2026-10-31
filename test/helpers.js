@@ -137,4 +137,10 @@ const sampleMarker = Object.freeze({
     travelDate: '2024-05-12'
 });
 
-module.exports = { createClient, createTestContext, sampleMarker, DATABASE_URL };
+/** Runs the purge as if 31 days had passed, deleting for good the accounts asked to be deleted. */
+function purgeDeletedAccounts(pool) {
+    const { createUserRepository } = require('../src/repositories');
+    return createUserRepository(pool).purgeDeleted(new Date(Date.now() + 31 * 86_400_000));
+}
+
+module.exports = { createClient, createTestContext, sampleMarker, DATABASE_URL, purgeDeletedAccounts };

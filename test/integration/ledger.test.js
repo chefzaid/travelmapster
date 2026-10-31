@@ -3,7 +3,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const request = require('supertest');
-const { createClient, createTestContext, sampleMarker } = require('../helpers');
+const { createClient, createTestContext, sampleMarker, purgeDeletedAccounts } = require('../helpers');
 
 let ctx;
 test.before(async () => { ctx = await createTestContext(); });
@@ -190,6 +190,7 @@ test('writes of the previous release are recorded too, and the history goes with
     await client.put('/api/ledger', settings);
     const { rows: [user] } = await ctx.pool.query("SELECT id FROM users WHERE username = 'history_legacy'");
     assert.equal((await client.delete('/api/auth/account', { password: 'history legacy password' })).status, 200);
+    await purgeDeletedAccounts(ctx.pool);
     for (const table of ['visit_changes', 'ledger_settings']) {
         const { rows } = await ctx.pool.query(`SELECT count(*)::int AS n FROM ${table} WHERE user_id = $1`, [user.id]);
         assert.equal(rows[0].n, 0, `${table} rows go with the account`);

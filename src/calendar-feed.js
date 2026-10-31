@@ -29,7 +29,11 @@ function createCalendarFeedRepository(db) {
             await db.query('DELETE FROM calendar_feeds WHERE user_id = $1', [userId]);
         },
         async userFor(tokenHash) {
-            const { rows } = await db.query('SELECT user_id AS "userId" FROM calendar_feeds WHERE token_hash = $1', [tokenHash]);
+            const { rows } = await db.query(
+                `SELECT f.user_id AS "userId" FROM calendar_feeds f JOIN users u ON u.id = f.user_id
+                 WHERE f.token_hash = $1 AND u.deletion_requested_at IS NULL`,
+                [tokenHash]
+            );
             return rows[0]?.userId ?? null;
         }
     };
