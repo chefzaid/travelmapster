@@ -131,7 +131,9 @@ a SHA-256 hash; each works once, for seven days, and is revoked by the admin or 
   ([ADR 0021](adr/0021-installable-offline-app.md)).
 - An employer's report holds, per member, business days per country and rule statuses only:
   it reads only the visits marked as business trips for that organization and never returns
-  place names, cities, dates or notes. Every report writes an audit entry per member shown,
+  place names, cities, dates or notes. Its forecast reads the business trips planned for that
+  organization the same way: their days count, their destinations, titles and dates never leave
+  the server. Every report writes an audit entry per member shown,
   which the member reads in the app and in their data download, and is sent with
   `Cache-Control: no-store`. The report's CSV defuses formula cells like the evidence CSV.
 - Travelers can download everything their account holds as one archive (`GET /api/export`,

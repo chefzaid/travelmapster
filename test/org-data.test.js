@@ -34,15 +34,32 @@ test('the report becomes CSV with a row per country and per rule, formulas defus
     const { buildReportCsv, REPORT_FIELDS } = await load('org-data.js');
     const csv = buildReportCsv({
         members: [
-            { username: 'ana', role: 'traveler', countries: [{ countryId: 'FRA', name: 'France', days: 10 }], rules: [{ name: '=France A1', kind: 'threshold', count: 10, maxDays: 8, status: 'reached' }] },
+            { username: 'ana', role: 'traveler', countries: [{ countryId: 'FRA', name: 'France', days: 10 }], rules: [
+                { name: '=France A1', kind: 'threshold', count: 10, maxDays: 8, status: 'reached', forecast: { count: 14, reached: true } },
+                { name: 'Japan 90/180', kind: 'stay', count: 0, maxDays: 90, status: 'ok', forecast: { fits: false, firstBreach: '2026-09-01' } },
+                { name: 'Spain', kind: 'threshold', count: 0, maxDays: 30, status: 'ok', forecast: null }
+            ] },
             { username: 'ben', role: 'admin', countries: [], rules: [] }
         ]
     }).split('\r\n');
     assert.equal(csv[0], REPORT_FIELDS.map(field => `"${field}"`).join(','));
     assert.deepEqual(csv.slice(1), [
-        '"ana","traveler","country","France","10","",""',
-        '"ana","traveler","threshold","\'=France A1","10","8","reached"'
+        '"ana","traveler","country","France","10","","","","",""',
+        '"ana","traveler","threshold","\'=France A1","10","8","reached","reached","14",""',
+        '"ana","traveler","stay","Japan 90/180","0","90","ok","over","","2026-09-01"',
+        '"ana","traveler","threshold","Spain","0","30","ok","","",""'
     ]);
+});
+
+test('the forecast of a rule with the business trips planned ahead, in words', async () => {
+    const { forecastLabel } = await load('org-data.js');
+    const { useCatalog } = await load('i18n.js');
+    useCatalog('en');
+    assert.equal(forecastLabel({ kind: 'stay', maxDays: 90, forecast: null }), '');
+    assert.equal(forecastLabel({ kind: 'stay', maxDays: 90, forecast: { fits: true, firstBreach: null } }), 'With planned trips: fits');
+    assert.equal(forecastLabel({ kind: 'stay', maxDays: 90, forecast: { fits: false, firstBreach: '2026-09-01' } }, iso => `<${iso}>`), 'With planned trips: over from <2026-09-01>');
+    assert.equal(forecastLabel({ kind: 'threshold', maxDays: 30, forecast: { count: 31, reached: true } }), 'With planned trips: 31 of 30 days, reached');
+    assert.equal(forecastLabel({ kind: 'threshold', maxDays: 30, forecast: { count: 12, reached: false } }), 'With planned trips: 12 of 30 days');
 });
 
 test('only the business visits for that organization count for it', async () => {

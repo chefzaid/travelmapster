@@ -116,17 +116,27 @@ test('the report counts business visits only, with the employer\'s rules, and th
     assert.deepEqual(report.body.members.find(item => item.username === 'globex_admin').countries, []);
     assert.equal(JSON.stringify(report.body).includes('Paris'), false, 'no place names');
     assert.equal(JSON.stringify(report.body).includes('Client workshop'), false, 'no notes');
+    assert.deepEqual(row.rules.map(rule => rule.forecast), [null, null], 'no forecast without planned business trips');
+
+    // A business trip to Tokyo planned in ten days: Japan's rule still fits, with its days ahead.
+    const plan = Array.from({ length: 5 }, () => ({ morning: '', afternoon: '', evening: '' }));
+    const { body: trip } = await worker.post('/api/trips', { title: 'Tokyo sales week', destination: 'Tokyo, Japan', startDate: day(10), plan });
+    assert.equal((await worker.put(`/api/trips/${trip.id}`, { ...trip, organizationId: org.id })).status, 200);
+    const ahead = (await admin.get(`/api/orgs/${org.id}/report?from=${day(-60)}&to=${day(0)}`)).body.members.find(item => item.username === 'globex_worker');
+    assert.deepEqual([ahead.plannedTrips, ahead.unknownTrips], [1, 0]);
+    assert.deepEqual(ahead.rules.find(rule => rule.ruleId === 'jp-90').forecast, { fits: true, firstBreach: null });
+    assert.equal(JSON.stringify(ahead).includes('Tokyo'), false, 'no destinations or titles');
     assert.equal((await admin.get(`/api/orgs/${org.id}/report?from=${day(0)}&to=${day(-1)}`)).status, 400);
     assert.equal((await admin.get(`/api/orgs/${org.id}/report?from=2026-02-30&to=2026-03-01`)).status, 400);
     const yearly = await admin.get(`/api/orgs/${org.id}/report`);
     assert.match(yearly.body.from, /^\d{4}-01-01$/);
 
     const audit = (await worker.get('/api/orgs/audit')).body;
-    assert.equal(audit.length, 2);
+    assert.equal(audit.length, 3, 'each look at the counts');
     assert.deepEqual([audit[0].organization, audit[0].actor, audit[0].action], ['Globex', 'globex_admin', 'viewed business-day counts']);
     const archive = (await worker.get('/api/export')).body;
     assert.deepEqual(archive.organizations, [{ name: 'Globex', role: 'traveler' }]);
-    assert.equal(archive.auditLog.length, 2);
+    assert.equal(archive.auditLog.length, 3);
 
     // Leaving turns the business visits back into personal ones; so does deleting the organization.
     await worker.delete(`/api/orgs/${org.id}/members/globex_worker`);

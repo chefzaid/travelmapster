@@ -196,8 +196,10 @@ function createOrgRouter({ orgs, users, security }) {
         const period = req.query.from || req.query.to ? parsePeriod(req.query.from, req.query.to) : yearOf();
         if (!period) return res.status(400).json({ error: 'The period needs a start and an end date (YYYY-MM-DD), at most ten years apart.' });
         const members = await orgs.listMembers(org.id);
-        const [visits, rules] = await Promise.all([orgs.businessVisits(org.id, members.map(member => member.id)), orgs.rules(org.id)]);
-        const rows = await orgReport({ members, visits, rules, ...period });
+        const ids = members.map(member => member.id);
+        const today = new Date().toISOString().slice(0, 10);
+        const [visits, trips, rules] = await Promise.all([orgs.businessVisits(org.id, ids), orgs.businessTrips(org.id, ids, today), orgs.rules(org.id)]);
+        const rows = await orgReport({ members, visits, trips, rules, ...period, today });
         // Every look at the counts is on the record, for each member shown.
         await orgs.audit(org.id, req.user.id, members.map(member => member.id), 'viewed business-day counts');
         res.set('Cache-Control', 'no-store');

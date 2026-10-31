@@ -207,7 +207,7 @@ Ideas that follow the product direction: a travel record people rely on for visa
 
 ### Teams
 
-- [ ] Forecast in the employer's report: planned business trips counted as planned days, so a rule shows when it would be reached before anyone travels.
+- [x] Forecast in the employer's report: planned business trips counted as planned days, so a rule shows when it would be reached before anyone travels. Done: each rule's forecast in the report and its CSV, from members' dated business trips not over yet.
 - [ ] Personal and organization API tokens (read-only, revocable, listed in the audit log) for accountants' and HR systems' integrations, on the documented API.
 
 ### Accounts and trust

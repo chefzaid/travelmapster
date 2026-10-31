@@ -46,6 +46,10 @@
     "one": "{count} schon gesetzt oder besucht",
     "other": "{count} schon gesetzt oder besucht"
   },
+  "{count} business trips planned": {
+    "one": "{count} Geschäftsreise geplant",
+    "other": "{count} Geschäftsreisen geplant"
+  },
   "{count} cities": {
     "one": "{count} Stadt",
     "other": "{count} Städte"
@@ -151,6 +155,10 @@
   "{count} places without dates are not shown.": {
     "one": "{count} Ort ohne Datum wird nicht angezeigt.",
     "other": "{count} Orte ohne Datum werden nicht angezeigt."
+  },
+  "{count} planned trips to no known place, left out": {
+    "one": "{count} geplante Reise an einen unbekannten Ort, nicht gezählt",
+    "other": "{count} geplante Reisen an einen unbekannten Ort, nicht gezählt"
   },
   "{count} rules": {
     "one": "{count} Regel",
@@ -1821,6 +1829,10 @@
   "with a passkey": "mit einem Passkey",
   "with a recovery code": "mit einem Wiederherstellungscode",
   "with an authenticator code": "mit einem Code aus der Authenticator-App",
+  "With planned trips: {count} of {maxDays} days": "Mit geplanten Reisen: {count} von {maxDays} Tagen",
+  "With planned trips: {count} of {maxDays} days, reached": "Mit geplanten Reisen: {count} von {maxDays} Tagen, erreicht",
+  "With planned trips: fits": "Mit geplanten Reisen: passt",
+  "With planned trips: over from {date}": "Mit geplanten Reisen: überschritten ab {date}",
   "with the password": "mit dem Passwort",
   "Works on any device and installs as an app that opens offline. Download all your data at any time, as JSON, CSV, GeoJSON or KML, and delete your account whenever you like.": "Läuft auf jedem Gerät und lässt sich als App installieren, die auch offline startet. Lade jederzeit alle deine Daten als JSON, CSV, GeoJSON oder KML herunter und lösche dein Konto, wann immer du willst.",
   "World citizen": "Weltbürger",

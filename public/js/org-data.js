@@ -27,14 +27,33 @@ export function readPurpose(value) {
     return purpose === 'business' && Number(id) > 0 ? { purpose, organizationId: Number(id) } : { purpose: 'personal', organizationId: null };
 }
 
-export const REPORT_FIELDS = ['member', 'role', 'kind', 'item', 'days', 'limit', 'status'];
+export const REPORT_FIELDS = ['member', 'role', 'kind', 'item', 'days', 'limit', 'status', 'forecast', 'forecastDays', 'overFrom'];
+
+/**
+ * What the business trips planned ahead do to a rule, in words: whether a stay rule still fits
+ * (or from which day it would not), or a threshold's days with them. '' without planned trips.
+ */
+export function forecastLabel(rule, formatDay = iso => iso) {
+    const { forecast } = rule;
+    if (!forecast) return '';
+    if (rule.kind === 'stay') return forecast.fits ? t('With planned trips: fits') : t('With planned trips: over from {date}', { date: formatDay(forecast.firstBreach) });
+    return forecast.reached ? t('With planned trips: {count} of {maxDays} days, reached', { count: forecast.count, maxDays: rule.maxDays })
+        : t('With planned trips: {count} of {maxDays} days', { count: forecast.count, maxDays: rule.maxDays });
+}
+
+// The forecast's CSV columns: ok, over or reached; the days with planned trips; the first day over.
+const forecastFields = ({ kind, forecast }) => {
+    if (!forecast) return ['', '', ''];
+    if (kind === 'stay') return [forecast.fits ? 'ok' : 'over', '', forecast.firstBreach || ''];
+    return [forecast.reached ? 'reached' : 'ok', forecast.count, ''];
+};
 
 /** The report as CSV for an adviser: a row per member and country, and per member and rule. */
 export function buildReportCsv(report) {
     const rows = [REPORT_FIELDS];
     for (const member of report.members) {
-        for (const country of member.countries) rows.push([member.username, member.role, 'country', country.name, country.days, '', '']);
-        for (const rule of member.rules) rows.push([member.username, member.role, rule.kind, rule.name, rule.count, rule.maxDays, rule.status]);
+        for (const country of member.countries) rows.push([member.username, member.role, 'country', country.name, country.days, '', '', '', '', '']);
+        for (const rule of member.rules) rows.push([member.username, member.role, rule.kind, rule.name, rule.count, rule.maxDays, rule.status, ...forecastFields(rule)]);
     }
     return rows.map(row => row.map(csvField).join(',')).join('\r\n');
 }

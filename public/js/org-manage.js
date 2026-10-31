@@ -1,7 +1,7 @@
 // Running an organization (ADR 0029), for its managers and admins: the business-day report with
 // its CSV, members and roles, invitation links, the employer's rules, renaming and deleting.
 import { h, toast, formDialog, formatDate, downloadFile, copyText, steppedDialog, STAY_CLOSED } from './ui.js';
-import { buildReportCsv, invitationLink } from './org-data.js';
+import { buildReportCsv, forecastLabel, invitationLink } from './org-data.js';
 import { openSecurity, ruleDialog } from './lazy.js';
 import { countryName } from './ledger-report.js';
 import { statusChip } from './ledger-parts.js';
@@ -47,9 +47,12 @@ function reportTable(report) {
         h('caption', { class: 'small' }, t('Business days from {from} to {to}', { from: formatDate(report.from), to: formatDate(report.to) })),
         h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, t('Member')), h('th', { scope: 'col' }, t('Days per country')), h('th', { scope: 'col' }, t('Rules')))),
         h('tbody', {}, report.members.map(member => h('tr', {},
-            h('th', { scope: 'row' }, member.username),
+            h('th', { scope: 'row' }, member.username,
+                member.plannedTrips ? h('small', { class: 'org-report-note' }, tn(member.plannedTrips, '{count} business trip planned', '{count} business trips planned')) : null,
+                member.unknownTrips ? h('small', { class: 'org-report-note' }, tn(member.unknownTrips, '{count} planned trip to no known place, left out', '{count} planned trips to no known place, left out')) : null),
             h('td', {}, member.countries.length ? member.countries.map(country => `${country.name} ${country.days}`).join(' · ') : '—'),
-            h('td', {}, member.rules.map(rule => h('div', {}, `${rule.name}: ${rule.count}/${rule.maxDays} `, statusChip(rule.status))))
+            h('td', {}, member.rules.map(rule => h('div', {}, `${rule.name}: ${rule.count}/${rule.maxDays} `, statusChip(rule.status),
+                rule.forecast ? h('small', { class: 'org-report-note' }, forecastLabel(rule, formatDate)) : null)))
         )))));
 }
 

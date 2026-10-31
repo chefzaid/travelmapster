@@ -2,8 +2,10 @@
 
 // The employer's report (ADR 0029): for each member, business days per country in a period and
 // the status of each employer rule, counted by the browser's own days.js over business visits
-// only, with countries found by geo.js. No place names, cities or dates leave this module.
-const { browserModule, countryData } = require('./browser-modules');
+// only, with countries found by geo.js; and a forecast of each rule with the business trips
+// planned ahead, their days counted as planned stays (itinerary.js). No place names, cities or
+// trip dates leave this module.
+const { browserModule, countryData, townData } = require('./browser-modules');
 
 const DAY_MS = 86_400_000;
 const isoDate = date => date.toISOString().slice(0, 10);
@@ -23,29 +25,50 @@ function placesOf(rows) {
 
 /**
  * The report rows: `members` ({ id, username, role }), `visits` (rows of business visits),
- * `rules` (the employer's) and the period from `from` to `to` (YYYY-MM-DD), as of `today`.
+ * `trips` (members' business trips not over yet), `rules` (the employer's) and the period from
+ * `from` to `to` (YYYY-MM-DD), as of `today`.
  */
-async function orgReport({ members, visits, rules, from, to, today = isoDate(new Date()) }) {
-    const [{ resolveMarkerCountry }, days, { index }] = await Promise.all([browserModule('geo.js'), browserModule('days.js'), countryData()]);
+async function orgReport({ members, visits, trips = [], rules, from, to, today = isoDate(new Date()) }) {
+    const [{ findTown, resolveMarkerCountry }, days, { resolveDestination, tripPlannedStays }, { index }, cities] = await Promise.all([
+        browserModule('geo.js'), browserModule('days.js'), browserModule('itinerary.js'), countryData(), townData()
+    ]);
     const countryOf = marker => resolveMarkerCountry(index, marker);
-    const settings = { dayRule: 'presence', rules, planned: [] };
+    const destinationCountry = destination => resolveDestination(destination, { findCountry: name => index.findByName(name), findCity: name => findTown(cities, name) })?.countryId || null;
     return members.map(member => {
-        const markers = placesOf(visits.filter(row => String(row.userId) === String(member.id)));
-        const overview = days.ledgerOverview({ markers, countryOf, settings, today });
+        const mine = row => String(row.userId) === String(member.id);
+        const markers = placesOf(visits.filter(mine));
+        // Planned days count from today: what is past is in the visits.
+        const planned = [];
+        let unknownTrips = 0;
+        for (const trip of trips.filter(mine)) {
+            const { stays, unknown } = tripPlannedStays(trip, destinationCountry);
+            if (unknown !== undefined) unknownTrips += 1;
+            for (const stay of stays || []) if (stay.endDate >= today) planned.push({ ...stay, startDate: stay.startDate < today ? today : stay.startDate });
+        }
+        const overview = days.ledgerOverview({ markers, countryOf, settings: { dayRule: 'presence', rules, planned }, today });
         const thresholds = overview.thresholds.filter(item => !item.rule.builtIn);
+        const forecastOf = rule => {
+            if (!planned.length) return null;
+            const stay = overview.plans.stays.find(item => item.rule.id === rule.id);
+            if (stay) return { fits: stay.fits, firstBreach: stay.firstBreach };
+            const threshold = overview.plans.thresholds.find(item => item.rule.id === rule.id);
+            return threshold ? { count: threshold.count, reached: threshold.reached } : null;
+        };
         return {
             username: member.username,
             role: member.role,
+            plannedTrips: trips.filter(mine).length - unknownTrips,
+            unknownTrips,
             countries: days.countryCounters(overview.ledger, from, to)
                 .map(({ countryId, days: count }) => ({ countryId, name: index.byId.get(countryId)?.name || countryId, days: count })),
             rules: [
                 ...overview.stays.filter(item => !item.rule.builtIn).map(item => ({
                     ruleId: item.rule.id, name: item.rule.name, kind: 'stay', status: days.stayRuleStatus(item),
-                    count: item.used, maxDays: item.rule.maxDays
+                    count: item.used, maxDays: item.rule.maxDays, forecast: forecastOf(item.rule)
                 })),
                 ...thresholds.map(item => ({
                     ruleId: item.rule.id, name: item.rule.name, kind: 'threshold', status: item.status,
-                    count: item.count, maxDays: item.rule.maxDays, reachDate: item.reachDate
+                    count: item.count, maxDays: item.rule.maxDays, reachDate: item.reachDate, forecast: forecastOf(item.rule)
                 }))
             ]
         };

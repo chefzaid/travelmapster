@@ -81,6 +81,17 @@ test('an admin invites a traveler, whose business days count against the employe
     await expect(section).toContainText('⛔ Reached');
     await expect(section).toContainText('6 of 5 days');
 
+    // A business trip back to Lisbon in ten days, planned with the organization.
+    const start = await browserDay(other, 10);
+    await other.evaluate(async ({ startDate, orgName: name }) => {
+        const { csrfToken } = await (await fetch('/api/csrf-token')).json();
+        const send = (method, url, body) => fetch(url, { method, headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken }, body: JSON.stringify(body) }).then(res => res.json());
+        const org = (await (await fetch('/api/orgs')).json()).find(item => item.name === name);
+        const plan = Array.from({ length: 3 }, () => ({ morning: '', afternoon: '', evening: '' }));
+        const trip = await send('POST', '/api/trips', { title: 'Lisbon client visit', destination: 'Lisbon, Portugal', startDate, plan });
+        await send('PUT', `/api/trips/${trip.id}`, { ...trip, organizationId: org.id });
+    }, { startDate: start, orgName });
+
     // The admin sees business days only, as CSV too; the traveler sees that they looked.
     await page.fill('#org-report-from', await browserDay(page, -30));
     await page.fill('#org-report-to', await browserDay(page, 0));
@@ -90,6 +101,9 @@ test('an admin invites a traveler, whose business days count against the employe
     await expect(row).toContainText('Portugal A1: 6/5');
     await expect(row).toContainText('⛔ Reached');
     await expect(page.locator('.org-report')).not.toContainText('Lisbon');
+    // The forecast counts the trip ahead, without its destination or dates.
+    await expect(row).toContainText('1 business trip planned');
+    await expect(row).toContainText('With planned trips: 9 of 5 days, reached');
     const download = page.waitForEvent('download');
     await page.getByRole('button', { name: /CSV for your adviser/ }).click();
     expect((await download).suggestedFilename()).toMatch(/^globex-\d+-business-days-.*\.csv$/);

@@ -58,6 +58,14 @@
     "many": "{count} دولة محدّدة مسبقًا أو مُزارة",
     "other": "{count} دولة محدّدة مسبقًا أو مُزارة"
   },
+  "{count} business trips planned": {
+    "zero": "لا رحلات عمل مخطط لها",
+    "one": "رحلة عمل واحدة مخطط لها",
+    "two": "رحلتا عمل مخطط لهما",
+    "few": "{count} رحلات عمل مخطط لها",
+    "many": "{count} رحلة عمل مخطط لها",
+    "other": "{count} رحلة عمل مخطط لها"
+  },
   "{count} cities": {
     "zero": "{count} مدينة",
     "one": "مدينة واحدة",
@@ -263,6 +271,14 @@
     "few": "لا تظهر {count} أماكن بلا تواريخ.",
     "many": "لا يظهر {count} مكانًا بلا تواريخ.",
     "other": "لا يظهر {count} مكان بلا تواريخ."
+  },
+  "{count} planned trips to no known place, left out": {
+    "zero": "لا رحلات إلى مكان غير معروف",
+    "one": "رحلة مخطط لها إلى مكان غير معروف، مستبعدة",
+    "two": "رحلتان مخطط لهما إلى مكان غير معروف، مستبعدتان",
+    "few": "{count} رحلات مخطط لها إلى مكان غير معروف، مستبعدة",
+    "many": "{count} رحلة مخطط لها إلى مكان غير معروف، مستبعدة",
+    "other": "{count} رحلة مخطط لها إلى مكان غير معروف، مستبعدة"
   },
   "{count} rules": {
     "zero": "{count} قاعدة",
@@ -2137,6 +2153,10 @@
   "with a passkey": "بمفتاح مرور",
   "with a recovery code": "برمز استرداد",
   "with an authenticator code": "برمز من تطبيق المصادقة",
+  "With planned trips: {count} of {maxDays} days": "مع الرحلات المخطط لها: {count} من {maxDays} يومًا",
+  "With planned trips: {count} of {maxDays} days, reached": "مع الرحلات المخطط لها: {count} من {maxDays} يومًا، تم بلوغه",
+  "With planned trips: fits": "مع الرحلات المخطط لها: ضمن الحد",
+  "With planned trips: over from {date}": "مع الرحلات المخطط لها: تجاوز الحد ابتداءً من {date}",
   "with the password": "بكلمة المرور",
   "Works on any device and installs as an app that opens offline. Download all your data at any time, as JSON, CSV, GeoJSON or KML, and delete your account whenever you like.": "يعمل على أي جهاز ويُثبَّت كتطبيق يفتح دون اتصال. نزّل كل بياناتك في أي وقت بصيغة JSON أو CSV أو GeoJSON أو KML، واحذف حسابك متى شئت.",
   "World citizen": "مواطن عالمي",

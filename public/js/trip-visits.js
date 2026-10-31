@@ -1,7 +1,7 @@
 // Completing a trip: once it has begun, each of its stops becomes a visit with the stop's dates,
 // on the saved place (a wish turns into "been there") or on a new one, after the traveler confirms.
 import { toast, formatDate } from './ui.js';
-import { normalizeName, searchCities, splitPlaceQuery } from './geo.js';
+import { findTown } from './geo.js';
 import { sortVisits, lastVisitDate } from './visits.js';
 import { statusFields, statusOf } from './status.js';
 import { resolveDestination, tripEndDate, tripStops } from './itinerary.js';
@@ -13,7 +13,7 @@ export function destinationPlace(ctx, destination) {
     const { index, cities } = ctx.state;
     return resolveDestination(destination, {
         findCountry: name => index.findByName(name),
-        findCity: name => searchCities(cities, name, 1).find(city => normalizeName(city.name) === splitPlaceQuery(name)[0])
+        findCity: name => findTown(cities, name)
     });
 }
 
