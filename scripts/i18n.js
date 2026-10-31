@@ -201,7 +201,12 @@ function untranslatedStrings() {
             // Also one-word labels handed to a function or used as a default, such as input('from', 'From').
             const handed = (parent?.type === 'CallExpression' && parent.arguments.includes(node)) || parent?.type === 'AssignmentPattern';
             const sentence = value && /[A-Za-z]{2,}[^\n]*\s[A-Za-z]{2,}/.test(value) && /^[\s\p{Extended_Pictographic}A-Z“'"(]/u.test(value);
-            if (sentence || (handed && value && /^[\p{Extended_Pictographic}\s]*[A-Z][a-z]+[.!?…]?$/u.test(value))) {
+            // Also words around ${…} in the middle of a sentence, such as `${place}: a visit from ${date}`,
+            // but not class names or the message of an Error.
+            const midSentence = node.type === 'TemplateElement' && parent.expressions.length && /[A-Za-z]{2,}\s+[A-Za-z]{2,}/.test(value)
+                && !/^[a-z-]+( [a-z-]+)*$/.test(value.trim()) && !/[<>="{}]|https?:/.test(value)
+                && !ancestors.some(ancestor => ancestor.type === 'NewExpression' && ancestor.callee.name === 'Error');
+            if (sentence || midSentence || (handed && value && /^[\p{Extended_Pictographic}\s]*[A-Z][a-z]+[.!?…]?$/u.test(value))) {
                 found.push(`${file}:${node.loc.start.line} ${JSON.stringify(value).slice(0, 100)}`);
             }
         });
