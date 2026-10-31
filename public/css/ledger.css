@@ -10,6 +10,14 @@
     box-shadow: 6px 6px 0 var(--shadow-color);
 }
 
+/* The list of countries (js/country-list.js): a taller table that scrolls under its header. */
+.dialog-wide { width: min(640px, calc(100vw - 32px)); }
+.country-table { max-height: 55vh; margin-top: 8px; overflow: auto; border: 2px solid var(--line); border-radius: var(--radius-sm); }
+.country-table table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.country-table th, .country-table td { padding: 6px 10px; text-align: start; border-bottom: 1px solid var(--line); }
+.country-table thead th { position: sticky; top: 0; background: var(--paper-2); }
+.country-table select { width: 100%; min-width: 9em; padding: 4px 8px; }
+
 .dialog::backdrop { background: rgba(31, 59, 87, 0.45); backdrop-filter: blur(2px); }
 
 .dialog-body { padding: 22px; }

@@ -55,6 +55,21 @@ async function setStatus(ctx, existing, place, status) {
     }
 }
 
+// A country as a place to save: at its label.
+const countryPlace = country => ({ lat: country.label[0], lng: country.label[1], name: country.name, category: 'Country' });
+
+/** Marks a country with a status, or with none (''), as the list of countries does. */
+export async function markCountry(ctx, country, status) {
+    const existing = countryMarker(ctx, country);
+    const current = existing ? statusOf(existing) : '';
+    if (status === current) return;
+    if (!status) {
+        await setStatus(ctx, existing, null, current);
+        return;
+    }
+    await setStatus(ctx, existing, countryPlace(country), status);
+}
+
 export function statusChip(status) {
     if (status === 'home') return h('span', { class: 'chip chip-home' }, `${HOME.icon} ${HOME.label}`);
     if (!status) return h('span', { class: 'chip' }, t('Not yet'));
@@ -181,7 +196,7 @@ export function showCountryCard(ctx, country, latlng) {
     const existing = countryMarker(ctx, country);
     const capital = capitalOf(ctx, country);
     const cities = markersForCountry(ctx, country).filter(marker => marker.category === 'City');
-    const place = { lat: country.label[0], lng: country.label[1], name: country.name, category: 'Country' };
+    const place = countryPlace(country);
 
     const card = h('article', { class: 'card' },
         cardHeader(country.flag, country.name, `${CONTINENT_EMOJI[country.continent] || ''} ${regionName(country.subregion || country.continent)}`),

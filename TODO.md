@@ -215,7 +215,7 @@ Ideas that follow the product direction: a travel record people rely on for visa
 
 ### Accessibility
 
-- [ ] A list view of the map: every country and its status in a table that screen-reader and keyboard users can browse and mark, as an equal alternative to clicking the map.
+- [x] A list view of the map: every country and its status in a table that screen-reader and keyboard users can browse and mark, as an equal alternative to clicking the map. Done: "Countries as a list" from the second skip link and the Places tab, with a filter and a status per country.
 
 ## More ideas (added 2026-10-31)
 

@@ -2,7 +2,7 @@
 
 const { test, expect } = require('@playwright/test');
 const { default: AxeBuilder } = require('@axe-core/playwright');
-const { turnOnTwoStep } = require('./helpers');
+const { signUp, turnOnTwoStep } = require('./helpers');
 
 // WCAG 2.2 level A and AA rules, including colour contrast, in both themes.
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
@@ -297,3 +297,28 @@ for (const colorScheme of ['light', 'dark']) {
         await expectAccessible(page, 'calculator with an overstay');
     });
 }
+
+test('the map as a list: a keyboard user finds, marks and clears a country without the map', async ({ page }) => {
+    await signUp(page, `e2e_list_${Date.now()}`);
+    // The second skip link opens the list.
+    await page.locator('#country-list-link').focus();
+    await page.keyboard.press('Enter');
+    const list = page.getByRole('dialog', { name: 'Countries as a list' });
+    await expect(list).toBeVisible();
+    await expect(list.getByRole('searchbox', { name: 'Filter the countries' })).toBeFocused();
+    await page.keyboard.type('Portugal');
+    await expect(list.locator('[role="status"]')).toHaveText('1 country shown.');
+    await expectAccessible(page, 'the list of countries');
+    await list.getByLabel('Mark Portugal').selectOption('visited');
+    await expect(list.getByRole('row', { name: /Portugal/ })).toContainText('✓ Been there');
+    await expect(page.locator('#legend-visited')).toHaveText('1');
+    await list.getByLabel('Mark Portugal').selectOption('');
+    await expect(list.getByRole('row', { name: /Portugal/ })).toContainText('Not yet');
+    await expect(page.locator('#legend-visited')).toHaveText('0');
+    // In the filter, Escape first clears it, then closes the list.
+    await list.getByRole('searchbox').focus();
+    await page.keyboard.press('Escape');
+    await expect(list.locator('[role="status"]')).not.toHaveText('1 country shown.');
+    await page.keyboard.press('Escape');
+    await expect(list).toBeHidden();
+});

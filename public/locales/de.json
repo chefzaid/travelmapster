@@ -69,6 +69,10 @@
     "one": "{count} Land ausgewählt",
     "other": "{count} Länder ausgewählt"
   },
+  "{count} countries shown.": {
+    "one": "{count} Land angezeigt.",
+    "other": "{count} Länder angezeigt."
+  },
   "{count} countries visited.": {
     "one": "{count} Land besucht.",
     "other": "{count} Länder besucht."
@@ -331,6 +335,7 @@
   "✏️ Rename": "✏️ Umbenennen",
   "✓ Been": "✓ War da",
   "✓ Been there": "✓ War schon da",
+  "✓ Cities only": "✓ Nur Städte",
   "✓ Following": "✓ Folge ich",
   "✓ On track": "✓ Im Rahmen",
   "✓ Recorded as a visit": "✓ Als Besuch erfasst",
@@ -403,6 +408,7 @@
   "🖨️ Print or save as PDF": "🖨️ Drucken oder als PDF speichern",
   "🖨️ Print this map": "🖨️ Diese Karte drucken",
   "🖼️ Make a poster": "🖼️ Poster gestalten",
+  "🗂️ Countries as a list": "🗂️ Länder als Liste",
   "🗑️ Delete": "🗑️ Löschen",
   "🗑️ Delete account": "🗑️ Konto löschen",
   "🗑️ Delete trip": "🗑️ Reise löschen",
@@ -661,6 +667,7 @@
     "other": "Länder"
   },
   "Countries": "Länder",
+  "Countries as a list": "Länder als Liste",
   "Countries by year": "Länder pro Jahr",
   "Countries must be three-letter map codes such as FRA.": "Länder müssen dreistellige Kartencodes wie FRA sein.",
   "Countries separated by commas. “Schengen” adds every Schengen country.": "Länder durch Kommas getrennt. „Schengen“ fügt jedes Schengen-Land hinzu.",
@@ -810,6 +817,8 @@
   "European Union": "Europäische Union",
   "Evening": "Abend",
   "Every counted day with the visit it comes from and any change to its dates. Made on your device when you ask; print it to PDF or download a CSV.": "Jeder gezählte Tag mit dem Besuch, aus dem er stammt, und jeder Änderung seiner Daten. Wird auf deinem Gerät erstellt, wenn du es willst; druck ihn als PDF oder lade eine CSV herunter.",
+  "Every country and territory of the map with its status.": "Jedes Land und Gebiet der Karte mit seinem Status.",
+  "Every country and territory of the map with its status. Marking one here colors it in on the map.": "Jedes Land und Gebiet der Karte mit seinem Status. Wird eines hier markiert, färbt es sich auf der Karte.",
   "Every dated visit turns into days in a country; a city counts for its country. Add visits from any place card.": "Jeder datierte Besuch wird zu Tagen in einem Land; eine Stadt zählt für ihr Land. Füg Besuche über jede Ortskarte hinzu.",
   "Every journey in {year}": "Jede Reise im Jahr {year}",
   "Every place keeps its visits with their dates, notes, photo links, ratings, tags and an emoji pin. Bring your past with you: import a Polarsteps export, a list of countries from Been or Visited, your photos or your phone's location history (read in your browser, reduced to towns), or a file from another app.": "Jeder Ort behält seine Besuche mit Daten, Notizen, Foto-Links, Bewertungen, Schlagwörtern und einer Emoji-Pinnadel. Nimm deine Vergangenheit mit: Importiere einen Polarsteps-Export, eine Länderliste aus Been oder Visited, deine Fotos oder den Standortverlauf deines Handys (im Browser gelesen, auf Orte reduziert) oder eine Datei aus einer anderen App.",
@@ -835,6 +844,8 @@
   },
   "Favorite memory, who you went with…": "Liebste Erinnerung, mit wem du unterwegs warst…",
   "Features": "Funktionen",
+  "Filter the countries": "Länder filtern",
+  "Filter the countries…": "Länder filtern…",
   "Filter your places": "Deine Orte filtern",
   "Filter your places or notes…": "Orte oder Notizen filtern…",
   "Finding the towns…": "Suche die Orte…",
@@ -1043,6 +1054,8 @@
   "Map filtered to {description}. Clear the filter": "Karte gefiltert auf {description}. Filter aufheben",
   "Map legend and filters": "Kartenlegende und Filter",
   "Map palette must be standard, colorblind or print.": "Die Kartenpalette muss standard, colorblind oder print sein.",
+  "Mark": "Markieren",
+  "Mark {country}": "{country} markieren",
   "Mark business trips for your employer and see them against its rules in the Ledger tab. Its managers see business days per country, never your places, notes or personal trips.": "Markiere Geschäftsreisen für deinen Arbeitgeber und vergleiche sie im Tab Tage-Konto mit seinen Regeln. Seine Manager sehen Geschäftsreisetage pro Land, nie deine Orte, Notizen oder privaten Reisen.",
   "Mark many at once": "Viele auf einmal markieren",
   "Mark several countries": "Mehrere Länder markieren",
@@ -1127,6 +1140,7 @@
   "Not a member.": "Kein Mitglied.",
   "Not counted: Cyprus and Ireland (EU members outside the area) and Andorra. Entry and exit days both count.": "Nicht gezählt: Zypern und Irland (EU-Mitglieder außerhalb des Raums) sowie Andorra. Ein- und Ausreisetag zählen beide.",
   "Not logged in.": "Nicht angemeldet.",
+  "Not marked": "Nicht markiert",
   "Not on {date}: the 180 days up to then already hold 90 days in the area.": "Nicht am {date}: Die 180 Tage bis dahin enthalten schon 90 Tage im Raum.",
   "Not on your list yet": "Noch nicht auf deiner Liste",
   "Not rated": "Nicht bewertet",
@@ -1153,6 +1167,7 @@
   "of UN countries": "der UN-Länder",
   "Of what?": "Wovon?",
   "On {date}": "Am {date}",
+  "On the map": "Auf der Karte",
   "On the road": "Unterwegs",
   "On the road!": "Unterwegs!",
   "On these days the 180 days up to them held more than 90 days in the area. Shorten or move the stays above until this goes away.": "An diesen Tagen enthielten die 180 Tage davor mehr als 90 Tage im Raum. Kürze oder verschiebe die Aufenthalte oben, bis das verschwindet.",

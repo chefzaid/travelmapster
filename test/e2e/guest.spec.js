@@ -86,6 +86,7 @@ test('logging in to an account with a map asks before adding the guest map to it
 
     await page.goto('/');
     await page.locator('#home').getByRole('button', { name: 'Try it without an account' }).click();
+    await expect(page.locator('#app[data-map="ready"] #main-view')).toBeVisible();
     await markCity(page, 'Tokyo');
     await page.keyboard.press('Escape');
     await page.click('#account-btn');
