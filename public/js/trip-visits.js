@@ -18,7 +18,7 @@ export function destinationPlace(ctx, destination) {
 }
 
 // The saved place for the destination, if any, and the place to create otherwise.
-function savedOrNew(ctx, where) {
+export function savedOrNew(ctx, where) {
     if (where.city) {
         const { city } = where;
         return {

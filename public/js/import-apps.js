@@ -150,7 +150,7 @@ async function reviewVisits(ctx, found, status, note) {
 
 // Towns from the bundled data: the base list now, region tiles as points need them.
 let townFinder = null;
-async function findTowns(ctx) {
+export async function findTowns(ctx) {
     if (!townFinder) {
         const { createTownFinder } = await readers.towns();
         const data = file => new URL(`../data/cities/${file}`, import.meta.url);
