@@ -203,6 +203,7 @@
   "{country}: {count} of {maxDays} days in {year}": "{country}: {count} von {maxDays} Tagen in {year}",
   "{country}: {maxDays} days": "{country}: {maxDays} Tage",
   "{currency} for 1 {code}": "{currency} für 1 {code}",
+  "{current} days in {year}, a third of {last} in {lastYear} and a sixth of {before} in {beforeYear}: {total} of {needed}, with at least 31 this year.": "{current} Tage in {year}, ein Drittel der {last} aus {lastYear} und ein Sechstel der {before} aus {beforeYear}: {total} von {needed}, davon mindestens 31 in diesem Jahr.",
   "{date} – end not recorded": "{date} – Ende nicht erfasst",
   "{date} – still there": "{date} – noch dort",
   "{dates} (still there)": "{dates} (noch dort)",
@@ -752,6 +753,7 @@
   "days recorded this year": "Tage erfasst dieses Jahr",
   "Days spent in each country": "Verbrachte Tage pro Land",
   "Days spent under a residence permit or a long-stay national visa of a member country do not count toward the 90. This calculator is a guide, not legal advice: border officers make the final decision.": "Tage mit einem Aufenthaltstitel oder einem nationalen Visum für längerfristige Aufenthalte eines Mitgliedstaats zählen nicht zu den 90. Dieser Rechner ist eine Orientierungshilfe, keine Rechtsberatung: Die Grenzbeamten entscheiden letztlich.",
+  "Days the IRS leaves out, such as an exempt student's or a transit of under a day, are counted here.": "Tage, die der IRS nicht zählt, etwa die eines befreiten Studierenden oder einen Transit unter einem Tag, werden hier mitgezählt.",
   "days to go": {
     "one": "Tag bis zur Abreise",
     "other": "Tage bis zur Abreise"
@@ -1535,6 +1537,7 @@
   "Storyteller": "Geschichtenerzähler",
   "street art, road trip": "Streetart, Roadtrip",
   "Style": "Stil",
+  "Substantial Presence Test": "Substantial Presence Test",
   "Summer in Portugal": "Sommer in Portugal",
   "Sunscreen, snorkel…": "Sonnencreme, Schnorchel…",
   "Surprise me": "Überrasch mich",
@@ -1708,6 +1711,7 @@
   "Untick any you do not want; places already on your map only get the visits they lack.": "Entferne den Haken bei allem, was du nicht willst; Orte, die schon auf deiner Karte sind, bekommen nur die fehlenden Besuche.",
   "Until {date}": "Bis {date}",
   "Upcoming & someday": "Demnächst & irgendwann",
+  "US Substantial Presence Test: {total} of {needed} days": "US-Substantial-Presence-Test: {total} von {needed} Tagen",
   "Use {choice}": "{choice} verwenden",
   "Use a code from the app instead": "Stattdessen einen Code aus der App nutzen",
   "Use a recovery code instead": "Stattdessen einen Wiederherstellungscode nutzen",

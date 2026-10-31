@@ -17,6 +17,7 @@ import { healthSection } from './ledger-health.js';
 import { exemptSection } from './ledger-exempt.js';
 import { pickTemplate } from './ledger-templates.js';
 import { templateDraft } from './rule-templates.js';
+import { usPresenceItem } from './ledger-us.js';
 import { travelHistorySection } from './ledger-history.js';
 
 const view = { entry: '', period: '', showAllStays: false };
@@ -336,6 +337,7 @@ function thresholdsSection(ctx, overview) {
                 ),
                 statusChip(item.status)
             )),
+            usPresenceItem(ctx, overview, localToday()),
             custom.map(item => h('li', { class: 'ledger-item' },
                 h('span', { class: 'ledger-item-text' },
                     h('strong', {}, item.rule.name, ' ', statusChip(item.status)),
