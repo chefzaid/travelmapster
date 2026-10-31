@@ -238,6 +238,9 @@
 
 .panel-handle { display: none; }
 
+.shortcuts { display: grid; grid-template-columns: auto 1fr; gap: 8px 14px; align-items: center; margin: 0 0 8px; }
+.shortcuts dd { margin: 0; }
+
 /* On wider screens the panel folds away (js/panel.js), leaving this tab on its edge to open it
    again, so the whole map can be seen and clicked. Phones have the bottom sheet instead. */
 .panel { transition: transform 0.25s ease, visibility 0.25s; }
