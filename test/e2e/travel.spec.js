@@ -23,6 +23,11 @@ test('a traveler signs up, colors in a city, shares a public map without a hidde
     // Passport renders progress bars with inline styles; the CSP must allow them.
     await page.click('#tab-passport');
     await expect(page.locator('#passport-tab')).toBeVisible();
+    // The stamps as a line of flags for a bio.
+    await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+    await page.getByRole('button', { name: /Copy my flags/ }).click();
+    await expect(page.locator('.toast', { hasText: 'Flags copied' })).toContainText('🇵🇹 1 country');
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('🇵🇹 1 country');
     await page.click('#tab-places');
     await expect(page.locator('#places-tab')).toContainText('Lisbon');
 

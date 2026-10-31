@@ -403,6 +403,7 @@
     "other": "📋 {count} choses à faire avant de partir"
   },
   "📋 Copy": "📋 Copier",
+  "📋 Copy my flags": "📋 Copier mes drapeaux",
   "📋 Copy the link": "📋 Copier le lien",
   "📋 Paste countries": "📋 Coller des pays",
   "📏 Rules": "📏 Règles",
@@ -869,6 +870,7 @@
   "First day": "Premier jour",
   "First stamp": "Premier tampon",
   "Fix the dates above to see your days.": "Corrigez les dates ci-dessus pour voir vos jours.",
+  "Flags copied: {line}": "Drapeaux copiés : {line}",
   "Flipping through the guidebook…": "On feuillette le guide…",
   "Fly somewhere you haven't been": "Envolez-vous vers un endroit inconnu",
   "Follow": "Suivre",
@@ -1767,6 +1769,7 @@
   "Your cities here": "Vos villes ici",
   "Your data archive is downloaded.": "Votre archive de données est téléchargée.",
   "Your device keeps the key and unlocks it with your fingerprint, face or screen lock. Name it to know it again.": "Votre appareil garde la clé et la déverrouille avec votre empreinte, votre visage ou le verrouillage de l'écran. Donnez-lui un nom pour la reconnaître.",
+  "Your flags: {line}": "Vos drapeaux : {line}",
   "Your guest map is now part of your account. 🎉": "Votre carte invité fait maintenant partie de votre compte. 🎉",
   "Your guest map is now saved in your account. 🎉": "Votre carte invité est maintenant enregistrée dans votre compte. 🎉",
   "Your guest map stays in this browser: try again from the account menu once you are back online.": "Votre carte invité reste dans ce navigateur : réessayez depuis le menu du compte une fois de retour en ligne.",

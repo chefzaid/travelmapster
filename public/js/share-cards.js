@@ -1,6 +1,6 @@
 // Image cards to share: the country count, the passport stamps and a year's recap, as square
-// SVG (1080 × 1080) that the browser turns into a PNG. Only counts, country names and flags:
-// never notes, photos, places or dates. Pure, unit tested in Node.
+// SVG (1080 × 1080) that the browser turns into a PNG, and the flags as a line of text. Only
+// counts, country names and flags: never notes, photos, places or dates. Pure, unit tested in Node.
 import { tn, t } from './i18n.js';
 
 export const CARD_SIZE = 1080;
@@ -98,4 +98,10 @@ export function yearRecapCard({ username, year, countries, newCountries, trips, 
 /** The card as a data: URL, which the page's Content Security Policy lets it draw. */
 export function svgDataUrl(svg) {
     return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
+/** The countries been to as a line of flag emoji and their count, to paste into a bio or a message. */
+export function flagLine(countries) {
+    const flags = countries.map(country => country.flag).filter(Boolean).join('');
+    return `${flags} ${tn(countries.length, '{count} country', '{count} countries')}`;
 }
