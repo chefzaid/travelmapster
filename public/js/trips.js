@@ -15,6 +15,7 @@ import { localToday } from './days.js';
 import { openPrintView, printTable } from './print-view.js';
 import { budgetSection, packingSection, stopsSection } from './trip-extras.js';
 import { templateControls } from './trip-packing-templates.js';
+import { familySection } from './trip-family.js';
 import { budgetTotals, formatMoney, tidyBudget } from './trip-budget.js';
 import { checklistBadge, checklistSection, purposeField } from './trip-checklist.js';
 import { t, tn } from './i18n.js';
@@ -366,6 +367,7 @@ function renderEditor(container, ctx, trip) {
             packingSection(draft, { rerender, markDirty, templates: templateControls(ctx, draft, { rerender }) }),
             budgetSection(draft, { rerender, markDirty, trips: ctx.state.trips })
         ),
+        familySection(ctx, trip),
         h('div', { class: 'row trip-footer' },
             readOnly ? h('span') : h('button', {
                 type: 'button',

@@ -286,3 +286,41 @@ test('the open trip shows its route on the map, and days and plans move by dragg
     await expect.poll(() => mapData('itinerary-stops')).toBe(0);
     expect(errors).toEqual([]);
 });
+
+test('family follow a trip from a private link without an account, until it is turned off', async ({ page, browser }) => {
+    const errors = trackErrors(page);
+    await signUp(page, `e2e_family_${Date.now()}`);
+    await page.click('#tab-trips');
+    await page.getByRole('button', { name: 'Plan my first trip' }).click();
+    await page.getByLabel('Where to?').fill('Lisbon');
+    await page.getByLabel('Trip name').fill('Lisbon week');
+    await page.getByLabel('How many days?').fill('3');
+    await page.getByRole('button', { name: 'Create trip' }).click();
+    const trips = page.locator('#trips-tab');
+    // Under way since yesterday.
+    await trips.getByLabel('Start date').fill(await browserDay(page, -1));
+    await trips.getByLabel('Start date').dispatchEvent('change');
+    await trips.getByRole('button', { name: '💾 Save' }).click();
+    await expect(page.locator('.toast-success', { hasText: 'Trip saved.' })).toBeVisible();
+
+    await trips.getByText('👪 Family view').click();
+    await trips.getByRole('button', { name: '👪 Make a family link' }).click();
+    const link = await page.locator('#family-link-url').inputValue();
+    expect(link).toMatch(/\/family\/[A-Za-z0-9_-]{43}$/);
+
+    // Family open it in a browser that is not signed in.
+    const family = await (await browser.newContext()).newPage();
+    await family.goto(link);
+    await expect(family.locator('#family-title')).toHaveText('Lisbon week');
+    await expect(family.locator('#family-now')).toHaveText('Today: in Lisbon, day 2 of 3.');
+    await expect(family.locator('#family-stops li')).toHaveCount(1);
+    await expect(family.locator('#family-stops li[aria-current="true"]')).toContainText('3 days');
+
+    await trips.getByRole('button', { name: 'Turn off' }).click();
+    await page.locator('dialog.dialog').getByRole('button', { name: 'Turn off' }).click();
+    await expect(page.locator('.toast', { hasText: 'Family link turned off.' })).toBeVisible();
+    await family.reload();
+    await expect(family.locator('#family-now')).toHaveText('This link is not valid any more. Ask for a new one.');
+    await family.context().close();
+    expect(errors).toEqual([]);
+});

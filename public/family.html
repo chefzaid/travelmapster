@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n>Trip · TravelMapster</title>
+    <meta name="robots" content="noindex">
+    <meta name="referrer" content="no-referrer">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <!-- The server rewrites /__assets__/ to this release's cacheable /a/<fingerprint>/ path. -->
+    <link rel="stylesheet" href="/__assets__/css/tokens.css">
+    <link rel="stylesheet" href="/__assets__/css/family.css">
+</head>
+<body class="family">
+    <!-- A trip shared privately with family: its stops and dates, read-only, without day plans,
+         packing list or budget. -->
+    <main class="family-card" aria-labelledby="family-title">
+        <p class="family-eyebrow" id="family-traveler"></p>
+        <h1 id="family-title" data-i18n>A trip</h1>
+        <p id="family-now" class="family-now" aria-live="polite" data-i18n>Loading the trip…</p>
+        <ol id="family-stops" class="family-stops"></ol>
+        <p id="family-updated" class="family-updated"></p>
+        <a class="family-link" href="/" data-i18n>Made with TravelMapster</a>
+    </main>
+    <script type="module" src="/__assets__/js/family.js"></script>
+</body>
+</html>

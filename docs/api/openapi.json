@@ -3952,6 +3952,207 @@
           }
         ]
       }
+    },
+    "/api/trips/{id}/family-link": {
+      "get": {
+        "summary": "Whether the trip's family link is on",
+        "tags": [
+          "Trips"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarFeed"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "404": {
+            "description": "Not a trip the traveler owns",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "description": "Only the trip's owner; anyone else, editors and viewers included, gets 404."
+      },
+      "post": {
+        "summary": "Make a new family link to the trip's stops and dates, ending the old one",
+        "tags": [
+          "Trips"
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarFeedLink"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "403": {
+            "$ref": "#/components/responses/CsrfRejected"
+          },
+          "404": {
+            "description": "Not a trip the traveler owns",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": [],
+            "csrf": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "description": "Only the trip's owner; anyone else, editors and viewers included, gets 404."
+      },
+      "delete": {
+        "summary": "Turn the trip's family link off",
+        "tags": [
+          "Trips"
+        ],
+        "responses": {
+          "204": {
+            "description": "Turned off"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "403": {
+            "$ref": "#/components/responses/CsrfRejected"
+          },
+          "404": {
+            "description": "Not a trip the traveler owns",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": [],
+            "csrf": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "description": "Only the trip's owner; anyone else, editors and viewers included, gets 404."
+      }
+    },
+    "/api/family/{token}": {
+      "get": {
+        "summary": "A trip's family view, for whoever holds its private link",
+        "tags": [
+          "Trips"
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{43}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyTrip"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not a valid link any more",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "security": []
+      }
     }
   },
   "components": {
@@ -5995,6 +6196,80 @@
             "description": "An iCalendar feed of the traveler's dated trips and planned stays, fetched without a session."
           },
           "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "FamilyTrip": {
+        "type": "object",
+        "required": [
+          "traveler",
+          "title",
+          "startDate",
+          "days",
+          "stops",
+          "updatedAt"
+        ],
+        "description": "The trip's title, stops and dates, and its owner's username; never day plans, the packing list, the budget or who it is shared with.",
+        "properties": {
+          "traveler": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "startDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "days": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 30
+          },
+          "stops": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "destination",
+                "firstDay",
+                "days"
+              ],
+              "properties": {
+                "destination": {
+                  "type": "string"
+                },
+                "firstDay": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "days": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "startDate": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date"
+                },
+                "endDate": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date"
+                }
+              }
+            }
+          },
+          "updatedAt": {
             "type": "string",
             "format": "date-time"
           }

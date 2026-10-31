@@ -140,6 +140,10 @@ export const api = {
     getVisitChanges: () => request('GET', '/ledger/changes'),
 
     getTrips: () => request('GET', '/trips'),
+    getFamilyLink: tripId => request('GET', `/trips/${tripId}/family-link`),
+    createFamilyLink: tripId => request('POST', `/trips/${tripId}/family-link`, {}),
+    deleteFamilyLink: tripId => request('DELETE', `/trips/${tripId}/family-link`),
+    getFamilyTrip: token => request('GET', `/family/${encodeURIComponent(token)}`),
     getCalendarFeed: () => request('GET', '/calendar-feed'),
     createCalendarFeed: () => request('POST', '/calendar-feed', {}),
     deleteCalendarFeed: () => request('DELETE', '/calendar-feed'),

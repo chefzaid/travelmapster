@@ -23,6 +23,8 @@ const { createSecurityRepository } = require('./security-repository');
 const { createSessionRepository } = require('./sessions');
 const { calendarFeedHandler, createCalendarFeedRepository } = require('./calendar-feed');
 const { createCalendarFeedRouter } = require('./routes/calendar-feed');
+const { createFamilyLinkRepository } = require('./family-links');
+const { createFamilyLinkRouter, createFamilyViewRouter } = require('./routes/family-links');
 const { createMarkerRouter } = require('./routes/markers');
 const { createVisitRouter } = require('./routes/visits');
 const { createLedgerRouter } = require('./routes/ledger');
@@ -62,6 +64,7 @@ function createApp({ config, pool, logger, metrics, geocoder, places, state = { 
     const ledger = createLedgerRepository(pool);
     const trips = createTripRepository(pool);
     const feeds = createCalendarFeedRepository(pool);
+    const familyLinks = createFamilyLinkRepository(pool);
     const security = createSecurityRepository(pool);
     const sessions = createSessionRepository(pool, config.session.maxAgeMs);
     const follows = createFollowRepository(pool);
@@ -149,6 +152,11 @@ function createApp({ config, pool, logger, metrics, geocoder, places, state = { 
     // A traveler's calendar subscription, fetched by calendar apps with the private link.
     app.get('/calendar/:file', jsonLimiter(pool, 'calendar', 60, 60_000, 'Too many requests, please slow down.'), calendarFeedHandler({ feeds, trips, ledger }));
     app.get('/schengen-calculator', (req, res) => sendPage(res, 'schengen-calculator.html'));
+    // A trip's family view, opened with its private link; the page reads the trip from the API.
+    app.get('/family/:token', (req, res) => {
+        res.set('X-Robots-Tag', 'noindex');
+        sendPage(res, 'family.html');
+    });
     // A public map other websites may frame (ADR 0020): only this page relaxes framing, and it
     // stays out of search results like shared maps.
     app.get('/embed/:username', (req, res) => {
@@ -222,7 +230,9 @@ function createApp({ config, pool, logger, metrics, geocoder, places, state = { 
     api.use('/markers', requireAuth, createMarkerRouter({ pool, markers, visits, orgs, metrics }));
     api.use('/visits', requireAuth, createVisitRouter({ visits, orgs }));
     api.use('/ledger', requireAuth, createLedgerRouter({ ledger, metrics }));
+    api.use('/trips/:id/family-link', requireAuth, createFamilyLinkRouter({ links: familyLinks, config }));
     api.use('/trips', requireAuth, createTripRouter({ trips, users, orgs }));
+    api.use('/family', jsonLimiter(pool, 'family', 60, 60_000, 'Too many requests, please slow down.'), createFamilyViewRouter({ links: familyLinks }));
     api.use('/calendar-feed', requireAuth, createCalendarFeedRouter({ feeds, config }));
     api.use('/follows', requireAuth, createFollowRouter({ users, follows }));
     api.use('/orgs', requireAuth, createOrgRouter({ orgs, users, security }));

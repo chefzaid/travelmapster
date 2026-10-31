@@ -76,6 +76,8 @@ JSON under `/api`, described in full in [OpenAPI](api/openapi.json) and kept bac
 | GET, POST | `/api/trips` | List or create itineraries, the caller's own and those shared with them; `organizationId` makes one a business trip |
 | PUT, DELETE | `/api/trips/:id` | Replace (owner or editor; 409 when changed meanwhile) or remove (owner) an itinerary |
 | GET, PUT, DELETE | `/api/trips/:id/members[/:username]` | Who a trip is shared with, to edit or view ([ADR 0028](adr/0028-friends-and-shared-trips.md)) |
+| GET, POST, DELETE | `/api/trips/:id/family-link` | The trip's family link, owner only (404 for anyone else): whether it is on, a new link (shown once, ending the old one) or turning it off |
+| GET | `/api/family/:token` | A trip's family view for whoever holds the link, without a session: title, stops and dates and the owner's username, never plans, packing, budget or members; 60 a minute per address |
 | GET, POST, DELETE | `/api/follows[/:username]` | Public maps the caller follows, with their country counts |
 | GET, POST, DELETE | `/api/security/…` | Passkeys and two-step sign-in, and signing in with a passkey ([ADR 0027](adr/0027-passkeys-and-two-step-sign-in.md)) |
 | GET, POST | `/api/orgs`, `/api/orgs/join`, `/api/orgs/audit` | The caller's organizations; create one (needs a second factor), join with an invitation token, and who looked at the caller's counts ([ADR 0029](adr/0029-organizations-and-business-days.md)) |
@@ -132,6 +134,7 @@ JSON under `/api`, described in full in [OpenAPI](api/openapi.json) and kept bac
 | `public/js/ics.js` | Calendar files read in the browser: events with their days, which look like travel, and where they go (pure, unit tested); the import and its review are in `import-apps.js` |
 | `public/js/checkin.js` | "I'm here": the browser's location once, the town and country it is in, and today's visit there (the plan is `checkInPlan()` in pure `visits.js`); loaded on first use |
 | `src/calendar-feed.js`, `src/routes/calendar-feed.js`, `public/js/trip-feed.js` | The calendar subscription: the feed served from a private link (`feedCalendar()` in pure `itinerary.js`), its link made, replaced and turned off, and the Trips tab section |
+| `src/family-links.js`, `src/routes/family-links.js`, `public/js/trip-family.js`, `public/family.html`, `public/js/family.js`, `family-view.js` | A trip's family view: the private link (only its hash stored), the owner's section in the trip editor, and the read-only page at `/family/<token>` with where the traveler is today (pure, unit tested) |
 | `src/sessions.js` | Signing in (shared by passwords, second steps and passkeys), the device it records, and listing and ending a traveler's sessions |
 | `public/js/duplicates.js`, `place-duplicates.js`, `place-merge.js` | Places saved twice and their merge: the pairs found (pure `duplicates.js`), the Places tab section, and the merge rules shared by the API (`POST /api/markers/{id}/merge`, through `src/browser-modules.js`) and guest maps (pure `place-merge.js`) |
 | `public/js/country-list.js` | The map as a list: every country with its status in a table to browse and mark, from the skip link or the Places tab |

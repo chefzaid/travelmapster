@@ -6,7 +6,7 @@ import { groupByNextMonth, matchesDetails, monthsLabel, priorityLabel, ratingLab
 import { STATUSES, statusLabel, statusOf } from './status.js';
 import { openNewTrip } from './lazy.js';
 import { importButtons } from './import-apps.js';
-import { t, tn } from './i18n.js';
+import { joinList, t, tn } from './i18n.js';
 import { openCountryList } from './country-list.js';
 import { duplicatesSection } from './place-duplicates.js';
 import { companionsOf } from './companions.js';
@@ -149,7 +149,7 @@ async function importFile(file, ctx, status) {
         }
         await ctx.reloadMarkers();
         const message = skipped
-            ? `${tn(imported, 'Imported {count} place', 'Imported {count} places')}, ${tn(skipped, 'skipped {count} invalid or duplicate', 'skipped {count} invalid or duplicate')}.`
+            ? `${joinList([tn(imported, 'Imported {count} place', 'Imported {count} places'), tn(skipped, 'skipped {count} invalid or duplicate', 'skipped {count} invalid or duplicate')])}.`
             : `${tn(imported, 'Imported {count} place', 'Imported {count} places')}.`;
         status.textContent = message;
         toast(message, { tone: imported ? 'success' : 'info' });

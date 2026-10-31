@@ -9,7 +9,7 @@ import { goalCount } from './goals.js';
 import { countriesByYear, daysAwayByYear, longestTrip } from './travel-stats.js';
 import { CARD_SIZE, countdownCard, countryCountCard, stampsCard, svgDataUrl, yearRecapCard } from './share-cards.js';
 import { tripFlags, upcomingTrip } from './trip-countdown.js';
-import { t, tn } from './i18n.js';
+import { joinList, t, tn } from './i18n.js';
 
 // The PNG of a card: the SVG drawn on a canvas.
 async function cardPng(svg) {
@@ -65,7 +65,7 @@ function recap(ctx) {
         newCountries: row?.newCount || 0,
         trips: goalCount({ year, kind: 'visits' }, markers, { countryOf, countedIds: stats.countedIds }),
         daysAway: daysAwayByYear(ctx.currentLedger().ledger, stats.homeId, today).find(item => item.year === year)?.count || 0,
-        longestTrip: trip ? `${tn(trip.days, '{count} day', '{count} days')}, ${trip.route}` : '',
+        longestTrip: trip ? joinList([tn(trip.days, '{count} day', '{count} days'), trip.route]) : '',
         awayWord: stats.homeId ? t('abroad') : t('recorded')
     });
 }

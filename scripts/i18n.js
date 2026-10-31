@@ -12,7 +12,7 @@ const acorn = require('acorn');
 const root = path.join(__dirname, '..');
 const jsDir = path.join(root, 'public', 'js');
 const localesDir = path.join(root, 'public', 'locales');
-const PAGES = ['index.html', 'schengen-calculator.html', 'embed.html'];
+const PAGES = ['index.html', 'schengen-calculator.html', 'embed.html', 'family.html'];
 const LOCALES = ['fr', 'es', 'de', 'ar'];
 // Server error messages travelers see as toasts; the client translates them when it can.
 const SERVER_FILES = ['src/routes', 'src/validation.js', 'src/validation-text.js', 'src/ledger-validation.js', 'src/trip-validation.js'];
