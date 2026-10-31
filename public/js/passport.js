@@ -43,7 +43,7 @@ function collectionsSection(stats, index) {
         stats.collections.map(collection => {
             if (!collection.count || !collection.missing.length || collection.missing.length > 5) return null;
             const names = collection.missing.map(id => index.byId.get(id)?.name || id).sort();
-            return h('p', { class: 'muted small' }, t('{title}: {names} to go.', { title: collection.title, names: names.join(', ') }));
+            return h('p', { class: 'muted small' }, t('{title}: {names} to go.', { title: collection.title, names: formatList(names) }));
         }),
         h('p', { class: 'muted small' }, t('Capitals count when you have been to a capital city; a country with several counts once.'))
     );
@@ -110,7 +110,7 @@ function uncountedNote(stats, index) {
     const names = stats.uncountedIds.map(id => index.byId.get(id)?.name).filter(Boolean).sort();
     if (!names.length) return null;
     return h('p', { class: 'muted small' }, h('span', { 'aria-hidden': 'true' }, '🗺️ '),
-        t('Also been to, not on the {list} list: {names}.', { list: countryList(stats.countryList).unit, names: names.join(', ') }));
+        t('Also been to, not on the {list} list: {names}.', { list: countryList(stats.countryList).unit, names: formatList(names) }));
 }
 
 // Layovers are listed but never stamped: they are not visits.
@@ -118,7 +118,7 @@ function transitNote(stats, index) {
     const names = [...stats.transitIds].map(id => index.byId.get(id)?.name).filter(Boolean).sort();
     if (!names.length) return null;
     return h('p', { class: 'muted small' }, h('span', { 'aria-hidden': 'true' }, '🛫 '),
-        t('Transit only, not counted: {names}.', { names: names.join(', ') }));
+        t('Transit only, not counted: {names}.', { names: formatList(names) }));
 }
 
 

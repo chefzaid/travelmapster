@@ -258,7 +258,7 @@ test('country status counts only the places passed in', async () => {
 test('wishlist places sort by the next month that suits them', async () => {
     const details = await load('details.js');
     const labels = [[11, 12, 1, 2], [3, 9], [4, 5, 6], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], []].map(months => details.monthsLabel(months));
-    assert.deepEqual(labels, ['Nov–Feb', 'Mar, Sep', 'Apr–Jun', 'All year', ''], 'runs of months wrap past December');
+    assert.deepEqual(labels, ['Nov–Feb', 'Mar and Sep', 'Apr–Jun', 'All year', ''], 'runs of months wrap past December');
     assert.equal(details.monthsUntil([1, 11], 10), 1);
     assert.equal(details.monthsUntil([10], 10), 0);
     assert.equal(details.monthsUntil([9], 10), 11, 'a month just gone is the furthest away');

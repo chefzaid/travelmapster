@@ -1,7 +1,7 @@
 // Itineraries: their stops, and the trip outside the app: as text, as an iCalendar file with an
 // all-day event per day, as a template copy without dates, and as planned stays in the day
 // ledger. Pure, unit tested in Node.
-import { locale, t, tk } from './i18n.js';
+import { joinList, locale, t, tk } from './i18n.js';
 
 export const SLOTS = [
     ['morning', '🌅', tk('Morning')],
@@ -70,7 +70,7 @@ export function tripAsText(trip) {
     const several = trip.stops?.length > 1;
     trip.plan.forEach((day, i) => {
         const date = dayDate(trip.startDate, i);
-        lines.push([t('Day {number}', { number: i + 1 }), date, several ? stopOfDay(trip, i).destination : ''].filter(Boolean).join(', '));
+        lines.push(joinList([t('Day {number}', { number: i + 1 }), date, several ? stopOfDay(trip, i).destination : ''].filter(Boolean)));
         for (const [slot, , label] of SLOTS) {
             if (day[slot]) lines.push(`  ${t(label)}: ${day[slot]}`);
         }

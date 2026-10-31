@@ -6,7 +6,7 @@ import {
     EXPENSE_CATEGORIES, EXPENSES_MAX, PACKING_MAX_ITEMS, budgetTotals, currencyOptions, emptyBudget,
     foreignCurrencies, formatMoney, homeCurrency, packingProgress, withStarterItems
 } from './trip-budget.js';
-import { locale, t, tn } from './i18n.js';
+import { formatList, locale, t, tn } from './i18n.js';
 
 const CURRENCY_LIST_ID = 'currency-codes';
 // Sections the traveler opened stay open when the editor redraws.
@@ -262,7 +262,7 @@ function totalsView(budget) {
             left === null ? null : h('span', { class: left < 0 ? 'over' : '' }, ` · ${left < 0 ? t('{money} over budget', { money: money(-left) }) : t('{money} left', { money: money(left) })}`)),
         h('ul', { class: 'budget-categories' }, EXPENSE_CATEGORIES.filter(([id]) => byCategory[id]).map(([id, icon, label]) =>
             h('li', {}, `${icon} ${t(label)}: ${money(byCategory[id])}`))),
-        missing.length ? h('p', { class: 'hint' }, t('Add a rate for {currencies} to count those expenses.', { currencies: missing.join(', ') })) : null
+        missing.length ? h('p', { class: 'hint' }, t('Add a rate for {currencies} to count those expenses.', { currencies: formatList(missing) })) : null
     );
 }
 

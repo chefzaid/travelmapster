@@ -5,7 +5,7 @@ import { openPrintView, printTable } from './print-view.js';
 import { localToday } from './days.js';
 import { HISTORY_YEARS, buildHistoryCsv, purposeLabel, travelHistory } from './travel-history.js';
 import { adviceNote, countryName } from './ledger-report.js';
-import { t, tn } from './i18n.js';
+import { joinList, t, tn } from './i18n.js';
 
 const form = { years: 10 };
 
@@ -36,7 +36,7 @@ function openHistory(ctx, stays, opener) {
                     h('td', {}, stay.ongoing ? t('still there') : formatDate(stay.to)),
                     h('td', {}, stay.days),
                     h('td', {}, purposeLabel(stay.purpose)),
-                    h('td', {}, stay.places.join(', ')))))
+                    h('td', {}, joinList(stay.places)))))
                 : h('p', {}, t('No stays abroad in this period.')),
             h('p', { class: 'report-foot' }, t('Dates come from your visits: check them against your passport stamps before you copy them into a form.')),
             h('p', { class: 'report-foot' }, adviceNote())
