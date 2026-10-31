@@ -186,7 +186,7 @@ Ideas that follow the product direction: a travel record people rely on for visa
 - [ ] Travel documents: passports, visas and residence permits with their validity dates, warnings before they expire, and a check of planned trips against the common "valid six months after your stay" rule; numbers are never stored, only names and dates.
 - [ ] Rule templates: ready-made stay rules and thresholds people commonly need (UK Statutory Residence Test day counts, Schengen-style limits of other countries, 183-day rules), each with its source and the "a guide, not tax advice" note.
 - [ ] US Substantial Presence Test: a weighted threshold over three years (days this year, a third of last year's, a sixth of the year before), a rule kind the ledger cannot express today.
-- [ ] Ledger health: point out overlapping visits in countries too far apart for the same day, visits with no end date, and stays abroad with no way back, so the record holds up when it matters.
+- [x] Ledger health: point out overlapping visits in countries too far apart for the same day, visits with no end date, and stays abroad with no way back, so the record holds up when it matters. Done: 🩺 Ledger health in the Ledger tab; "no way back" is a stay still marked "still there" after a later visit elsewhere, since days with no visit are not counted anywhere.
 
 ### Atlas and places
 

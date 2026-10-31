@@ -39,6 +39,8 @@ test('a traveler counts Schengen days, tries a plan, gets an alert and prints ev
     await expect(ledger.locator('.days-left strong')).toHaveText('80');
     await expect(ledger.locator('.timeline-stay').first()).toContainText('Portugal');
     await expect(ledger.locator('.timeline-stay').first()).toContainText('10 days');
+    // Still there and nothing since: the record is sound.
+    await expect(ledger.locator('#health-title').locator('..')).toContainText('All good');
 
     // Where was I? The last 30 days at first: twenty with no visit, then ten in Lisbon.
     const where = ledger.locator('.whereabouts');
