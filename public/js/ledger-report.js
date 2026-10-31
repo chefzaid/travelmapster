@@ -1,6 +1,6 @@
 // Ledger tab, evidence side: the date history and the day-by-day evidence report, printed
 // or downloaded as CSV. Built on the device from days.js, only when asked.
-import { h, downloadFile, formatDate } from './ui.js';
+import { h, downloadFile, formatDate, formatDateTime } from './ui.js';
 import { openPrintView, printTable } from './print-view.js';
 import { DAY_RULES, localToday } from './days.js';
 import { buildEvidenceCsv, describeChange, evidenceReport } from './ledger-evidence.js';
@@ -14,9 +14,7 @@ export function countryName(ctx, id) {
     return ctx.state.index.byId.get(id)?.name || id;
 }
 
-function changeWhen(change) {
-    return new Date(change.changedAt).toLocaleString(locale(), { dateStyle: 'medium', timeStyle: 'short' });
-}
+const changeWhen = change => formatDateTime(change.changedAt);
 
 export function historySection(ctx) {
     const { changes } = ctx.state.ledger;

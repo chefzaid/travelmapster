@@ -316,7 +316,9 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   named, removable), and two-step sign-in, where a password sign-in also asks for a code from an
   authenticator app, set up from a QR code, with ten single-use recovery codes. The devices
   signed in are listed with their browser and system, when they signed in and were last used,
-  and any other one can be signed out, or all of them at once.
+  and any other one can be signed out, or all of them at once. Recent activity lists sign-ins
+  (with the password, an authenticator code, a recovery code or a passkey) and changes to the
+  password, passkeys and two-step sign-in, with the device and the time, so an intruder shows.
 - **Download all my data** in the account menu: one ZIP archive with everything the account
   holds (`account.json`: profile and settings, places and visits, trips, ledger settings and the
   whole date history) and the places as CSV, GeoJSON and KML, with a README

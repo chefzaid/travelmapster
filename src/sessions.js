@@ -22,12 +22,22 @@ function describeDevice(userAgent = '') {
 /** How a session is named to its owner: a hash of its id. */
 const sessionKey = sid => crypto.createHash('sha256').update(String(sid)).digest('hex').slice(0, 24);
 
-/** Signs in, with a new session (passport 0.7 regenerates it, preventing fixation) that records the device. */
-async function login(req, user) {
+/**
+ * Signs in, with a new session (passport 0.7 regenerates it, preventing fixation) that records
+ * the device; with `security` and a `method`, the sign-in joins the security activity.
+ */
+async function login(req, user, { security = null, method = null } = {}) {
     await new Promise(/** @param {(value?: void) => void} resolve */ (resolve, reject) => {
         req.login(user, err => (err ? reject(err) : resolve()));
     });
-    req.session.device = { ...describeDevice(req.get('user-agent')), signedInAt: new Date().toISOString() };
+    const device = describeDevice(req.get('user-agent'));
+    req.session.device = { ...device, signedInAt: new Date().toISOString() };
+    if (security && method) await security.recordEvent(user.id, 'sign_in', { method, ...device });
+}
+
+/** Records a change to how the account signs in, from the device making it. */
+function recordChange(security, req, kind) {
+    return security.recordEvent(req.user.id, kind, describeDevice(req.get('user-agent')));
 }
 
 /** The sessions of a traveler and signing them out; `maxAgeMs` turns a session's expiry into its last use. */
@@ -62,4 +72,4 @@ function createSessionRepository(db, maxAgeMs) {
     };
 }
 
-module.exports = { createSessionRepository, describeDevice, login, sessionKey };
+module.exports = { createSessionRepository, describeDevice, login, recordChange, sessionKey };

@@ -12,7 +12,7 @@ const { readPassword, normalizeText } = require('../validation');
 const { getOrCreateToken } = require('../middleware/csrf');
 const { siteOrigin } = require('../seo');
 const totp = require('../totp');
-const { login, sessionKey } = require('../sessions');
+const { login, recordChange, sessionKey } = require('../sessions');
 
 const MAX_PASSKEYS = 10;
 const CHALLENGE_MS = 5 * 60_000;
@@ -48,11 +48,11 @@ function createSecurityRouter({ config, users, security, sessions, authLimiter, 
     }
 
     router.get('/', requireAuth, async (req, res) => {
-        const [passkeys, secret, left, devices] = await Promise.all([
+        const [passkeys, secret, left, devices, activity] = await Promise.all([
             security.listPasskeys(req.user.id), security.findTotp(req.user.id), security.recoveryCodesLeft(req.user.id),
-            sessions.list(req.user.id, req.sessionID)
+            sessions.list(req.user.id, req.sessionID), security.listEvents(req.user.id, 20)
         ]);
-        res.json({ passkeys, twoStep: { enabled: Boolean(secret?.enabled), recoveryCodesLeft: secret?.enabled ? left : 0 }, sessions: devices });
+        res.json({ passkeys, twoStep: { enabled: Boolean(secret?.enabled), recoveryCodesLeft: secret?.enabled ? left : 0 }, sessions: devices, activity });
     });
 
     // ---- devices signed in
@@ -110,12 +110,14 @@ function createSecurityRouter({ config, users, security, sessions, authLimiter, 
             id: credential.id, publicKey: credential.publicKey, counter: credential.counter, transports: credential.transports || [], name
         });
         metrics.authEvents.inc({ event: 'passkey_add', outcome: 'success' });
+        await recordChange(security, req, 'passkey_added');
         logger.info({ userId: req.user.id }, 'Passkey added');
         return res.status(201).json(passkey);
     });
 
     router.delete('/passkeys/:id', requireAuth, async (req, res) => {
         if (!(await security.removePasskey(req.user.id, String(req.params.id)))) return res.status(404).json({ error: 'Passkey not found.' });
+        await recordChange(security, req, 'passkey_removed');
         logger.info({ userId: req.user.id }, 'Passkey removed');
         return res.status(204).end();
     });
@@ -155,7 +157,7 @@ function createSecurityRouter({ config, users, security, sessions, authLimiter, 
         const user = await users.findById(passkey.userId);
         if (!user) return refused();
         try {
-            await login(req, user);
+            await login(req, user, { security, method: 'passkey' });
         } catch (err) {
             return next(err);
         }
@@ -182,6 +184,7 @@ function createSecurityRouter({ config, users, security, sessions, authLimiter, 
         if (step === null || !secret) return res.status(400).json({ error: 'That code does not match. Check the time on your phone and try the newest code.' });
         const codes = totp.generateRecoveryCodes();
         await security.enableTotp(req.user.id, step, codes.map(totp.hashRecoveryCode));
+        await recordChange(security, req, 'two_step_on');
         metrics.authEvents.inc({ event: 'two_step_on', outcome: 'success' });
         logger.info({ userId: req.user.id }, 'Two-step sign-in turned on');
         return res.json({ recoveryCodes: codes });
@@ -190,6 +193,7 @@ function createSecurityRouter({ config, users, security, sessions, authLimiter, 
     router.post('/two-step/disable', requireAuth, authLimiter, async (req, res) => {
         if (!(await passwordMatches(req, readPassword(req.body?.password)))) return res.status(400).json({ error: 'Password is incorrect.' });
         await security.disableTotp(req.user.id);
+        await recordChange(security, req, 'two_step_off');
         logger.info({ userId: req.user.id }, 'Two-step sign-in turned off');
         return res.status(204).end();
     });
@@ -221,7 +225,7 @@ async function checkSecondStep(req, { config, users, security }) {
     if (!passed) return { status: 400, error: recoveryCode ? 'That recovery code is not right, or was used already.' : 'That code is not right. Try the newest one.' };
     delete req.session.secondStep;
     const user = await users.findById(pending.userId);
-    return user ? { user } : { status: 401, error: 'Please sign in again.' };
+    return user ? { user, method: recoveryCode ? 'recovery_code' : 'authenticator' } : { status: 401, error: 'Please sign in again.' };
 }
 
 /** Whether a password sign-in must wait for a second step; if so, the session remembers it. */

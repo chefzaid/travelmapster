@@ -96,6 +96,9 @@ test('a traveler sees the devices signed in and signs another one out', async ({
     await expect(devices).toHaveCount(2);
     await expect(devices.filter({ hasText: 'This device' })).toHaveCount(1);
     await expect(devices.filter({ hasText: 'Chrome on Android' })).toHaveCount(1);
+    // The phone's sign-in is in the activity.
+    await expect(page.locator('#security-activity li').first()).toContainText('Signed in with the password');
+    await expect(page.locator('#security-activity li').first()).toContainText('Chrome on Android');
     await page.getByRole('button', { name: 'Sign out Chrome on Android' }).click();
     await expect(page.locator('.toast', { hasText: 'Signed out Chrome on Android.' })).toBeVisible();
     await expect(devices).toHaveCount(1);

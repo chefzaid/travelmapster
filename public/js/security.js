@@ -1,9 +1,9 @@
 // Sign-in security (ADR 0027), from the account menu: passkeys to add and remove, and two-step
 // sign-in with an authenticator app, its QR code and recovery codes.
-import { h, toast, formDialog, formatDate, downloadFile, steppedDialog } from './ui.js';
+import { h, toast, formDialog, formatDate, formatDateTime, downloadFile, steppedDialog } from './ui.js';
 import { createPasskey, passkeysSupported } from './webauthn.js';
 import { qrSvg } from './qr.js';
-import { t, tn, tParts } from './i18n.js';
+import { t, tk, tn, tParts } from './i18n.js';
 
 const MAX_PASSKEYS = 10;
 
@@ -95,10 +95,23 @@ function passkeyItem(ctx, passkey, step) {
         }, '✕'));
 }
 
+// What each kind of activity and sign-in method is called.
+const ACTIVITY = {
+    sign_in: tk('Signed in'), password_changed: tk('Password changed'), passkey_added: tk('Passkey added'),
+    passkey_removed: tk('Passkey removed'), two_step_on: tk('Two-step sign-in turned on'), two_step_off: tk('Two-step sign-in turned off')
+};
+const METHODS = { password: tk('with the password'), authenticator: tk('with an authenticator code'), recovery_code: tk('with a recovery code'), passkey: tk('with a passkey') };
+
+const deviceName = ({ browser, os }) => (browser && os ? t('{browser} on {os}', { browser, os }) : browser || os || t('Unknown browser'));
+
+function activityItem(event) {
+    const what = [t(ACTIVITY[event.kind] || event.kind), event.method ? t(METHODS[event.method]) : ''].filter(Boolean).join(' ');
+    return h('li', { class: 'dialog-item' }, h('span', {}, h('strong', {}, what), h('small', {}, `${deviceName(event)} · ${formatDateTime(event.at)}`)));
+}
+
 // A device signed in: its browser and system, when it signed in and was last used.
 function sessionItem(ctx, session, step) {
-    const device = session.browser && session.os ? t('{browser} on {os}', { browser: session.browser, os: session.os })
-        : session.browser || session.os || t('Unknown browser');
+    const device = deviceName(session);
     return h('li', { class: 'dialog-item' },
         h('span', {}, h('strong', {}, device, session.current ? h('span', { class: 'chip chip-ok' }, t('This device')) : null),
             h('small', {}, [
@@ -120,7 +133,7 @@ export function openSecurity(ctx) {
         labelledBy: 'security-title',
         load: () => ctx.api.security(),
         onError: ctx.handleError,
-        draw: ({ passkeys, twoStep, sessions = [] }, step, close) => [
+        draw: ({ passkeys, twoStep, sessions = [], activity = [] }, step, close) => [
             h('h3', { id: 'security-title' }, t('Sign-in security')),
             h('section', { class: 'dialog-section' },
                 h('h4', {}, t('🔑 Passkeys')),
@@ -149,6 +162,10 @@ export function openSecurity(ctx) {
                         toast(t('Signed out everywhere else.'));
                     })
                 }, t('Sign out everywhere else')) : null),
+            activity.length ? h('section', { class: 'dialog-section' },
+                h('h4', {}, t('🛡️ Recent activity')),
+                h('p', { class: 'small' }, t('Sign-ins and changes to how you sign in. Something you did not do? Sign out the other devices and change your password.')),
+                h('ul', { class: 'dialog-list', id: 'security-activity' }, activity.map(activityItem))) : null,
             h('div', { class: 'dialog-actions' }, h('button', { type: 'button', class: 'btn btn-primary', onclick: close }, t('Done')))
         ]
     });

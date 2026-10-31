@@ -5365,6 +5365,60 @@
           }
         }
       },
+      "SecurityEvent": {
+        "type": "object",
+        "description": "A sign-in or a change to how the account signs in, with the browser and system names of the device (null when unknown).",
+        "required": [
+          "kind",
+          "method",
+          "browser",
+          "os",
+          "at"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "sign_in",
+              "password_changed",
+              "passkey_added",
+              "passkey_removed",
+              "two_step_on",
+              "two_step_off"
+            ]
+          },
+          "method": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "password",
+              "authenticator",
+              "recovery_code",
+              "passkey",
+              null
+            ],
+            "description": "How a sign-in was made."
+          },
+          "browser": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "os": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "SecurityStatus": {
         "type": "object",
         "properties": {
@@ -5391,6 +5445,14 @@
               "$ref": "#/components/schemas/SessionInfo"
             },
             "description": "Open sessions, the most recently used first."
+          },
+          "activity": {
+            "type": "array",
+            "maxItems": 20,
+            "items": {
+              "$ref": "#/components/schemas/SecurityEvent"
+            },
+            "description": "The latest security activity, newest first."
           }
         }
       },
