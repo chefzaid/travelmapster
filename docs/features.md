@@ -254,8 +254,10 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   country, counted by the ledger's day rule; every recorded day when no home country is set), the
   longest trip (stays away from home no more than three days apart, layovers included, places
   lived in left out), the approximate distance traveled (straight lines between every place been
-  to, in the order of the visits, also told as times around the Earth) and countries per year
-  with how many were new.
+  to, in the order of the visits, also told as times around the Earth), countries per year
+  with how many were new, and streaks: years in a row with a new country and, once a home
+  country is set, years in a row abroad, with the best of each (this year can still extend
+  last year's streak; planned trips do not count).
 - **Friends**: follow friends' public maps from their shared page or the Passport tab (up to
   200; they are not told), see how many countries each has been to and how many you share,
   and compare them: both of you, only you, only them, counted on your country list.

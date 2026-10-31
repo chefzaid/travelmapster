@@ -214,6 +214,11 @@
     "many": "{count} visites, la dernière le {date}",
     "other": "{count} visites, la dernière le {date}"
   },
+  "{count} years abroad ({from}–{to})": {
+    "one": "{count} an à l'étranger ({from}–{to})",
+    "many": "{count} d'années à l'étranger ({from}–{to})",
+    "other": "{count} ans à l'étranger ({from}–{to})"
+  },
   "{count} years ago today, you arrived in {place}": {
     "one": "Il y a un an jour pour jour, vous arriviez à {place}",
     "many": "Il y a {count} ans jour pour jour, vous arriviez à {place}",
@@ -223,6 +228,11 @@
     "one": "Il y a un an jour pour jour, vous emménagiez à {place}",
     "many": "Il y a {count} ans jour pour jour, vous emménagiez à {place}",
     "other": "Il y a {count} ans jour pour jour, vous emménagiez à {place}"
+  },
+  "{count} years with a new country ({from}–{to})": {
+    "one": "{count} an avec un nouveau pays ({from}–{to})",
+    "many": "{count} d'années avec un nouveau pays ({from}–{to})",
+    "other": "{count} ans avec un nouveau pays ({from}–{to})"
   },
   "{country}: {count} of {maxDays} days in {year}": "{country} : {count} jours sur {maxDays} en {year}",
   "{country}: {maxDays} days": "{country} : {maxDays} jours",
@@ -583,6 +593,7 @@
   "Best months are month numbers from 1 to 12.": "Les meilleurs mois sont des numéros de mois de 1 à 12.",
   "Best months must be a list of month numbers from 1 to 12.": "Les meilleurs mois doivent être une liste de numéros de mois de 1 à 12.",
   "Best months to go": "Meilleurs mois pour y aller",
+  "Best streaks: {streaks}.": "Meilleures séries : {streaks}.",
   "between your places": "entre vos lieux",
   "Borders:": "Frontières :",
   "Both of you": "Vous deux",
@@ -1739,6 +1750,16 @@
   "Year from {date}": "Année à partir du {date}",
   "Year start must be a MM-DD day such as 01-01 or 04-06.": "Le début d'année doit être un jour au format MM-JJ, comme 01-01 ou 04-06.",
   "Year starts on (MM-DD)": "L'année commence le (MM-JJ)",
+  "years in a row abroad": {
+    "one": "année d'affilée à l'étranger",
+    "many": "années d'affilée à l'étranger",
+    "other": "années d'affilée à l'étranger"
+  },
+  "years in a row with a new country": {
+    "one": "année d'affilée avec un nouveau pays",
+    "many": "années d'affilée avec un nouveau pays",
+    "other": "années d'affilée avec un nouveau pays"
+  },
   "You and {username}": "Vous et {username}",
   "You are in the area now.": "Vous êtes dans l'espace en ce moment.",
   "You are in the area that day.": "Vous êtes dans l'espace ce jour-là.",

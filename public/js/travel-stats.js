@@ -1,5 +1,5 @@
 // Passport statistics from dated visits: days away from home per year, the longest trip, the
-// approximate distance traveled and countries per year. Pure, unit tested in Node.
+// approximate distance traveled, countries per year and streaks of years. Pure, unit tested in Node.
 import { dayNumber, isoDay } from './days.js';
 import { groupRuns, journeyLegs, journeyStops, routeLabel } from './journeys.js';
 import { statusOf } from './status.js';
@@ -78,4 +78,26 @@ export function countriesByYear(markers, { countryOf, countedIds }) {
         for (const id of ids) seen.add(id);
         return { year, count: ids.size, newCount: fresh.length };
     });
+}
+
+/**
+ * Runs of consecutive years among `years` (YYYY), up to `thisYear`: the current run, which may
+ * end last year since this year can still extend it, and the best run with its first and last year.
+ */
+export function yearStreak(years, thisYear) {
+    const set = new Set(years.map(Number).filter(year => year <= thisYear));
+    const best = { length: 0, from: null, to: null };
+    let run = 0;
+    let start = null;
+    for (const year of [...set].sort((a, b) => a - b)) {
+        if (set.has(year - 1)) run += 1;
+        else {
+            run = 1;
+            start = year;
+        }
+        if (run > best.length) Object.assign(best, { length: run, from: start, to: year });
+    }
+    let current = 0;
+    for (let year = set.has(thisYear) ? thisYear : thisYear - 1; set.has(year); year -= 1) current += 1;
+    return { current, best };
 }

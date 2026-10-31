@@ -114,6 +114,11 @@ export function formatNumber(value, options) {
     return Number(value).toLocaleString(current, options);
 }
 
+/** Items joined the language's way: "A, B, and C" in English, "A وB وC" in Arabic. */
+export function formatList(items) {
+    return new Intl.ListFormat(current, { type: 'conjunction' }).format(items);
+}
+
 /** Fetches and uses a language's catalog, and sets the page's language and direction. */
 export async function loadLocale(code) {
     let entries = {};

@@ -133,6 +133,9 @@ test('a traveler records several visits to the same city', async ({ page }) => {
     await expect(travel.locator('.stat', { hasText: 'longest trip' })).toContainText('4');
     await expect(travel).toContainText('Longest trip: Lisbon');
     await expect(travel).toContainText('Set a home country');
+    // Portugal was new in 2019 only, so no streak runs today and none spans two years.
+    await expect(travel.locator('.stat', { hasText: 'years in a row with a new country' })).toContainText('🔥 0');
+    await expect(travel).not.toContainText('Best streaks');
     await expect(page.locator('#passport-tab')).toContainText('Countries by year');
 
     // A goal already met is celebrated at once; it can be removed again.
