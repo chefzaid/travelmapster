@@ -156,6 +156,10 @@ counting rules are in [ADR 0010](adr/0010-day-ledger.md).
 - **Tax residency**: 183 days in the calendar year for each country, plus your own thresholds over
   a year starting on any day (such as the UK tax year from 6 April) or a rolling window. Each one
   warns ahead of time, including when a stay still going on would reach it.
+- **US Substantial Presence Test**, once the ledger has days in the United States in the last
+  three years: this year's days plus a third of last year's and a sixth of the year before's,
+  against 183 with at least 31 this year, counted up to today by any part of a day. Days the IRS
+  leaves out (an exempt student's, a transit of under a day) are not known and so are counted.
 - **Rule templates**: ready-made rules to start from, each with what it means and its official
   source: Türkiye 90/180, the UK Statutory Residence Test's 16, 46 and 183 days (tax year from
   6 April), Australia's 183 days (income year from 1 July), India's 182 days (financial year from

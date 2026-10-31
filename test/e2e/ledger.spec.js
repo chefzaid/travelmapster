@@ -3,7 +3,7 @@
 // The day ledger: days on the map, Schengen days, a planned stay, a threshold alert and the
 // evidence report.
 const { test, expect } = require('@playwright/test');
-const { browserDay, markCity, signUp, stubThirdParties, trackErrors } = require('./helpers');
+const { addVisit, browserDay, markCity, signUp, stubThirdParties, trackErrors } = require('./helpers');
 
 test.beforeEach(({ page }) => stubThirdParties(page));
 
@@ -140,5 +140,20 @@ test('a traveler counts Schengen days, tries a plan, gets an alert and prints ev
     await expect(ledger.locator('.plan-outcomes')).toContainText('over the limit');
     await expect(ledger.getByLabel(/Midnight rule/)).toBeChecked();
     await expect(page.locator('.toast', { hasText: 'Day ledger' })).toBeVisible();
+    expect(errors).toEqual([]);
+});
+
+test('days in the United States add up to the Substantial Presence Test', async ({ page }) => {
+    const errors = trackErrors(page);
+    await signUp(page, `e2e_spt_${Date.now()}`);
+    await markCity(page, 'New York');
+    await addVisit(page, await browserDay(page, -39), await browserDay(page, 0));
+    await page.click('#tab-ledger');
+    const item = page.locator('#us-presence');
+    const year = (await browserDay(page, 0)).slice(0, 4);
+    // Early in January the forty days span two years; the total is the same weighed either way.
+    await expect(item).toContainText('Substantial Presence Test');
+    await expect(item).toContainText(year);
+    await expect(item).toContainText('✓ On track');
     expect(errors).toEqual([]);
 });
