@@ -18,6 +18,7 @@ test('texts fall back to English and fill their placeholders', async () => {
     assert.equal(tn(1, '{count} day', '{count} days'), '1 day');
     assert.equal(tn(1200, '{count} day', '{count} days'), '1,200 days');
     assert.equal(tk('Wishlist'), 'Wishlist');
+    assert.equal((await load('i18n.js')).formatList(['Lisbon', 'Porto', 'Faro']), 'Lisbon, Porto, and Faro');
 
     useCatalog('fr', {
         'Removed {name}.': '{name} supprimé.',
@@ -39,6 +40,8 @@ test('texts fall back to English and fill their placeholders', async () => {
     assert.equal(isRtl(), true);
     assert.deepEqual([0, 1, 2, 3, 11, 100].map(count => tn(count, '{count} day', '{count} days')),
         ['لا أيام', 'يوم واحد', 'يومان', `${(3).toLocaleString('ar')} أيام`, `${(11).toLocaleString('ar')} يومًا`, `${(100).toLocaleString('ar')} يوم`]);
+    const { formatList } = await load('i18n.js');
+    assert.equal(formatList(['a', 'b', 'c']), 'a وb وc');
     useCatalog('xx', { a: 'b' });
     assert.equal(locale(), 'en', 'an unknown language is English');
     assert.equal(t('a'), 'a');

@@ -89,3 +89,11 @@ test('countries per year count visits and moves on the chosen list, with the new
         { year: '2025', count: 1, newCount: 0 }
     ]);
 });
+
+test('streaks count consecutive years, and this year can still extend last year\'s', async () => {
+    const { yearStreak } = await load('travel-stats.js');
+    assert.deepEqual(yearStreak(['2015', '2016', '2017', '2019', '2024', '2025'], 2026), { current: 2, best: { length: 3, from: 2015, to: 2017 } });
+    assert.deepEqual(yearStreak(['2024', '2025', '2026', '2027'], 2026), { current: 3, best: { length: 3, from: 2024, to: 2026 } }, 'planned years do not count');
+    assert.deepEqual(yearStreak(['2020', '2021'], 2026), { current: 0, best: { length: 2, from: 2020, to: 2021 } });
+    assert.deepEqual(yearStreak([], 2026), { current: 0, best: { length: 0, from: null, to: null } });
+});

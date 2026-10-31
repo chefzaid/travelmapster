@@ -319,6 +319,14 @@
     "many": "{count} زيارة، آخرها في {date}",
     "other": "{count} زيارة، آخرها في {date}"
   },
+  "{count} years abroad ({from}–{to})": {
+    "zero": "لا سنوات في الخارج ({from}–{to})",
+    "one": "سنة واحدة في الخارج ({from}–{to})",
+    "two": "سنتان في الخارج ({from}–{to})",
+    "few": "{count} سنوات في الخارج ({from}–{to})",
+    "many": "{count} سنة في الخارج ({from}–{to})",
+    "other": "{count} سنة في الخارج ({from}–{to})"
+  },
   "{count} years ago today, you arrived in {place}": {
     "zero": "في مثل هذا اليوم، وصلت إلى {place}",
     "one": "قبل عام في مثل هذا اليوم، وصلت إلى {place}",
@@ -334,6 +342,14 @@
     "few": "قبل {count} أعوام في مثل هذا اليوم، انتقلت للعيش في {place}",
     "many": "قبل {count} عامًا في مثل هذا اليوم، انتقلت للعيش في {place}",
     "other": "قبل {count} عام في مثل هذا اليوم، انتقلت للعيش في {place}"
+  },
+  "{count} years with a new country ({from}–{to})": {
+    "zero": "لا سنوات مع دولة جديدة ({from}–{to})",
+    "one": "سنة واحدة مع دولة جديدة ({from}–{to})",
+    "two": "سنتان مع دولة جديدة ({from}–{to})",
+    "few": "{count} سنوات مع دولة جديدة ({from}–{to})",
+    "many": "{count} سنة مع دولة جديدة ({from}–{to})",
+    "other": "{count} سنة مع دولة جديدة ({from}–{to})"
   },
   "{country}: {count} of {maxDays} days in {year}": "{country}: {count} من {maxDays} يوم في {year}",
   "{country}: {maxDays} days": "{country}: {maxDays} يوم",
@@ -721,6 +737,7 @@
   "Best months are month numbers from 1 to 12.": "أفضل الأشهر هي أرقام أشهر من 1 إلى 12.",
   "Best months must be a list of month numbers from 1 to 12.": "يجب أن تكون أفضل الأشهر قائمة بأرقام أشهر من 1 إلى 12.",
   "Best months to go": "أفضل الأشهر للزيارة",
+  "Best streaks: {streaks}.": "أفضل السلاسل: {streaks}.",
   "between your places": "بين أماكنك",
   "Borders:": "الحدود:",
   "Both of you": "كلاكما",
@@ -1955,6 +1972,22 @@
   "Year from {date}": "سنة تبدأ من {date}",
   "Year start must be a MM-DD day such as 01-01 or 04-06.": "يجب أن تكون بداية السنة يومًا بصيغة MM-DD مثل 01-01 أو 04-06.",
   "Year starts on (MM-DD)": "تبدأ السنة في (MM-DD)",
+  "years in a row abroad": {
+    "zero": "سنة متتالية في الخارج",
+    "one": "سنة متتالية في الخارج",
+    "two": "سنتان متتاليتان في الخارج",
+    "few": "سنوات متتالية في الخارج",
+    "many": "سنة متتالية في الخارج",
+    "other": "سنة متتالية في الخارج"
+  },
+  "years in a row with a new country": {
+    "zero": "سنة متتالية مع دولة جديدة",
+    "one": "سنة متتالية مع دولة جديدة",
+    "two": "سنتان متتاليتان مع دولة جديدة",
+    "few": "سنوات متتالية مع دولة جديدة",
+    "many": "سنة متتالية مع دولة جديدة",
+    "other": "سنة متتالية مع دولة جديدة"
+  },
   "You and {username}": "أنت و{username}",
   "You are in the area now.": "أنت في المنطقة الآن.",
   "You are in the area that day.": "أنت في المنطقة في ذلك اليوم.",

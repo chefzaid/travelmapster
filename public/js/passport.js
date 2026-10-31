@@ -8,8 +8,8 @@ import { goalsSection } from './passport-goals.js';
 import { shareCardsSection } from './passport-share.js';
 import { flagLine } from './share-cards.js';
 import { friendsSection } from './friends.js';
-import { EARTH_CIRCUMFERENCE_KM, countriesByYear, daysAwayByYear, distanceTraveled, longestTrip } from './travel-stats.js';
-import { formatNumber, t, tn } from './i18n.js';
+import { EARTH_CIRCUMFERENCE_KM, countriesByYear, daysAwayByYear, distanceTraveled, longestTrip, yearStreak } from './travel-stats.js';
+import { formatList, formatNumber, t, tn } from './i18n.js';
 import { regionName } from './geo.js';
 
 function statTile(value, label, tone = '') {
@@ -137,6 +137,18 @@ function yearChart(title, rows, describe) {
 
 // Days away from home, the longest trip, the distance between places and countries per year,
 // all from dated visits; days count by the ledger's day rule.
+// The best streaks, once they span two years or more.
+function streakNote(newStreak, awayStreak) {
+    const longer = streak => (streak?.best.length > 1 ? { count: streak.best.length, from: streak.best.from, to: streak.best.to } : null);
+    const fresh = longer(newStreak);
+    const abroad = longer(awayStreak);
+    const parts = [
+        fresh && tn(fresh.count, '{count} year with a new country ({from}–{to})', '{count} years with a new country ({from}–{to})', fresh),
+        abroad && tn(abroad.count, '{count} year abroad ({from}–{to})', '{count} years abroad ({from}–{to})', abroad)
+    ].filter(Boolean);
+    return parts.length ? h('p', { class: 'muted small' }, t('Best streaks: {streaks}.', { streaks: formatList(parts) })) : null;
+}
+
 function travelSections(ctx) {
     const { markers, stats } = ctx.state;
     const countryOf = marker => stats.markerCountry.get(marker.id);
@@ -147,6 +159,10 @@ function travelSections(ctx) {
     const away = daysAwayByYear(ctx.currentLedger().ledger, stats.homeId, today);
     const perYear = countriesByYear(markers, { countryOf, countedIds: stats.countedIds });
     const awayDays = count => (home ? tn(count, '{count} day abroad', '{count} days abroad') : tn(count, '{count} day recorded', '{count} days recorded'));
+    // Streaks: years in a row with a new country, and with days abroad once home is known.
+    const thisYear = Number(today.slice(0, 4));
+    const newStreak = yearStreak(perYear.filter(row => row.newCount).map(row => row.year), thisYear);
+    const awayStreak = home ? yearStreak(away.filter(row => row.count).map(row => row.year), thisYear) : null;
     if (!trip && !away.length) {
         return h('section', {}, h('h3', { class: 'section-title' }, t('On the road')),
             h('p', { class: 'muted small' }, t('Add dates to your visits to see your days abroad, your longest trip and how far you have traveled.')));
@@ -157,8 +173,11 @@ function travelSections(ctx) {
             h('div', { class: 'stat-grid' },
                 statTile(away.find(row => row.year === today.slice(0, 4))?.count || 0, home ? t('days abroad this year') : t('days recorded this year')),
                 trip ? statTile(trip.days, tn(trip.days, 'day, longest trip', 'days, longest trip')) : null,
-                statTile(`≈ ${formatNumber(km)} km`, t('between your places'))
+                statTile(`≈ ${formatNumber(km)} km`, t('between your places')),
+                newStreak.best.length ? statTile(`🔥 ${formatNumber(newStreak.current)}`, tn(newStreak.current, 'year in a row with a new country', 'years in a row with a new country')) : null,
+                awayStreak?.best.length ? statTile(`🧳 ${formatNumber(awayStreak.current)}`, tn(awayStreak.current, 'year in a row abroad', 'years in a row abroad')) : null
             ),
+            streakNote(newStreak, awayStreak),
             trip ? h('p', { class: 'muted small' }, t('Longest trip: {route}, {startDate} – {endDate}.', { route: trip.route, startDate: formatDate(trip.startDate), endDate: formatDate(trip.endDate) })) : null,
             h('p', { class: 'muted small' }, km
                 ? t('About {times} times around the Earth, in straight lines between your places in the order you visited them.', { times: formatNumber(km / EARTH_CIRCUMFERENCE_KM, { maximumFractionDigits: 1, minimumFractionDigits: 1 }) })

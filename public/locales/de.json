@@ -179,6 +179,10 @@
     "one": "{count} Besuch, zuletzt {date}",
     "other": "{count} Besuche, zuletzt {date}"
   },
+  "{count} years abroad ({from}–{to})": {
+    "one": "{count} Jahr im Ausland ({from}–{to})",
+    "other": "{count} Jahre im Ausland ({from}–{to})"
+  },
   "{count} years ago today, you arrived in {place}": {
     "one": "Heute vor einem Jahr bist du in {place} angekommen",
     "other": "Heute vor {count} Jahren bist du in {place} angekommen"
@@ -186,6 +190,10 @@
   "{count} years ago today, you moved to {place}": {
     "one": "Heute vor einem Jahr bist du nach {place} gezogen",
     "other": "Heute vor {count} Jahren bist du nach {place} gezogen"
+  },
+  "{count} years with a new country ({from}–{to})": {
+    "one": "{count} Jahr mit einem neuen Land ({from}–{to})",
+    "other": "{count} Jahre mit einem neuen Land ({from}–{to})"
   },
   "{country}: {count} of {maxDays} days in {year}": "{country}: {count} von {maxDays} Tagen in {year}",
   "{country}: {maxDays} days": "{country}: {maxDays} Tage",
@@ -537,6 +545,7 @@
   "Best months are month numbers from 1 to 12.": "Beste Monate sind Monatszahlen von 1 bis 12.",
   "Best months must be a list of month numbers from 1 to 12.": "Beste Monate müssen eine Liste von Monatszahlen von 1 bis 12 sein.",
   "Best months to go": "Beste Reisemonate",
+  "Best streaks: {streaks}.": "Längste Serien: {streaks}.",
   "between your places": "zwischen deinen Orten",
   "Borders:": "Grenzen:",
   "Both of you": "Ihr beide",
@@ -1667,6 +1676,14 @@
   "Year from {date}": "Jahr ab {date}",
   "Year start must be a MM-DD day such as 01-01 or 04-06.": "Der Jahresbeginn muss ein Tag im Format MM-TT wie 01-01 oder 04-06 sein.",
   "Year starts on (MM-DD)": "Jahr beginnt am (MM-TT)",
+  "years in a row abroad": {
+    "one": "Jahr in Folge im Ausland",
+    "other": "Jahre in Folge im Ausland"
+  },
+  "years in a row with a new country": {
+    "one": "Jahr in Folge mit einem neuen Land",
+    "other": "Jahre in Folge mit einem neuen Land"
+  },
   "You and {username}": "Du und {username}",
   "You are in the area now.": "Du bist gerade im Raum.",
   "You are in the area that day.": "An diesem Tag bist du im Raum.",
