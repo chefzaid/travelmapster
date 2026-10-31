@@ -310,6 +310,10 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
 - **Kilometers or miles** for distances, chosen in Settings and kept in the browser like the
   language; at first, miles in a browser set to the United States, the United Kingdom, Liberia
   or Myanmar, kilometers elsewhere.
+- **Countries as a list**: every country and territory with its status in a table, with a
+  filter and a status to choose for each, opened from the second skip link at the top of the
+  page or the Places tab, so screen-reader and keyboard users can browse and mark the map
+  without clicking it; visitors of a public map can browse it too.
 - Responsive layout: on wider screens the side panel folds away with the tab on its edge (and
   stays folded in this browser) so the whole map can be seen and clicked, and opens again when
   a tab, the sign-in form or the skip link needs it; phones have a bottom sheet instead; keyboard shortcuts (`/` to search, `T` the timeline,

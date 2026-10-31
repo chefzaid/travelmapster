@@ -7,6 +7,7 @@ import { STATUSES, statusLabel, statusOf } from './status.js';
 import { openNewTrip } from './trips.js';
 import { importButtons } from './import-apps.js';
 import { t, tn } from './i18n.js';
+import { openCountryList } from './country-list.js';
 
 const view = { query: '', type: 'all', category: 'all', lastVisit: 'all', sort: 'continent' };
 
@@ -270,6 +271,7 @@ export function renderPlaces(container, ctx) {
 
     fill(container,
         h('div', { class: 'section-head' }, h('h2', {}, t('Your places')), summary),
+        h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => openCountryList(ctx) }, t('🗂️ Countries as a list')),
         h('div', { class: 'filters' },
             searchInput,
             chipGroup(t('Status'), 'type', [['all', t('All')], ...STATUSES.map(({ id, filter }) => [id, filter])], rerender),
