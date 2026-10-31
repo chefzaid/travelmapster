@@ -117,6 +117,7 @@ button.chip { cursor: pointer; }
 
 .onboarding,
 .dream-card,
+.countdown,
 .share-card {
     padding: 14px 16px;
     border: 2px solid var(--ink);
@@ -127,11 +128,30 @@ button.chip { cursor: pointer; }
 .onboarding ol { margin: 0; padding-inline-start: 1.2em; }
 .dream-card { background: #fff1c2; }
 .share-card { background: #e8f9f6; }
+.countdown { background: #e6f7ff; }
+.countdown .eyebrow { margin-bottom: 4px; }
+.countdown-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 0;
+    font: inherit;
+    font-size: 1.05rem;
+    color: inherit;
+    text-align: start;
+    background: none;
+    border: 0;
+    cursor: pointer;
+}
+.countdown-btn > span { font-size: 1.6rem; }
+.countdown-btn:hover strong { text-decoration: underline; }
 
 @media (prefers-color-scheme: dark) {
     .onboarding { background: #1f4260; }
     .dream-card { background: #4b3c12; }
     .share-card { background: #1c4744; }
+    .countdown { background: #1f4260; }
     .chip-wishlist, .btn-wishlist { background: #5a4712; }
     .form-error { color: #ffd5d5; background: #4d1f22; }
 }

@@ -1,12 +1,14 @@
 // Picture cards from the passport, to share on social networks or in messages: the country
-// count, the stamps and this year's recap, without notes, photos, places or dates. The cards
+// count, the stamps, this year's recap and the countdown to the next trip, without notes,
+// photos, places or dates. The cards
 // are drawn in share-cards.js; this module turns them into PNG files.
 import { h, toast, downloadFile } from './ui.js';
 import { localToday } from './days.js';
 import { shareLabel } from './lists.js';
 import { goalCount } from './goals.js';
 import { countriesByYear, daysAwayByYear, longestTrip } from './travel-stats.js';
-import { CARD_SIZE, countryCountCard, stampsCard, svgDataUrl, yearRecapCard } from './share-cards.js';
+import { CARD_SIZE, countdownCard, countryCountCard, stampsCard, svgDataUrl, yearRecapCard } from './share-cards.js';
+import { tripFlags, upcomingTrip } from './trip-countdown.js';
 import { t, tn } from './i18n.js';
 
 // The PNG of a card: the SVG drawn on a canvas.
@@ -41,9 +43,10 @@ async function shareCard(svg, fileName, title) {
     }
 }
 
-function stampsOf(stats, index) {
+/** The countries stamped in the passport: those been to that the chosen list counts, by name. */
+export function stampedCountries(stats, index) {
     return [...stats.visitedIds].filter(id => stats.countedIds.has(id)).map(id => index.byId.get(id)).filter(Boolean)
-        .sort((a, b) => a.name.localeCompare(b.name)).map(country => ({ flag: country.flag, name: country.name }));
+        .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 // This year's recap, from the visits begun in it.
@@ -76,9 +79,15 @@ export function shareCardsSection(ctx) {
             username: user.username, countries: stats.visitedCountries, worldPercent: stats.worldPercent,
             shareLabel: shareLabel(stats.countryList), continents: stats.visitedContinents, rank: stats.rank.title
         }), 'countries'],
-        [t('🛂 Stamps'), () => stampsCard({ username: user.username, stamps: stampsOf(stats, index) }), 'stamps'],
+        [t('🛂 Stamps'), () => stampsCard({ username: user.username, stamps: stampedCountries(stats, index) }), 'stamps'],
         [t('🗓️ {year} recap', { year: date.slice(0, 4) }), () => recap(ctx), `recap-${date.slice(0, 4)}`]
     ];
+    const next = upcomingTrip(ctx);
+    if (next) {
+        cards.push([t('✈️ Countdown'), () => countdownCard({
+            username: user.username, days: next.days, underWay: next.underWay, flags: tripFlags(ctx, next.trip)
+        }), 'countdown']);
+    }
     return h('section', { id: 'share-pictures', 'aria-labelledby': 'share-pictures-title' },
         h('h3', { class: 'section-title', id: 'share-pictures-title' }, t('Share a picture')),
         h('p', { class: 'muted small' }, t('Square pictures of your counts and stamps for social networks and messages. They never show notes, photos, places or dates.')),

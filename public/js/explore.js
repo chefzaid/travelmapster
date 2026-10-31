@@ -1,6 +1,6 @@
-// Explore tab: the greeting, memories, countries not seen for years, next dream, continents and
-// recent places, and the travel ideas from Wikivoyage, which also show beside the landing page
-// and public maps.
+// Explore tab: the greeting, the countdown to the next trip, memories, countries not seen for
+// years, next dream, continents and recent places, and the travel ideas from Wikivoyage, which
+// also show beside the landing page and public maps.
 import { h, $, fill } from './ui.js';
 import { CONTINENTS, CONTINENT_EMOJI, regionName } from './geo.js';
 import { monthsLabel, nextInSeason, priorityLabel } from './details.js';
@@ -11,6 +11,7 @@ import { openNewTrip } from './trips.js';
 import { showCountryCard, showMarker, statusChip } from './cards.js';
 import { localToday } from './days.js';
 import { longTimeNoSee, memoryLabel, onThisDay } from './memories.js';
+import { countdownSection } from './trip-countdown.js';
 import { formatList, t, tn, tParts } from './i18n.js';
 
 // ---------------------------------------------------------------- ideas
@@ -142,6 +143,7 @@ export function renderExplore(container, ctx) {
                 ? tn(stats.visitedCountries, 'You\'ve colored in {count} country, {percent}% {share}.', 'You\'ve colored in {count} countries, {percent}% {share}.', { percent: stats.worldPercent, share: shareLabel(stats.countryList) })
                 : t('Click any country you have visited to color it in.'))
         ),
+        countdownSection(ctx),
         state.markers.length === 0 ? h('section', { class: 'onboarding' },
             h('h3', {}, t('Get started in three taps')),
             h('ol', {},

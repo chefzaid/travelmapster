@@ -115,6 +115,9 @@ The reasoning and what each rule rules out are in [ADR 0017](adr/0017-product-pr
   years ("2 years ago today, you arrived in Lisbon"), each showing its place on the map; a visit
   that began on 29 February comes back on 28 February in other years. Layovers and wishes are
   left out.
+- **Countdown to the next trip** ("Lisbon long weekend in 12 days", or that it starts today or
+  is under way) at the top of the Explore tab, with the flags of its countries, and on the
+  passport; it opens the Trips tab.
 - **Long time no see**: the Explore tab lists countries last visited five or more years ago, the
   longest ago first, with the towns been to there and the year of the last visit, each showing
   its country. The home country, layovers and wishes are left out, and a visit still going on
@@ -249,8 +252,8 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   list) or new cities first visited that year, or trips begun in it, with a progress bar each
   and a confetti celebration when one is reached. One goal per kind and year; goals are never
   on the public map.
-- **Share a picture**: square cards (1080 × 1080) of the country count, the passport stamps or
-  this year's recap, shared through the phone's share sheet or downloaded as PNG. They show
+- **Share a picture**: square cards (1080 × 1080) of the country count, the passport stamps,
+  this year's recap or the countdown to the next trip (the days to go and its countries' flags), shared through the phone's share sheet or downloaded as PNG. They show
   counts, country names and flags only: never notes, photos, places or dates.
 - **Copy my flags** under the stamps: the countries as a line of flag emoji with their count
   (🇫🇷🇯🇵🇲🇦 3 countries), copied to paste into a social bio or a message.
