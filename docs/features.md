@@ -326,7 +326,8 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
 
 - Username and password accounts ([security](security.md#authentication-and-sessions)); change
   the password (signing out other devices) or delete the account and all its data from the
-  account menu.
+  account menu. A deleted account is signed out everywhere and hidden at once, and deleted for
+  good after 30 days; signing in before then restores everything.
 - **Sign-in security** in the account menu ([ADR 0027](adr/0027-passkeys-and-two-step-sign-in.md)):
   passkeys, to log in with a fingerprint, face or screen lock instead of the password (up to 10,
   named, removable), and two-step sign-in, where a password sign-in also asks for a code from an

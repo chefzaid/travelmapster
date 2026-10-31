@@ -157,12 +157,12 @@ function createSecurityRouter({ config, users, security, sessions, authLimiter, 
         const user = await users.findById(passkey.userId);
         if (!user) return refused();
         try {
-            await login(req, user, { security, method: 'passkey' });
+            const { restored } = await login(req, user, { security, method: 'passkey', users });
+            metrics.authEvents.inc({ event: 'passkey_login', outcome: 'success' });
+            return res.json({ user: { ...publicUser(user), restored }, csrfToken: getOrCreateToken(req) });
         } catch (err) {
             return next(err);
         }
-        metrics.authEvents.inc({ event: 'passkey_login', outcome: 'success' });
-        return res.json({ user: publicUser(user), csrfToken: getOrCreateToken(req) });
     });
 
     // ---- two-step sign-in

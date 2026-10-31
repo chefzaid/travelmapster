@@ -218,7 +218,7 @@ Ideas that follow the product direction: a travel record people rely on for visa
 ### Accounts and trust
 
 - [x] Signed-in devices: the list of active sessions with their browser and last use, and signing out any of them. Done: 💻 Signed-in devices in Sign-in security; only the browser and system names are kept, and sessions are named by a hash.
-- [ ] Account deletion with a 30-day grace period during which signing in restores everything; deleted for good after it.
+- [x] Account deletion with a 30-day grace period during which signing in restores everything; deleted for good after it. Done: migration 027; hidden at once, restored by signing in, deleted for good by an hourly sweep after 30 days.
 - [x] Security activity: sign-ins, new passkeys and two-step changes listed in Sign-in security, so a traveler notices an intruder. Done: 🛡️ Recent activity in Sign-in security, with password changes too, kept 50 deep and in the account export.
 
 ### Accessibility

@@ -38,7 +38,15 @@ async function main() {
     const applied = await migrateWithRetry(pool, logger);
     logger.info({ applied }, 'Database migrations complete');
 
-    const metrics = createMetrics({ users: createUserRepository(pool), logger });
+    const users = createUserRepository(pool);
+    const metrics = createMetrics({ users, logger });
+    // Accounts past their 30-day deletion grace period are deleted for good, at start and then
+    // hourly; every replica may run it, as deleting twice deletes nothing more.
+    const purge = () => users.purgeDeleted()
+        .then(count => count && logger.info({ count }, 'Accounts deleted for good after their grace period'))
+        .catch(err => logger.error({ err }, 'Accounts past their grace period could not be deleted'));
+    purge();
+    setInterval(purge, 60 * 60_000).unref();
     const geocoder = createGeocoder(config.geocoder, fetch, createPgSlots(pool, config.geocoder.minIntervalMs));
     const state = { shuttingDown: false };
     // Load the town index in the background so the first search does not wait for it.

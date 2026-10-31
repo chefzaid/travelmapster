@@ -64,7 +64,7 @@ JSON under `/api`, described in full in [OpenAPI](api/openapi.json) and kept bac
 | POST | `/api/auth/register`, `/api/auth/login`, `/api/auth/logout` | Account and session; responses include a fresh CSRF token. Sign-ups have their own rate limit, and one with the honeypot field `website` filled in is refused |
 | GET | `/api/auth/me` | Current user, or 401 |
 | POST | `/api/auth/password` | Change password (`currentPassword`, `newPassword`); signs out other sessions |
-| DELETE | `/api/auth/account` | Delete the account and all its data (`password`); signs out everywhere |
+| DELETE | `/api/auth/account` | Delete the account and all its data after 30 days (`password`); signs out everywhere and hides it at once, answers `deleteAfter`; signing in before then restores it |
 | GET, POST | `/api/markers` | List saved places, each with its visits newest first, or create one (optionally with `visits`, `rating`, `tags`, `emoji`, `hideFromPublic`, `priority`, `bestMonths` and `stay`: `visit`, `lived` or `transit` for places been to, [ADR 0014](adr/0014-home-lived-and-transit.md)) |
 | POST | `/api/markers/import` | Import up to 1,000 places with their visits |
 | POST | `/api/markers/bulk` | Apply up to 300 changes all or nothing: places to `create`, status changes to `update` (`{ id, type }`, with an optional `stay`) and ids to `remove`; marking several countries at once and its undo are one call each. Returns `created`, `updated` and `removed`; any id not the caller's is a 404 and nothing is kept |

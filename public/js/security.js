@@ -98,7 +98,8 @@ function passkeyItem(ctx, passkey, step) {
 // What each kind of activity and sign-in method is called.
 const ACTIVITY = {
     sign_in: tk('Signed in'), password_changed: tk('Password changed'), passkey_added: tk('Passkey added'),
-    passkey_removed: tk('Passkey removed'), two_step_on: tk('Two-step sign-in turned on'), two_step_off: tk('Two-step sign-in turned off')
+    passkey_removed: tk('Passkey removed'), two_step_on: tk('Two-step sign-in turned on'), two_step_off: tk('Two-step sign-in turned off'),
+    deletion_requested: tk('Account deletion asked for'), account_restored: tk('Account restored by signing in')
 };
 const METHODS = { password: tk('with the password'), authenticator: tk('with an authenticator code'), recovery_code: tk('with a recovery code'), passkey: tk('with a passkey') };
 

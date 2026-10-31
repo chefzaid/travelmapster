@@ -29,16 +29,53 @@ const PROFILE_COLUMNS = [
     ['mapPalette', 'map_palette'], ['publicJourneys', 'public_journeys'], ['publicIndexing', 'public_indexing'],
     ['goals', 'goals', 'jsonb'], ['packingTemplates', 'packing_templates', 'jsonb']
 ];
-const USER_COLUMNS = 'id, username, profile_visibility, home_country, country_list, map_palette, public_journeys, public_indexing, goals, packing_templates';
+const USER_COLUMNS = 'id, username, profile_visibility, home_country, country_list, map_palette, public_journeys, public_indexing, goals, packing_templates, deletion_requested_at';
+// Accounts waiting out their deletion grace period are left out of every lookup but signing in.
+const ACTIVE = 'deletion_requested_at IS NULL';
+const GRACE_DAYS = 30;
 
 function createUserRepository(db) {
     return {
+        /** An account others can find (to follow, share with or see the map of), not one being deleted. */
         async findByUsername(username) {
+            const { rows } = await db.query(
+                `SELECT ${USER_COLUMNS}, password_hash FROM users WHERE lower(username) = lower($1) AND ${ACTIVE}`,
+                [username]
+            );
+            return rows[0] || null;
+        },
+
+        /** The account signing in, also during its deletion grace period, when signing in restores it. */
+        async findForSignIn(username) {
             const { rows } = await db.query(
                 `SELECT ${USER_COLUMNS}, password_hash FROM users WHERE lower(username) = lower($1)`,
                 [username]
             );
             return rows[0] || null;
+        },
+
+        /** Starts the grace period; returns when the account will be deleted for good. */
+        async requestDeletion(id) {
+            const { rows } = await db.query(
+                `UPDATE users SET deletion_requested_at = now() WHERE id = $1
+                 RETURNING deletion_requested_at + make_interval(days => $2) AS "deleteAfter"`,
+                [id, GRACE_DAYS]
+            );
+            return rows[0]?.deleteAfter ?? null;
+        },
+
+        /** Ends the grace period: the account stays. */
+        async restore(id) {
+            await db.query('UPDATE users SET deletion_requested_at = NULL WHERE id = $1', [id]);
+        },
+
+        /** Deletes for good the accounts whose grace period has passed; returns how many. */
+        async purgeDeleted(now = new Date()) {
+            const { rowCount } = await db.query(
+                'DELETE FROM users WHERE deletion_requested_at <= $1::timestamptz - make_interval(days => $2)',
+                [now.toISOString(), GRACE_DAYS]
+            );
+            return rowCount ?? 0;
         },
 
         /** The user, with `seen_today` telling whether their activity day is already recorded. */
@@ -58,7 +95,7 @@ function createUserRepository(db) {
         /** Names of the public maps whose owners let search engines list them, for the sitemap. */
         async listIndexed(limit = 10_000) {
             const { rows } = await db.query(
-                `SELECT username FROM users WHERE profile_visibility = 'public' AND public_indexing
+                `SELECT username FROM users WHERE profile_visibility = 'public' AND public_indexing AND ${ACTIVE}
                  ORDER BY lower(username) LIMIT $1`,
                 [limit]
             );

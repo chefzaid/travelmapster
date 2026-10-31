@@ -7,7 +7,7 @@ function createFollowRepository(db) {
         /** The maps followed, by name, with whether each is still public. */
         async list(userId) {
             const { rows } = await db.query(
-                `SELECT u.username, u.profile_visibility = 'public' AS public, f.created_at AS since
+                `SELECT u.username, (u.profile_visibility = 'public' AND u.deletion_requested_at IS NULL) AS public, f.created_at AS since
                  FROM follows f JOIN users u ON u.id = f.followee_id
                  WHERE f.follower_id = $1 ORDER BY lower(u.username)`,
                 [userId]

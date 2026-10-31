@@ -4,6 +4,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const request = require('supertest');
 const { createClient, createTestContext } = require('../helpers');
+const { createUserRepository } = require('../../src/repositories');
 
 let ctx;
 test.before(async () => { ctx = await createTestContext(); });
@@ -114,13 +115,15 @@ test('changing the password needs the current one and signs out other devices', 
     assert.equal((await fresh.post('/api/auth/login', { username: 'mover', password: 'brand new password' })).status, 200);
 });
 
-test('deleting the account removes all travel data and every session', async () => {
+test('deleting the account signs out everywhere and hides it; signing in within 30 days restores it, then it is gone for good', async () => {
     const client = createClient(ctx.server);
     const { body } = await client.register('leaver', 'leaving for good');
     const { body: place } = await client.post('/api/markers', {
         lat: 1, lng: 2, type: 'visited', name: 'Somewhere', category: 'City', visits: [{ startDate: '2024-01-01', notes: 'Private' }]
     });
     await client.post('/api/trips', { title: 'Last trip', destination: 'Somewhere', plan: [{ morning: 'Pack' }] });
+    await client.patch('/api/profile', { profileVisibility: 'public' });
+    const feed = new URL((await client.post('/api/calendar-feed')).body.url).pathname;
     const otherDevice = createClient(ctx.server);
     await otherDevice.post('/api/auth/login', { username: 'leaver', password: 'leaving for good' });
 
@@ -129,8 +132,32 @@ test('deleting the account removes all travel data and every session', async () 
 
     const deleted = await client.delete('/api/auth/account', { password: 'leaving for good' });
     assert.equal(deleted.status, 200);
+    const days = (Date.parse(deleted.body.deleteAfter) - Date.now()) / 86_400_000;
+    assert.ok(days > 29.9 && days <= 30, 'deleted for good in 30 days');
     assert.equal((await client.get('/api/auth/me')).status, 401);
     assert.equal((await otherDevice.get('/api/auth/me')).status, 401);
+    // Meanwhile nobody finds it: no public map, no feed, no sharing, and the name stays taken.
+    const visitor = createClient(ctx.server);
+    assert.equal((await visitor.get('/api/public/leaver')).status, 404);
+    assert.equal((await request(ctx.app).get(feed)).status, 404);
+    assert.equal((await visitor.register('LEAVER', 'someone else entirely')).status, 409);
+
+    // Signing in again keeps the account, with everything in it.
+    const back = await client.post('/api/auth/login', { username: 'leaver', password: 'leaving for good' });
+    assert.equal(back.status, 200);
+    assert.equal(back.body.user.restored, true);
+    assert.equal((await client.get('/api/markers')).body[0].visits[0].notes, 'Private');
+    assert.equal((await visitor.get('/api/public/leaver')).status, 200);
+    assert.equal((await request(ctx.app).get(feed)).status, 200);
+    const activity = (await client.get('/api/security')).body.activity.map(event => event.kind);
+    assert.deepEqual(activity.slice(0, 3), ['account_restored', 'sign_in', 'deletion_requested']);
+    assert.equal((await client.post('/api/auth/login', { username: 'leaver', password: 'leaving for good' })).body.user.restored, false);
+
+    // Asked again and left for 30 days: the account and all it holds are deleted for good.
+    await client.delete('/api/auth/account', { password: 'leaving for good' });
+    const users = createUserRepository(ctx.pool);
+    assert.equal(await users.purgeDeleted(new Date(Date.now() + 29 * 86_400_000)), 0, 'not before the 30 days');
+    assert.equal(await users.purgeDeleted(new Date(Date.now() + 31 * 86_400_000)), 1);
     for (const table of ['users', 'markers', 'trips']) {
         const column = table === 'users' ? 'id' : 'user_id';
         const { rows } = await ctx.pool.query(`SELECT count(*)::int AS n FROM ${table} WHERE ${column} = $1`, [body.user.id]);
@@ -138,6 +165,7 @@ test('deleting the account removes all travel data and every session', async () 
     }
     const { rows: visits } = await ctx.pool.query('SELECT count(*)::int AS n FROM visits WHERE marker_id = $1', [place.id]);
     assert.equal(visits[0].n, 0, 'visits are gone');
+    assert.equal((await client.post('/api/auth/login', { username: 'leaver', password: 'leaving for good' })).status, 401);
     assert.equal((await createClient(ctx.server).register('leaver', 'a new beginning')).status, 201, 'the username is free again');
 });
 

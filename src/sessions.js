@@ -26,13 +26,18 @@ const sessionKey = sid => crypto.createHash('sha256').update(String(sid)).digest
  * Signs in, with a new session (passport 0.7 regenerates it, preventing fixation) that records
  * the device; with `security` and a `method`, the sign-in joins the security activity.
  */
-async function login(req, user, { security = null, method = null } = {}) {
+async function login(req, user, { security = null, method = null, users = null } = {}) {
+    // Signing in during the deletion grace period keeps the account.
+    const restored = Boolean(users && user.deletion_requested_at);
+    if (restored) await users.restore(user.id);
     await new Promise(/** @param {(value?: void) => void} resolve */ (resolve, reject) => {
         req.login(user, err => (err ? reject(err) : resolve()));
     });
     const device = describeDevice(req.get('user-agent'));
     req.session.device = { ...device, signedInAt: new Date().toISOString() };
     if (security && method) await security.recordEvent(user.id, 'sign_in', { method, ...device });
+    if (restored) await security?.recordEvent(user.id, 'account_restored', device);
+    return { restored };
 }
 
 /** Records a change to how the account signs in, from the device making it. */

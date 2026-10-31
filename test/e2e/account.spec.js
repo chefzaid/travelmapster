@@ -8,7 +8,7 @@ const { markCity, signUp, stubThirdParties, trackErrors } = require('./helpers')
 
 test.beforeEach(({ page }) => stubThirdParties(page));
 
-test('a traveler changes their password, downloads all their data, then deletes their account', async ({ page }) => {
+test('a traveler changes their password, downloads all their data, deletes their account and keeps it by signing in again', async ({ page }) => {
     const errors = trackErrors(page);
     const username = `e2e_account_${Date.now()}`;
     await signUp(page, username);
@@ -81,13 +81,17 @@ test('a traveler changes their password, downloads all their data, then deletes 
     await page.click('#account-btn');
     await page.click('#delete-account-btn');
     await page.fill('#dialog-password', 'a brand new password');
+    await expect(page.locator('dialog.dialog')).toContainText('deleted for good after 30 days');
     await page.getByRole('button', { name: 'Delete account' }).click();
     await expect(page.locator('#app[data-map="ready"] #welcome-view')).toBeVisible();
+    await expect(page.locator('.toast', { hasText: 'Your account will be deleted for good on' })).toBeVisible();
 
+    // Within the 30 days, signing in again keeps the account and everything in it.
     await page.click('#tab-login');
     await page.fill('#auth-username', username);
     await page.fill('#auth-password', 'a brand new password');
     await page.click('#auth-submit');
-    await expect(page.locator('#auth-error')).toHaveText('Invalid username or password.');
+    await expect(page.locator('.toast', { hasText: `Welcome back, ${username}! Your account is restored and will not be deleted.` })).toBeVisible();
+    await expect(page.locator('#legend-visited')).toHaveText('1');
     expect(errors).toEqual([]);
 });
