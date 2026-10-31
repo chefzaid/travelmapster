@@ -375,7 +375,10 @@ menu.
   business trips for that organization, with its status.
 - **The report**: managers and admins see, for a period (this year by default), each member's
   business days per country and how they stand against the rules, and download it as CSV for an
-  adviser. No place, city, date or note is in it.
+  adviser. No place, city, date or note is in it. With business trips planned ahead for the
+  organization, each rule also shows its forecast: whether a stay rule still fits (or the first
+  day it would not) and a threshold's days with the planned ones, so a rule shows before anyone
+  travels; trips to no known place are counted apart.
 - **Audit log**: every look at the report is recorded for each member shown; members read who
   looked and when under **Who looked at your days**, and in their data download.
 - **Before a trip** ([ADR 0030](adr/0030-pre-trip-checklists.md)): admins list tasks for

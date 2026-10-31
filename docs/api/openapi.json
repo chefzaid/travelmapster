@@ -5635,7 +5635,7 @@
           "rules",
           "members"
         ],
-        "description": "Business days only; no place names, cities, dates or notes.",
+        "description": "Business days only; no place names, cities, dates or notes. A rule's forecast counts the member's business trips planned ahead as planned days, without their destinations or dates.",
         "properties": {
           "from": {
             "type": "string",
@@ -5729,9 +5729,42 @@
                         ],
                         "format": "date",
                         "description": "Thresholds: the day it is or would be reached."
+                      },
+                      "forecast": {
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "description": "With the business trips planned ahead: whether a stay rule still fits and its first day over, or a threshold's days and whether they reach it. Null without planned trips.",
+                        "properties": {
+                          "fits": {
+                            "type": "boolean"
+                          },
+                          "firstBreach": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "format": "date"
+                          },
+                          "count": {
+                            "type": "integer"
+                          },
+                          "reached": {
+                            "type": "boolean"
+                          }
+                        }
                       }
                     }
                   }
+                },
+                "plannedTrips": {
+                  "type": "integer",
+                  "description": "Business trips planned ahead counted in the forecast."
+                },
+                "unknownTrips": {
+                  "type": "integer",
+                  "description": "Business trips planned ahead to no known place, left out of the forecast."
                 }
               }
             }

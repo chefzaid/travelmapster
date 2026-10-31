@@ -39,6 +39,9 @@ days with the same rules as the browser.
   `public/js/geo.js` over the bundled borders, loaded as ES modules, so the report and the
   traveler's Ledger tab agree. Only business visits for that organization are read; place
   names, notes, cities and dates never leave the server.
+  Later, a forecast per rule: members' dated business trips for the organization that are not
+  over yet become planned stays (`public/js/itinerary.js`, destinations found over the bundled
+  towns), as the Ledger tab's plans do; their destinations, titles and dates stay on the server.
 - **Audit log.** Each report writes one entry per member it shows (who looked, when); members
   read the entries about themselves from the Organizations dialog and in their data download.
   The report is loaded only when asked for, not each time the dialog opens.

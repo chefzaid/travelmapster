@@ -49,6 +49,11 @@
     "many": "{count} ya estaban marcados o visitados",
     "other": "{count} ya estaban marcados o visitados"
   },
+  "{count} business trips planned": {
+    "one": "{count} viaje de negocios previsto",
+    "many": "{count} de viajes de negocios previstos",
+    "other": "{count} viajes de negocios previstos"
+  },
   "{count} cities": {
     "one": "{count} ciudad",
     "many": "{count} ciudades",
@@ -179,6 +184,11 @@
     "one": "{count} lugar sin fechas no se muestra.",
     "many": "{count} lugares sin fechas no se muestran.",
     "other": "{count} lugares sin fechas no se muestran."
+  },
+  "{count} planned trips to no known place, left out": {
+    "one": "{count} viaje previsto a un lugar desconocido, excluido",
+    "many": "{count} de viajes previstos a un lugar desconocido, excluidos",
+    "other": "{count} viajes previstos a un lugar desconocido, excluidos"
   },
   "{count} rules": {
     "one": "{count} regla",
@@ -1900,6 +1910,10 @@
   "with a passkey": "con una llave de acceso",
   "with a recovery code": "con un código de recuperación",
   "with an authenticator code": "con un código de autenticación",
+  "With planned trips: {count} of {maxDays} days": "Con los viajes previstos: {count} de {maxDays} días",
+  "With planned trips: {count} of {maxDays} days, reached": "Con los viajes previstos: {count} de {maxDays} días, alcanzado",
+  "With planned trips: fits": "Con los viajes previstos: se cumple",
+  "With planned trips: over from {date}": "Con los viajes previstos: superado desde el {date}",
   "with the password": "con la contraseña",
   "Works on any device and installs as an app that opens offline. Download all your data at any time, as JSON, CSV, GeoJSON or KML, and delete your account whenever you like.": "Funciona en cualquier dispositivo y se instala como una app que se abre sin conexión. Descarga todos tus datos cuando quieras, en JSON, CSV, GeoJSON o KML, y elimina tu cuenta cuando te apetezca.",
   "World citizen": "Ciudadano del mundo",

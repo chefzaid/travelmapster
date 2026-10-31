@@ -160,6 +160,18 @@ function createOrgRepository(db) {
             return rows;
         },
 
+        /** Members' dated business trips for the organization not over yet, for the report's forecast. */
+        async businessTrips(orgId, userIds, today) {
+            const { rows } = await db.query(
+                `SELECT user_id AS "userId", id, destination, start_date AS "startDate", plan, stops
+                 FROM trips
+                 WHERE organization_id = $1 AND user_id = ANY($2::bigint[]) AND start_date IS NOT NULL
+                    AND start_date + (jsonb_array_length(plan) - 1) >= $3::date`,
+                [orgId, userIds, today]
+            );
+            return rows;
+        },
+
         async audit(orgId, actorId, travelerIds, action) {
             if (!travelerIds.length) return;
             await db.query(

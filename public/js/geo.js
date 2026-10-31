@@ -240,6 +240,11 @@ export function splitPlaceQuery(query) {
     return [cityPart, countryPart];
 }
 
+/** The town a name such as "Lisbon" or "Lisbon, Portugal" names exactly, or undefined. */
+export function findTown(cities, name) {
+    return searchCities(cities, name, 1).find(city => normalizeName(city.name) === splitPlaceQuery(name)[0]);
+}
+
 export function searchCities(cities, query, limit = 8) {
     const [cityPart, countryPart] = splitPlaceQuery(query);
     if (!cityPart) return [];
