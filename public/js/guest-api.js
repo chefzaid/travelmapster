@@ -21,7 +21,7 @@ const TRIP_FIELDS = ['title', 'destination', 'startDate', 'plan', 'stops', 'pack
 
 const empty = () => ({
     version: VERSION, nextId: 1, profile: {}, markers: [], trips: [],
-    ledger: { dayRule: 'presence', rules: [], planned: [] }
+    ledger: { dayRule: 'presence', rules: [], planned: [], exempt: [] }
 });
 
 /** Whether this browser holds a guest map. */
@@ -160,7 +160,7 @@ export function createGuestApi(storage, now = () => new Date().toISOString()) {
 
         getLedger: () => look(data => data.ledger),
         saveLedger: settings => change(data => {
-            data.ledger = { dayRule: settings.dayRule, rules: settings.rules, planned: settings.planned };
+            data.ledger = { dayRule: settings.dayRule, rules: settings.rules, planned: settings.planned, exempt: settings.exempt || [] };
             return data.ledger;
         }),
         // The history of visit dates is kept by the server; a guest map has none.

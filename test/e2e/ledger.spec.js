@@ -42,6 +42,18 @@ test('a traveler counts Schengen days, tries a plan, gets an alert and prints ev
     // Still there and nothing since: the record is sound.
     await expect(ledger.locator('#health-title').locator('..')).toContainText('All good');
 
+    // A Portuguese residence permit: days in Portugal leave the Schengen count while it lasts.
+    await ledger.getByRole('button', { name: '＋ Add a period' }).click();
+    await page.fill('#dialog-label', 'Portuguese residence permit');
+    await page.fill('#dialog-countries', 'Portugal');
+    await page.fill('#dialog-startDate', await browserDay(page, -30));
+    await page.fill('#dialog-endDate', await browserDay(page, 30));
+    await page.getByRole('button', { name: 'Add period' }).click();
+    await expect(ledger.locator('#exempt-list')).toContainText('Portuguese residence permit');
+    await expect(ledger.locator('.days-left strong')).toHaveText('90');
+    await ledger.getByRole('button', { name: 'Remove Portuguese residence permit' }).click();
+    await expect(ledger.locator('.days-left strong')).toHaveText('80');
+
     // Where was I? The last 30 days at first: twenty with no visit, then ten in Lisbon.
     const where = ledger.locator('.whereabouts');
     await expect(where.locator('li')).toHaveCount(2);

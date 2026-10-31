@@ -87,6 +87,9 @@ Migration 005 is additive, so the previous release keeps working during a rollou
   validated by the API (`PUT /api/ledger`, at most 20 rules and 30 planned stays). The rules are
   small, always read and written together, and only ever read by their owner, so a document per
   traveler is simpler than tables per rule kind.
+  Later, `exempt` (migration 021, at most 20) holds periods under a residence permit or
+  long-stay visa: days spent in their countries during them leave the stay rules but not the
+  thresholds, since a permit changes where one may stay, not where one is present.
 - `visit_changes`, an append-only history of visit dates: who, which visit and place (with the
   place name at that time), `added`, `changed` or `removed`, old and new dates and flag, and when.
   Triggers on `visits` and `markers` write it, so every write is recorded, including those of

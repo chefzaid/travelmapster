@@ -4420,6 +4420,45 @@
           }
         }
       },
+      "LedgerExemption": {
+        "type": "object",
+        "description": "A period under a residence permit or long-stay visa: the days in its countries from its first to its last day do not count toward stay rules.",
+        "required": [
+          "id",
+          "label",
+          "countries",
+          "startDate",
+          "endDate"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{1,40}$"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "countries": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 80,
+            "items": {
+              "type": "string",
+              "pattern": "^[A-Z]{3}$"
+            }
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
       "LedgerSettings": {
         "type": "object",
         "required": [
@@ -4445,6 +4484,13 @@
             "maxItems": 30,
             "items": {
               "$ref": "#/components/schemas/PlannedStay"
+            }
+          },
+          "exempt": {
+            "type": "array",
+            "maxItems": 20,
+            "items": {
+              "$ref": "#/components/schemas/LedgerExemption"
             }
           },
           "updatedAt": {

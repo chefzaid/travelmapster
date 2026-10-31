@@ -126,8 +126,11 @@ test('parseLedgerSettings keeps only known rule fields and defaults missing list
     assert.deepEqual(settings, {
         dayRule: 'midnight',
         rules: [{ id: 'a', kind: 'threshold', name: 'Rolling', countries: ['ESP'], maxDays: 10, period: 'rolling', windowDays: 30, warnDays: 2 }],
-        planned: []
+        planned: [],
+        exempt: []
     });
+    assert.deepEqual(parseLedgerSettings({ dayRule: 'presence', exempt: [{ id: 'e', label: ' Permit ', countries: ['FRA', 'FRA'], startDate: '2026-01-01', endDate: '2026-01-01', note: 'dropped' }] }).settings.exempt,
+        [{ id: 'e', label: 'Permit', countries: ['FRA'], startDate: '2026-01-01', endDate: '2026-01-01' }], 'a one-day period is allowed');
     assert.ok(parseLedgerSettings(null).error);
     assert.ok(parseLedgerSettings({ dayRule: 'presence', planned: [{ id: 'p', countryId: 'FRA', startDate: '2026-01-01' }] }).error);
 });
