@@ -1,6 +1,6 @@
 'use strict';
 
-const { isValidTravelDate, normalizeText } = require('./validation-text');
+const { isValidTravelDate, normalizeText, parseCompanions } = require('./validation-text');
 const { COUNTRY_ID_PATTERN, parseLedgerSettings, plainObject, wholeNumber } = require('./ledger-validation');
 const { parsePackingTemplates, parseTripPayload } = require('./trip-validation');
 
@@ -140,7 +140,15 @@ function parseVisitPayload(body) {
         }
     }
 
-    return { visit: { startDate, endDate: endDate || null, ongoing, notes: notes || null, photoUrl: photoUrl || null, purpose, organizationId } };
+    // Names of who came along; left out, an update keeps the stored ones.
+    let companions;
+    if (body.companions !== undefined) {
+        const parsed = parseCompanions(body.companions);
+        if (parsed.error) return { error: parsed.error };
+        companions = parsed.companions;
+    }
+
+    return { visit: { startDate, endDate: endDate || null, ongoing, notes: notes || null, photoUrl: photoUrl || null, purpose, organizationId, companions } };
 }
 
 function parseVisitList(value) {

@@ -37,7 +37,7 @@ test('parseMarkerPayload reads visits only when asked to', () => {
     const body = { ...valid, visits: [{ startDate: '2024-01-01', endDate: '2024-01-02' }] };
     assert.equal(parseMarkerPayload(body).marker.visits, undefined);
     assert.deepEqual(parseMarkerPayload(body, { withVisits: true }).marker.visits, [
-        { startDate: '2024-01-01', endDate: '2024-01-02', ongoing: false, notes: null, photoUrl: null, purpose: 'personal', organizationId: null }
+        { startDate: '2024-01-01', endDate: '2024-01-02', ongoing: false, notes: null, photoUrl: null, purpose: 'personal', organizationId: null, companions: undefined }
     ]);
     assert.equal(parseMarkerPayload({ ...valid, visits: null }, { withVisits: true }).marker.visits, undefined);
     assert.match(parseMarkerPayload({ ...valid, visits: [{}] }, { withVisits: true }).error, /^Visit 1: /);
@@ -45,7 +45,7 @@ test('parseMarkerPayload reads visits only when asked to', () => {
 
 test('parseVisitPayload keeps plain calendar dates in order', () => {
     assert.deepEqual(parseVisitPayload({ startDate: ' 2024-02-29 ', notes: ' Leap day ', photoUrl: 'http://e.com/x.jpg' }).visit, {
-        startDate: '2024-02-29', endDate: null, ongoing: false, notes: 'Leap day', photoUrl: 'http://e.com/x.jpg', purpose: undefined, organizationId: null
+        startDate: '2024-02-29', endDate: null, ongoing: false, notes: 'Leap day', photoUrl: 'http://e.com/x.jpg', purpose: undefined, organizationId: null, companions: undefined
     });
     assert.equal(parseVisitPayload({ startDate: '2024-03-01', endDate: '2024-03-01' }).visit.endDate, '2024-03-01', 'a one-day visit');
     for (const bad of [null, [], { startDate: '2023-02-29' }, { startDate: '2024-03-02', endDate: '2024-03-01' }]) {

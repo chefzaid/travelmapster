@@ -4,7 +4,8 @@ import { h, toast, formDialog, formatDate } from './ui.js';
 import { checkVisit, formatVisitDates, sortVisits, lastVisitDate, visitCountLabel, visitDays } from './visits.js';
 import { statusOf } from './status.js';
 import { purposeValue, readPurpose } from './org-data.js';
-import { t, tn } from './i18n.js';
+import { readCompanions } from './companions.js';
+import { formatList, joinList, t, tn } from './i18n.js';
 
 function setVisits(ctx, marker, visits, reopenCard) {
     marker.visits = sortVisits(visits);
@@ -36,7 +37,8 @@ async function visitDialog(ctx, marker, visit) {
                 { name: 'startDate', label: t('First day'), type: 'date', value: draft?.startDate || '', required: true },
                 { name: 'endDate', label: t('Last day'), type: 'date', value: draft?.endDate || '', hint: t('Optional. Without it, the day ledger counts the first day only.') },
                 { name: 'ongoing', label: t('I\'m still there'), type: 'checkbox', value: draft?.ongoing, hint: t('Leave the last day empty: the day ledger counts every day up to today.') },
-                { name: 'notes', label: t('What happened'), type: 'textarea', value: draft?.notes || '', maxlength: 2000, placeholder: t('Favorite memory, who you went with…') },
+                { name: 'companions', label: t('Who came along'), value: joinList(readCompanions(draft?.companions)), placeholder: t('Sam, Alex'), autocomplete: 'off', hint: t('Names only, between commas. Filter the map by who you traveled with in Places.') },
+                { name: 'notes', label: t('What happened'), type: 'textarea', value: draft?.notes || '', maxlength: 2000, placeholder: t('Favorite memory, what you ate…') },
                 { name: 'photoUrl', label: t('Photo link'), type: 'url', value: draft?.photoUrl || '', placeholder: 'https://…', hint: t('Link to a photo or album hosted anywhere (HTTP or HTTPS).') },
                 ...purposeFields(ctx, draft)
             ]
@@ -104,6 +106,7 @@ function visitItem(ctx, marker, visit, reopenCard) {
             days ? h('small', { class: 'visit-days' }, tn(days, '{count} day', '{count} days')) : null,
             !visit.endDate && !visit.ongoing ? h('small', { class: 'visit-days' }, t('Last day not recorded')) : null,
             business ? h('small', { class: 'visit-days' }, business.name ? t('💼 Business: {name}', { name: business.name }) : t('💼 Business')) : null,
+            visit.companions?.length ? h('small', { class: 'visit-days visit-companions' }, t('👥 With {names}', { names: formatList(visit.companions) })) : null,
             visit.notes ? h('p', { class: 'visit-notes' }, visit.notes) : null,
             visit.photoUrl ? h('a', { href: visit.photoUrl, target: '_blank', rel: 'noopener noreferrer', class: 'visit-photo', 'aria-label': t('Photo of the visit of {dates} (opens in a new tab)', { dates }) }, t('📷 Photo')) : null
         ),

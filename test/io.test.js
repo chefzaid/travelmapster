@@ -20,7 +20,7 @@ test('import and export round-trip saved places', async () => {
     assert.equal(place.travelDate, '2024-01-02');
     assert.equal(placeKey(place), placeKey(markers[0]));
 
-    assert.deepEqual(place.visits, [{ startDate: '2024-01-02', endDate: '', notes: '', photoUrl: '', ongoing: false }],
+    assert.deepEqual(place.visits, [{ startDate: '2024-01-02', endDate: '', notes: '', photoUrl: '', ongoing: false, companions: [] }],
         'an export from before visits turns its travel date into a visit');
 
     assert.equal(validatePlace({ ...record, photoUrl: 'javascript:alert(1)' }), null);
@@ -39,14 +39,14 @@ test('import and export round-trip every visit in JSON and CSV', async () => {
             travelDate: '2023-04-01',
             visits: [
                 { id: 5, startDate: '2019-06-01', endDate: '2019-06-04', notes: 'First, "sunny"', photoUrl: 'https://example.com/1.jpg' },
-                { id: 9, startDate: '2023-04-01', endDate: '', notes: '', photoUrl: '', ongoing: true }
+                { id: 9, startDate: '2023-04-01', endDate: '', notes: '', photoUrl: '', ongoing: true, companions: [] }
             ]
         },
         { id: 2, lat: 35.68, lng: 139.69, type: 'wishlist', name: 'Japan', category: 'Country', photoUrl: '', notes: '', travelDate: '', visits: [] }
     ];
     const expected = [
-        { startDate: '2023-04-01', endDate: '', notes: '', photoUrl: '', ongoing: true },
-        { startDate: '2019-06-01', endDate: '2019-06-04', notes: 'First, "sunny"', photoUrl: 'https://example.com/1.jpg', ongoing: false }
+        { startDate: '2023-04-01', endDate: '', notes: '', photoUrl: '', ongoing: true, companions: [] },
+        { startDate: '2019-06-01', endDate: '2019-06-04', notes: 'First, "sunny"', photoUrl: 'https://example.com/1.jpg', ongoing: false, companions: [] }
     ];
 
     const fromJson = parseImportContent('places.json', buildJson(markers)).map(validatePlace);

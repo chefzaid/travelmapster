@@ -93,6 +93,10 @@ The reasoning and what each rule rules out are in [ADR 0017](adr/0017-product-pr
   first, and the Explore tab suggests the place in season soonest.
 - Tag and rating filters that narrow the places list and the map together; the legend shows
   the active filter and clears it in one tap.
+- **Travel companions**: a visit lists who came along (names only, between commas, never
+  accounts), shown on the place's card; the **Who with** filter in Places narrows the list and
+  the map to everywhere you have been with someone, with how many places you shared. Names
+  are kept in exports and imports, and never shown on a public map.
 - Undo after removing a place, which brings its visits back too.
 - Export places as GeoJSON or KML for other map apps, GIS tools and Google Earth.
 - **Import from other travel apps**, with a preview to untick what to leave out: a Polarsteps

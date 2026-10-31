@@ -126,7 +126,7 @@ test('visits sort newest first and describe how often you have been', async () =
     assert.equal(visits.formatVisitDates({ startDate: '2024-01-01', endDate: '2024-01-01' }, format), '<2024-01-01>');
 
     assert.deepEqual(visits.checkVisit({ startDate: ' 2024-01-01 ', endDate: '', notes: ' Hi ' }).visit,
-        { startDate: '2024-01-01', endDate: '', notes: 'Hi', photoUrl: '', ongoing: false });
+        { startDate: '2024-01-01', endDate: '', notes: 'Hi', photoUrl: '', ongoing: false, companions: [] });
     // Still there: a form checkbox or a CSV "yes", and never with a last day.
     assert.equal(visits.checkVisit({ startDate: '2024-01-01', ongoing: 'on' }).visit.ongoing, true);
     assert.equal(visits.checkVisit({ startDate: '2024-01-01', ongoing: true }).visit.ongoing, true);

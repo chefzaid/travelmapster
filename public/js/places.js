@@ -9,6 +9,7 @@ import { importButtons } from './import-apps.js';
 import { t, tn } from './i18n.js';
 import { openCountryList } from './country-list.js';
 import { duplicatesSection } from './place-duplicates.js';
+import { companionsOf } from './companions.js';
 
 const view = { query: '', type: 'all', category: 'all', lastVisit: 'all', sort: 'continent' };
 
@@ -241,15 +242,26 @@ function tagOptions(markers, chosen) {
 const ratingFilters = () => [['all', t('Any rating')], ['5', t('★★★★★ only')], ['4', t('★★★★ and up')], ['3', t('★★★ and up')],
     ['2', t('★★ and up')], ['1', t('Rated')], ['none', t('Not rated')]];
 
-// Tag and rating filters are shared with the map, so they live in the app state.
+// Everyone who came along, with how many places; a chosen name stays even once no visit has it.
+function companionOptions(people, chosen) {
+    const options = people.map(({ name, places }) => [name, tn(places, '{name} ({count} place)', '{name} ({count} places)', { name })]);
+    if (chosen !== 'all' && !people.some(({ name }) => name === chosen)) options.push([chosen, chosen]);
+    return [['all', t('Anyone')], ...options];
+}
+
+// Tag, rating and companion filters are shared with the map, so they live in the app state.
 function detailFilters(ctx) {
     const { filters } = ctx.state;
+    const people = companionsOf(ctx.state.markers);
     const select = (id, key, options) => h('select', { id, onchange: event => ctx.setDetailFilter({ [key]: event.target.value }) },
         options.map(([value, label]) => h('option', { value, selected: filters[key] === value }, label)));
     return h('div', { class: 'row sort-row' },
         h('label', { class: 'sort' }, t('Tag'), ' ', select('tag-filter', 'tag', tagOptions(ctx.state.markers, filters.tag))),
         h('label', { class: 'sort' }, t('Rating'), ' ', select('rating-filter', 'rating', ratingFilters())),
-        h('small', { class: 'muted filter-note' }, t('Tag and rating filters apply to the map too.'))
+        people.length || filters.companion !== 'all'
+            ? h('label', { class: 'sort' }, t('Who with'), ' ', select('companion-filter', 'companion', companionOptions(people, filters.companion)))
+            : null,
+        h('small', { class: 'muted filter-note' }, t('These filters apply to the map too.'))
     );
 }
 

@@ -90,7 +90,7 @@ a SHA-256 hash; each works once, for seven days, and is revoked by the admin or 
 
 ## Privacy
 
-- Notes and photo links, of places and of visits, and ratings, tags, emoji and wishlist plans
+- Notes and photo links, of places and of visits, the names of who came along on a visit, and ratings, tags, emoji and wishlist plans
   of places are never included in public maps; only visit dates are ([ADR 0012](adr/0012-place-details.md)).
   Places the traveler hid from the public map are left out by the query itself, with their
   visits; a replica of a release before that change would list them, so rollbacks below it

@@ -79,7 +79,8 @@ export function createGuestApi(storage, now = () => new Date().toISOString()) {
 
     // Stored as the UI works with them, as api.js hands them over.
     const visitFields = visit => toClientVisit({
-        startDate: visit.startDate, endDate: visit.endDate, ongoing: Boolean(visit.ongoing) && !visit.endDate, notes: visit.notes, photoUrl: visit.photoUrl
+        startDate: visit.startDate, endDate: visit.endDate, ongoing: Boolean(visit.ongoing) && !visit.endDate, notes: visit.notes, photoUrl: visit.photoUrl,
+        companions: visit.companions
     });
     const visitOf = (data, visit) => ({ id: data.nextId++, ...visitFields(visit) });
     const withDate = marker => Object.assign(marker, { visits: sortVisits(marker.visits) }, { travelDate: lastVisitDate({ ...marker, travelDate: '' }) });

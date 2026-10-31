@@ -14,12 +14,13 @@ const MARKER_COLUMNS = `m.id, m.lat, m.lng, m.type, m.name, m.category,
     (SELECT max(v.start_date) FROM visits v WHERE v.marker_id = m.id) AS "travelDate",
     COALESCE((SELECT json_agg(json_build_object(
         'id', v.id, 'startDate', v.start_date, 'endDate', v.end_date, 'ongoing', v.ongoing,
-        'notes', v.notes, 'photoUrl', v.photo_url, 'purpose', v.purpose, 'organizationId', v.organization_id)
+        'notes', v.notes, 'photoUrl', v.photo_url, 'purpose', v.purpose, 'organizationId', v.organization_id,
+        'companions', v.companions)
         ORDER BY v.start_date DESC, v.id DESC)
         FROM visits v WHERE v.marker_id = m.id), '[]'::json) AS visits`;
 
 const VISIT_COLUMNS = `v.id, v.start_date AS "startDate", v.end_date AS "endDate", v.ongoing,
-    v.notes, v.photo_url AS "photoUrl", v.purpose, v.organization_id AS "organizationId"`;
+    v.notes, v.photo_url AS "photoUrl", v.purpose, v.organization_id AS "organizationId", v.companions`;
 
 // Account settings by API field and column.
 // Goals and packing templates are JSON, so they are written as text and cast.
@@ -197,9 +198,9 @@ function createMarkerRepository(db) {
             const legacyVisit = marker.travelDate ? [{ startDate: marker.travelDate, endDate: null, notes: null, photoUrl: null, ongoing: false }] : [];
             for (const visit of marker.visits || legacyVisit) {
                 await client.query(
-                    `INSERT INTO visits (marker_id, start_date, end_date, notes, photo_url, ongoing)
-                     VALUES ($1, $2, $3, $4, $5, $6)`,
-                    [rows[0].id, ...visitValues(visit)]
+                    `INSERT INTO visits (marker_id, start_date, end_date, notes, photo_url, ongoing, companions)
+                     VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7::text[], '{}'))`,
+                    [rows[0].id, ...visitValues(visit), visit.companions ?? null]
                 );
             }
             return find(userId, rows[0].id, client);
@@ -323,25 +324,27 @@ function createVisitRepository(db) {
 
         async create(userId, markerId, visit) {
             const { rows } = await db.query(
-                `INSERT INTO visits AS v (marker_id, start_date, end_date, notes, photo_url, ongoing, purpose, organization_id)
-                 SELECT m.id, $3, $4, $5, $6, $7, COALESCE($8, 'personal'), $9 FROM markers m WHERE m.id = $1 AND m.user_id = $2
+                `INSERT INTO visits AS v (marker_id, start_date, end_date, notes, photo_url, ongoing, purpose, organization_id, companions)
+                 SELECT m.id, $3, $4, $5, $6, $7, COALESCE($8, 'personal'), $9, COALESCE($10::text[], '{}')
+                 FROM markers m WHERE m.id = $1 AND m.user_id = $2
                  RETURNING ${VISIT_COLUMNS}`,
-                [markerId, userId, ...visitValues(visit), visit.purpose ?? null, visit.organizationId ?? null]
+                [markerId, userId, ...visitValues(visit), visit.purpose ?? null, visit.organizationId ?? null, visit.companions ?? null]
             );
             return rows[0] || null;
         },
 
-        // A purpose left out keeps the stored one and its organization (ADR 0029).
+        // A purpose left out keeps the stored one and its organization (ADR 0029); companions too.
         async update(userId, visitId, visit) {
             const { rows } = await db.query(
                 `UPDATE visits v SET start_date = $3, end_date = $4, notes = $5, photo_url = $6, ongoing = $7,
                     purpose = COALESCE($8, v.purpose),
                     organization_id = CASE WHEN $8::text IS NULL THEN v.organization_id ELSE $9::bigint END,
+                    companions = COALESCE($10::text[], v.companions),
                     updated_at = now()
                  FROM markers m
                  WHERE v.id = $1 AND m.id = v.marker_id AND m.user_id = $2
                  RETURNING ${VISIT_COLUMNS}`,
-                [visitId, userId, ...visitValues(visit), visit.purpose ?? null, visit.organizationId ?? null]
+                [visitId, userId, ...visitValues(visit), visit.purpose ?? null, visit.organizationId ?? null, visit.companions ?? null]
             );
             return rows[0] || null;
         },

@@ -4248,6 +4248,16 @@
               "null"
             ],
             "description": "For a business visit: one of the caller's organizations."
+          },
+          "companions": {
+            "type": "array",
+            "maxItems": 10,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 40
+            },
+            "description": "Names of who came along, each once regardless of case; never on the public map. Left out of an update, the stored ones stay."
           }
         }
       },
