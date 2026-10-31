@@ -351,6 +351,7 @@
     "many": "{count} سنة مع دولة جديدة ({from}–{to})",
     "other": "{count} سنة مع دولة جديدة ({from}–{to})"
   },
+  "{country} ({places})": "{country} ({places})",
   "{country}: {count} of {maxDays} days in {year}": "{country}: {count} من {maxDays} يوم في {year}",
   "{country}: {maxDays} days": "{country}: {maxDays} يوم",
   "{currency} for 1 {code}": "{currency} مقابل 1 {code}",
@@ -1201,6 +1202,7 @@
   "Last day missing": "اليوم الأخير مفقود",
   "last day not recorded": "اليوم الأخير غير مسجّل",
   "Last day not recorded": "اليوم الأخير غير مسجّل",
+  "Last there in {year}": "آخر زيارة في {year}",
   "last used {date}": "آخر استخدام {date}",
   "Last visit": "آخر زيارة",
   "Later": "لاحقًا",
@@ -1244,6 +1246,7 @@
   "Log in or sign up to join the organization that invited you.": "سجّل الدخول أو أنشئ حسابًا للانضمام إلى المؤسسة التي دعتك.",
   "Log in to color this in on your map.": "سجّل الدخول لتلوين هذا على خريطتك.",
   "Log in with your fingerprint, face or screen lock instead of your password. Passkeys cannot be phished.": "سجّل الدخول ببصمتك أو وجهك أو قفل الشاشة بدلًا من كلمة المرور. لا يمكن سرقة مفاتيح المرور بالتصيّد الاحتيالي.",
+  "Long time no see": "طال الغياب",
   "Longest trip: {route}, {startDate} – {endDate}.": "أطول رحلة: {route}، {startDate} – {endDate}.",
   "Longest trip: {trip}": "أطول رحلة: {trip}",
   "Longitude must be a number between -180 and 180.": "يجب أن يكون خط الطول رقمًا بين -180 و180.",

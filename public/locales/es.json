@@ -234,6 +234,7 @@
     "many": "{count} de años con un país nuevo ({from}–{to})",
     "other": "{count} años con un país nuevo ({from}–{to})"
   },
+  "{country} ({places})": "{country} ({places})",
   "{country}: {count} of {maxDays} days in {year}": "{country}: {count} de {maxDays} días en {year}",
   "{country}: {maxDays} days": "{country}: {maxDays} días",
   "{currency} for 1 {code}": "{currency} por 1 {code}",
@@ -1018,6 +1019,7 @@
   "Last day missing": "Falta el último día",
   "last day not recorded": "último día no registrado",
   "Last day not recorded": "Último día no registrado",
+  "Last there in {year}": "Última visita en {year}",
   "last used {date}": "usada por última vez el {date}",
   "Last visit": "Última visita",
   "Later": "Después",
@@ -1058,6 +1060,7 @@
   "Log in or sign up to join the organization that invited you.": "Inicia sesión o regístrate para unirte a la organización que te invitó.",
   "Log in to color this in on your map.": "Inicia sesión para colorear esto en tu mapa.",
   "Log in with your fingerprint, face or screen lock instead of your password. Passkeys cannot be phished.": "Inicia sesión con tu huella, tu cara o el bloqueo de pantalla en lugar de tu contraseña. Las llaves de acceso no se pueden robar con phishing.",
+  "Long time no see": "Cuánto tiempo",
   "Longest trip: {route}, {startDate} – {endDate}.": "Viaje más largo: {route}, {startDate} – {endDate}.",
   "Longest trip: {trip}": "Viaje más largo: {trip}",
   "Longitude must be a number between -180 and 180.": "La longitud debe ser un número entre -180 y 180.",

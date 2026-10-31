@@ -1,5 +1,5 @@
-// "On this day": visits that began on today's calendar day in an earlier year, shown on the
-// Explore tab. Pure, unit tested in Node.
+// "On this day": visits that began on today's calendar day in an earlier year, and "long time no
+// see": countries last visited years ago, shown on the Explore tab. Pure, unit tested in Node.
 import { statusOf } from './status.js';
 import { tn } from './i18n.js';
 
@@ -33,4 +33,33 @@ export function memoryLabel({ marker, yearsAgo }) {
     return statusOf(marker) === 'lived'
         ? tn(yearsAgo, 'A year ago today, you moved to {place}', '{count} years ago today, you moved to {place}', { place })
         : tn(yearsAgo, 'A year ago today, you arrived in {place}', '{count} years ago today, you arrived in {place}', { place });
+}
+
+// Countries not seen for this many years come back as "long time no see".
+export const LONG_AGO_YEARS = 5;
+
+/**
+ * Countries been to (visits and stays lived in, not layovers) whose last visit ended at least
+ * `years` years before today, the longest ago first, with the towns visited there. The home
+ * country is left out, and a visit still going on or planned ahead keeps a country off the list.
+ */
+export function longTimeNoSee(markers, { today, countryOf, homeId = null, years = LONG_AGO_YEARS }) {
+    const cutoff = `${Number(today.slice(0, 4)) - years}${today.slice(4)}`;
+    const byCountry = new Map();
+    for (const marker of markers) {
+        if (!['visited', 'lived'].includes(statusOf(marker)) || !marker.visits?.length) continue;
+        const country = countryOf(marker);
+        if (!country || country.id === homeId) continue;
+        const entry = byCountry.get(country.id) || { country, last: '', places: new Set() };
+        byCountry.set(country.id, entry);
+        for (const visit of marker.visits) {
+            const last = visit.ongoing && !visit.endDate ? today : visit.endDate || visit.startDate;
+            if (last > entry.last) entry.last = last;
+        }
+        if (marker.category === 'City') entry.places.add(marker.name.split(',')[0]);
+    }
+    return [...byCountry.values()]
+        .filter(entry => entry.last <= cutoff)
+        .map(({ country, last, places }) => ({ country, last, places: [...places].sort() }))
+        .sort((a, b) => a.last.localeCompare(b.last) || a.country.name.localeCompare(b.country.name));
 }

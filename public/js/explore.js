@@ -1,5 +1,6 @@
-// Explore tab: the greeting, next dream, continents and recent places, and the travel ideas
-// from Wikivoyage, which also show beside the landing page and public maps.
+// Explore tab: the greeting, memories, countries not seen for years, next dream, continents and
+// recent places, and the travel ideas from Wikivoyage, which also show beside the landing page
+// and public maps.
 import { h, $, fill } from './ui.js';
 import { CONTINENTS, CONTINENT_EMOJI, regionName } from './geo.js';
 import { monthsLabel, nextInSeason, priorityLabel } from './details.js';
@@ -7,10 +8,10 @@ import { statusOf } from './status.js';
 import { shareLabel } from './lists.js';
 import { fetchIdeas } from './ideas.js';
 import { openNewTrip } from './trips.js';
-import { showMarker, statusChip } from './cards.js';
+import { showCountryCard, showMarker, statusChip } from './cards.js';
 import { localToday } from './days.js';
-import { memoryLabel, onThisDay } from './memories.js';
-import { t, tn, tParts } from './i18n.js';
+import { longTimeNoSee, memoryLabel, onThisDay } from './memories.js';
+import { formatList, t, tn, tParts } from './i18n.js';
 
 // ---------------------------------------------------------------- ideas
 
@@ -96,6 +97,24 @@ function memoriesSection(ctx) {
     );
 }
 
+// Countries not seen for years, each a button that shows the country: a gentle "go back".
+function longAgoSection(ctx) {
+    const { state } = ctx;
+    const list = longTimeNoSee(state.markers, {
+        today: localToday(), countryOf: marker => state.stats.markerCountry.get(marker.id), homeId: state.stats.homeId
+    });
+    if (!list.length) return null;
+    return h('section', { 'aria-labelledby': 'long-ago-title' },
+        h('h3', { class: 'section-title', id: 'long-ago-title' }, h('span', { 'aria-hidden': 'true' }, '👋 '), t('Long time no see')),
+        h('ul', { class: 'mini-list', id: 'long-ago' }, list.slice(0, 5).map(({ country, last, places }) => h('li', {},
+            h('button', { type: 'button', onclick: () => ctx.map.flyToCountry(country).then(() => showCountryCard(ctx, country)) },
+                h('span', { 'aria-hidden': 'true' }, country.flag),
+                h('span', {}, places.length ? t('{country} ({places})', { country: country.name, places: formatList(places) }) : country.name),
+                h('small', { class: 'muted' }, t('Last there in {year}', { year: last.slice(0, 4) }))
+            ))))
+    );
+}
+
 const CONTINENT_VIEWS = {
     Africa: [[2, 20], 3],
     Asia: [[34, 90], 2.5],
@@ -132,6 +151,7 @@ export function renderExplore(container, ctx) {
             )
         ) : null,
         memoriesSection(ctx),
+        longAgoSection(ctx),
         nextDream ? h('section', { class: 'dream-card' },
             h('p', { class: 'eyebrow' }, t('Your next adventure?')),
             h('h3', {}, nextDream.emoji ? `${nextDream.emoji} ` : '', nextDream.name),
