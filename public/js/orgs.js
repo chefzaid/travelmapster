@@ -3,10 +3,11 @@
 // counts. Managers and admins run theirs in org-manage.js.
 import { h, toast, formDialog, formatDate, steppedDialog, STAY_CLOSED } from './ui.js';
 import { invitationToken } from './org-data.js';
+import { INVITATION_KEY } from './home.js';
 import { manageOrg, orgError, roleLabel } from './org-manage.js';
 import { t, tn } from './i18n.js';
 
-const PENDING_KEY = 'travelmapster.join';
+const PENDING_KEY = INVITATION_KEY;
 
 /**
  * Keeps the token of an opened invitation link (`/#join=<token>`) for after signing in, and

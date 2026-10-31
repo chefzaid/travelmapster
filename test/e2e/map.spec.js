@@ -133,6 +133,7 @@ test('a traveler replays their map year by year with journey lines, picks map co
     await visitor.reload();
     // Listed in search engines at the owner's choice.
     await expect(visitor.locator('link[rel="canonical"]')).toHaveAttribute('href', new RegExp(`/\\?u=${username}$`));
+    await expect(visitor.locator('#app[data-map="ready"] #public-view')).toBeVisible();
     await visitor.click('#timeline-btn');
     await expect(visitor.locator('#time-journeys')).toBeVisible();
     await expect(visitor.locator('html')).not.toHaveAttribute('data-palette', /./);

@@ -2,14 +2,13 @@
 // account menu, settings, password change, account deletion and sharing.
 import { h, $, $all, fill, toast, formDialog, downloadFile, copyText } from './ui.js';
 import { passkeysSupported, usePasskey } from './webauthn.js';
-import { openSecurity } from './security.js';
 import { openOrgs } from './orgs.js';
-import { accountArchive } from './archive.js';
 import { SCHENGEN_RULE } from './days.js';
 import { COUNTRY_LISTS, countedCountries } from './lists.js';
 import { PALETTES, paletteId } from './palettes.js';
 import { LOCALES, locale, rememberLocale, t, tParts, tn } from './i18n.js';
 import { showPanel } from './panel.js';
+import { AUTH_HASHES } from './home.js';
 
 // ---------------------------------------------------------------- landing
 
@@ -27,7 +26,6 @@ export function renderDemoLedger(ctx) {
 
 // "Sign up" and "Log in" on the landing page, and links from other pages to /#sign-up or
 // /#log-in, open the account form in that mode.
-export const AUTH_HASHES = { '#sign-up': 'register', '#log-in': 'login' };
 
 export function openAuth(mode) {
     showPanel();
@@ -253,11 +251,14 @@ async function changePassword(ctx) {
     }
 }
 
+// Sign-in security loads when first opened, so the first page stays light.
+const openSecurity = ctx => import('./security.js').then(module => module.openSecurity(ctx));
+
 // Everything in the account as one ZIP archive (ADR 0017: a record you can keep).
 async function downloadArchive(ctx) {
     const closeToast = toast(t('Packing your data…'), { duration: 15000 });
     try {
-        const data = await ctx.api.exportAccount();
+        const [data, { accountArchive }] = await Promise.all([ctx.api.exportAccount(), import('./archive.js')]);
         const date = data.exportedAt.slice(0, 10);
         downloadFile(`travelmapster-${data.profile.username}-${date}.zip`, accountArchive(data), 'application/zip');
         closeToast();

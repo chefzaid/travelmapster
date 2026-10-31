@@ -24,12 +24,12 @@ import { countryMarker, showCityCard, showCountryCard, showMarker, showSavedCity
 import { editPlace } from './place-form.js';
 import { setupSearch } from './search.js';
 import { showIdeas } from './explore.js';
-import { AUTH_HASHES, closeAccountMenu, openAuth, renderDemoLedger, setupAccountMenu, setupAuth } from './account.js';
-import { hideHome, offerHome, rememberSignedIn, setupHome, wasSignedIn } from './home.js';
+import { closeAccountMenu, openAuth, renderDemoLedger, setupAccountMenu, setupAuth } from './account.js';
+import { AUTH_HASHES, hideHome, offerHome, rememberSignedIn, setupHome, wasSignedIn } from './home.js';
 import { followButton } from './friends.js';
 import { explainInvitation, joinPendingInvitation, setupInvitations, takeInvitation } from './orgs.js';
 import { enterGuestMode, guestActive, labelGuestButtons, leaveGuestMode, moveGuestMap, setupGuest, showGuestControls } from './guest.js';
-import { loadLocale, preferredLocale, translateDom, t, setupLanguagePickers } from './i18n.js';
+import { t } from './i18n.js';
 
 const state = {
     user: null,
@@ -402,11 +402,9 @@ async function createMap() {
     });
 }
 
+// start.js has already set the interface's language (the map data names countries in it, ADR
+// 0031) and shown the presentation to a visitor.
 async function init() {
-    // The interface's language first: the map data names countries in it (ADR 0031).
-    await loadLocale(preferredLocale()).catch(() => {});
-    translateDom();
-    setupLanguagePickers();
     // Start with this browser's palette; a signed-in traveler's own choice follows.
     applyPalette(context, storedPalette());
     setupOffline();

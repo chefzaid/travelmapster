@@ -89,6 +89,9 @@ Invalid integers stop startup with a clear error. Production values come from
   including one-word labels handed to a function. Lists of names go through `formatList()`
   ("Lisbon and Porto") or `joinList()` (the language's own comma, for plain enumerations and
   field values), never `join(', ')`: Arabic writes `،`.
+- **First page weight**: every module imported statically from `app.js` loads on the landing
+  page. Import a feature that only runs after a click with `import()` where it is used (see
+  `openSecurity` in `account.js`), and keep `start.js` to what the presentation needs.
 - **Third-party calls** need a CSP change in `src/app.js` and a [security](security.md) review.
 
 ## App Icons

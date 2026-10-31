@@ -1,7 +1,6 @@
 import { h, fill, toast, downloadFile, formatDate } from './ui.js';
 import { CONTINENTS, CONTINENT_EMOJI, regionName } from './geo.js';
 import { buildCsv, buildJson, parseImportContent, validatePlace, placeKey, mergePlaces } from './io.js';
-import { buildGeoJson, buildKml } from './archive.js';
 import { lastVisitDate, lastVisitYears, matchesLastVisit, visitCount } from './visits.js';
 import { groupByNextMonth, matchesDetails, monthsLabel, priorityLabel, ratingLabel, stars, usedTags } from './details.js';
 import { STATUSES, statusLabel, statusOf } from './status.js';
@@ -156,12 +155,15 @@ async function importFile(file, ctx, status) {
     }
 }
 
+// The map formats are written by archive.js, loaded when first used.
+const fromArchive = name => async markers => (await import('./archive.js'))[name](markers);
+
 // Each export format: how to build the file, its media type and its name.
 const EXPORTS = {
     json: [buildJson, 'application/json', 'JSON'],
     csv: [buildCsv, 'text/csv', 'CSV'],
-    geojson: [buildGeoJson, 'application/geo+json', 'GeoJSON'],
-    kml: [buildKml, 'application/vnd.google-earth.kml+xml', 'KML']
+    geojson: [fromArchive('buildGeoJson'), 'application/geo+json', 'GeoJSON'],
+    kml: [fromArchive('buildKml'), 'application/vnd.google-earth.kml+xml', 'KML']
 };
 
 function dataSection(ctx) {
@@ -176,7 +178,7 @@ function dataSection(ctx) {
             if (file) importFile(file, ctx, status).finally(() => { event.target.value = ''; });
         }
     });
-    const exportAs = format => {
+    const exportAs = async format => {
         const { markers } = ctx.state;
         if (!markers.length) {
             status.textContent = t('No saved places to export yet.');
@@ -184,7 +186,7 @@ function dataSection(ctx) {
         }
         const date = new Date().toISOString().slice(0, 10);
         const [build, type, label] = EXPORTS[format];
-        downloadFile(`travelmapster-places-${date}.${format}`, build(markers), type);
+        downloadFile(`travelmapster-places-${date}.${format}`, await build(markers), type);
         status.textContent = tn(markers.length, 'Exported {count} place as {label}.', 'Exported {count} places as {label}.', { label });
     };
     return h('section', { class: 'data-section' },
