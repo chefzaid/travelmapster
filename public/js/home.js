@@ -6,6 +6,24 @@ import { $, $all } from './ui.js';
 
 const SIGNED_IN_KEY = 'travelmapster.signedIn';
 
+/** Sign-up and log-in links, which open the form at once, without the presentation. */
+export const AUTH_HASHES = { '#sign-up': 'register', '#log-in': 'login' };
+/** An invitation to an organization waiting for a sign-in (orgs.js). */
+export const INVITATION_KEY = 'travelmapster.join';
+
+/**
+ * Whether this visit starts with the presentation: not a public map, a sign-up or log-in link,
+ * or an invitation. Known before the rest of the app loads (start.js).
+ */
+export function presentsFirst() {
+    if (new URLSearchParams(location.search).has('u') || AUTH_HASHES[location.hash] || location.hash.startsWith('#join=')) return false;
+    try {
+        return !sessionStorage.getItem(INVITATION_KEY);
+    } catch {
+        return true;
+    }
+}
+
 /** Remembers in this browser whether a traveler is signed in. */
 export function rememberSignedIn(signedIn) {
     try {

@@ -5,16 +5,21 @@
 // location history never leave the browser: only towns and dates are sent.
 import { h, toast, formDialog, formatDate } from './ui.js';
 import { placeKey } from './io.js';
-import { countryListPlaces, polarstepsPlaces, polarstepsTripEntries } from './imports.js';
-import { placesFromSightings, timelineSightings } from './auto-import.js';
-import { photoMetadata } from './exif.js';
-import { createTownFinder } from './towns.js';
-import { readZipText, zipEntries } from './zip-read.js';
 import { joinList, t, tn } from './i18n.js';
+
+// The readers load when an import starts, so the first page stays light.
+const readers = {
+    imports: () => import('./imports.js'),
+    sightings: () => import('./auto-import.js'),
+    photos: () => import('./exif.js'),
+    towns: () => import('./towns.js'),
+    zip: () => import('./zip-read.js')
+};
 
 
 // The trips in the chosen files: a whole export as a ZIP, or trip.json files.
 async function polarstepsTrips(files) {
+    const [{ polarstepsTripEntries }, { readZipText, zipEntries }] = await Promise.all([readers.imports(), readers.zip()]);
     const trips = [];
     for (const file of files) {
         if (/\.zip$/i.test(file.name)) {
@@ -147,6 +152,7 @@ async function reviewVisits(ctx, found, status, note) {
 let townFinder = null;
 async function findTowns(ctx) {
     if (!townFinder) {
+        const { createTownFinder } = await readers.towns();
         const data = file => new URL(`../data/cities/${file}`, import.meta.url);
         const tiles = await fetch(data('index.json')).then(response => (response.ok ? response.json() : []));
         townFinder = createTownFinder({
@@ -166,6 +172,7 @@ async function findTowns(ctx) {
 }
 
 async function importPhotos(ctx, files, status) {
+    const [{ photoMetadata }, { placesFromSightings }] = await Promise.all([readers.photos(), readers.sightings()]);
     const sightings = [];
     let unplaced = 0;
     for (const [i, file] of files.entries()) {
@@ -185,6 +192,7 @@ async function importPhotos(ctx, files, status) {
 // Location history files: JSON files, or the .json entries of a Takeout ZIP. Raw location
 // records (Records.json) are too large and too fine to read here.
 async function historyFiles(files) {
+    const { readZipText, zipEntries } = await readers.zip();
     const texts = [];
     for (const file of files) {
         if (/\.zip$/i.test(file.name)) {
@@ -199,6 +207,7 @@ async function historyFiles(files) {
 async function importLocationHistory(ctx, files, status) {
     try {
         status.textContent = t('Reading your location history…');
+        const { placesFromSightings, timelineSightings } = await readers.sightings();
         const sightings = [];
         for (const text of await historyFiles(files)) {
             try {
@@ -219,6 +228,7 @@ async function importPolarsteps(ctx, files, status) {
     try {
         status.textContent = t('Reading your Polarsteps trips…');
         const trips = await polarstepsTrips(files);
+        const { polarstepsPlaces } = await readers.imports();
         await previewAndImport(ctx, mergeByName(trips.flatMap(polarstepsPlaces)), status, tn(trips.length, 'From {count} trip.', 'From {count} trips.'));
     } catch (error) {
         status.textContent = error instanceof SyntaxError ? t('That file is not a Polarsteps trip.') : error.message;
@@ -233,6 +243,7 @@ async function importCountryList(ctx, status) {
         fields: [{ name: 'list', label: t('Countries'), type: 'textarea', required: true, maxlength: 20_000, placeholder: t('France\nJapan\nPortugal') }]
     });
     if (!values) return;
+    const { countryListPlaces } = await readers.imports();
     const { places, unknown } = countryListPlaces(values.list, ctx.state.index);
     await previewAndImport(ctx, places, status, unknown.length ? t('Not recognized: {names}.', { names: `${joinList(unknown.slice(0, 10))}${unknown.length > 10 ? '…' : ''}` }) : '');
 }

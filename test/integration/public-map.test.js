@@ -45,7 +45,7 @@ test('a public map gets its own link preview, and private or missing maps get th
     assert.match(page.text, /<meta property="og:url" content="http:\/\/travel\.test\/\?u=previewer">/);
     assert.match(page.text, /<meta name="twitter:card" content="summary_large_image">/);
     assert.doesNotMatch(page.text, /rel="canonical"/);
-    assert.match(page.text, /\/a\/[0-9a-f]{12}\/js\/app\.js/, 'still the app, with its asset links');
+    assert.match(page.text, /\/a\/[0-9a-f]{12}\/js\/start\.js/, 'still the app, with its asset links');
 
     for (const name of ['nobody', 'bad name!', '']) {
         const res = await request(ctx.server).get(`/?u=${encodeURIComponent(name)}`);

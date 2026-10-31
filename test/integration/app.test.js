@@ -262,11 +262,11 @@ test('the page links this release\'s assets under a fingerprinted, long-cached p
     assert.equal(page.status, 200);
     assert.equal(page.headers['cache-control'], 'no-cache');
     assert.ok(!page.text.includes('__assets__'), 'every placeholder is rewritten');
-    const script = page.text.match(/src="(\/a\/[0-9a-f]{12}\/js\/app\.js)"/)?.[1];
-    assert.ok(script, 'the app script is fingerprinted');
+    const script = page.text.match(/src="(\/a\/[0-9a-f]{12}\/js\/start\.js)"/)?.[1];
+    assert.ok(script, 'the page\'s first script is fingerprinted');
 
     const asset = await request(ctx.server).get(script);
     assert.equal(asset.status, 200);
     assert.equal(asset.headers['cache-control'], 'public, max-age=31536000, immutable');
-    assert.equal((await request(ctx.server).get(script.replace('js/app.js', '../src/server.js'))).status, 404);
+    assert.equal((await request(ctx.server).get(script.replace('js/start.js', '../src/server.js'))).status, 404);
 });

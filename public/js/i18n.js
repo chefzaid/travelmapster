@@ -176,22 +176,31 @@ function sentenceKey(nodes) {
  * `data-i18n-parts`, whose inline elements move where the translation puts them.
  */
 export function translateDom(root = globalThis.document) {
+    // Text already in the right language is left alone: rewriting it would paint it again, and
+    // the landing page's largest text would count as painted only once the scripts have run.
     for (const element of /** @type {NodeListOf<HTMLElement>} */ (root.querySelectorAll('[data-i18n]'))) {
-        element.dataset.i18nText ??= element.textContent.trim().replace(/\s+/g, ' ');
-        element.textContent = t(element.dataset.i18nText);
+        const shown = element.textContent.trim().replace(/\s+/g, ' ');
+        element.dataset.i18nText ??= shown;
+        const text = t(element.dataset.i18nText);
+        if (text !== shown) element.textContent = text;
     }
     for (const element of /** @type {NodeListOf<HTMLElement>} */ (root.querySelectorAll('[data-i18n-attr]'))) {
         for (const name of element.dataset.i18nAttr.split(/\s+/).filter(Boolean)) {
             const key = `i18n${name.replace(/(^|-)(\w)/g, (match, dash, letter) => letter.toUpperCase())}`;
             element.dataset[key] ??= element.getAttribute(name) || '';
-            element.setAttribute(name, t(element.dataset[key]));
+            const text = t(element.dataset[key]);
+            if (element.getAttribute(name) !== text) element.setAttribute(name, text);
         }
     }
     for (const element of /** @type {NodeListOf<HTMLElement>} */ (root.querySelectorAll('[data-i18n-parts]'))) {
-        if (!sentenceParts.has(element)) sentenceParts.set(element, [...element.childNodes]);
+        const unchanged = !sentenceParts.has(element);
+        if (unchanged) sentenceParts.set(element, [...element.childNodes]);
         const nodes = sentenceParts.get(element);
+        const key = sentenceKey(nodes);
+        // Still the page's own sentence and no translation: nothing to move.
+        if (unchanged && t(key) === key) continue;
         const elements = nodes.filter(node => node.nodeType === 1);
-        const parts = tParts(sentenceKey(nodes), Object.fromEntries(elements.map((node, i) => [String(i + 1), node])));
+        const parts = tParts(key, Object.fromEntries(elements.map((node, i) => [String(i + 1), node])));
         element.replaceChildren(...parts.map(part => (typeof part === 'string' ? document.createTextNode(part) : part)));
     }
 }

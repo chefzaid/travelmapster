@@ -94,6 +94,7 @@ JSON under `/api`, described in full in [OpenAPI](api/openapi.json) and kept bac
 
 | Module | Responsibility |
 |---|---|
+| `public/js/start.js` | The page's first module: the interface's language and, for a visitor, the presentation, shown before the rest of the app loads; a press on its buttons meanwhile waits for the app. Features used only after a click (sign-in security, the importers' readers, the archive and map-format writers) load on first use |
 | `public/js/app.js` | App shell: state, map filters, the signed-in, signed-out (demo map) and public views, and the context every feature module receives. A signed-out visitor sees the landing panel while MapLibre (loaded on demand) and the map data arrive |
 | `public/js/tabs.js`, `place-store.js` | The panel's tabs, and saving places through the API or, for the demo map, in the page |
 | `public/js/home.js` | The presentation page shown to visitors before the app ([ADR 0011](adr/0011-public-pages.md)) |
