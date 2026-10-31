@@ -85,8 +85,14 @@ test('a traveler records several visits to the same city', async ({ page }) => {
 
     await addVisit(page, '2019-06-01', '2019-06-04');
     await expect(card.locator('.visits-title')).toHaveText('Visited once');
+    // Not seen for five years and more: Portugal comes back as "long time no see", until a
+    // more recent visit is recorded.
+    await page.click('#tab-explore');
+    await expect(page.locator('#long-ago li')).toContainText('Portugal (Lisbon)');
+    await expect(page.locator('#long-ago li')).toContainText('Last there in 2019');
     await addVisit(page, '2023-04-01');
     await expect(card.locator('.visits-title')).toHaveText('Visited 2 times');
+    await expect(page.locator('#long-ago')).toHaveCount(0);
     // Newest first.
     await expect(card.locator('.visit').first()).toContainText('2023');
 

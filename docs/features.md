@@ -115,6 +115,10 @@ The reasoning and what each rule rules out are in [ADR 0017](adr/0017-product-pr
   years ("2 years ago today, you arrived in Lisbon"), each showing its place on the map; a visit
   that began on 29 February comes back on 28 February in other years. Layovers and wishes are
   left out.
+- **Long time no see**: the Explore tab lists countries last visited five or more years ago, the
+  longest ago first, with the towns been to there and the year of the last visit, each showing
+  its country. The home country, layovers and wishes are left out, and a visit still going on
+  or planned ahead keeps a country off the list.
 
 ## Day Ledger
 
