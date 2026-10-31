@@ -298,6 +298,7 @@
   "{name}: transit only, not counted as a visit.": "{name}: solo tránsito, no cuenta como visita.",
   "{owner} can share it with you again.": "{owner} puede volver a compartirlo contigo.",
   "{packed} of {total} packed": "{packed} de {total} en la maleta",
+  "{place}: a visit from {from} to {to}": "{place}: una visita del {from} al {to}",
   "{places} with {visits}.": "{places} con {visits}.",
   "{range}: {count} countries": {
     "one": "{range}: {count} país",
@@ -336,6 +337,8 @@
   "{verb} {name} on the demo map.": "{verb} {name} (mapa de demostración).",
   "{verb} {name}!": "¡{verb} {name}!",
   "{visits} to {places}, by the nearest town.": "{visits} en {places}, según la población más cercana.",
+  "{visits}, and wishes move from your wishlist to the places you have been.": "{visits}, y los deseos pasan de tu lista de deseos a los lugares en los que has estado.",
+  "{visits}.": "{visits}.",
   "{year} in travel": "{year} de viajes",
   "＋ Add": "＋ Añadir",
   "＋ Add a day": "＋ Añadir un día",
@@ -1695,6 +1698,7 @@
   "Trip payload must be a JSON object.": "Los datos del viaje deben ser un objeto JSON.",
   "Trip saved.": "Viaje guardado.",
   "Trip title is required and must be 120 characters or fewer.": "El viaje necesita un título de 120 caracteres como máximo.",
+  "Trip: {title}": "Viaje: {title}",
   "Trips": "Viajes",
   "trips planned": {
     "one": "viaje planeado",
@@ -1831,6 +1835,7 @@
   "You are offline: this change was not saved. Try again once you are back online.": "No tienes conexión: este cambio no se guardó. Inténtalo de nuevo cuando vuelvas a estar en línea.",
   "You are offline: your map shows as last loaded, and changes will not save until you are back online.": "No tienes conexión: tu mapa se muestra tal como se cargó por última vez, y los cambios no se guardarán hasta que vuelvas a estar en línea.",
   "You become its admin: invite your team, set the rules that matter to you and see business days per country. Running one needs a passkey or two-step sign-in.": "Te conviertes en su administrador: invita a tu equipo, define las reglas que te importan y consulta los días de negocios por país. Para gestionar una necesitas una llave de acceso o el inicio de sesión en dos pasos.",
+  "You can edit visits on the place's card.": "Puedes editar las visitas en la ficha del lugar.",
   "You can view this trip but not change it.": "Puedes ver este viaje, pero no cambiarlo.",
   "You can't enter on {date}: the 180 days up to then already hold 90 days in the area.": "No puedes entrar el {date}: los 180 días hasta entonces ya suman 90 días en el espacio.",
   "You do not follow that map.": "No sigues ese mapa.",

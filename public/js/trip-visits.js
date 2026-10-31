@@ -6,7 +6,7 @@ import { sortVisits, lastVisitDate } from './visits.js';
 import { statusFields, statusOf } from './status.js';
 import { resolveDestination, tripEndDate, tripStops } from './itinerary.js';
 import { cityMarkerFor, countryMarker } from './cards.js';
-import { t, tn } from './i18n.js';
+import { formatList, t, tn } from './i18n.js';
 
 // Where a destination is: a country, or a town of the map data by its exact name.
 export function destinationPlace(ctx, destination) {
@@ -48,7 +48,7 @@ function tripVisits(ctx, trip) {
         const where = destinationPlace(ctx, stop.destination);
         if (!where) return { unknown: stop.destination };
         const endDate = stops[i + 1]?.startDate || tripEndDate(trip);
-        visits.push({ where, ...savedOrNew(ctx, where), visit: { startDate: stop.startDate, endDate, notes: `Trip: ${trip.title}`.slice(0, 2000), photoUrl: '', ongoing: false, ...business } });
+        visits.push({ where, ...savedOrNew(ctx, where), visit: { startDate: stop.startDate, endDate, notes: t('Trip: {title}', { title: trip.title }).slice(0, 2000), photoUrl: '', ongoing: false, ...business } });
     }
     return { visits };
 }
@@ -76,6 +76,14 @@ async function addTripVisit(ctx, { where, visit }) {
     existing.travelDate = lastVisitDate(existing);
 }
 
+// "Lisbon, Portugal: a visit from 1 May to 4 May, …", and what happens to wishes.
+function confirmation(visits, wishes) {
+    const list = formatList(visits.map(({ place, visit }) =>
+        t('{place}: a visit from {from} to {to}', { place: place.name, from: formatDate(visit.startDate), to: formatDate(visit.endDate) })));
+    const what = wishes ? t('{visits}, and wishes move from your wishlist to the places you have been.', { visits: list }) : t('{visits}.', { visits: list });
+    return `${what} ${t('You can edit visits on the place\'s card.')}`;
+}
+
 export async function completeTrip(ctx, trip) {
     const { visits, unknown } = tripVisits(ctx, trip);
     if (unknown !== undefined) {
@@ -85,8 +93,7 @@ export async function completeTrip(ctx, trip) {
     const wishes = visits.some(({ existing }) => existing && statusOf(existing) === 'wishlist');
     const confirmed = await ctx.confirmDialog({
         title: visits.length > 1 ? t('Record this trip as visits?') : t('Record this trip as a visit?'),
-        message: `${visits.map(({ place, visit }) => `${place.name}: a visit from ${formatDate(visit.startDate)} to ${formatDate(visit.endDate)}`).join('; ')}`
-            + `${wishes ? ', and wishes move from your wishlist to the places you have been' : ''}. You can edit visits on the place's card.`,
+        message: confirmation(visits, wishes),
         confirmLabel: visits.length > 1 ? t('Add the visits') : t('Add the visit')
     });
     if (!confirmed) return false;
