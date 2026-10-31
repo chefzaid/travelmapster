@@ -26,7 +26,9 @@ test('two-step sign-in asks for a code after the password, and recovery codes wo
     assert.ok(!stored.secret.includes(setup.body.secret), 'the secret is encrypted at rest');
 
     assert.equal((await client.post('/api/security/two-step/enable', { code: '000000' })).status, 400);
-    const enabled = await client.post('/api/security/two-step/enable', { code: codeFor(setup.body.secret) });
+    // Kept to replay later: a new code from the clock would be valid once the 30-second step turns.
+    const enablingCode = codeFor(setup.body.secret);
+    const enabled = await client.post('/api/security/two-step/enable', { code: enablingCode });
     assert.equal(enabled.status, 200);
     assert.equal(enabled.body.recoveryCodes.length, 10);
     assert.equal((await client.post('/api/security/two-step/setup')).status, 409);
@@ -40,7 +42,7 @@ test('two-step sign-in asks for a code after the password, and recovery codes wo
     assert.equal((await client.get('/api/auth/me')).status, 401);
     assert.equal((await client.post('/api/auth/login/second-step', { code: '000000' })).status, 400);
     // The code used to turn the step on cannot be used again; the next one can.
-    assert.equal((await client.post('/api/auth/login/second-step', { code: codeFor(setup.body.secret) })).status, 400);
+    assert.equal((await client.post('/api/auth/login/second-step', { code: enablingCode })).status, 400);
     const opened = await client.post('/api/auth/login/second-step', { code: codeFor(setup.body.secret, 1) });
     assert.equal(opened.status, 200);
     assert.equal(opened.body.user.username, 'stepper');
