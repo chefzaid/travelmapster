@@ -20,6 +20,7 @@ const {
 const { createAuthRouter, createPassport, publicUser, requireAuth } = require('./routes/auth');
 const { createSecurityRouter } = require('./routes/security');
 const { createSecurityRepository } = require('./security-repository');
+const { createSessionRepository } = require('./sessions');
 const { createMarkerRouter } = require('./routes/markers');
 const { createVisitRouter } = require('./routes/visits');
 const { createLedgerRouter } = require('./routes/ledger');
@@ -59,6 +60,7 @@ function createApp({ config, pool, logger, metrics, geocoder, places, state = { 
     const ledger = createLedgerRepository(pool);
     const trips = createTripRepository(pool);
     const security = createSecurityRepository(pool);
+    const sessions = createSessionRepository(pool, config.session.maxAgeMs);
     const follows = createFollowRepository(pool);
     const orgs = createOrgRepository(pool);
     const passport = createPassport(users, logger);
@@ -205,7 +207,7 @@ function createApp({ config, pool, logger, metrics, geocoder, places, state = { 
     const registerLimiter = jsonLimiter(pool, 'register', config.rateLimit.registerPerHour, 60 * 60_000,
         'Too many new accounts from this network, please try again later.');
     api.use('/auth', createAuthRouter({ passport, users, security, config, authLimiter, registerLimiter, metrics, logger }));
-    api.use('/security', createSecurityRouter({ config, users, security, authLimiter, requireAuth, publicUser, metrics, logger }));
+    api.use('/security', createSecurityRouter({ config, users, security, sessions, authLimiter, requireAuth, publicUser, metrics, logger }));
     api.use('/public', createPublicProfileRouter({ users, markers }));
     api.use('/places', createPlacesRouter({ places }));
     api.use('/geocode', requireAuth,

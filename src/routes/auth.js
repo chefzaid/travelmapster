@@ -7,6 +7,7 @@ const { Strategy: LocalStrategy } = require('passport-local');
 const { parseCredentials, parsePasswordChange, readPassword } = require('../validation');
 const { getOrCreateToken } = require('../middleware/csrf');
 const { checkSecondStep, needsSecondStep } = require('./security');
+const { login } = require('../sessions');
 
 const BCRYPT_ROUNDS = 12;
 
@@ -62,13 +63,6 @@ function logout(req) {
     // passport 0.7 regenerates the session on logout as well.
     return new Promise(/** @param {(value?: void) => void} resolve */ (resolve, reject) => {
         req.logout(err => (err ? reject(err) : resolve()));
-    });
-}
-
-function login(req, user) {
-    // passport 0.7 regenerates the session on login, preventing fixation.
-    return new Promise(/** @param {(value?: void) => void} resolve */ (resolve, reject) => {
-        req.login(user, err => (err ? reject(err) : resolve()));
     });
 }
 

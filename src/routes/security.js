@@ -1,7 +1,7 @@
 'use strict';
 
-// Sign-in security (ADR 0027): passkeys to add, list, remove and sign in with, and two-step
-// sign-in with an authenticator app and recovery codes.
+// Sign-in security (ADR 0027): passkeys to add, list, remove and sign in with, two-step sign-in
+// with an authenticator app and recovery codes, and the devices signed in (src/sessions.js).
 const crypto = require('node:crypto');
 const express = require('express');
 const bcrypt = require('bcrypt');
@@ -12,17 +12,11 @@ const { readPassword, normalizeText } = require('../validation');
 const { getOrCreateToken } = require('../middleware/csrf');
 const { siteOrigin } = require('../seo');
 const totp = require('../totp');
+const { login, sessionKey } = require('../sessions');
 
 const MAX_PASSKEYS = 10;
 const CHALLENGE_MS = 5 * 60_000;
 const NAME_MAX_LENGTH = 60;
-
-function login(req, user) {
-    // passport 0.7 regenerates the session on login, preventing fixation.
-    return new Promise(/** @param {(value?: void) => void} resolve */ (resolve, reject) => {
-        req.login(user, err => (err ? reject(err) : resolve()));
-    });
-}
 
 // Where passkeys belong: the public site's host, or the host the request came to.
 function relyingParty(config, req) {
@@ -44,7 +38,7 @@ function takeChallenge(req, kind) {
 // An opaque, stable WebAuthn user handle, so authenticators never see the account's number.
 const userHandle = (config, user) => crypto.createHmac('sha256', config.totpKey).update(`webauthn:${user.id}`).digest().subarray(0, 16);
 
-function createSecurityRouter({ config, users, security, authLimiter, requireAuth, publicUser, metrics, logger }) {
+function createSecurityRouter({ config, users, security, sessions, authLimiter, requireAuth, publicUser, metrics, logger }) {
     const router = express.Router();
     const box = totp.createSecretBox(config.totpKey);
 
@@ -54,10 +48,27 @@ function createSecurityRouter({ config, users, security, authLimiter, requireAut
     }
 
     router.get('/', requireAuth, async (req, res) => {
-        const [passkeys, secret, left] = await Promise.all([
-            security.listPasskeys(req.user.id), security.findTotp(req.user.id), security.recoveryCodesLeft(req.user.id)
+        const [passkeys, secret, left, devices] = await Promise.all([
+            security.listPasskeys(req.user.id), security.findTotp(req.user.id), security.recoveryCodesLeft(req.user.id),
+            sessions.list(req.user.id, req.sessionID)
         ]);
-        res.json({ passkeys, twoStep: { enabled: Boolean(secret?.enabled), recoveryCodesLeft: secret?.enabled ? left : 0 } });
+        res.json({ passkeys, twoStep: { enabled: Boolean(secret?.enabled), recoveryCodesLeft: secret?.enabled ? left : 0 }, sessions: devices });
+    });
+
+    // ---- devices signed in
+
+    // Signs one other device out; this one signs out from the account menu.
+    router.delete('/sessions/:id', requireAuth, async (req, res) => {
+        const key = normalizeText(req.params.id);
+        if (!/^[0-9a-f]{24}$/.test(key)) return res.status(400).json({ error: 'Invalid session id.' });
+        if (key === sessionKey(req.sessionID)) return res.status(400).json({ error: 'To sign out of this device, use Log out in the account menu.' });
+        if (!(await sessions.end(req.user.id, key))) return res.status(404).json({ error: 'Session not found.' });
+        return res.status(204).end();
+    });
+
+    router.delete('/sessions', requireAuth, async (req, res) => {
+        await users.endSessions(req.user.id, req.sessionID);
+        return res.status(204).end();
     });
 
     // ---- passkeys of the signed-in traveler

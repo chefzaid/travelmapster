@@ -21,6 +21,11 @@
 - Changing the password or deleting the account requires the current password and shares the
   sign-in rate limit. A password change starts a new session and ends all others; deletion ends
   every session.
+- Each session started by signing in records the browser and system names read from the
+  User-Agent (such as "Firefox", "macOS"; the header itself is not kept) and when, so Sign-in
+  security can list the devices signed in. They are named to the traveler by a SHA-256 hash of
+  the session id, never the id; any other one can be ended, and ending them all keeps the
+  current one (`src/sessions.js`).
 - Production refuses to start without a `SESSION_SECRET` of at least 32 characters.
 - **Passkeys** (WebAuthn, [ADR 0027](adr/0027-passkeys-and-two-step-sign-in.md)) must be
   discoverable and verify the user; registrations and sign-ins are checked by

@@ -16,7 +16,9 @@ const codeFor = (secret, offset = 0) => totp.hotp(totp.base32Decode(secret), Mat
 test('two-step sign-in asks for a code after the password, and recovery codes work once', async () => {
     const client = createClient(ctx.server);
     await client.register('stepper', 'stepper password');
-    assert.deepEqual((await client.get('/api/security')).body, { passkeys: [], twoStep: { enabled: false, recoveryCodesLeft: 0 } });
+    const { sessions, ...status } = (await client.get('/api/security')).body;
+    assert.deepEqual(status, { passkeys: [], twoStep: { enabled: false, recoveryCodesLeft: 0 } });
+    assert.equal(sessions.length, 1);
 
     assert.equal((await client.post('/api/security/two-step/enable', { code: '123456' })).status, 400, 'set up first');
     const setup = await client.post('/api/security/two-step/setup');
@@ -147,4 +149,39 @@ test('a passkey sign-in needs no second step, and an account holds at most ten p
     assert.equal((await client.delete('/api/auth/account', { password: 'belt and braces' })).status, 200);
     const { rows } = await ctx.pool.query('SELECT (SELECT count(*) FROM passkeys)::int AS keys, (SELECT count(*) FROM totp_secrets)::int AS secrets');
     assert.deepEqual(rows[0], { keys: 0, secrets: 0 });
+});
+
+test('the devices signed in are listed, and any other one can be signed out', async () => {
+    const signIn = client => client.post('/api/auth/login', { username: 'devices', password: 'devices password' });
+    const laptop = createClient(ctx.server, { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15' });
+    await laptop.register('devices', 'devices password');
+    const phone = createClient(ctx.server, { userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Mobile Safari/537.36' });
+    await signIn(phone);
+    const desktop = createClient(ctx.server, { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0' });
+    await signIn(desktop);
+
+    const { sessions } = (await laptop.get('/api/security')).body;
+    assert.equal(sessions.length, 3);
+    const [current] = sessions.filter(session => session.current);
+    assert.deepEqual([current.browser, current.os], ['Safari', 'macOS']);
+    const other = sessions.find(session => session.browser === 'Chrome');
+    assert.equal(other.os, 'Android');
+    assert.match(other.id, /^[0-9a-f]{24}$/);
+    assert.ok(Date.parse(other.signedInAt) && Date.parse(other.lastSeenAt));
+
+    assert.equal((await laptop.delete(`/api/security/sessions/${current.id}`)).status, 400, 'this device signs out from the menu');
+    assert.equal((await laptop.delete('/api/security/sessions/not-a-session')).status, 400);
+    assert.equal((await laptop.delete(`/api/security/sessions/${'0'.repeat(24)}`)).status, 404);
+    // Someone else cannot sign these out.
+    const stranger = createClient(ctx.server);
+    await stranger.register('devices_stranger', 'devices stranger password');
+    assert.equal((await stranger.delete(`/api/security/sessions/${other.id}`)).status, 404);
+
+    assert.equal((await laptop.delete(`/api/security/sessions/${other.id}`)).status, 204);
+    assert.equal((await phone.get('/api/auth/me')).status, 401, 'the phone is signed out');
+    assert.equal((await desktop.get('/api/auth/me')).status, 200);
+    assert.equal((await laptop.delete('/api/security/sessions')).status, 204);
+    assert.equal((await desktop.get('/api/auth/me')).status, 401, 'every other device is signed out');
+    assert.equal((await laptop.get('/api/auth/me')).status, 200, 'but not this one');
+    assert.equal((await laptop.get('/api/security')).body.sessions.length, 1);
 });

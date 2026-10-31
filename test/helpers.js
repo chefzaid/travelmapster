@@ -87,13 +87,15 @@ async function createTestContext(envOverrides = {}) {
 }
 
 /** A cookie-keeping client that sends the CSRF token like the browser does. */
-function createClient(target) {
+function createClient(target, { userAgent = '' } = {}) {
     const agent = request.agent(target);
+    // A browser's User-Agent on every request, for the devices signed in.
+    const as = req => (userAgent ? req.set('User-Agent', userAgent) : req);
     let csrfToken = null;
 
     async function token() {
         if (!csrfToken) {
-            const res = await agent.get('/api/csrf-token').expect(200);
+            const res = await as(agent.get('/api/csrf-token')).expect(200);
             csrfToken = res.body.csrfToken;
         }
         return csrfToken;
@@ -107,13 +109,13 @@ function createClient(target) {
     async function send(method, path, body) {
         // Fetch the token first: the agent attaches cookies when a request is created.
         const csrf = await token();
-        const req = agent[method](path).set('X-CSRF-Token', csrf);
+        const req = as(agent[method](path)).set('X-CSRF-Token', csrf);
         return remember(await (body === undefined ? req : req.send(body)));
     }
 
     return {
         agent,
-        get: path => agent.get(path),
+        get: path => as(agent.get(path)),
         post: (path, body) => send('post', path, body ?? {}),
         patch: (path, body) => send('patch', path, body),
         put: (path, body) => send('put', path, body),

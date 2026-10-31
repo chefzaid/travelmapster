@@ -95,13 +95,32 @@ function passkeyItem(ctx, passkey, step) {
         }, '✕'));
 }
 
-/** The sign-in security dialog: passkeys and two-step sign-in, redrawn after each change. */
+// A device signed in: its browser and system, when it signed in and was last used.
+function sessionItem(ctx, session, step) {
+    const device = session.browser && session.os ? t('{browser} on {os}', { browser: session.browser, os: session.os })
+        : session.browser || session.os || t('Unknown browser');
+    return h('li', { class: 'dialog-item' },
+        h('span', {}, h('strong', {}, device, session.current ? h('span', { class: 'chip chip-ok' }, t('This device')) : null),
+            h('small', {}, [
+                session.signedInAt ? t('Signed in {date}', { date: formatDate(session.signedInAt.slice(0, 10)) }) : null,
+                t('last used {date}', { date: formatDate(session.lastSeenAt.slice(0, 10)) })
+            ].filter(Boolean).join(' · '))),
+        session.current ? null : h('button', {
+            type: 'button', class: 'btn btn-ghost btn-sm', 'aria-label': t('Sign out {device}', { device }),
+            onclick: () => step(async () => {
+                await ctx.api.endSession(session.id);
+                toast(t('Signed out {device}.', { device }));
+            })
+        }, t('Sign out')));
+}
+
+/** The sign-in security dialog: passkeys, two-step sign-in and the devices signed in, redrawn after each change. */
 export function openSecurity(ctx) {
     return steppedDialog({
         labelledBy: 'security-title',
         load: () => ctx.api.security(),
         onError: ctx.handleError,
-        draw: ({ passkeys, twoStep }, step, close) => [
+        draw: ({ passkeys, twoStep, sessions = [] }, step, close) => [
             h('h3', { id: 'security-title' }, t('Sign-in security')),
             h('section', { class: 'dialog-section' },
                 h('h4', {}, t('🔑 Passkeys')),
@@ -119,6 +138,17 @@ export function openSecurity(ctx) {
                     type: 'button', class: twoStep.enabled ? 'btn btn-danger-ghost btn-sm' : 'btn btn-ghost btn-sm',
                     onclick: () => step(() => (twoStep.enabled ? turnOffTwoStep(ctx) : turnOnTwoStep(ctx)))
                 }, twoStep.enabled ? t('Turn off') : t('Turn on'))),
+            h('section', { class: 'dialog-section' },
+                h('h4', {}, t('💻 Signed-in devices')),
+                h('p', { class: 'small' }, t('Where your account is open. Sign out any device you do not recognize, then change your password.')),
+                h('ul', { class: 'dialog-list', id: 'sessions' }, sessions.map(session => sessionItem(ctx, session, step))),
+                sessions.length > 1 ? h('button', {
+                    type: 'button', class: 'btn btn-danger-ghost btn-sm',
+                    onclick: () => step(async () => {
+                        await ctx.api.endOtherSessions();
+                        toast(t('Signed out everywhere else.'));
+                    })
+                }, t('Sign out everywhere else')) : null),
             h('div', { class: 'dialog-actions' }, h('button', { type: 'button', class: 'btn btn-primary', onclick: close }, t('Done')))
         ]
     });
