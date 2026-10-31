@@ -1348,6 +1348,7 @@
   "New password": "كلمة المرور الجديدة",
   "New stop": "محطة جديدة",
   "Next": "التالي",
+  "Next to {countries}": "بجوار {countries}",
   "Next trip": "الرحلة القادمة",
   "Night": "الليل",
   "No account by that name.": "لا يوجد حساب بهذا الاسم.",
@@ -1431,6 +1432,7 @@
     "other": "مفعّل: بعد كلمة المرور، رمز من تطبيق المصادقة. يتبقى {count} رمز استرداد."
   },
   "One area, one count.": "منطقة واحدة، وعدّ واحد.",
+  "One border away": "على بعد حدود واحدة",
   "Only {username}": "{username} فقط",
   "Only places you have been to can be lived in or transit only.": "لا يمكن تحديد «عشت فيها» أو «عبور فقط» إلا للأماكن التي زرتها.",
   "Only the trip's owner can delete it. Leave it instead.": "لا يمكن حذف الرحلة إلا لمالكها. غادرها بدلًا من ذلك.",

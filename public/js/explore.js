@@ -1,6 +1,6 @@
 // Explore tab: the greeting, the countdown to the next trip, memories, countries not seen for
-// years, next dream, continents and recent places, and the travel ideas from Wikivoyage, which
-// also show beside the landing page and public maps.
+// years and next door, next dream, continents and recent places, and the travel ideas from
+// Wikivoyage, which also show beside the landing page and public maps.
 import { h, $, fill } from './ui.js';
 import { CONTINENTS, CONTINENT_EMOJI, regionName } from './geo.js';
 import { monthsLabel, nextInSeason, priorityLabel } from './details.js';
@@ -12,6 +12,7 @@ import { showCountryCard, showMarker, statusChip } from './cards.js';
 import { localToday } from './days.js';
 import { longTimeNoSee, memoryLabel, onThisDay } from './memories.js';
 import { countdownSection } from './trip-countdown.js';
+import { oneBorderAway } from './borders.js';
 import { formatList, t, tn, tParts } from './i18n.js';
 
 // ---------------------------------------------------------------- ideas
@@ -116,6 +117,22 @@ function longAgoSection(ctx) {
     );
 }
 
+// Countries next to those been to, as easy next trips.
+function nextDoorSection(ctx) {
+    const { state } = ctx;
+    const list = oneBorderAway(state.index.countries, state.stats.visitedIds);
+    if (!list.length) return null;
+    return h('section', { 'aria-labelledby': 'next-door-title' },
+        h('h3', { class: 'section-title', id: 'next-door-title' }, h('span', { 'aria-hidden': 'true' }, '🧭 '), t('One border away')),
+        h('ul', { class: 'mini-list', id: 'next-door' }, list.slice(0, 5).map(({ country, via }) => h('li', {},
+            h('button', { type: 'button', onclick: () => ctx.map.flyToCountry(country).then(() => showCountryCard(ctx, country)) },
+                h('span', { 'aria-hidden': 'true' }, country.flag),
+                h('span', {}, country.name),
+                h('small', { class: 'muted' }, t('Next to {countries}', { countries: formatList(via.slice(0, 3).map(item => item.name)) }))
+            ))))
+    );
+}
+
 const CONTINENT_VIEWS = {
     Africa: [[2, 20], 3],
     Asia: [[34, 90], 2.5],
@@ -154,6 +171,7 @@ export function renderExplore(container, ctx) {
         ) : null,
         memoriesSection(ctx),
         longAgoSection(ctx),
+        nextDoorSection(ctx),
         nextDream ? h('section', { class: 'dream-card' },
             h('p', { class: 'eyebrow' }, t('Your next adventure?')),
             h('h3', {}, nextDream.emoji ? `${nextDream.emoji} ` : '', nextDream.name),

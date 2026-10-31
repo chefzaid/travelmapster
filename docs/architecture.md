@@ -128,6 +128,7 @@ JSON under `/api`, described in full in [OpenAPI](api/openapi.json) and kept bac
 | `public/js/memories.js` | "On this day": visits that began on today's date in earlier years (pure, unit tested) |
 | `public/js/days.js`, `ledger-evidence.js`, `ledger-rules.js` | Day ledger: day rules, days per country, Schengen 90/180 and stay rules, thresholds, planned stays and alerts; the day-by-day evidence and its CSV; and checking edited rules like the API (pure, unit and property tested) |
 | `public/js/ledger.js`, `ledger-report.js`, `ledger-org.js`, `ledger-parts.js` | Ledger tab, its date history and printable evidence report, the employer rules counted on business trips, and the status chips, meters and country labels they share |
+| `public/js/borders.js` | Land borders from the shared vertices of the map's shapes, and the countries one border away from those been to (pure, unit tested) |
 | `public/js/world-share.js` | The share of the world's land and people in the countries been to, with areas worked out on the sphere (pure, unit tested) |
 | `public/js/shortcuts.js` | Keyboard shortcuts across the app and the dialog that lists them; they wait while the traveler types or a dialog is open |
 | `public/js/theme.js` | Light or dark as the system has it or as chosen in Settings: the stylesheets' `prefers-color-scheme: dark` blocks are turned on or off, so no rule is written twice (unit tested) |

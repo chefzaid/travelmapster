@@ -118,6 +118,9 @@ The reasoning and what each rule rules out are in [ADR 0017](adr/0017-product-pr
 - **Countdown to the next trip** ("Lisbon long weekend in 12 days", or that it starts today or
   is under way) at the top of the Explore tab, with the flags of its countries, and on the
   passport; it opens the Trips tab.
+- **One border away**: the Explore tab suggests countries not been to that border those been
+  to, those next to the most first, with the countries they are next to; borders come from the
+  map's own shapes (neighbors share the vertices of their border), worked out once in the browser.
 - **Long time no see**: the Explore tab lists countries last visited five or more years ago, the
   longest ago first, with the towns been to there and the year of the last visit, each showing
   its country. The home country, layovers and wishes are left out, and a visit still going on
