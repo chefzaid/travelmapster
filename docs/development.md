@@ -86,7 +86,9 @@ Invalid integers stop startup with a clear error. Production values come from
   adds the new keys to `public/locales/*.json`, fill in each language, and check with
   `node scripts/i18n.js check`; a test fails while a catalog misses a key.
   `node scripts/i18n.js strings` lists literals that look like interface text but are not keys,
-  including one-word labels handed to a function.
+  including one-word labels handed to a function. Lists of names go through `formatList()`
+  ("Lisbon and Porto") or `joinList()` (the language's own comma, for plain enumerations and
+  field values), never `join(', ')`: Arabic writes `،`.
 - **Third-party calls** need a CSP change in `src/app.js` and a [security](security.md) review.
 
 ## App Icons

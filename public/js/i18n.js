@@ -4,11 +4,11 @@
 // Pure apart from loadLocale() and translateDom(), unit tested in Node.
 
 export const LOCALES = Object.freeze({
-    en: { name: 'English', dir: 'ltr' },
-    fr: { name: 'Français', dir: 'ltr' },
-    es: { name: 'Español', dir: 'ltr' },
-    de: { name: 'Deutsch', dir: 'ltr' },
-    ar: { name: 'العربية', dir: 'rtl' }
+    en: { name: 'English', dir: 'ltr', comma: ', ' },
+    fr: { name: 'Français', dir: 'ltr', comma: ', ' },
+    es: { name: 'Español', dir: 'ltr', comma: ', ' },
+    de: { name: 'Deutsch', dir: 'ltr', comma: ', ' },
+    ar: { name: 'العربية', dir: 'rtl', comma: '، ' }
 });
 
 const STORAGE_KEY = 'travelmapster.locale';
@@ -114,9 +114,14 @@ export function formatNumber(value, options) {
     return Number(value).toLocaleString(current, options);
 }
 
-/** Items joined the language's way: "A, B, and C" in English, "A وB وC" in Arabic. */
+/** Items as a sentence, the language's way: "A, B, and C" in English, "A وB وC" in Arabic. */
 export function formatList(items) {
     return new Intl.ListFormat(current, { type: 'conjunction' }).format(items);
+}
+
+/** Items separated by the language's comma, without "and": a plain enumeration or a field's value. */
+export function joinList(items) {
+    return items.join(LOCALES[current].comma);
 }
 
 /** Fetches and uses a language's catalog, and sets the page's language and direction. */

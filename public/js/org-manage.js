@@ -7,7 +7,7 @@ import { countryName } from './ledger-report.js';
 import { statusChip } from './ledger-parts.js';
 import { openSecurity } from './security.js';
 import { checklistSection } from './org-checklist.js';
-import { t, tn, tk } from './i18n.js';
+import { joinList, t, tk, tn } from './i18n.js';
 
 const ROLE_LABELS = { traveler: tk('Traveler'), manager: tk('Manager'), admin: tk('Admin') };
 const roleOptions = () => Object.entries(ROLE_LABELS).map(([value, label]) => ({ value, label: t(label) }));
@@ -35,7 +35,7 @@ function thisYear() {
 }
 
 function ruleSummary(ctx, rule) {
-    const countries = rule.countries.map(id => countryName(ctx, id)).join(', ');
+    const countries = joinList(rule.countries.map(id => countryName(ctx, id)));
     if (rule.kind === 'stay') return t('{maxDays} days in any {windowDays} · {countries}', { maxDays: rule.maxDays, windowDays: rule.windowDays, countries });
     if (rule.period === 'rolling') return t('{maxDays} days in any {windowDays} days · {countries}', { maxDays: rule.maxDays, windowDays: rule.windowDays, countries });
     return t('{maxDays} days a year from {date} · {countries}', { maxDays: rule.maxDays, date: rule.yearStart || '01-01', countries });

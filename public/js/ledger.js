@@ -11,7 +11,7 @@ import { adviceNote, countryName, historySection, reportSection } from './ledger
 import { isTripPlan } from './itinerary.js';
 import { meter, statusChip, countryLabel } from './ledger-parts.js';
 import { orgRulesSections } from './ledger-org.js';
-import { t, tn } from './i18n.js';
+import { formatList, joinList, t, tn } from './i18n.js';
 import { whereSection } from './ledger-where.js';
 import { travelHistorySection } from './ledger-history.js';
 
@@ -103,7 +103,7 @@ function schengenSection(ctx, overview) {
     const today = localToday();
     const entry = view.entry || today;
     const result = h('p', { class: 'entry-result', 'aria-live': 'polite' }, entryResult(days, entry));
-    const names = ids => ids.map(id => countryName(ctx, id)).sort().join(', ');
+    const names = ids => joinList(ids.map(id => countryName(ctx, id)).sort());
 
     return h('section', { class: 'schengen-card', 'aria-labelledby': 'schengen-title' },
         h('div', { class: 'schengen-head' },
@@ -213,7 +213,7 @@ function plansSection(ctx, overview) {
 // ---------------------------------------------------------------- rules
 
 function countryNames(ctx, ids) {
-    return ids.map(id => countryName(ctx, id)).join(', ');
+    return joinList(ids.map(id => countryName(ctx, id)));
 }
 
 export async function ruleDialog(ctx, kind, rule) {
@@ -249,7 +249,7 @@ export async function ruleDialog(ctx, kind, rule) {
         if (!values) return null;
         const { ids, unknown } = parseCountryList(values.countries, name => ctx.state.index.findByName(name) || ctx.state.index.byId.get(name.toUpperCase()));
         const { rule: checked, error } = unknown.length
-            ? { error: tn(unknown.length, 'Unknown country: {names}.', 'Unknown countries: {names}.', { names: unknown.join(', ') }) }
+            ? { error: tn(unknown.length, 'Unknown country: {names}.', 'Unknown countries: {names}.', { names: formatList(unknown) }) }
             : checkRule({ ...values, kind, id: rule?.id || newId() }, ids);
         if (!error) return checked;
         toast(error, { tone: 'error' });

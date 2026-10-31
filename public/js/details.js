@@ -1,7 +1,7 @@
 // Ratings, tags, a custom emoji and wishlist plans per place, and the filters and wishlist
 // order built on them (ADR 0012).
 // The rules match src/validation.js. Pure functions, unit tested in Node.
-import { t, locale, tn } from './i18n.js';
+import { formatList, locale, t, tn } from './i18n.js';
 
 export const SUGGESTED_TAGS = ['food', 'hiking', 'family', 'work', 'beach', 'culture'];
 export const TAGS_MAX = 8;
@@ -102,11 +102,11 @@ export function monthsLabel(months = []) {
     const short = month => monthName(month, 'short');
     // Start each run at a month whose previous month is not chosen, so runs wrap past December.
     const starts = months.filter(month => !set.has(month === 1 ? 12 : month - 1));
-    return starts.map(start => {
+    return formatList(starts.map(start => {
         let end = start;
         while (set.has(end === 12 ? 1 : end + 1)) end = end === 12 ? 1 : end + 1;
         return end === start ? short(start) : `${short(start)}–${short(end)}`;
-    }).join(', ');
+    }));
 }
 
 /** How many months from `month` until the next chosen month (0 = this month), or null. */

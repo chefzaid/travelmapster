@@ -5,7 +5,7 @@ import { h, fill, formatDate } from './ui.js';
 import { addDays, localToday } from './days.js';
 import { whereabouts } from './ledger-evidence.js';
 import { countryLabel } from './ledger-parts.js';
-import { t, tn } from './i18n.js';
+import { formatList, t, tn } from './i18n.js';
 
 const MAX_RUNS_SHOWN = 60;
 const form = { from: '', to: '' };
@@ -20,7 +20,7 @@ function runItem(ctx, run) {
         h('strong', {}, runDates(run)),
         run.stays.length
             ? run.stays.map(stay => h('small', {}, countryLabel(ctx, stay.countryId),
-                stay.planned ? ` · ${t('planned stay')}` : stay.places.length ? `: ${stay.places.join(', ')}` : ''))
+                stay.planned ? ` · ${t('planned stay')}` : stay.places.length ? `: ${formatList(stay.places)}` : ''))
             : h('small', {}, t('No visit recorded'))));
 }
 

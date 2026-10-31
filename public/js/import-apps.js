@@ -10,7 +10,7 @@ import { placesFromSightings, timelineSightings } from './auto-import.js';
 import { photoMetadata } from './exif.js';
 import { createTownFinder } from './towns.js';
 import { readZipText, zipEntries } from './zip-read.js';
-import { t, tn } from './i18n.js';
+import { joinList, t, tn } from './i18n.js';
 
 
 // The trips in the chosen files: a whole export as a ZIP, or trip.json files.
@@ -234,7 +234,7 @@ async function importCountryList(ctx, status) {
     });
     if (!values) return;
     const { places, unknown } = countryListPlaces(values.list, ctx.state.index);
-    await previewAndImport(ctx, places, status, unknown.length ? t('Not recognized: {names}.', { names: `${unknown.slice(0, 10).join(', ')}${unknown.length > 10 ? '…' : ''}` }) : '');
+    await previewAndImport(ctx, places, status, unknown.length ? t('Not recognized: {names}.', { names: `${joinList(unknown.slice(0, 10))}${unknown.length > 10 ? '…' : ''}` }) : '');
 }
 
 // A button that opens the file picker and hands the chosen files to `read`.

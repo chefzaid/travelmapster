@@ -4,12 +4,12 @@ import { h, toast, formDialog } from './ui.js';
 import { checkChecklistItem } from './org-data.js';
 import { newId, parseCountryList } from './ledger-rules.js';
 import { countryName } from './ledger-report.js';
-import { t, tn } from './i18n.js';
+import { formatList, joinList, t, tn } from './i18n.js';
 
 const MAX_ITEMS = 50;
 
 async function itemDialog(ctx, item) {
-    let draft = item ? { ...item, countries: item.countries.map(id => countryName(ctx, id)).join(', '), link: item.link || '' }
+    let draft = item ? { ...item, countries: joinList(item.countries.map(id => countryName(ctx, id))), link: item.link || '' }
         : { task: '', countries: '', daysBefore: 14, link: '' };
     for (;;) {
         const values = await formDialog({
@@ -26,7 +26,7 @@ async function itemDialog(ctx, item) {
         if (!values) return null;
         const { ids, unknown } = parseCountryList(values.countries, name => ctx.state.index.findByName(name) || ctx.state.index.byId.get(name.toUpperCase()));
         const { item: checked, error } = unknown.length
-            ? { error: tn(unknown.length, 'Unknown country: {names}.', 'Unknown countries: {names}.', { names: unknown.join(', ') }) }
+            ? { error: tn(unknown.length, 'Unknown country: {names}.', 'Unknown countries: {names}.', { names: formatList(unknown) }) }
             : checkChecklistItem({ ...values, id: item?.id || newId() }, ids);
         if (!error) return checked;
         toast(error, { tone: 'error' });
@@ -54,7 +54,7 @@ export function checklistSection(ctx, org, step) {
         h('p', { class: 'small' }, t('What travelers should do before a business trip, such as an A1 certificate or a posted-worker declaration within the EU.')),
         checklist.length ? h('ul', { class: 'dialog-list' }, checklist.map(item => h('li', { class: 'dialog-item' },
             h('span', {}, h('strong', {}, item.task),
-                h('small', {}, tn(item.daysBefore, '{count} day before · {countries}', '{count} days before · {countries}', { countries: item.countries.map(id => countryName(ctx, id)).join(', ') }))),
+                h('small', {}, tn(item.daysBefore, '{count} day before · {countries}', '{count} days before · {countries}', { countries: joinList(item.countries.map(id => countryName(ctx, id))) }))),
             admin ? h('button', { type: 'button', class: 'icon-btn', 'aria-label': t('Edit {task}', { task: item.task }), title: t('Edit'), onclick: () => edit(item) }, '✏️') : null,
             admin ? h('button', { type: 'button', class: 'icon-btn', 'aria-label': t('Remove {task}', { task: item.task }), title: t('Remove'), onclick: () => remove(item) }, '🗑️') : null
         ))) : h('p', { class: 'muted small' }, t('Nothing to do before trips yet.')),
