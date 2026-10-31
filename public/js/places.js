@@ -4,7 +4,7 @@ import { buildCsv, buildJson, parseImportContent, validatePlace, placeKey, merge
 import { lastVisitDate, lastVisitYears, matchesLastVisit, visitCount } from './visits.js';
 import { groupByNextMonth, matchesDetails, monthsLabel, priorityLabel, ratingLabel, stars, usedTags } from './details.js';
 import { STATUSES, statusLabel, statusOf } from './status.js';
-import { openNewTrip } from './trips.js';
+import { openNewTrip } from './lazy.js';
 import { importButtons } from './import-apps.js';
 import { t, tn } from './i18n.js';
 import { openCountryList } from './country-list.js';

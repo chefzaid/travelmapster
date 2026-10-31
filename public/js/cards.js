@@ -4,7 +4,7 @@ import { h, toast } from './ui.js';
 import { countryLook, countryStatus, formatPopulation, CONTINENT_EMOJI, regionName } from './geo.js';
 import { monthsLabel, priorityLabel, ratingLabel, stars } from './details.js';
 import { HOME, STATUSES, statusFields, statusLabel, statusOf } from './status.js';
-import { openNewTrip } from './trips.js';
+import { openNewTrip } from './lazy.js';
 import { visitsSection } from './card-visits.js';
 import { t, tn } from './i18n.js';
 

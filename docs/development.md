@@ -90,8 +90,10 @@ Invalid integers stop startup with a clear error. Production values come from
   ("Lisbon and Porto") or `joinList()` (the language's own comma, for plain enumerations and
   field values), never `join(', ')`: Arabic writes `،`.
 - **First page weight**: every module imported statically from `app.js` loads on the landing
-  page. Import a feature that only runs after a click with `import()` where it is used (see
-  `openSecurity` in `account.js`), and keep `start.js` to what the presentation needs.
+  page. Import a feature that only runs after a click through `lazy.js` (as `openNewTrip`,
+  `ruleDialog` and `openSecurity` are) or with `import()` where it is used, keep the Trips and
+  Ledger tabs out of static imports (`tabs.js` loads them when first opened), and keep
+  `start.js` to what the presentation needs. `test/e2e/performance.spec.js` holds the budget.
 - **Third-party calls** need a CSP change in `src/app.js` and a [security](security.md) review.
 
 ## App Icons

@@ -3,11 +3,15 @@ import { $, $all } from './ui.js';
 import { showPanel } from './panel.js';
 import { renderExplore } from './explore.js';
 import { renderPlaces } from './places.js';
-import { renderTrips } from './trips.js';
-import { renderLedger } from './ledger.js';
 import { renderPassport } from './passport.js';
 
-const TAB_RENDERERS = { explore: renderExplore, places: renderPlaces, trips: renderTrips, ledger: renderLedger, passport: renderPassport };
+const TABS = ['explore', 'places', 'trips', 'ledger', 'passport'];
+const renderers = { explore: renderExplore, places: renderPlaces, passport: renderPassport };
+// The Trips and Ledger tabs load when first opened, so the first page stays light.
+const LOADERS = {
+    trips: () => import('./trips.js').then(module => module.renderTrips),
+    ledger: () => import('./ledger.js').then(module => module.renderLedger)
+};
 const STORAGE_KEY = 'travelmapster.tab';
 
 /** The tab this browser showed last, or Explore. */
@@ -18,7 +22,7 @@ export function storedTab() {
     } catch {
         // Ignore unavailable storage.
     }
-    return Object.hasOwn(TAB_RENDERERS, saved) ? saved : 'explore';
+    return TABS.includes(saved) ? saved : 'explore';
 }
 
 export function selectTab(ctx, name) {
@@ -43,11 +47,19 @@ export function selectTab(ctx, name) {
 export function renderActiveTab(ctx) {
     const { state } = ctx;
     if (!state.user || !state.stats) return;
-    const container = $(`#${state.activeTab}-tab`);
+    const name = state.activeTab;
+    if (!renderers[name]) {
+        LOADERS[name]().then(render => {
+            renderers[name] = render;
+            if (ctx.state.activeTab === name) renderActiveTab(ctx);
+        }).catch(error => ctx.handleError(error));
+        return;
+    }
+    const container = $(`#${name}-tab`);
     const scroll = $('#panel').scrollTop;
     // A filter that re-renders its own tab keeps the keyboard focus on it.
     const focusedId = container.contains(document.activeElement) ? document.activeElement.id : '';
-    TAB_RENDERERS[state.activeTab](container, ctx);
+    renderers[name](container, ctx);
     if (focusedId) document.getElementById(focusedId)?.focus({ preventScroll: true });
     $('#panel').scrollTop = scroll;
 }

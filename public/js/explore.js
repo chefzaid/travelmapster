@@ -7,7 +7,7 @@ import { monthsLabel, nextInSeason, priorityLabel } from './details.js';
 import { statusOf } from './status.js';
 import { shareLabel } from './lists.js';
 import { fetchIdeas } from './ideas.js';
-import { openNewTrip } from './trips.js';
+import { openNewTrip } from './lazy.js';
 import { showCountryCard, showMarker, statusChip } from './cards.js';
 import { localToday } from './days.js';
 import { longTimeNoSee, memoryLabel, onThisDay } from './memories.js';

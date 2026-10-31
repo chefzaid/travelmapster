@@ -2,14 +2,11 @@
 // its CSV, members and roles, invitation links, the employer's rules, renaming and deleting.
 import { h, toast, formDialog, formatDate, downloadFile, copyText, steppedDialog, STAY_CLOSED } from './ui.js';
 import { buildReportCsv, invitationLink } from './org-data.js';
-import { ruleDialog } from './ledger.js';
+import { openSecurity, ruleDialog } from './lazy.js';
 import { countryName } from './ledger-report.js';
 import { statusChip } from './ledger-parts.js';
 import { checklistSection } from './org-checklist.js';
 import { joinList, t, tk, tn } from './i18n.js';
-
-// Sign-in security loads when first opened, so the first page stays light.
-const openSecurity = ctx => import('./security.js').then(module => module.openSecurity(ctx));
 
 const ROLE_LABELS = { traveler: tk('Traveler'), manager: tk('Manager'), admin: tk('Admin') };
 const roleOptions = () => Object.entries(ROLE_LABELS).map(([value, label]) => ({ value, label: t(label) }));

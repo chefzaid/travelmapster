@@ -8,6 +8,7 @@ import { COUNTRY_LISTS, countedCountries } from './lists.js';
 import { PALETTES, paletteId } from './palettes.js';
 import { LOCALES, locale, rememberLocale, t, tParts, tn } from './i18n.js';
 import { showPanel } from './panel.js';
+import { openSecurity } from './lazy.js';
 import { AUTH_HASHES } from './home.js';
 import { DISTANCE_UNITS, distanceUnit, rememberDistanceUnit } from './units.js';
 import { THEMES, applyTheme, rememberTheme, storedTheme } from './theme.js';
@@ -270,9 +271,6 @@ async function changePassword(ctx) {
         ctx.handleError(error);
     }
 }
-
-// Sign-in security loads when first opened, so the first page stays light.
-const openSecurity = ctx => import('./security.js').then(module => module.openSecurity(ctx));
 
 // Everything in the account as one ZIP archive (ADR 0017: a record you can keep).
 async function downloadArchive(ctx) {
