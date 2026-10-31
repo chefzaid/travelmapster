@@ -61,7 +61,7 @@ export function toClientVisit(visit) {
     return {
         ...visit, endDate: visit.endDate || '', notes: visit.notes || '', photoUrl: visit.photoUrl || '', ongoing: Boolean(visit.ongoing),
         // A replica of an older release sends no purpose: every visit was personal.
-        purpose: visit.purpose || 'personal', organizationId: visit.organizationId ?? null
+        purpose: visit.purpose || 'personal', organizationId: visit.organizationId ?? null, companions: visit.companions || []
     };
 }
 

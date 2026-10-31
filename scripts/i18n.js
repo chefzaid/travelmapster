@@ -15,7 +15,7 @@ const localesDir = path.join(root, 'public', 'locales');
 const PAGES = ['index.html', 'schengen-calculator.html', 'embed.html'];
 const LOCALES = ['fr', 'es', 'de', 'ar'];
 // Server error messages travelers see as toasts; the client translates them when it can.
-const SERVER_FILES = ['src/routes', 'src/validation.js', 'src/ledger-validation.js', 'src/trip-validation.js'];
+const SERVER_FILES = ['src/routes', 'src/validation.js', 'src/validation-text.js', 'src/ledger-validation.js', 'src/trip-validation.js'];
 
 function walk(node, visit, ancestors = []) {
     if (!node || typeof node.type !== 'string') return;

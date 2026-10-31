@@ -2,6 +2,7 @@
 // time zone) with optional notes and a photo link. Without an end date a visit is either
 // still going on (`ongoing`) or its end was not recorded. Pure functions, unit tested in Node.
 import { t, tk, tn } from './i18n.js';
+import { companionsError, readCompanions } from './companions.js';
 
 const NOTES_MAX_LENGTH = 2000;
 const PHOTO_URL_MAX_LENGTH = 2048;
@@ -78,7 +79,8 @@ export function checkVisit(record) {
         notes: text(record?.notes),
         photoUrl: text(record?.photoUrl),
         // A form checkbox sends "on"; CSV files say "yes".
-        ongoing: record?.ongoing === true || /^(on|true|yes|1)$/i.test(text(record?.ongoing))
+        ongoing: record?.ongoing === true || /^(on|true|yes|1)$/i.test(text(record?.ongoing)),
+        companions: readCompanions(record?.companions)
     };
     if (!isValidDate(visit.startDate)) return { error: t('Choose the day the visit started.') };
     if (visit.endDate && !isValidDate(visit.endDate)) return { error: t('The end date is not a real date.') };
@@ -88,6 +90,8 @@ export function checkVisit(record) {
     if (visit.photoUrl && (visit.photoUrl.length > PHOTO_URL_MAX_LENGTH || !isHttpUrl(visit.photoUrl))) {
         return { error: t('The photo link must be an HTTP or HTTPS address.') };
     }
+    const error = companionsError(visit.companions);
+    if (error) return { error };
     return { visit };
 }
 

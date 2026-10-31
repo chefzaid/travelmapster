@@ -125,6 +125,7 @@ JSON under `/api`, described in full in [OpenAPI](api/openapi.json) and kept bac
 | `public/js/bulk.js` | Marking several countries at once: the bulk change, its undo and the updated places (pure, unit tested) |
 | `public/js/details.js` | Ratings, tags, emoji and wishlist plans of a place, the tag and rating filter shared by the list and the map, and the wishlist by next good month (pure, unit tested) |
 | `public/js/visits.js` | Visit dates, counts, last-visit filter and validation (pure, unit tested) |
+| `public/js/companions.js` | Who came along on a visit: reading the names, their limits and everyone met on the map, for the Who with filter (pure, unit tested) |
 | `public/js/memories.js` | "On this day": visits that began on today's date in earlier years (pure, unit tested) |
 | `public/js/days.js`, `ledger-evidence.js`, `ledger-rules.js` | Day ledger: day rules, days per country, Schengen 90/180 and stay rules, thresholds, planned stays and alerts; the day-by-day evidence and its CSV; and checking edited rules like the API (pure, unit and property tested) |
 | `public/js/ledger.js`, `ledger-report.js`, `ledger-org.js`, `ledger-parts.js` | Ledger tab, its date history and printable evidence report, the employer rules counted on business trips, and the status chips, meters and country labels they share |

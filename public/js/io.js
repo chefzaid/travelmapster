@@ -12,15 +12,15 @@ export const EXPORT_FIELDS = ['id', 'lat', 'lng', 'type', 'name', 'category', 'p
     'rating', 'tags', 'emoji', 'hideFromPublic', 'priority', 'bestMonths', 'stay'];
 const STAYS = ['visit', 'lived', 'transit'];
 // CSV has one row per visit; JSON nests the visits in each place.
-export const VISIT_FIELDS = ['visitStartDate', 'visitEndDate', 'visitNotes', 'visitPhotoUrl', 'visitOngoing'];
+export const VISIT_FIELDS = ['visitStartDate', 'visitEndDate', 'visitNotes', 'visitPhotoUrl', 'visitOngoing', 'visitCompanions'];
 const CSV_FIELDS = [...EXPORT_FIELDS, ...VISIT_FIELDS];
 
 function escapeCsvField(value) {
     return `"${String(value ?? '').replace(/"/g, '""')}"`;
 }
 
-function exportVisit({ startDate, endDate, notes, photoUrl, ongoing }) {
-    return { startDate, endDate: endDate || '', notes: notes || '', photoUrl: photoUrl || '', ongoing: Boolean(ongoing) };
+function exportVisit({ startDate, endDate, notes, photoUrl, ongoing, companions }) {
+    return { startDate, endDate: endDate || '', notes: notes || '', photoUrl: photoUrl || '', ongoing: Boolean(ongoing), companions: companions || [] };
 }
 
 export function buildJson(markers) {
@@ -36,8 +36,8 @@ export function buildJson(markers) {
     return JSON.stringify(records, null, 2);
 }
 
-// CSV cells hold one value: tags and month numbers are joined with semicolons, which tags
-// never contain.
+// CSV cells hold one value: tags, month numbers and companions are joined with semicolons,
+// which tags never contain and companions are split at.
 function csvValue(marker, field) {
     if (field === 'travelDate') return lastVisitDate(marker);
     if (field === 'tags') return (marker.tags || []).join('; ');
@@ -54,7 +54,7 @@ export function buildCsv(markers) {
         const visits = sortVisits(marker.visits).map(exportVisit);
         // A place without visits still gets one row, with empty visit columns.
         for (const visit of visits.length ? visits : [null]) {
-            rows.push([...place, visit?.startDate, visit?.endDate, visit?.notes, visit?.photoUrl, visit?.ongoing ? 'yes' : '']);
+            rows.push([...place, visit?.startDate, visit?.endDate, visit?.notes, visit?.photoUrl, visit?.ongoing ? 'yes' : '', visit?.companions.join('; ')]);
         }
     }
     return rows.map(row => row.map(escapeCsvField).join(',')).join('\r\n');
@@ -140,7 +140,7 @@ function recordVisits(record) {
     if (text(record?.visitStartDate) || text(record?.visitEndDate) || text(record?.visitNotes) || text(record?.visitPhotoUrl)) {
         return [{
             startDate: record.visitStartDate, endDate: record.visitEndDate, notes: record.visitNotes,
-            photoUrl: record.visitPhotoUrl, ongoing: record.visitOngoing
+            photoUrl: record.visitPhotoUrl, ongoing: record.visitOngoing, companions: record.visitCompanions
         }];
     }
     const travelDate = text(record?.travelDate);
@@ -186,7 +186,7 @@ export function validatePlace(record) {
     return place;
 }
 
-const visitKey = visit => [visit.startDate, visit.endDate, visit.ongoing, visit.notes, visit.photoUrl].join('|');
+const visitKey = visit => [visit.startDate, visit.endDate, visit.ongoing, visit.notes, visit.photoUrl, visit.companions].join('|');
 
 /** Joins records of the same place (one CSV row per visit), dropping repeated visits. */
 export function mergePlaces(places) {

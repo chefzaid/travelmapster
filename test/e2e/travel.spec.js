@@ -181,6 +181,47 @@ test('a traveler records several visits to the same city', async ({ page }) => {
     expect(errors).toEqual([]);
 });
 
+test('a traveler notes who came along and filters the map to everywhere they went with them', async ({ page }) => {
+    const errors = trackErrors(page);
+    await signUp(page, `e2e_companions_${Date.now()}`);
+    const card = page.locator('.maplibregl-popup.card-popup');
+    const visitWith = async (startDate, companions) => {
+        await card.locator('.visit-add').click();
+        await page.fill('#dialog-startDate', startDate);
+        await page.fill('#dialog-companions', companions);
+        await page.getByRole('button', { name: 'Add visit' }).click();
+    };
+    await markCity(page, 'Lisbon');
+    await visitWith('2022-05-01', 'Sam, Alex , sam');
+    await expect(card.locator('.visit-companions')).toHaveText('👥 With Sam and Alex');
+    await markCity(page, 'Rome');
+    await visitWith('2023-09-10', 'Alex');
+    await markCity(page, 'Oslo');
+
+    await page.click('#tab-places');
+    const people = page.locator('#companion-filter');
+    await expect(people.locator('option')).toHaveText(['Anyone', 'Alex (2 places)', 'Sam (1 place)']);
+    await people.selectOption('Sam');
+    await expect(page.locator('#legend-detail-filter')).toContainText('with Sam');
+    await expect(page.locator('#places-tab .place-main')).toHaveCount(1);
+    await expect(page.locator('#places-tab .place-main')).toContainText('Lisbon');
+    await people.selectOption('Alex');
+    await expect(page.locator('#places-tab .place-main')).toHaveCount(2);
+    await page.click('#legend-detail-filter');
+    await expect(page.locator('#legend-detail-filter')).toBeHidden();
+    await expect(page.locator('#places-tab .place-main')).toHaveCount(3);
+
+    // Editing the visit keeps the names to change them.
+    await page.fill('#global-search', 'Lisbon');
+    await page.locator('#search-results [role="option"]').filter({ hasText: 'Lisbon' }).first().click();
+    await card.getByRole('button', { name: /Edit the visit/ }).click();
+    await expect(page.locator('#dialog-companions')).toHaveValue('Sam, Alex');
+    await page.fill('#dialog-companions', 'Sam');
+    await page.getByRole('button', { name: 'Save visit' }).click();
+    await expect(card.locator('.visit-companions')).toHaveText('👥 With Sam');
+    expect(errors).toEqual([]);
+});
+
 test('a traveler marks several countries and a whole continent at once, with undo', async ({ page }) => {
     // Recoloring a whole continent several times is slow on a busy runner without a GPU.
     test.setTimeout(60_000);

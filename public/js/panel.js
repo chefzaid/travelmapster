@@ -45,7 +45,7 @@ export function setupPanel() {
 
 export function setupLegend(ctx) {
     const { filters } = ctx.state;
-    $('#legend-detail-filter').addEventListener('click', () => ctx.setDetailFilter({ tag: 'all', rating: 'all' }));
+    $('#legend-detail-filter').addEventListener('click', () => ctx.setDetailFilter({ tag: 'all', rating: 'all', companion: 'all' }));
     for (const button of $all('.legend-item[data-filter]')) {
         button.addEventListener('click', () => {
             const key = button.dataset.filter;

@@ -50,7 +50,7 @@ const state = {
     // Signed out, the map shows a sample traveler that visitors can try; nothing is saved.
     demo: false,
     // The legend's status toggles, and the tag and rating filter shared by the map and the Places tab.
-    filters: { visited: true, lived: true, transit: true, wishlist: true, tag: 'all', rating: 'all' },
+    filters: { visited: true, lived: true, transit: true, wishlist: true, tag: 'all', rating: 'all', companion: 'all' },
     // The legend's "Days" switch: countries colored by days spent instead of by status.
     colorByDays: false,
     // The days per country the map shows then, for the country card.

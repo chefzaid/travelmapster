@@ -44,14 +44,15 @@ test('a place keeps every visit, newest first, and its latest date', async () =>
     assert.equal(marker.travelDate, null);
 
     const first = await client.post(`/api/markers/${marker.id}/visits`, {
-        startDate: '2019-07-01', endDate: '2019-07-10', notes: '  First time  ', photoUrl: 'https://example.com/a.jpg'
+        startDate: '2019-07-01', endDate: '2019-07-10', notes: '  First time  ', photoUrl: 'https://example.com/a.jpg', companions: [' Sam ', 'Alex  Doe', 'sam']
     });
     assert.equal(first.status, 201);
     assert.deepEqual(first.body, {
-        id: first.body.id, startDate: '2019-07-01', endDate: '2019-07-10', ongoing: false, notes: 'First time', photoUrl: 'https://example.com/a.jpg', purpose: 'personal', organizationId: null
+        id: first.body.id, startDate: '2019-07-01', endDate: '2019-07-10', ongoing: false, notes: 'First time', photoUrl: 'https://example.com/a.jpg', purpose: 'personal', organizationId: null,
+        companions: ['Sam', 'Alex Doe']
     });
     const second = await client.post(`/api/markers/${marker.id}/visits`, { startDate: '2023-03-04' });
-    assert.deepEqual(second.body, { id: second.body.id, startDate: '2023-03-04', endDate: null, ongoing: false, notes: null, photoUrl: null, purpose: 'personal', organizationId: null });
+    assert.deepEqual(second.body, { id: second.body.id, startDate: '2023-03-04', endDate: null, ongoing: false, notes: null, photoUrl: null, purpose: 'personal', organizationId: null, companions: [] });
     await client.post(`/api/markers/${marker.id}/visits`, { startDate: '2021-12-31', endDate: '2022-01-02' });
 
     const list = await client.get(`/api/markers/${marker.id}/visits`);
@@ -65,7 +66,17 @@ test('a place keeps every visit, newest first, and its latest date', async () =>
 
     const edited = await client.patch(`/api/visits/${second.body.id}`, { startDate: '2018-01-01', endDate: '', notes: 'Earlier' });
     assert.equal(edited.status, 200);
-    assert.deepEqual(edited.body, { id: second.body.id, startDate: '2018-01-01', endDate: null, ongoing: false, notes: 'Earlier', photoUrl: null, purpose: 'personal', organizationId: null });
+    assert.deepEqual(edited.body, { id: second.body.id, startDate: '2018-01-01', endDate: null, ongoing: false, notes: 'Earlier', photoUrl: null, purpose: 'personal', organizationId: null, companions: [] });
+    // Companions left out of an edit stay; an empty list clears them.
+    const firstEdited = await client.patch(`/api/visits/${first.body.id}`, { startDate: '2019-07-01', endDate: '2019-07-10' });
+    assert.deepEqual(firstEdited.body.companions, ['Sam', 'Alex Doe']);
+    assert.deepEqual((await client.patch(`/api/visits/${first.body.id}`, { startDate: '2019-07-01', companions: [] })).body.companions, []);
+    await client.patch(`/api/visits/${first.body.id}`, { startDate: '2019-07-01', endDate: '2019-07-10', notes: 'First time', companions: ['Sam'] });
+    await client.patch('/api/profile', { profileVisibility: 'public' });
+    const visitor = await createClient(ctx.server).get('/api/public/repeat_visitor');
+    assert.equal(visitor.status, 200);
+    assert.ok(visitor.body.markers[0].visits.length, 'the public map has the visit dates');
+    assert.ok(!JSON.stringify(visitor.body).includes('Sam'), 'companions stay off a public map');
     assert.equal(await legacyTravelDate(marker.id), '2021-12-31');
 
     assert.equal((await client.delete(`/api/visits/${second.body.id}`)).status, 204);
@@ -100,7 +111,12 @@ test('invalid visits are rejected', async () => {
         { startDate: '2024-01-05', photoUrl: 'not a url' },
         { startDate: '2024-01-05', photoUrl: `https://example.com/${'x'.repeat(2048)}` },
         { startDate: '2024-01-05', ongoing: 'yes' },
-        { startDate: '2024-01-05', endDate: '2024-01-06', ongoing: true }
+        { startDate: '2024-01-05', endDate: '2024-01-06', ongoing: true },
+        { startDate: '2024-01-05', companions: 'Sam' },
+        { startDate: '2024-01-05', companions: [''] },
+        { startDate: '2024-01-05', companions: ['x'.repeat(41)] },
+        { startDate: '2024-01-05', companions: [7] },
+        { startDate: '2024-01-05', companions: Array.from({ length: 11 }, (_, i) => `Friend ${i}`) }
     ];
     for (const body of cases) {
         const created = await client.post(`/api/markers/${marker.id}/visits`, body);

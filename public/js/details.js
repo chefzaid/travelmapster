@@ -2,6 +2,7 @@
 // order built on them (ADR 0012).
 // The rules match src/validation.js. Pure functions, unit tested in Node.
 import { formatList, locale, t, tn } from './i18n.js';
+import { visitedWith } from './companions.js';
 
 export const SUGGESTED_TAGS = ['food', 'hiking', 'family', 'work', 'beach', 'culture'];
 export const TAGS_MAX = 8;
@@ -170,22 +171,27 @@ export function usedTags(markers) {
     return [...new Set(markers.flatMap(marker => marker.tags || []))].sort((a, b) => a.localeCompare(b));
 }
 
-/** The list and map filter: `tag` is 'all' or a tag, `rating` is 'all', 'none' or a minimum. */
-export function matchesDetails(marker, { tag = 'all', rating = 'all' } = {}) {
+/**
+ * The list and map filter: `tag` is 'all' or a tag, `rating` is 'all', 'none' or a minimum, and
+ * `companion` is 'all' or a name someone came along under (companions.js).
+ */
+export function matchesDetails(marker, { tag = 'all', rating = 'all', companion = 'all' } = {}) {
     if (tag !== 'all' && !(marker.tags || []).includes(tag)) return false;
+    if (companion !== 'all' && !visitedWith(marker, companion)) return false;
     if (rating === 'none') return !marker.rating;
     if (rating !== 'all' && !((marker.rating || 0) >= Number(rating))) return false;
     return true;
 }
 
 export function detailFilterActive(filters) {
-    return (filters?.tag ?? 'all') !== 'all' || (filters?.rating ?? 'all') !== 'all';
+    return ['tag', 'rating', 'companion'].some(key => (filters?.[key] ?? 'all') !== 'all');
 }
 
-export function describeDetailFilter({ tag = 'all', rating = 'all' } = {}) {
+export function describeDetailFilter({ tag = 'all', rating = 'all', companion = 'all' } = {}) {
     const parts = [];
+    if (companion !== 'all') parts.push(t('with {name}', { name: companion }));
     if (tag !== 'all') parts.push(`#${tag}`);
-    if (rating === 'none') parts.push('not rated');
+    if (rating === 'none') parts.push(t('not rated'));
     else if (rating === '5') parts.push('★5');
     else if (rating !== 'all') parts.push(`★${rating}+`);
     return parts.join(' · ');
