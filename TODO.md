@@ -63,6 +63,8 @@ Parts of tasks that cannot advance without the owner's decision or information. 
   - Answer:
 - [ ] **Public holidays and climate data.** Showing public holidays and typical weather at a destination during a trip needs data the app does not bundle. Holidays: Nager.Date's data (MIT, about 120 countries; fetched by the server and cached, or bundled per release)? Climate normals: a bundled monthly table per country from an open source such as NASA POWER (public domain), coarse but private, or no weather at all? *(task: New ideas › Trips › Holidays and weather; asked by: Coding Agent)*
   - Answer:
+- [ ] **Before you go data.** The destination facts (emergency number, driving side, plug types, time zone) come from Wikidata (CC0), but the coding agent's environment cannot reach `query.wikidata.org`, and writing them out by hand for about 200 countries without a source risks a wrong emergency number. Can you (a) allow `query.wikidata.org` in the agent's network settings so a build script fetches and bundles the table, or (b) supply the table (a CSV per country code)? *(task: More ideas › Before you go; asked by: Coding Agent)*
+  - Answer:
 
 ## Product direction (added 2026-10-04)
 
@@ -240,7 +242,7 @@ Small, everyday things travelers ask for, built on data the app already has or a
 - [x] Countdown to the next trip ("Lisbon in 12 days") in the Explore tab and on the passport, and as a share card. Done: the card shows the days to go and the countries' flags only, as the other share cards promise no places or dates.
 - [x] Travel companions: names of who came along on a visit or trip (names only, no accounts), and the map filtered to one of them ("everywhere I've been with Sam"). Done for visits (migration 025), with the Who with filter in Places shared with the map; trips carry no names of their own (a trip planned together already lists the people sharing it), so add who came along to the visits a trip records.
 - [x] Packing list templates: save a list as a named template (beach, city, business, ski) and start a new trip's list from one. Done: ready-made templates for the basics, the beach, a city, business and skiing, and up to 20 of the traveler's own saved on the account (migration 024), from the trip's packing list.
-- [ ] Before you go: emergency number, driving side, plug types and the time difference on each destination of a trip, from a small table bundled from Wikidata (CC0).
+- [ ] Before you go: emergency number, driving side, plug types and the time difference on each destination of a trip, from a small table bundled from Wikidata (CC0). *(waiting: see Needs Input › Before you go data)*
 - [ ] Family view of a trip: a private, revocable read-only link to a trip's days and stops (no notes, no bookings), so family knows where the traveler is this week without an account.
 
 ### Comfort
