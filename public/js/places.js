@@ -8,6 +8,7 @@ import { openNewTrip } from './lazy.js';
 import { importButtons } from './import-apps.js';
 import { t, tn } from './i18n.js';
 import { openCountryList } from './country-list.js';
+import { duplicatesSection } from './place-duplicates.js';
 
 const view = { query: '', type: 'all', category: 'all', lastVisit: 'all', sort: 'continent' };
 
@@ -291,6 +292,7 @@ export function renderPlaces(container, ctx) {
             detailFilters(ctx)
         ),
         list,
+        duplicatesSection(ctx),
         bulkSection(ctx),
         dataSection(ctx)
     );

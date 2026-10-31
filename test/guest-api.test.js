@@ -109,3 +109,16 @@ test('storage that is full or broken is reported, and other versions start afres
     old.setItem('travelmapster.guest', JSON.stringify({ version: 0, markers: [{ id: 1 }] }));
     assert.deepEqual(await createGuestApi(old).getMarkers(), []);
 });
+
+test('a guest map merges two pins for one place as the API does', async () => {
+    const { createGuestApi } = await load();
+    const api = createGuestApi(memoryStorage(), () => '2026-10-26T10:00:00.000Z');
+    const wish = await api.addMarker({ ...lisbon, type: 'wishlist', notes: 'Trams', visits: [] });
+    const been = await api.addMarker({ ...lisbon, name: 'Lisboa, Portugal', tags: ['food'] });
+    await assert.rejects(api.mergeMarkers(wish.id, wish.id), { status: 400 });
+    await assert.rejects(api.mergeMarkers(wish.id, 99), { status: 404 });
+    const merged = await api.mergeMarkers(wish.id, been.id);
+    assert.deepEqual([merged.id, merged.type, merged.name, merged.notes, merged.tags, merged.visits.length, merged.travelDate],
+        [wish.id, 'visited', 'Lisbon, Portugal', 'Trams\n\nPastéis', ['food'], 1, '2024-05-01']);
+    assert.deepEqual((await api.getMarkers()).map(marker => marker.id), [wish.id]);
+});

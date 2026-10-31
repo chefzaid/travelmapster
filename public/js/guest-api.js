@@ -4,6 +4,7 @@
 // tested in Node with any Storage.
 import { lastVisitDate, sortVisits } from './visits.js';
 import { toClientMarker, toClientVisit } from './api.js';
+import { mergedDetails } from './place-merge.js';
 import { t } from './i18n.js';
 
 const KEY = 'travelmapster.guest';
@@ -137,6 +138,17 @@ export function createGuestApi(storage, now = () => new Date().toISOString()) {
         deleteMarker: id => change(data => {
             markerOf(data, id);
             data.markers = data.markers.filter(marker => marker.id !== Number(id));
+        }),
+        // As the API merges (public/js/place-merge.js): the kept place takes the other's visits.
+        mergeMarkers: (keepId, otherId) => change(data => {
+            const keep = markerOf(data, keepId);
+            const other = markerOf(data, otherId);
+            if (keep === other) throw Object.assign(new Error(t('Choose two different places to merge.')), { status: 400 });
+            Object.assign(keep, toClientMarker({ ...keep, ...mergedDetails(keep, other) }));
+            keep.visits = sortVisits([...keep.visits, ...other.visits]);
+            withDate(keep);
+            data.markers = data.markers.filter(marker => marker !== other);
+            return keep;
         }),
 
         addVisit: (markerId, visit) => change(data => {

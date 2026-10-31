@@ -4,7 +4,7 @@
 // from photos and location history, each previewed before anything is saved.
 const path = require('node:path');
 const { test, expect } = require('@playwright/test');
-const { markCity, signUp, stubThirdParties, trackErrors } = require('./helpers');
+const { addPlaces, markCity, signUp, stubThirdParties, trackErrors } = require('./helpers');
 
 test.beforeEach(({ page }) => stubThirdParties(page));
 
@@ -109,5 +109,24 @@ test('a traveler imports visits found in photos, location history and a calendar
     await dialog.getByRole('button', { name: 'Import', exact: true }).click();
     await expect(page.locator('.toast-success', { hasText: 'Imported 1 new place and 1 visit to places you had.' })).toBeVisible();
     await expect(page.locator('#places-tab .place', { hasText: 'Madrid' })).toContainText('1 visit');
+    expect(errors).toEqual([]);
+});
+
+test('two pins for one town are offered as a duplicate and merged, keeping both visits', async ({ page }) => {
+    const errors = trackErrors(page);
+    await signUp(page, `e2e_merge_${Date.now()}`);
+    const pin = (name, lat, startDate) => ({ lat, lng: -9.14, type: 'visited', name, category: 'City', visits: [{ startDate, endDate: startDate }] });
+    await addPlaces(page, [pin('Lisbon, Portugal', 38.72, '2024-05-01'), pin('Lisboa, Portugal', 38.721, '2025-03-02')]);
+    await page.click('#tab-places');
+    const duplicates = page.locator('#duplicates li');
+    await expect(duplicates).toHaveCount(1);
+    await expect(duplicates).toContainText('Lisbon, Portugal and Lisboa, Portugal');
+    await duplicates.getByRole('button', { name: 'Merge' }).click();
+    await expect(page.locator('dialog.dialog')).toContainText('takes 1 visit');
+    await page.locator('dialog.dialog').getByRole('button', { name: 'Merge' }).click();
+    await expect(page.locator('.toast-success', { hasText: 'Merged into Lisbon, Portugal.' })).toBeVisible();
+    await expect(page.locator('#duplicates')).toHaveCount(0);
+    await expect(page.locator('#places-tab .place')).toHaveCount(1);
+    await expect(page.locator('#places-tab .place')).toContainText('2 visits');
     expect(errors).toEqual([]);
 });

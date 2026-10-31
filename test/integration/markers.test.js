@@ -382,3 +382,37 @@ test('places lived in or passed through keep how the traveler was there (ADR 001
         [['Berlin, Germany', 'lived'], ['Dubai, United Arab Emirates', 'visit'], ['Rome, Italy', 'visit'], ['Doha, Qatar', 'visit']]);
     assert.doesNotMatch(JSON.stringify(shared), /DEU|homeCountry/);
 });
+
+test('two pins for one place merge into one, keeping every visit and its history', async () => {
+    const client = createClient(ctx.server);
+    await client.register('merger', 'merger password');
+    const wish = (await client.post('/api/markers', { ...sampleMarker, type: 'wishlist', travelDate: null, notes: 'Croissants', tags: ['food'], rating: null })).body;
+    const been = (await client.post('/api/markers', { ...sampleMarker, lat: 48.86, notes: 'Louvre', tags: ['museums'], rating: 4, hideFromPublic: true,
+        visits: [{ startDate: '2024-05-01', endDate: '2024-05-04' }] })).body;
+    const [visit] = been.visits;
+    assert.equal((await client.post(`/api/markers/${wish.id}/merge`, { from: wish.id })).status, 400);
+    assert.equal((await client.post(`/api/markers/${wish.id}/merge`, { from: 'two' })).status, 400);
+    assert.equal((await client.post(`/api/markers/${wish.id}/merge`, { from: 999999 })).status, 404);
+
+    // Someone else cannot merge them, or merge into them.
+    const other = createClient(ctx.server);
+    await other.register('merger_other', 'merger other password');
+    const theirs = (await other.post('/api/markers', sampleMarker)).body;
+    assert.equal((await other.post(`/api/markers/${theirs.id}/merge`, { from: been.id })).status, 404);
+    assert.equal((await other.post(`/api/markers/${wish.id}/merge`, { from: been.id })).status, 404);
+
+    const merged = await client.post(`/api/markers/${wish.id}/merge`, { from: been.id });
+    assert.equal(merged.status, 200);
+    assert.equal(merged.body.id, wish.id);
+    assert.equal(merged.body.type, 'visited', 'a place been to wins over a wish');
+    assert.equal(merged.body.notes, 'Croissants\n\nLouvre');
+    assert.deepEqual(merged.body.tags, ['food', 'museums']);
+    assert.equal(merged.body.rating, 4);
+    assert.equal(merged.body.hideFromPublic, true, 'hidden if either was');
+    assert.deepEqual(merged.body.visits.map(item => item.id), [visit.id], 'the visit moved with its id');
+    const list = (await client.get('/api/markers')).body;
+    assert.deepEqual(list.map(item => item.id), [wish.id]);
+    const changes = (await client.get('/api/ledger/changes')).body;
+    assert.ok(changes.some(change => change.visitId === visit.id && change.action === 'added'), 'its history is kept');
+    assert.ok(!changes.some(change => change.visitId === visit.id && change.action === 'removed'), 'and it was never removed');
+});

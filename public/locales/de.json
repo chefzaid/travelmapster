@@ -218,6 +218,11 @@
   "{goal} in {year}": "{goal} in {year}",
   "{goal}: {count} so far": "{goal}: bisher {count}",
   "{icon} Home: {flag} {name}": "{icon} Zuhause: {flag} {name}",
+  "{keep} and {other}": "{keep} und {other}",
+  "{keep} keeps its details and takes {count} visits and the details it lacks from {other}, which is then removed.": {
+    "one": "{keep} behält seine Angaben und übernimmt {count} Besuch und die fehlenden Angaben von {other}, das danach entfernt wird.",
+    "other": "{keep} behält seine Angaben und übernimmt {count} Besuche und die fehlenden Angaben von {other}, das danach entfernt wird."
+  },
   "{label} reached ({count} days since {since}).": {
     "one": "{label} erreicht ({count} Tag seit {since}).",
     "other": "{label} erreicht ({count} Tage seit {since})."
@@ -403,6 +408,7 @@
   "📷 Photo": "📷 Foto",
   "📷 Photos": "📷 Fotos",
   "📷 View photo": "📷 Foto ansehen",
+  "🔁 Possible duplicates": "🔁 Mögliche Doppelungen",
   "🔎 Where was I?": "🔎 Wo war ich?",
   "🔐 Sign-in security": "🔐 Anmeldesicherheit",
   "🔑 Change password": "🔑 Passwort ändern",
@@ -632,6 +638,7 @@
   "Choose the day you left, or leave it empty if you are still there.": "Wähle den Tag deiner Ausreise oder lass das Feld leer, wenn du noch dort bist.",
   "Choose the first and last day of the period.": "Wähle den ersten und letzten Tag des Zeitraums.",
   "Choose the first and last day of the planned stay.": "Wähle den ersten und letzten Tag des geplanten Aufenthalts.",
+  "Choose two different places to merge.": "Wähle zwei verschiedene Orte zum Zusammenführen.",
   "cities": {
     "one": "Stadt",
     "other": "Städte"
@@ -1113,6 +1120,9 @@
   "Melanesia": "Melanesien",
   "Member": "Mitglied",
   "Members: {SCHENGEN_MEMBERS}.": "Mitglieder: {SCHENGEN_MEMBERS}.",
+  "Merge": "Zusammenführen",
+  "Merge {other} into {keep}?": "{other} mit {keep} zusammenführen?",
+  "Merged into {name}.": "Mit {name} zusammengeführt.",
   "Micronesia": "Mikronesien",
   "Middle Africa": "Zentralafrika",
   "Midnight rule": "Mitternachtsregel",
@@ -1590,6 +1600,7 @@
   "The picture could not be made.": "Das Bild konnte nicht erstellt werden.",
   "The planned budget must be an amount from 0 to 1,000,000,000.": "Das geplante Budget muss ein Betrag von 0 bis 1.000.000.000 sein.",
   "The planned stay must end on or after the day it starts.": "Der geplante Aufenthalt muss am oder nach dem Starttag enden.",
+  "The same place saved twice, often after an import. Merging keeps every visit.": "Derselbe Ort doppelt gespeichert, oft nach einem Import. Beim Zusammenführen bleiben alle Besuche erhalten.",
   "The sample traveler is in Lisbon and has used {used} Schengen days, so {left} are left today.": "Die Beispielreisende ist in Lissabon und hat {used} Schengen-Tage genutzt, heute bleiben also {left}.",
   "The Schengen area has 29 members as of 2026, including Bulgaria and Romania since 1 January 2025:": "Der Schengen-Raum hat 2026 29 Mitglieder, darunter Bulgarien und Rumänien seit dem 1. Januar 2025:",
   "The server keeps your visits, your ledger settings and the history of visit dates, so reports can show every change. None of it is ever on your public map, and deleting your account deletes all of it.": "Der Server speichert deine Besuche, deine Tage-Konto-Einstellungen und den Verlauf der Besuchsdaten, damit Berichte jede Änderung zeigen können. Nichts davon erscheint je auf deiner öffentlichen Karte, und wenn du dein Konto löschst, wird alles gelöscht.",

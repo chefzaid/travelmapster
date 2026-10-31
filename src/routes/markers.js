@@ -96,6 +96,17 @@ function createMarkerRouter({ pool, markers, visits, metrics, orgs }) {
         return res.json(updated);
     });
 
+    // Two pins for the same place: this one takes the other's visits and missing details.
+    router.post('/:id/merge', async (req, res) => {
+        const keepId = parseMarkerId(req.params.id);
+        const otherId = parseMarkerId(req.body?.from);
+        if (!keepId || !otherId) return res.status(400).json({ error: 'Invalid marker id.' });
+        if (keepId === otherId) return res.status(400).json({ error: 'Choose two different places to merge.' });
+        const merged = await withTransaction(pool, client => markers.merge(req.user.id, keepId, otherId, client));
+        if (!merged) return res.status(404).json({ error: 'Marker not found.' });
+        return res.json(merged);
+    });
+
     router.delete('/:id', async (req, res) => {
         const markerId = parseMarkerId(req.params.id);
         if (!markerId) return res.status(400).json({ error: 'Invalid marker id.' });

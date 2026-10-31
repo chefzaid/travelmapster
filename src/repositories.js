@@ -1,6 +1,7 @@
 'use strict';
 
 const { createTripRepository } = require('./trip-repository');
+const { browserModule } = require('./browser-modules');
 
 // The legacy travel date is derived from the visits. The app no longer reads or writes
 // markers.travel_date; triggers keep it in step for the previous release until the column
@@ -231,6 +232,33 @@ function createMarkerRepository(db) {
                 );
             }
             return find(userId, markerId);
+        },
+
+        /**
+         * Merges `otherId` into `keepId` inside the caller's transaction: the kept place takes the
+         * other's visits (ids and date history unchanged) and the details it lacks, and the other
+         * is removed. Resolves to the kept place, or null when either is missing or someone else's.
+         */
+        async merge(userId, keepId, otherId, client) {
+            const { rows } = await client.query(
+                'SELECT id FROM markers WHERE id = ANY($1::bigint[]) AND user_id = $2 FOR UPDATE',
+                [[keepId, otherId], userId]
+            );
+            if (rows.length !== 2) return null;
+            const [keep, other] = [await find(userId, keepId, client), await find(userId, otherId, client)];
+            // The browser's own rules, so a guest map merges alike (public/js/place-merge.js).
+            const { mergedDetails } = await browserModule('place-merge.js');
+            const merged = mergedDetails(keep, other);
+            const details = DETAIL_COLUMNS.map(([field]) => merged[field]);
+            await client.query(
+                `UPDATE markers SET lat = $1, lng = $2, type = $3, name = $4, category = $5, photo_url = $6, notes = $7,
+                    ${DETAIL_COLUMNS.map(([, column], i) => `${column} = $${i + 10}`).join(', ')}, updated_at = now()
+                 WHERE id = $8 AND user_id = $9`,
+                [...markerValues(merged), keepId, userId, ...details]
+            );
+            await client.query('UPDATE visits SET marker_id = $1 WHERE marker_id = $2', [keepId, otherId]);
+            await client.query('DELETE FROM markers WHERE id = $1 AND user_id = $2', [otherId, userId]);
+            return find(userId, keepId, client);
         },
 
         async remove(userId, markerId) {
