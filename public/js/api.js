@@ -126,6 +126,8 @@ export const api = {
     },
     updateMarker: async (id, marker) => toClientMarker(await request('PATCH', `/markers/${Number(id)}`, placeFields(marker))),
     deleteMarker: id => request('DELETE', `/markers/${Number(id)}`),
+    // The place kept, with the other's visits and the details it lacked; the other is removed.
+    mergeMarkers: async (keepId, otherId) => toClientMarker(await request('POST', `/markers/${Number(keepId)}/merge`, { from: Number(otherId) })),
 
     addVisit: async (markerId, visit) => toClientVisit(await request('POST', `/markers/${Number(markerId)}/visits`, visit)),
     updateVisit: async (id, visit) => toClientVisit(await request('PATCH', `/visits/${Number(id)}`, visit)),

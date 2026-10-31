@@ -111,6 +111,11 @@ The reasoning and what each rule rules out are in [ADR 0017](adr/0017-product-pr
   recurring one) become visits where they go, a flight's after "to" in its title and other
   events' from their location; places in the home country are left out and every visit is
   listed to untick before saving. The file never leaves the browser.
+- **Possible duplicates** in the Places tab: the same kind of place saved twice under the same
+  name, or two town pins under 2 km apart, often after an import. Merging (after a confirmation)
+  keeps the place with more visits, moves the other's visits to it with their date history, takes
+  the details it lacks (a place been to wins over a wish, notes and tags combine, hidden stays
+  hidden) and removes the other.
 - Import and export as JSON (visits nested in each place) or CSV (one row per visit), with
   ratings, tags, emoji, wishlist plans and whether a place was lived in or a layover; import
   also reads files from before visits or tags existed, and

@@ -130,6 +130,7 @@ JSON under `/api`, described in full in [OpenAPI](api/openapi.json) and kept bac
 | `public/js/ledger.js`, `ledger-report.js`, `ledger-org.js`, `ledger-parts.js` | Ledger tab, its date history and printable evidence report, the employer rules counted on business trips, and the status chips, meters and country labels they share |
 | `public/js/ics.js` | Calendar files read in the browser: events with their days, which look like travel, and where they go (pure, unit tested); the import and its review are in `import-apps.js` |
 | `public/js/checkin.js` | "I'm here": the browser's location once, the town and country it is in, and today's visit there (the plan is `checkInPlan()` in pure `visits.js`); loaded on first use |
+| `public/js/duplicates.js`, `place-duplicates.js`, `place-merge.js` | Places saved twice and their merge: the pairs found (pure `duplicates.js`), the Places tab section, and the merge rules shared by the API (`POST /api/markers/{id}/merge`, through `src/browser-modules.js`) and guest maps (pure `place-merge.js`) |
 | `public/js/country-list.js` | The map as a list: every country with its status in a table to browse and mark, from the skip link or the Places tab |
 | `public/js/borders.js` | Land borders from the shared vertices of the map's shapes, and the countries one border away from those been to (pure, unit tested) |
 | `public/js/world-share.js` | The share of the world's land and people in the countries been to, with areas worked out on the sphere (pure, unit tested) |
