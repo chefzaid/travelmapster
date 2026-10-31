@@ -337,6 +337,7 @@
   "{verb} {name} on the demo map.": "{verb} {name} sur la carte de démo.",
   "{verb} {name}!": "{verb} {name} !",
   "{visits} to {places}, by the nearest town.": "{visits} dans {places}, d'après la ville la plus proche.",
+  "{visits} to {places}, from your calendar.": "{visits} dans {places}, depuis votre agenda.",
   "{visits}, and wishes move from your wishlist to the places you have been.": "{visits}, et les envies passent de votre liste d'envies aux lieux visités.",
   "{visits}.": "{visits}.",
   "{year} in travel": "{year} en voyage",
@@ -576,7 +577,6 @@
   "An organization needs an account.": "Une organisation nécessite un compte.",
   "An organization needs an admin: make someone else admin first, or delete it.": "Une organisation a besoin d'un admin : nommez d'abord quelqu'un d'autre admin, ou supprimez-la.",
   "An organization needs an admin: make someone else admin first.": "Une organisation a besoin d'un admin : nommez d'abord quelqu'un d'autre admin.",
-  "and": "et",
   "and {count} more": {
     "one": "et {count} de plus",
     "many": "et {count} de plus",
@@ -942,6 +942,11 @@
   "Free tool · no account": "Outil gratuit · sans compte",
   "Free, no card needed. No ads, no trackers: your travels are yours.": "Gratuit, sans carte bancaire. Sans publicité, sans traceurs : vos voyages vous appartiennent.",
   "From": "Du",
+  "From {count} events that look like travel.": {
+    "one": "D'après {count} événement qui ressemble à un voyage.",
+    "many": "D'après {count} d'événements qui ressemblent à des voyages.",
+    "other": "D'après {count} événements qui ressemblent à des voyages."
+  },
   "From {count} photos.": {
     "one": "D'après {count} photo.",
     "many": "D'après {count} photos.",
@@ -1374,6 +1379,7 @@
   "Rating": "Note",
   "Reached: {count} of {target} 🎉": "Atteint : {count} sur {target} 🎉",
   "Reading photo {number} of {total}…": "Lecture de la photo {number} sur {total}…",
+  "Reading your calendar…": "Lecture de votre agenda…",
   "Reading your location history…": "Lecture de votre historique des positions…",
   "Reading your Polarsteps trips…": "Lecture de vos voyages Polarsteps…",
   "Recently added": "Ajoutés récemment",

@@ -478,6 +478,7 @@
   "{verb} {name} on the demo map.": "{verb} {name} على الخريطة التجريبية.",
   "{verb} {name}!": "{verb} {name}!",
   "{visits} to {places}, by the nearest town.": "{visits} إلى {places}، حسب أقرب بلدة.",
+  "{visits} to {places}, from your calendar.": "{visits} إلى {places}، من تقويمك.",
   "{visits}, and wishes move from your wishlist to the places you have been.": "{visits}، وتنتقل الأمنيات من قائمة أمنياتك إلى الأماكن التي زرتها.",
   "{visits}.": "{visits}.",
   "{year} in travel": "{year} في السفر",
@@ -723,7 +724,6 @@
   "An organization needs an account.": "تتطلب المؤسسة وجود حساب.",
   "An organization needs an admin: make someone else admin first, or delete it.": "تحتاج المؤسسة إلى مسؤول: اجعل شخصًا آخر مسؤولًا أولًا، أو احذفها.",
   "An organization needs an admin: make someone else admin first.": "تحتاج المؤسسة إلى مسؤول: اجعل شخصًا آخر مسؤولًا أولًا.",
-  "and": "و",
   "and {count} more": {
     "zero": "ولا مزيد",
     "one": "وواحد آخر",
@@ -1119,6 +1119,14 @@
   "Free tool · no account": "أداة مجانية · دون حساب",
   "Free, no card needed. No ads, no trackers: your travels are yours.": "مجاني، دون الحاجة إلى بطاقة. بلا إعلانات ولا أدوات تتبع: رحلاتك ملكك.",
   "From": "من",
+  "From {count} events that look like travel.": {
+    "zero": "لا أحداث تشبه السفر.",
+    "one": "من حدث واحد يشبه السفر.",
+    "two": "من حدثين يشبهان السفر.",
+    "few": "من {count} أحداث تشبه السفر.",
+    "many": "من {count} حدثًا يشبه السفر.",
+    "other": "من {count} حدث يشبه السفر."
+  },
   "From {count} photos.": {
     "zero": "من {count} صورة.",
     "one": "من صورة واحدة.",
@@ -1584,6 +1592,7 @@
   "Rating": "التقييم",
   "Reached: {count} of {target} 🎉": "تحقق: {count} من {target} 🎉",
   "Reading photo {number} of {total}…": "جارٍ قراءة الصورة {number} من {total}…",
+  "Reading your calendar…": "جارٍ قراءة تقويمك…",
   "Reading your location history…": "جارٍ قراءة سجل مواقعك…",
   "Reading your Polarsteps trips…": "جارٍ قراءة رحلاتك في Polarsteps…",
   "Recently added": "أُضيفت مؤخرًا",

@@ -128,6 +128,7 @@ JSON under `/api`, described in full in [OpenAPI](api/openapi.json) and kept bac
 | `public/js/memories.js` | "On this day": visits that began on today's date in earlier years (pure, unit tested) |
 | `public/js/days.js`, `ledger-evidence.js`, `ledger-rules.js` | Day ledger: day rules, days per country, Schengen 90/180 and stay rules, thresholds, planned stays and alerts; the day-by-day evidence and its CSV; and checking edited rules like the API (pure, unit and property tested) |
 | `public/js/ledger.js`, `ledger-report.js`, `ledger-org.js`, `ledger-parts.js` | Ledger tab, its date history and printable evidence report, the employer rules counted on business trips, and the status chips, meters and country labels they share |
+| `public/js/ics.js` | Calendar files read in the browser: events with their days, which look like travel, and where they go (pure, unit tested); the import and its review are in `import-apps.js` |
 | `public/js/checkin.js` | "I'm here": the browser's location once, the town and country it is in, and today's visit there (the plan is `checkInPlan()` in pure `visits.js`); loaded on first use |
 | `public/js/country-list.js` | The map as a list: every country with its status in a table to browse and mark, from the skip link or the Places tab |
 | `public/js/borders.js` | Land borders from the shared vertices of the map's shapes, and the countries one border away from those been to (pure, unit tested) |

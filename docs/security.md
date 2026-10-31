@@ -94,8 +94,8 @@ a SHA-256 hash; each works once, for seven days, and is revoked by the admin or 
 - A guest map is kept only in the browser's storage and never sent, until the guest signs up and
   it moves into the account; anyone using the same browser profile can see it
   ([ADR 0026](adr/0026-guest-mode.md)).
-- Photos and location history files chosen for an import are read in the browser and never
-  uploaded; only the nearest town (or country) and the visit dates are sent, after the traveler
+- Photos, location history and calendar files chosen for an import are read in the browser and
+  never uploaded; only the nearest town (or country) and the visit dates are sent, after the traveler
   reviews them ([ADR 0025](adr/0025-imports-from-photos-and-location-history.md)).
 - "I'm here" reads the browser's location once, only when the traveler presses it and the
   browser allows it; the town is found in the bundled map data and only that town, at the map
