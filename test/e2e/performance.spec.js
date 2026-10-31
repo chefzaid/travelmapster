@@ -36,13 +36,20 @@ test('the landing page stays within its performance budget on a mid-range phone'
     const vitals = await page.evaluate(() => new Promise(resolve => {
         let lcp = 0;
         let cls = 0;
+        const shifts = [];
         new PerformanceObserver(list => {
             for (const entry of list.getEntries()) lcp = Math.max(lcp, entry.startTime);
         }).observe({ type: 'largest-contentful-paint', buffered: true });
         new PerformanceObserver(list => {
-            for (const entry of list.getEntries()) if (!entry.hadRecentInput) cls += entry.value;
+            for (const entry of list.getEntries()) {
+                if (entry.hadRecentInput) continue;
+                cls += entry.value;
+                // What moved, so a failure on a slower machine says where to look.
+                const moved = entry.sources.map(source => source.node?.id || source.node?.className || source.node?.nodeName || '?');
+                shifts.push(`${Math.round(entry.startTime)}ms ${entry.value.toFixed(3)} ${moved.join(', ')}`);
+            }
         }).observe({ type: 'layout-shift', buffered: true });
-        setTimeout(() => resolve({ lcp, cls }), 500);
+        setTimeout(() => resolve({ lcp, cls, shifts }), 500);
     }));
 
     const measured = {
@@ -52,6 +59,7 @@ test('the landing page stays within its performance budget on a mid-range phone'
         cls: Math.round(vitals.cls * 1000) / 1000
     };
     console.log(`Performance on a mid-range phone: ${JSON.stringify(measured)}; budget ${JSON.stringify(budget)}`);
+    console.log(`Layout shifts: ${vitals.shifts.join('; ') || 'none'}`);
     expect(measured.pageWeightKB, 'page weight in KB').toBeLessThanOrEqual(budget.pageWeightKB);
     expect(measured.mapDataKB, 'map data in KB').toBeLessThanOrEqual(budget.mapDataKB);
     expect(measured.lcpMs, 'Largest Contentful Paint in ms').toBeLessThanOrEqual(budget.lcpMs);
