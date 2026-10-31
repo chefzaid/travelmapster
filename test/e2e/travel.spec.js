@@ -142,6 +142,13 @@ test('a traveler records several visits to the same city', async ({ page }) => {
     // Portugal was new in 2019 only, so no streak runs today and none spans two years.
     await expect(travel.locator('.stat', { hasText: 'years in a row with a new country' })).toContainText('🔥 0');
     await expect(travel).not.toContainText('Best streaks');
+    // An American browser counts in miles until Settings say kilometers.
+    await expect(travel.locator('.stat', { hasText: 'between your places' })).toContainText(/≈ [\d,]+ mi/);
+    await page.click('#account-btn');
+    await page.click('#settings-btn');
+    await page.locator('#dialog-distanceUnit').selectOption('km');
+    await page.getByRole('button', { name: 'Save settings' }).click();
+    await expect(travel.locator('.stat', { hasText: 'between your places' })).toContainText(/≈ [\d,]+ km/);
     await expect(page.locator('#passport-tab')).toContainText('Countries by year');
 
     // A goal already met is celebrated at once; it can be removed again.
