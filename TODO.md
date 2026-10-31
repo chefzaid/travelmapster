@@ -241,5 +241,5 @@ Small, everyday things travelers ask for, built on data the app already has or a
 ### Comfort
 
 - [ ] Theme in Settings: follow the system, light or dark, for people whose system theme does not suit the map.
-- [ ] Kilometers or miles in Settings for distances on the passport and trips, following the language at first.
+- [x] Kilometers or miles in Settings for distances on the passport and trips, following the language at first. Done: "Distances in" in Settings, kept in the browser; trips show no distances today, so the passport's is the one that follows it.
 - [ ] Keyboard shortcuts: `?` lists them (`/` search, Escape and the timeline's keys today), with a few more: `T` timeline, `D` days on the map, `[` to fold the panel.

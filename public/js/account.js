@@ -9,6 +9,7 @@ import { PALETTES, paletteId } from './palettes.js';
 import { LOCALES, locale, rememberLocale, t, tParts, tn } from './i18n.js';
 import { showPanel } from './panel.js';
 import { AUTH_HASHES } from './home.js';
+import { DISTANCE_UNITS, distanceUnit, rememberDistanceUnit } from './units.js';
 
 // ---------------------------------------------------------------- landing
 
@@ -192,6 +193,9 @@ async function openSettings(ctx) {
         fields: [
             { name: 'locale', label: t('Language'), type: 'select', value: locale(),
                 options: Object.entries(LOCALES).map(([value, { name }]) => ({ value, label: name })) },
+            { name: 'distanceUnit', label: t('Distances in'), type: 'select', value: distanceUnit(),
+                options: Object.entries(DISTANCE_UNITS).map(([value, { label }]) => ({ value, label })),
+                hint: t('Kept in this browser, like the language.') },
             { name: 'homeCountry', label: t('Home country'), type: 'select', value: user.homeCountry || '',
                 options: [{ value: '', label: t('No home country') }, ...countries.map(country => ({ value: country.id, label: `${country.flag} ${country.name}` }))],
                 hint: t('Shown with its own color and counted as a country you have been to and lived in. It is never shown on your public map.') },
@@ -218,6 +222,13 @@ async function openSettings(ctx) {
     if (!user.guest) {
         if ((values.publicJourneys === 'on') !== Boolean(user.publicJourneys)) changes.publicJourneys = values.publicJourneys === 'on';
         if ((values.publicIndexing === 'on') !== Boolean(user.publicIndexing)) changes.publicIndexing = values.publicIndexing === 'on';
+    }
+    if (values.distanceUnit !== distanceUnit()) {
+        rememberDistanceUnit(values.distanceUnit);
+        if (!Object.keys(changes).length) {
+            ctx.renderActiveTab();
+            toast(t('Settings saved.'), { tone: 'success' });
+        }
     }
     if (Object.keys(changes).length) await ctx.saveSettings(changes, t('Settings saved.'));
     // A new language redraws the whole page in it (ADR 0031).

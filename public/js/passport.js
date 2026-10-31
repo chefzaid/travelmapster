@@ -8,6 +8,7 @@ import { goalsSection } from './passport-goals.js';
 import { shareCardsSection, stampedCountries } from './passport-share.js';
 import { flagLine } from './share-cards.js';
 import { countdownLabel, upcomingTrip } from './trip-countdown.js';
+import { formatDistance } from './units.js';
 import { friendsSection } from './friends.js';
 import { EARTH_CIRCUMFERENCE_KM, countriesByYear, daysAwayByYear, distanceTraveled, longestTrip, yearStreak } from './travel-stats.js';
 import { formatList, formatNumber, t, tn } from './i18n.js';
@@ -175,7 +176,7 @@ function travelSections(ctx) {
             h('div', { class: 'stat-grid' },
                 statTile(away.find(row => row.year === today.slice(0, 4))?.count || 0, home ? t('days abroad this year') : t('days recorded this year')),
                 trip ? statTile(trip.days, tn(trip.days, 'day, longest trip', 'days, longest trip')) : null,
-                statTile(`≈ ${formatNumber(km)} km`, t('between your places')),
+                statTile(`≈ ${formatDistance(km)}`, t('between your places')),
                 newStreak.best.length ? statTile(`🔥 ${formatNumber(newStreak.current)}`, tn(newStreak.current, 'year in a row with a new country', 'years in a row with a new country')) : null,
                 awayStreak?.best.length ? statTile(`🧳 ${formatNumber(awayStreak.current)}`, tn(awayStreak.current, 'year in a row abroad', 'years in a row abroad')) : null
             ),
