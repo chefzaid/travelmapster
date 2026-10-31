@@ -1785,6 +1785,94 @@
         ]
       }
     },
+    "/api/security/sessions": {
+      "delete": {
+        "summary": "Sign out every other device",
+        "tags": [
+          "Account"
+        ],
+        "responses": {
+          "204": {
+            "description": "Signed out everywhere else"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/CsrfRejected"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "security": [
+          {
+            "session": [],
+            "csrf": []
+          }
+        ]
+      }
+    },
+    "/api/security/sessions/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "The session's id from SessionInfo.",
+          "schema": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{24}$"
+          }
+        }
+      ],
+      "delete": {
+        "summary": "Sign out one other device",
+        "tags": [
+          "Account"
+        ],
+        "responses": {
+          "204": {
+            "description": "Signed out"
+          },
+          "400": {
+            "description": "Invalid id, or this device (sign out with logout)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not one of the caller's sessions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/CsrfRejected"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "security": [
+          {
+            "session": [],
+            "csrf": []
+          }
+        ]
+      }
+    },
     "/api/security/passkeys/options": {
       "post": {
         "summary": "Options to create a passkey (discoverable, user verification required)",
@@ -5232,6 +5320,51 @@
           }
         }
       },
+      "SessionInfo": {
+        "type": "object",
+        "description": "A device signed in: the browser and system read from its User-Agent when it signed in (null when unknown or before this was recorded), named by a hash of the session id.",
+        "required": [
+          "id",
+          "browser",
+          "os",
+          "signedInAt",
+          "lastSeenAt",
+          "current"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{24}$"
+          },
+          "browser": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "os": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "signedInAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "lastSeenAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "current": {
+            "type": "boolean",
+            "description": "The session making this request."
+          }
+        }
+      },
       "SecurityStatus": {
         "type": "object",
         "properties": {
@@ -5251,6 +5384,13 @@
                 "type": "integer"
               }
             }
+          },
+          "sessions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SessionInfo"
+            },
+            "description": "Open sessions, the most recently used first."
           }
         }
       },

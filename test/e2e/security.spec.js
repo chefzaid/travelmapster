@@ -3,7 +3,7 @@
 // Sign-in security (ADR 0027): a passkey made with Chromium's virtual authenticator, and
 // two-step sign-in with codes computed like an authenticator app's.
 const { test, expect } = require('@playwright/test');
-const { stubThirdParties, trackErrors } = require('./helpers');
+const { signUp, stubThirdParties, trackErrors } = require('./helpers');
 const totp = require('../../src/totp');
 
 test.beforeEach(({ page }) => stubThirdParties(page));
@@ -72,5 +72,35 @@ test('a traveler adds a passkey and two-step sign-in, then signs in with each', 
     await page.getByRole('button', { name: '🔑 Log in with a passkey' }).click();
     await expect(page.locator('#main-view')).toBeVisible();
     await expect(page.locator('#account-name')).toHaveText(username);
+    expect(errors).toEqual([]);
+});
+
+test('a traveler sees the devices signed in and signs another one out', async ({ page, browser }) => {
+    const errors = trackErrors(page);
+    const username = `e2e_devices_${Date.now()}`;
+    await signUp(page, username);
+    // The same account on a phone.
+    const phone = await browser.newContext({ userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Mobile Safari/537.36' });
+    const phonePage = await phone.newPage();
+    await stubThirdParties(phonePage);
+    await phonePage.goto('/#log-in');
+    await expect(phonePage.locator('#app[data-map="ready"] #welcome-view')).toBeVisible();
+    await phonePage.fill('#auth-username', username);
+    await phonePage.fill('#auth-password', 'end to end password');
+    await phonePage.click('#auth-submit');
+    await expect(phonePage.locator('#main-view')).toBeVisible({ timeout: 15_000 });
+
+    await page.click('#account-btn');
+    await page.click('#security-btn');
+    const devices = page.locator('#sessions li');
+    await expect(devices).toHaveCount(2);
+    await expect(devices.filter({ hasText: 'This device' })).toHaveCount(1);
+    await expect(devices.filter({ hasText: 'Chrome on Android' })).toHaveCount(1);
+    await page.getByRole('button', { name: 'Sign out Chrome on Android' }).click();
+    await expect(page.locator('.toast', { hasText: 'Signed out Chrome on Android.' })).toBeVisible();
+    await expect(devices).toHaveCount(1);
+    await phonePage.reload();
+    await expect(phonePage.locator('#app[data-map="ready"] #welcome-view')).toBeVisible();
+    await phone.close();
     expect(errors).toEqual([]);
 });

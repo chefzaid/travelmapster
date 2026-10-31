@@ -314,7 +314,9 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
 - **Sign-in security** in the account menu ([ADR 0027](adr/0027-passkeys-and-two-step-sign-in.md)):
   passkeys, to log in with a fingerprint, face or screen lock instead of the password (up to 10,
   named, removable), and two-step sign-in, where a password sign-in also asks for a code from an
-  authenticator app, set up from a QR code, with ten single-use recovery codes.
+  authenticator app, set up from a QR code, with ten single-use recovery codes. The devices
+  signed in are listed with their browser and system, when they signed in and were last used,
+  and any other one can be signed out, or all of them at once.
 - **Download all my data** in the account menu: one ZIP archive with everything the account
   holds (`account.json`: profile and settings, places and visits, trips, ledger settings and the
   whole date history) and the places as CSV, GeoJSON and KML, with a README
