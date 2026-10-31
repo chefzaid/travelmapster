@@ -15,6 +15,8 @@ import { formatList, joinList, t, tn } from './i18n.js';
 import { whereSection } from './ledger-where.js';
 import { healthSection } from './ledger-health.js';
 import { exemptSection } from './ledger-exempt.js';
+import { pickTemplate } from './ledger-templates.js';
+import { templateDraft } from './rule-templates.js';
 import { travelHistorySection } from './ledger-history.js';
 
 const view = { entry: '', period: '', showAllStays: false };
@@ -218,9 +220,10 @@ function countryNames(ctx, ids) {
     return joinList(ids.map(id => countryName(ctx, id)));
 }
 
-export async function ruleDialog(ctx, kind, rule) {
+export async function ruleDialog(ctx, kind, rule, template = null) {
     const stay = kind === 'stay';
-    let draft = rule ? { ...rule, countries: countryNames(ctx, rule.countries) } : {
+    const start = rule || (template && templateDraft(template));
+    let draft = start ? { ...start, countries: countryNames(ctx, start.countries) } : {
         name: '', countries: '', maxDays: stay ? 90 : 183, windowDays: stay ? 180 : 365,
         warnDays: stay ? 10 : 30, dayRule: 'presence', period: 'year', yearStart: '01-01'
     };
@@ -276,12 +279,14 @@ function ruleActions(ctx, rule) {
     );
 }
 
-function addRuleButton(ctx, kind, label) {
+function addRuleButton(ctx, kind, label, fromTemplate = false) {
     return h('button', {
         type: 'button',
         class: 'btn btn-sm btn-ghost',
         onclick: async () => {
-            const rule = await ruleDialog(ctx, kind);
+            const template = fromTemplate ? await pickTemplate(kind) : null;
+            if (fromTemplate && !template) return;
+            const rule = await ruleDialog(ctx, kind, null, template);
             if (rule && await save(ctx, { rules: [...ctx.state.ledger.settings.rules, rule] })) toast(t('Added {name}.', { name: rule.name }), { tone: 'success' });
         }
     }, label);
@@ -302,7 +307,8 @@ function staysSection(ctx, overview) {
             ),
             ruleActions(ctx, item.rule)
         ))) : h('p', { class: 'muted small' }, t('Add your own rule, such as 90 days in any 180 for a visa, or 30 in any 60 for a country group.')),
-        addRuleButton(ctx, 'stay', t('＋ Add a stay rule'))
+        addRuleButton(ctx, 'stay', t('＋ Add a stay rule')),
+        addRuleButton(ctx, 'stay', t('📚 From a template'), true)
     );
 }
 
@@ -341,7 +347,8 @@ function thresholdsSection(ctx, overview) {
             ))
         ),
         builtIn.length || custom.length ? null : h('p', { class: 'muted small' }, t('No days recorded in {year} yet.', { year })),
-        addRuleButton(ctx, 'threshold', t('＋ Add a threshold'))
+        addRuleButton(ctx, 'threshold', t('＋ Add a threshold')),
+        addRuleButton(ctx, 'threshold', t('📚 From a template'), true)
     );
 }
 

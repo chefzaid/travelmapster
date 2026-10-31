@@ -87,6 +87,19 @@ test('a traveler counts Schengen days, tries a plan, gets an alert and prints ev
     await expect(ledger.locator('.ledger-alerts')).toContainText('Portugal test reached');
     await expect(page.locator('#ledger-alert-count')).toBeVisible();
 
+    // A ready-made threshold with its source fills in the dialog, to check and save.
+    await ledger.locator('section', { has: page.locator('#thresholds-title') }).getByRole('button', { name: '📚 From a template' }).click();
+    await expect(page.locator('dialog.dialog .template-list')).toContainText('UK residence test: 183 days');
+    await expect(page.locator('dialog.dialog')).toContainText('not legal or tax advice');
+    await page.locator('#dialog-template').selectOption('uk-srt-183');
+    await page.getByRole('button', { name: 'Use it' }).click();
+    await expect(page.locator('#dialog-name')).toHaveValue('UK residence test: 183 days');
+    await expect(page.locator('#dialog-countries')).toHaveValue('United Kingdom');
+    await expect(page.locator('#dialog-yearStart')).toHaveValue('04-06');
+    await page.getByRole('button', { name: 'Add rule' }).click();
+    await expect(page.locator('.toast', { hasText: 'Added UK residence test: 183 days.' })).toBeVisible();
+    await ledger.getByRole('button', { name: 'Remove UK residence test: 183 days' }).click();
+
     await ledger.getByLabel(/Midnight rule/).check();
     await expect(ledger.getByLabel(/Midnight rule/)).toBeChecked();
 

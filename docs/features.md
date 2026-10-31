@@ -156,6 +156,11 @@ counting rules are in [ADR 0010](adr/0010-day-ledger.md).
 - **Tax residency**: 183 days in the calendar year for each country, plus your own thresholds over
   a year starting on any day (such as the UK tax year from 6 April) or a rolling window. Each one
   warns ahead of time, including when a stay still going on would reach it.
+- **Rule templates**: ready-made rules to start from, each with what it means and its official
+  source: Türkiye 90/180, the UK Statutory Residence Test's 16, 46 and 183 days (tax year from
+  6 April), Australia's 183 days (income year from 1 July), India's 182 days (financial year from
+  1 April), Canada's 183 days, New Zealand's 183 days in any 12 months, and the 183 days in any
+  12 months of many tax treaties. A template only fills in the rule dialog, to check and save.
 - **Plan ahead**: try planned stays against every rule and threshold they touch before you go,
   typed in or taken from a dated trip.
 - **Days that do not count**: periods under a residence permit or long-stay visa, with their

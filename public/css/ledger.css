@@ -18,6 +18,10 @@
 .country-table thead th { position: sticky; top: 0; background: var(--paper-2); }
 .country-table select { width: 100%; min-width: 9em; padding: 4px 8px; }
 
+/* Rule templates (js/ledger-templates.js): what each is, with its source. */
+.template-list { display: grid; gap: 6px; margin: 0 0 10px; padding-inline-start: 1.1em; font-size: 0.9rem; }
+.template-list small { color: var(--muted); }
+
 .dialog::backdrop { background: rgba(31, 59, 87, 0.45); backdrop-filter: blur(2px); }
 
 .dialog-body { padding: 22px; }
