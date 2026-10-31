@@ -1,11 +1,13 @@
 // Importing from other travel apps, with a preview: a Polarsteps data export (its ZIP, or the
 // trip.json files in it), a pasted list of countries from Been, Visited and other atlases, and
-// visits found in photos' metadata or a phone's location history. The places are read in
-// imports.js and auto-import.js; nothing is saved until the traveler confirms, and photos and
-// location history never leave the browser: only towns and dates are sent.
+// visits found in photos' metadata, a phone's location history or a calendar file. The places
+// are read in imports.js, auto-import.js and ics.js; nothing is saved until the traveler
+// confirms, and photos, location history and calendars never leave the browser: only places
+// and dates are sent.
 import { h, toast, formDialog, formatDate } from './ui.js';
 import { placeKey } from './io.js';
-import { joinList, t, tn } from './i18n.js';
+import { statusFields } from './status.js';
+import { formatList, joinList, t, tn } from './i18n.js';
 
 // The readers load when an import starts, so the first page stays light.
 const readers = {
@@ -13,6 +15,8 @@ const readers = {
     sightings: () => import('./auto-import.js'),
     photos: () => import('./exif.js'),
     towns: () => import('./towns.js'),
+    calendar: () => import('./ics.js'),
+    trips: () => import('./trip-visits.js'),
     zip: () => import('./zip-read.js')
 };
 
@@ -77,7 +81,7 @@ async function importPlaces(ctx, picked, status) {
             places || !visits ? tn(places, '{count} new place', '{count} new places') : '',
             visits ? tn(visits, '{count} visit to places you had', '{count} visits to places you had') : ''
         ].filter(Boolean);
-        const message = t('Imported {what}.', { what: parts.join(` ${t('and')} `) });
+        const message = t('Imported {what}.', { what: formatList(parts) });
         status.textContent = message;
         toast(message, { tone: 'success' });
     } catch (error) {
@@ -119,7 +123,7 @@ const stayLabel = ({ startDate, endDate }) => (endDate && endDate !== startDate
  * Shows every visit found, by place, all ticked; saves the places with their ticked visits.
  * Found automatically, each visit is the traveler's to confirm.
  */
-async function reviewVisits(ctx, found, status, note) {
+async function reviewVisits(ctx, found, status, note, how = (visits, places) => t('{visits} to {places}, by the nearest town.', { visits, places })) {
     if (!found.length) {
         status.textContent = t('No places found. {note}', { note });
         return;
@@ -129,7 +133,7 @@ async function reviewVisits(ctx, found, status, note) {
     const values = await formDialog({
         title: t('Import these visits?'),
         message: [
-            t('{visits} to {places}, by the nearest town.', { visits: tn(visits, '{count} visit', '{count} visits'), places: tn(found.length, '{count} place', '{count} places') }),
+            how(tn(visits, '{count} visit', '{count} visits'), tn(found.length, '{count} place', '{count} places')),
             note, t('Untick any you do not want; places already on your map only get the visits they lack.')
         ].filter(Boolean).join(' '),
         submitLabel: t('Import'),
@@ -248,6 +252,29 @@ async function importCountryList(ctx, status) {
     await previewAndImport(ctx, places, status, unknown.length ? t('Not recognized: {names}.', { names: `${joinList(unknown.slice(0, 10))}${unknown.length > 10 ? '…' : ''}` }) : '');
 }
 
+// Calendar files: the events that look like travel, at the place each goes to. Places in the
+// home country are left out; every visit is reviewed before it is saved.
+async function importCalendar(ctx, files, status) {
+    try {
+        status.textContent = t('Reading your calendar…');
+        const [{ parseCalendar, looksLikeTravel, eventDestinations }, { destinationPlace, savedOrNew }] = await Promise.all([readers.calendar(), readers.trips()]);
+        const events = (await Promise.all(files.map(file => file.text()))).flatMap(parseCalendar).filter(looksLikeTravel);
+        const places = [];
+        for (const event of events) {
+            const where = eventDestinations(event).map(text => destinationPlace(ctx, text)).find(Boolean);
+            if (!where || where.countryId === ctx.state.stats.homeId) continue;
+            const { place } = savedOrNew(ctx, where);
+            const visit = { startDate: event.startDate, endDate: event.endDate, notes: event.summary.slice(0, 200), photoUrl: '', ongoing: false };
+            places.push({ ...place, ...statusFields('visited'), notes: '', photoUrl: '', visits: [visit] });
+        }
+        await reviewVisits(ctx, mergeByName(places), status,
+            tn(events.length, 'From {count} event that looks like travel.', 'From {count} events that look like travel.'),
+            (visits, count) => t('{visits} to {places}, from your calendar.', { visits, places: count }));
+    } catch (error) {
+        status.textContent = error.message || t('That file could not be read.');
+    }
+}
+
 // A button that opens the file picker and hands the chosen files to `read`.
 function fileButton(id, label, accept, read) {
     return [
@@ -268,6 +295,7 @@ export function importButtons(ctx, status) {
         ...fileButton('polarsteps-file', '⬆️ Polarsteps', '.zip,.json,application/zip,application/json', files => importPolarsteps(ctx, files, status)),
         h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => importCountryList(ctx, status) }, t('📋 Paste countries')),
         ...fileButton('photos-file', t('📷 Photos'), 'image/jpeg,image/heic,image/heif,.jpg,.jpeg,.heic,.heif', files => importPhotos(ctx, files, status)),
-        ...fileButton('history-file', t('🧭 Location history'), '.zip,.json,application/zip,application/json', files => importLocationHistory(ctx, files, status))
+        ...fileButton('history-file', t('🧭 Location history'), '.zip,.json,application/zip,application/json', files => importLocationHistory(ctx, files, status)),
+        ...fileButton('calendar-file', t('📅 Calendar'), '.ics,text/calendar', files => importCalendar(ctx, files, status))
     ];
 }

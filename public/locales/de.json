@@ -290,6 +290,7 @@
   "{verb} {name} on the demo map.": "{name} auf der Demokarte: {verb}.",
   "{verb} {name}!": "{verb} {name}!",
   "{visits} to {places}, by the nearest town.": "{visits} an {places}, nach nächstgelegenem Ort.",
+  "{visits} to {places}, from your calendar.": "{visits} an {places}, aus deinem Kalender.",
   "{visits}, and wishes move from your wishlist to the places you have been.": "{visits}, und Wünsche wandern von deiner Wunschliste zu den besuchten Orten.",
   "{visits}.": "{visits}.",
   "{year} in travel": "{year} unterwegs",
@@ -527,7 +528,6 @@
   "An organization needs an account.": "Eine Organisation braucht ein Konto.",
   "An organization needs an admin: make someone else admin first, or delete it.": "Eine Organisation braucht einen Admin: Mach zuerst jemand anderen zum Admin oder lösche sie.",
   "An organization needs an admin: make someone else admin first.": "Eine Organisation braucht einen Admin: Mach zuerst jemand anderen zum Admin.",
-  "and": "und",
   "and {count} more": {
     "one": "und {count} weiteres",
     "other": "und {count} weitere"
@@ -883,6 +883,10 @@
   "Free tool · no account": "Kostenloses Tool · kein Konto",
   "Free, no card needed. No ads, no trackers: your travels are yours.": "Kostenlos, keine Karte nötig. Keine Werbung, keine Tracker: Deine Reisen gehören dir.",
   "From": "Von",
+  "From {count} events that look like travel.": {
+    "one": "Aus {count} Termin, der nach Reise aussieht.",
+    "other": "Aus {count} Terminen, die nach Reisen aussehen."
+  },
   "From {count} photos.": {
     "one": "Aus {count} Foto.",
     "other": "Aus {count} Fotos."
@@ -1304,6 +1308,7 @@
   "Rating": "Bewertung",
   "Reached: {count} of {target} 🎉": "Erreicht: {count} von {target} 🎉",
   "Reading photo {number} of {total}…": "Lese Foto {number} von {total}…",
+  "Reading your calendar…": "Dein Kalender wird gelesen…",
   "Reading your location history…": "Lese deinen Standortverlauf…",
   "Reading your Polarsteps trips…": "Lese deine Polarsteps-Reisen…",
   "Recently added": "Kürzlich hinzugefügt",

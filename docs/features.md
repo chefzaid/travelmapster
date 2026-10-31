@@ -106,6 +106,11 @@ The reasoning and what each rule rules out are in [ADR 0017](adr/0017-product-pr
   each photo was taken, or each stay in the history, reduces it to the nearest town and turns
   days into visits; every visit is listed by place to untick before saving. The files never
   leave the browser ([ADR 0025](adr/0025-imports-from-photos-and-location-history.md)).
+- **Import from a calendar file** (`.ics`, exported from Google, Apple or Outlook calendars):
+  the events that look like travel (all-day or several days, or a flight or a train, never a
+  recurring one) become visits where they go, a flight's after "to" in its title and other
+  events' from their location; places in the home country are left out and every visit is
+  listed to untick before saving. The file never leaves the browser.
 - Import and export as JSON (visits nested in each place) or CSV (one row per visit), with
   ratings, tags, emoji, wishlist plans and whether a place was lived in or a layover; import
   also reads files from before visits or tags existed, and

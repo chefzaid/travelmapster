@@ -56,7 +56,7 @@ test('a traveler imports countries from a list and trips from a Polarsteps expor
     expect(errors).toEqual([]);
 });
 
-test('a traveler imports visits found in photos and location history, reviewing each visit', async ({ page }) => {
+test('a traveler imports visits found in photos, location history and a calendar, reviewing each visit', async ({ page }) => {
     const errors = trackErrors(page);
     const { jpeg } = require('../fixtures/photos');
     await signUp(page, `e2e_photos_${Date.now()}`);
@@ -93,5 +93,21 @@ test('a traveler imports visits found in photos and location history, reviewing 
     await dialog.getByRole('button', { name: 'Import', exact: true }).click();
     await expect(page.locator('.toast-success', { hasText: 'Imported 1 new place.' })).toBeVisible();
     await expect(page.locator('#places-tab .place', { hasText: 'Barcelona' })).toContainText('1 visit');
+
+    // A calendar file: a weekend and a flight are travel; a meeting and a birthday are not.
+    const calendar = ['BEGIN:VCALENDAR',
+        'BEGIN:VEVENT', 'SUMMARY:Lisbon weekend', 'DTSTART;VALUE=DATE:20240920', 'DTEND;VALUE=DATE:20240923', 'LOCATION:Lisbon\\, Portugal', 'END:VEVENT',
+        'BEGIN:VEVENT', 'SUMMARY:Flight to Madrid', 'DTSTART:20240923T170000Z', 'DTEND:20240923T190000Z', 'LOCATION:Lisbon Airport', 'END:VEVENT',
+        'BEGIN:VEVENT', 'SUMMARY:Team meeting', 'DTSTART:20240924T090000Z', 'DTEND:20240924T100000Z', 'LOCATION:Room 4B', 'END:VEVENT',
+        'BEGIN:VEVENT', 'SUMMARY:Birthday', 'DTSTART;VALUE=DATE:20240612', 'RRULE:FREQ=YEARLY', 'END:VEVENT',
+        'END:VCALENDAR'].join('\r\n');
+    await page.setInputFiles('#calendar-file', { name: 'trips.ics', mimeType: 'text/calendar', buffer: Buffer.from(calendar) });
+    await expect(dialog).toContainText('2 visits to 2 places, from your calendar.');
+    await expect(dialog).toContainText('From 2 events that look like travel.');
+    await expect(dialog.locator('legend', { hasText: 'Lisbon, Portugal (on your map)' })).toBeVisible();
+    await expect(dialog.locator('legend', { hasText: 'Madrid, Spain' })).toBeVisible();
+    await dialog.getByRole('button', { name: 'Import', exact: true }).click();
+    await expect(page.locator('.toast-success', { hasText: 'Imported 1 new place and 1 visit to places you had.' })).toBeVisible();
+    await expect(page.locator('#places-tab .place', { hasText: 'Madrid' })).toContainText('1 visit');
     expect(errors).toEqual([]);
 });

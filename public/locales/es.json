@@ -337,6 +337,7 @@
   "{verb} {name} on the demo map.": "{verb} {name} (mapa de demostración).",
   "{verb} {name}!": "¡{verb} {name}!",
   "{visits} to {places}, by the nearest town.": "{visits} en {places}, según la población más cercana.",
+  "{visits} to {places}, from your calendar.": "{visits} a {places}, de tu calendario.",
   "{visits}, and wishes move from your wishlist to the places you have been.": "{visits}, y los deseos pasan de tu lista de deseos a los lugares en los que has estado.",
   "{visits}.": "{visits}.",
   "{year} in travel": "{year} de viajes",
@@ -576,7 +577,6 @@
   "An organization needs an account.": "Una organización necesita una cuenta.",
   "An organization needs an admin: make someone else admin first, or delete it.": "Una organización necesita un administrador: nombra antes a otra persona administrador o elimínala.",
   "An organization needs an admin: make someone else admin first.": "Una organización necesita un administrador: nombra antes a otra persona administrador.",
-  "and": "y",
   "and {count} more": {
     "one": "y {count} más",
     "many": "y {count} más",
@@ -942,6 +942,11 @@
   "Free tool · no account": "Herramienta gratuita · sin cuenta",
   "Free, no card needed. No ads, no trackers: your travels are yours.": "Gratis, sin tarjeta. Sin anuncios ni rastreadores: tus viajes son tuyos.",
   "From": "Desde",
+  "From {count} events that look like travel.": {
+    "one": "De {count} evento que parece un viaje.",
+    "many": "De {count} de eventos que parecen viajes.",
+    "other": "De {count} eventos que parecen viajes."
+  },
   "From {count} photos.": {
     "one": "De {count} foto.",
     "many": "De {count} fotos.",
@@ -1374,6 +1379,7 @@
   "Rating": "Valoración",
   "Reached: {count} of {target} 🎉": "Conseguido: {count} de {target} 🎉",
   "Reading photo {number} of {total}…": "Leyendo la foto {number} de {total}…",
+  "Reading your calendar…": "Leyendo tu calendario…",
   "Reading your location history…": "Leyendo tu historial de ubicaciones…",
   "Reading your Polarsteps trips…": "Leyendo tus viajes de Polarsteps…",
   "Recently added": "Añadidos recientemente",
