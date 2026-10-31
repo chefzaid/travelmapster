@@ -309,7 +309,8 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   or Myanmar, kilometers elsewhere.
 - Responsive layout: on wider screens the side panel folds away with the tab on its edge (and
   stays folded in this browser) so the whole map can be seen and clicked, and opens again when
-  a tab, the sign-in form or the skip link needs it; phones have a bottom sheet instead; `/` to search, screen-reader labels, and light and dark themes that follow the system.
+  a tab, the sign-in form or the skip link needs it; phones have a bottom sheet instead; `/` to search, screen-reader labels, and light and dark themes that follow the system, or the choice made in
+  Settings (kept in this browser).
 
 ## Organizations
 
