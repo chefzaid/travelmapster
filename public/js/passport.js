@@ -12,7 +12,7 @@ import { formatDistance } from './units.js';
 import { worldShare } from './world-share.js';
 import { friendsSection } from './friends.js';
 import { EARTH_CIRCUMFERENCE_KM, countriesByYear, daysAwayByYear, distanceTraveled, longestTrip, yearStreak } from './travel-stats.js';
-import { formatList, formatNumber, t, tn } from './i18n.js';
+import { formatList, formatNumber, joinList, t, tn } from './i18n.js';
 import { regionName } from './geo.js';
 
 function statTile(value, label, tone = '') {
@@ -197,7 +197,7 @@ function travelSections(ctx) {
             home ? '' : ` ${t('Set a home country in ⚙️ Settings to count days abroad.')}`)
         ),
         yearChart(home ? t('Days abroad by year') : t('Days recorded by year'), away, row => `${row.year}: ${awayDays(row.count)}`),
-        yearChart(t('Countries by year'), perYear, row => `${row.year}: ${tn(row.count, '{count} country', '{count} countries')}, ${tn(row.newCount, '{count} new', '{count} new')}`)
+        yearChart(t('Countries by year'), perYear, row => `${row.year}: ${joinList([tn(row.count, '{count} country', '{count} countries'), tn(row.newCount, '{count} new', '{count} new')])}`)
     ];
 }
 

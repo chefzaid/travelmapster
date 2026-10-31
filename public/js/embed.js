@@ -5,7 +5,7 @@ import { $ } from './ui.js';
 import { computeStats } from './geo.js';
 import { createTravelMap } from './map.js';
 import { loadMapData } from './map-data.js';
-import { loadLocale, preferredLocale, translateDom, t, tn } from './i18n.js';
+import { joinList, loadLocale, preferredLocale, translateDom, t, tn } from './i18n.js';
 
 const ignore = () => {};
 
@@ -29,7 +29,7 @@ async function init() {
     const title = t('{username}\'s travel map', { username: data.username });
     $('#embed-title').textContent = title;
     document.title = t('{title} · TravelMapster', { title });
-    $('#embed-stats').textContent = `${tn(stats.visitedCountries, '{count} country', '{count} countries')}, ${tn(stats.visitedCities, '{count} city', '{count} cities')}`;
+    $('#embed-stats').textContent = joinList([tn(stats.visitedCountries, '{count} country', '{count} countries'), tn(stats.visitedCities, '{count} city', '{count} cities')]);
     $('#embed-link').href = `/?u=${encodeURIComponent(data.username)}`;
 }
 

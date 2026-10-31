@@ -31,6 +31,12 @@
   The feed needs no session, as calendar apps fetch it, so it holds only trip titles, routes and
   days and planned stays' countries and days, never day plans, notes or places; it is
   rate-limited per address, `noindex`, and cached privately for 15 minutes (`src/calendar-feed.js`).
+- **Family view**: a trip's family link works the same way (32 random bytes, only the hash
+  stored, shown once, ended by a new link, turning it off or deleting the trip). Only the
+  owner manages it, and anyone else, an editor included, gets 404 as for a trip that does not
+  exist. The view needs no session, so it carries only the trip's title, stops, dates and the
+  owner's username; it is rate-limited per address, `noindex`, and its page sends no referrer,
+  so the token never leaks to a link it holds (`src/family-links.js`).
 - **Security activity**: sign-ins and changes to the password, passkeys and two-step sign-in are
   recorded with the method and the device's browser and system names (no address or
   User-Agent), the latest 50 per account (migration 022); Sign-in security shows the latest 20

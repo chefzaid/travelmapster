@@ -37,7 +37,9 @@ function printTitle(ctx) {
     const title = owner ? t('{username}\'s travel map', { username: owner }) : t('A sample TravelMapster map');
     const view = timelineView(ctx);
     if (!view) return title;
-    return `${title}, ${view.mode === 'during' ? 'places visited during' : 'by the end of'} ${view.year}`;
+    return view.mode === 'during'
+        ? t('{title}, places visited during {year}', { title, year: view.year })
+        : t('{title}, by the end of {year}', { title, year: view.year });
 }
 
 // Printing shows a picture of the map as it is on screen (see the print styles). The evidence

@@ -257,6 +257,11 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   and days, never its plans) and every planned stay of the ledger, which Google, Apple or Outlook
   calendars keep up to date. It is shown once when made; a new link ends the old one, and the
   feed can be turned off.
+- **Family view**: the trip's owner makes a private, read-only link (👪 Family view in the trip)
+  so family see, without an account, the trip's stops and dates and where the traveler is today
+  ("Today: in Lisbon, day 2 of 3"). Day plans, notes, the packing list, the budget and who the
+  trip is shared with stay private. The link is shown once; a new one ends it, and so does
+  turning it off or deleting the trip.
 - A printable itinerary, one row per day, to print or save as PDF from the browser.
 - Duplicating a saved trip as a template: the same days, plans and packing list (unpacked),
   named "(copy)", without dates or expenses.
