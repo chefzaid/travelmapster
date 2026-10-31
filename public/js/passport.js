@@ -9,6 +9,7 @@ import { shareCardsSection, stampedCountries } from './passport-share.js';
 import { flagLine } from './share-cards.js';
 import { countdownLabel, upcomingTrip } from './trip-countdown.js';
 import { formatDistance } from './units.js';
+import { worldShare } from './world-share.js';
 import { friendsSection } from './friends.js';
 import { EARTH_CIRCUMFERENCE_KM, countriesByYear, daysAwayByYear, distanceTraveled, longestTrip, yearStreak } from './travel-stats.js';
 import { formatList, formatNumber, t, tn } from './i18n.js';
@@ -85,6 +86,14 @@ function stamps(stats, index, onPick) {
             )
         );
     }));
+}
+
+// The share of the world's land and people in the countries been to.
+function worldShareTiles(stats, index) {
+    if (!stats.visitedIds.size) return [];
+    const share = worldShare(index.countries, stats.visitedIds);
+    const percent = value => formatNumber(value, { style: 'percent', maximumFractionDigits: 1 });
+    return [statTile(percent(share.land), t('of the world\'s land')), statTile(percent(share.people), t('of the world\'s people'))];
 }
 
 // Days to the next trip, or that it is under way.
@@ -228,6 +237,7 @@ export function renderPassport(container, ctx) {
         h('div', { class: 'stat-grid' },
             statTile(stats.visitedCountries, tn(stats.visitedCountries, 'country', 'countries'), 'tone-visited'),
             statTile(`${stats.worldPercent}%`, shareLabel(stats.countryList)),
+            ...worldShareTiles(stats, index),
             statTile(`${stats.visitedContinents}/6`, t('continents')),
             statTile(stats.visitedCities, tn(stats.visitedCities, 'city', 'cities')),
             // Lived in and transit only are counted on their own, when there are any.
