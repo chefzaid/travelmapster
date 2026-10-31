@@ -28,6 +28,9 @@ test('a traveler signs up, colors in a city, shares a public map without a hidde
     await page.getByRole('button', { name: /Copy my flags/ }).click();
     await expect(page.locator('.toast', { hasText: 'Flags copied' })).toContainText('🇵🇹 1 country');
     expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('🇵🇹 1 country');
+    // Portugal is about a thousandth of the world's land and people.
+    await expect(page.locator('#passport-tab .stat', { hasText: 'of the world\'s land' })).toContainText('0.1%');
+    await expect(page.locator('#passport-tab .stat', { hasText: 'of the world\'s people' })).toContainText('0.1%');
     await page.click('#tab-places');
     await expect(page.locator('#places-tab')).toContainText('Lisbon');
 

@@ -241,6 +241,9 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   the world (or of UN countries), continents, cities and trips, all counted on your chosen
   country list; countries lived in and layovers counted on their own; per-continent progress
   bars.
+- **How much of the world**: the share of the world's land (from the map's shapes, on the
+  sphere) and of its people (from the bundled populations) in the countries been to, over every
+  country and territory on the map.
 - **Collections** to complete, counted on the chosen country list: the capital of every country
   (a country with several capitals counts once, for any of them) and every member of the
   European Union, with what is left once only a few remain.
