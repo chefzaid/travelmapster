@@ -1084,6 +1084,7 @@
   "New password": "Neues Passwort",
   "New stop": "Neuer Stopp",
   "Next": "Weiter",
+  "Next to {countries}": "Neben {countries}",
   "Next trip": "Nächste Reise",
   "Night": "Nacht",
   "No account by that name.": "Kein Konto mit diesem Namen.",
@@ -1163,6 +1164,7 @@
     "other": "An: nach deinem Passwort ein Code aus deiner Authenticator-App. Noch {count} Wiederherstellungscodes übrig."
   },
   "One area, one count.": "Ein Raum, eine Zählung.",
+  "One border away": "Eine Grenze entfernt",
   "Only {username}": "Nur {username}",
   "Only places you have been to can be lived in or transit only.": "Nur Orte, an denen du warst, können „Dort gelebt“ oder „Nur Transit“ sein.",
   "Only the trip's owner can delete it. Leave it instead.": "Nur die Person, der die Reise gehört, kann sie löschen. Verlass sie stattdessen.",

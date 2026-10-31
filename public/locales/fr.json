@@ -1150,6 +1150,7 @@
   "New password": "Nouveau mot de passe",
   "New stop": "Nouvelle étape",
   "Next": "Suivant",
+  "Next to {countries}": "Voisin de {countries}",
   "Next trip": "Prochain voyage",
   "Night": "Nuit",
   "No account by that name.": "Aucun compte à ce nom.",
@@ -1230,6 +1231,7 @@
     "other": "Activée : après votre mot de passe, un code de votre application d'authentification. {count} codes de récupération restants."
   },
   "One area, one count.": "Un espace, un seul décompte.",
+  "One border away": "À une frontière",
   "Only {username}": "Seulement {username}",
   "Only places you have been to can be lived in or transit only.": "Seuls les lieux visités peuvent être marqués « J'y ai vécu » ou « En transit ».",
   "Only the trip's owner can delete it. Leave it instead.": "Seul le propriétaire du voyage peut le supprimer. Quittez-le plutôt.",

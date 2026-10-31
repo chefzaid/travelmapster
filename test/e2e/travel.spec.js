@@ -93,6 +93,8 @@ test('a traveler records several visits to the same city', async ({ page }) => {
     await page.click('#tab-explore');
     await expect(page.locator('#long-ago li')).toContainText('Portugal (Lisbon)');
     await expect(page.locator('#long-ago li')).toContainText('Last there in 2019');
+    // Spain is the only country next to Portugal.
+    await expect(page.locator('#next-door li')).toHaveText(['🇪🇸SpainNext to Portugal']);
     await addVisit(page, '2023-04-01');
     await expect(card.locator('.visits-title')).toHaveText('Visited 2 times');
     await expect(page.locator('#long-ago')).toHaveCount(0);
