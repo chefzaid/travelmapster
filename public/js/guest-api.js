@@ -13,10 +13,10 @@ const VERSION = 1;
 /** The guest's account settings, as the API's user. */
 export const GUEST_USER = Object.freeze({
     id: 0, username: 'Guest', guest: true, profileVisibility: 'private', homeCountry: null, countryList: 'all',
-    mapPalette: 'standard', publicJourneys: false, publicIndexing: false, goals: []
+    mapPalette: 'standard', publicJourneys: false, publicIndexing: false, goals: [], packingTemplates: []
 });
 
-const PROFILE_FIELDS = ['homeCountry', 'countryList', 'mapPalette', 'goals'];
+const PROFILE_FIELDS = ['homeCountry', 'countryList', 'mapPalette', 'goals', 'packingTemplates'];
 const PLACE_FIELDS = ['lat', 'lng', 'type', 'stay', 'name', 'category', 'notes', 'photoUrl', 'rating', 'tags', 'emoji', 'hideFromPublic', 'priority', 'bestMonths'];
 const TRIP_FIELDS = ['title', 'destination', 'startDate', 'plan', 'stops', 'packing', 'budget'];
 
@@ -110,8 +110,8 @@ export function createGuestApi(storage, now = () => new Date().toISOString()) {
         currentUser: async () => ({ ...GUEST_USER, ...read().profile }),
         saveProfile: changes => change(data => {
             Object.assign(data.profile, pick(changes, PROFILE_FIELDS));
-            const { profileVisibility, homeCountry, countryList, mapPalette, publicJourneys, publicIndexing, goals } = { ...GUEST_USER, ...data.profile };
-            return { profileVisibility, homeCountry, countryList, mapPalette, publicJourneys, publicIndexing, goals };
+            const { profileVisibility, homeCountry, countryList, mapPalette, publicJourneys, publicIndexing, goals, packingTemplates } = { ...GUEST_USER, ...data.profile };
+            return { profileVisibility, homeCountry, countryList, mapPalette, publicJourneys, publicIndexing, goals, packingTemplates };
         }),
 
         getMarkers: () => look(data => data.markers),

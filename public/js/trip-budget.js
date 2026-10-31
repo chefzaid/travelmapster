@@ -1,7 +1,7 @@
 // A trip's packing list and budget. The budget totals its expenses in its own currency (the
 // traveler's home currency) with the exchange rate the traveler enters for each other currency:
 // the rate they actually got, with no rate service to depend on. Pure, unit tested in Node.
-import { locale as interfaceLocale, tk, t } from './i18n.js';
+import { locale as interfaceLocale, tk } from './i18n.js';
 
 export const EXPENSE_CATEGORIES = [
     ['transport', '🚆', tk('Transport')],
@@ -25,10 +25,15 @@ export function packingProgress(packing = []) {
     return { packed: packing.filter(item => item.packed).length, total: packing.length };
 }
 
-/** The list with the starter items it does not have yet (compared without case), unpacked. */
-export function withStarterItems(packing = []) {
+/** The list with the items it does not have yet (compared without case), unpacked. */
+export function withItems(packing = [], items = []) {
     const known = new Set(packing.map(entry => entry.item.toLowerCase()));
-    const added = STARTER_PACKING.map(item => t(item)).filter(item => !known.has(item.toLowerCase())).map(item => ({ item, packed: false }));
+    const added = [];
+    for (const item of items) {
+        if (known.has(item.toLowerCase())) continue;
+        known.add(item.toLowerCase());
+        added.push({ item, packed: false });
+    }
     return [...packing, ...added].slice(0, PACKING_MAX_ITEMS);
 }
 

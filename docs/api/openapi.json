@@ -439,6 +439,14 @@
                         "$ref": "#/components/schemas/Goal"
                       },
                       "description": "Yearly goals, sorted by year and kind; never on the public map."
+                    },
+                    "packingTemplates": {
+                      "type": "array",
+                      "maxItems": 20,
+                      "items": {
+                        "$ref": "#/components/schemas/PackingTemplate"
+                      },
+                      "description": "Packing list templates to start a trip's list from, each with its own name; never on the public map."
                     }
                   }
                 }
@@ -4105,6 +4113,14 @@
               "$ref": "#/components/schemas/Goal"
             },
             "description": "Yearly goals, sorted by year and kind; never on the public map."
+          },
+          "packingTemplates": {
+            "type": "array",
+            "maxItems": 20,
+            "items": {
+              "$ref": "#/components/schemas/PackingTemplate"
+            },
+            "description": "Packing list templates to start a trip's list from, each with its own name; never on the public map."
           }
         }
       },
@@ -4169,6 +4185,14 @@
               "$ref": "#/components/schemas/Goal"
             },
             "description": "Replaces every goal; one per kind and year."
+          },
+          "packingTemplates": {
+            "type": "array",
+            "maxItems": 20,
+            "items": {
+              "$ref": "#/components/schemas/PackingTemplate"
+            },
+            "description": "Packing list templates to start a trip's list from, each with its own name; never on the public map."
           }
         }
       },
@@ -5275,6 +5299,28 @@
           "packed": {
             "type": "boolean",
             "default": false
+          }
+        }
+      },
+      "PackingTemplate": {
+        "type": "object",
+        "required": [
+          "name",
+          "items"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 200,
+            "items": {
+              "type": "string",
+              "maxLength": 80
+            }
           }
         }
       },

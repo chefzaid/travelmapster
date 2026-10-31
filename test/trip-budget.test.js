@@ -46,17 +46,19 @@ test('budgets are tidied, started and given a home currency', async () => {
     assert.equal(homeCurrency(), 'EUR');
 });
 
-test('packing lists count what is packed and add the basics once', async () => {
-    const { packingProgress, withStarterItems, STARTER_PACKING, PACKING_MAX_ITEMS } = await load();
+test('packing lists count what is packed and add items once each', async () => {
+    const { packingProgress, withItems, STARTER_PACKING, PACKING_MAX_ITEMS } = await load();
     assert.deepEqual(packingProgress([{ item: 'A', packed: true }, { item: 'B', packed: false }]), { packed: 1, total: 2 });
     assert.deepEqual(packingProgress(), { packed: 0, total: 0 });
-    const list = withStarterItems([{ item: 'phone charger', packed: true }]);
+    const list = withItems([{ item: 'phone charger', packed: true }], STARTER_PACKING);
     assert.equal(list.length, STARTER_PACKING.length);
     assert.deepEqual(list[0], { item: 'phone charger', packed: true });
     assert.ok(list.slice(1).every(entry => !entry.packed));
-    assert.deepEqual(withStarterItems(list), list);
-    assert.equal(withStarterItems(Array.from({ length: PACKING_MAX_ITEMS }, (_, i) => ({ item: `x${i}`, packed: false }))).length, PACKING_MAX_ITEMS);
-    assert.equal(withStarterItems().length, STARTER_PACKING.length);
+    assert.deepEqual(withItems(list, STARTER_PACKING), list);
+    assert.deepEqual(withItems([], ['Hat', 'hat', 'Socks']).map(entry => entry.item), ['Hat', 'Socks']);
+    assert.equal(withItems(Array.from({ length: PACKING_MAX_ITEMS }, (_, i) => ({ item: `x${i}`, packed: false })), STARTER_PACKING).length, PACKING_MAX_ITEMS);
+    assert.equal(withItems(undefined, STARTER_PACKING).length, STARTER_PACKING.length);
+    assert.deepEqual(withItems(), []);
 });
 
 test('money and currency names come from Intl', async () => {

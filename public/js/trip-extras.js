@@ -4,7 +4,7 @@ import { tripStops } from './itinerary.js';
 import { MAX_DAYS, MAX_STOPS, addStop, removeStop, renameStop, resizeStop } from './trip-stops.js';
 import {
     EXPENSE_CATEGORIES, EXPENSES_MAX, PACKING_MAX_ITEMS, budgetTotals, currencyOptions, emptyBudget,
-    foreignCurrencies, formatMoney, homeCurrency, packingProgress, withStarterItems
+    foreignCurrencies, formatMoney, homeCurrency, packingProgress
 } from './trip-budget.js';
 import { formatList, locale, t, tn } from './i18n.js';
 
@@ -107,8 +107,11 @@ export function stopsSection(draft, { rerender, markDirty }) {
 
 // ---------------------------------------------------------------- packing list
 
-/** The packing list section: tick items off, add your own or the basics, remove them. */
-export function packingSection(draft, { rerender, markDirty }) {
+/**
+ * The packing list section: tick items off, add your own, remove them; `templates` holds the
+ * controls that add a template's items (trip-packing-templates.js).
+ */
+export function packingSection(draft, { rerender, markDirty, templates }) {
     const { packed, total } = packingProgress(draft.packing);
     const summary = h('small', {}, total ? t('{packed} of {total} packed', { packed, total }) : '');
     const add = event => {
@@ -150,15 +153,7 @@ export function packingSection(draft, { rerender, markDirty }) {
         h('form', { class: 'row extra-add', onsubmit: add },
             h('input', { name: 'entry', maxlength: 80, placeholder: t('Sunscreen, snorkel…'), 'aria-label': t('Item to pack'), autocomplete: 'off' }),
             h('button', { type: 'submit', class: 'btn btn-ghost btn-sm' }, t('＋ Add'))),
-        h('button', {
-            type: 'button', class: 'btn btn-ghost btn-sm',
-            onclick: () => {
-                const before = draft.packing.length;
-                draft.packing = withStarterItems(draft.packing);
-                toast(draft.packing.length > before ? t('Added the basics. Save to keep them.') : t('The basics are already on your list.'));
-                rerender();
-            }
-        }, t('✨ Add the basics'))
+        templates
     );
 }
 

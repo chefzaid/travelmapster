@@ -21,7 +21,8 @@ function publicUser(user) {
         mapPalette: user.map_palette || 'standard',
         publicJourneys: Boolean(user.public_journeys),
         publicIndexing: Boolean(user.public_indexing),
-        goals: user.goals || []
+        goals: user.goals || [],
+        packingTemplates: user.packing_templates || []
     };
 }
 

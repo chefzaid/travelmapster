@@ -99,8 +99,8 @@ export async function moveGuestMap(ctx) {
             await ctx.saveLedger({ ...settings, rules: [...settings.rules, ...rules], planned: [...settings.planned, ...planned] });
         }
         if (!own) {
-            const { homeCountry, countryList, mapPalette, goals } = profile;
-            await ctx.saveSettings({ homeCountry, countryList, mapPalette, goals }, t('Your guest map is now saved in your account. 🎉'));
+            const { homeCountry, countryList, mapPalette, goals, packingTemplates } = profile;
+            await ctx.saveSettings({ homeCountry, countryList, mapPalette, goals, packingTemplates }, t('Your guest map is now saved in your account. 🎉'));
         } else {
             toast(t('Your guest map is now part of your account. 🎉'), { tone: 'success' });
         }
