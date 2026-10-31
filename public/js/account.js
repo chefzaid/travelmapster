@@ -10,6 +10,7 @@ import { LOCALES, locale, rememberLocale, t, tParts, tn } from './i18n.js';
 import { showPanel } from './panel.js';
 import { AUTH_HASHES } from './home.js';
 import { DISTANCE_UNITS, distanceUnit, rememberDistanceUnit } from './units.js';
+import { THEMES, applyTheme, rememberTheme, storedTheme } from './theme.js';
 
 // ---------------------------------------------------------------- landing
 
@@ -196,6 +197,8 @@ async function openSettings(ctx) {
             { name: 'distanceUnit', label: t('Distances in'), type: 'select', value: distanceUnit(),
                 options: Object.entries(DISTANCE_UNITS).map(([value, { label }]) => ({ value, label })),
                 hint: t('Kept in this browser, like the language.') },
+            { name: 'theme', label: t('Light or dark'), type: 'select', value: storedTheme(),
+                options: Object.entries(THEMES).map(([value, { label }]) => ({ value, label })) },
             { name: 'homeCountry', label: t('Home country'), type: 'select', value: user.homeCountry || '',
                 options: [{ value: '', label: t('No home country') }, ...countries.map(country => ({ value: country.id, label: `${country.flag} ${country.name}` }))],
                 hint: t('Shown with its own color and counted as a country you have been to and lived in. It is never shown on your public map.') },
@@ -223,12 +226,18 @@ async function openSettings(ctx) {
         if ((values.publicJourneys === 'on') !== Boolean(user.publicJourneys)) changes.publicJourneys = values.publicJourneys === 'on';
         if ((values.publicIndexing === 'on') !== Boolean(user.publicIndexing)) changes.publicIndexing = values.publicIndexing === 'on';
     }
-    if (values.distanceUnit !== distanceUnit()) {
-        rememberDistanceUnit(values.distanceUnit);
-        if (!Object.keys(changes).length) {
-            ctx.renderActiveTab();
-            toast(t('Settings saved.'), { tone: 'success' });
-        }
+    // Kept in this browser: distances and the theme.
+    const unitChanged = values.distanceUnit !== distanceUnit();
+    const themeChanged = values.theme !== storedTheme();
+    if (unitChanged) rememberDistanceUnit(values.distanceUnit);
+    if (themeChanged) {
+        rememberTheme(values.theme);
+        applyTheme(values.theme);
+        ctx.map?.refreshTheme();
+    }
+    if ((unitChanged || themeChanged) && !Object.keys(changes).length) {
+        ctx.renderActiveTab();
+        toast(t('Settings saved.'), { tone: 'success' });
     }
     if (Object.keys(changes).length) await ctx.saveSettings(changes, t('Settings saved.'));
     // A new language redraws the whole page in it (ADR 0031).

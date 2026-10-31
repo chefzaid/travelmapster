@@ -4,8 +4,11 @@
 import { $ } from './ui.js';
 import { loadLocale, preferredLocale, setupLanguagePickers, translateDom } from './i18n.js';
 import { offerHome, presentsFirst, wasSignedIn } from './home.js';
+import { applyTheme, storedTheme } from './theme.js';
 
 async function start() {
+    // Light or dark as chosen in this browser, before anything else shows.
+    applyTheme(storedTheme());
     // The map data names countries in the interface's language (ADR 0031).
     await loadLocale(preferredLocale()).catch(() => {});
     translateDom();

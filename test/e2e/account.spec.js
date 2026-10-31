@@ -1,6 +1,7 @@
 'use strict';
 
-// The account: changing the password, downloading all the data and deleting the account.
+// The account: light or dark, changing the password, downloading all the data and deleting
+// the account.
 const fs = require('node:fs');
 const { test, expect } = require('@playwright/test');
 const { markCity, signUp, stubThirdParties, trackErrors } = require('./helpers');
@@ -11,6 +12,23 @@ test('a traveler changes their password, downloads all their data, then deletes 
     const errors = trackErrors(page);
     const username = `e2e_account_${Date.now()}`;
     await signUp(page, username);
+
+    // Dark in a light browser, kept after a reload, then back to the system's light.
+    const ocean = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+    const light = await ocean();
+    await page.click('#account-btn');
+    await page.click('#settings-btn');
+    await page.locator('#dialog-theme').selectOption('dark');
+    await page.getByRole('button', { name: 'Save settings' }).click();
+    await expect.poll(ocean).toBe('rgb(29, 78, 115)');
+    await page.reload();
+    await expect(page.locator('#main-view')).toBeVisible();
+    expect(await ocean()).toBe('rgb(29, 78, 115)');
+    await page.click('#account-btn');
+    await page.click('#settings-btn');
+    await page.locator('#dialog-theme').selectOption('system');
+    await page.getByRole('button', { name: 'Save settings' }).click();
+    await expect.poll(ocean).toBe(light);
 
     await page.click('#account-btn');
     await page.click('#password-btn');
