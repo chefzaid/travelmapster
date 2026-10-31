@@ -17,6 +17,7 @@ import { budgetSection, packingSection, stopsSection } from './trip-extras.js';
 import { budgetTotals, formatMoney, tidyBudget } from './trip-budget.js';
 import { checklistBadge, checklistSection, purposeField } from './trip-checklist.js';
 import { t, tn } from './i18n.js';
+import { calendarFeedSection } from './trip-feed.js';
 
 const MAX_DAYS = 30;
 
@@ -124,7 +125,8 @@ function renderList(container, ctx) {
             h('button', { type: 'button', class: 'btn btn-primary', onclick: () => openNewTrip(ctx) }, t('Plan my first trip'))
         ),
         section(t('Upcoming & someday'), upcoming),
-        section(t('Past trips'), past)
+        section(t('Past trips'), past),
+        calendarFeedSection(ctx)
     );
 }
 

@@ -76,6 +76,18 @@ test('a traveler plans a trip that is saved to their account', async ({ page }) 
     await trips.getByRole('button', { name: '‹ All trips' }).click();
     await expect(page.locator('.trip-card')).toHaveCount(2);
 
+    // A private calendar link serves the dated trip to calendar apps, until it is turned off.
+    await trips.getByRole('button', { name: '📆 Make a private calendar link' }).click();
+    const link = await page.locator('#calendar-feed-url').inputValue();
+    expect(link).toMatch(/\/calendar\/[A-Za-z0-9_-]{43}\.ics$/);
+    const feed = await page.request.get(link);
+    expect(feed.ok()).toBe(true);
+    expect(await feed.text()).toContain('SUMMARY:Pastel de nata tour');
+    await trips.getByRole('button', { name: 'Turn off' }).click();
+    await page.locator('dialog.dialog').getByRole('button', { name: 'Turn off' }).click();
+    await expect(trips.getByRole('button', { name: '📆 Make a private calendar link' })).toBeVisible();
+    expect((await page.request.get(link)).status()).toBe(404);
+
     // Deleting the trip takes its stay out of the ledger plans.
     await page.locator('.trip-card', { hasText: 'Pastel de nata tour' }).filter({ hasNotText: 'copy' }).click();
     await trips.getByRole('button', { name: '🗑️ Delete trip' }).click();

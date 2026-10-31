@@ -26,6 +26,11 @@
   security can list the devices signed in. They are named to the traveler by a SHA-256 hash of
   the session id, never the id; any other one can be ended, and ending them all keeps the
   current one (`src/sessions.js`).
+- **Calendar feed**: the link carries 32 random bytes; only their SHA-256 hash is stored, the
+  link is shown once (`no-store`), and a new link or turning it off ends the old one at once.
+  The feed needs no session, as calendar apps fetch it, so it holds only trip titles, routes and
+  days and planned stays' countries and days, never day plans, notes or places; it is
+  rate-limited per address, `noindex`, and cached privately for 15 minutes (`src/calendar-feed.js`).
 - **Security activity**: sign-ins and changes to the password, passkeys and two-step sign-in are
   recorded with the method and the device's browser and system names (no address or
   User-Agent), the latest 50 per account (migration 022); Sign-in security shows the latest 20

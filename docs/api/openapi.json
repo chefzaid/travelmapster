@@ -1353,6 +1353,96 @@
         ]
       }
     },
+    "/api/calendar-feed": {
+      "get": {
+        "summary": "Whether the calendar subscription is on",
+        "tags": [
+          "Trips"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarFeed"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "Make a new private calendar link, ending the old one",
+        "tags": [
+          "Trips"
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarFeedLink"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "403": {
+            "$ref": "#/components/responses/CsrfRejected"
+          }
+        },
+        "security": [
+          {
+            "session": [],
+            "csrf": []
+          }
+        ]
+      },
+      "delete": {
+        "summary": "Turn the calendar subscription off",
+        "tags": [
+          "Trips"
+        ],
+        "responses": {
+          "204": {
+            "description": "Turned off"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "403": {
+            "$ref": "#/components/responses/CsrfRejected"
+          }
+        },
+        "security": [
+          {
+            "session": [],
+            "csrf": []
+          }
+        ]
+      }
+    },
     "/api/trips/{id}": {
       "parameters": [
         {
@@ -5813,6 +5903,44 @@
             ],
             "maxLength": 2048,
             "description": "An HTTP or HTTPS link to the official page."
+          }
+        }
+      },
+      "CalendarFeed": {
+        "type": "object",
+        "required": [
+          "active",
+          "createdAt"
+        ],
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "CalendarFeedLink": {
+        "type": "object",
+        "required": [
+          "url",
+          "createdAt"
+        ],
+        "description": "The private link, shown once: only a hash of its token is stored.",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "An iCalendar feed of the traveler's dated trips and planned stays, fetched without a session."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       }

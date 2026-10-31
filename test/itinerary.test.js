@@ -157,3 +157,25 @@ test('the next trip is the soonest one ahead or under way, with the days until i
     assert.deepEqual(pick('2026-06-24'), ['Later', 69, false]);
     assert.equal(pick('2026-09-03'), null);
 });
+
+test('the subscription feed has an event for each dated trip and planned stay, with stable ids', async () => {
+    const { feedCalendar } = await load();
+    const days = n => Array.from({ length: n }, () => ({ morning: 'Secret plan', afternoon: '', evening: '' }));
+    const calendar = feedCalendar({
+        trips: [
+            { id: 7, title: 'Summer in Portugal; sun, sea', destination: 'Lisbon, Portugal', startDate: '2027-02-27', plan: days(3), stops: [] },
+            { id: 8, title: 'Undated', destination: 'Japan', startDate: null, plan: days(2), stops: [] }
+        ],
+        planned: [{ id: 'trip-7', countryId: 'PRT', startDate: '2027-02-27', endDate: '2027-03-01' }, { id: 'p1', countryId: 'FRA', startDate: '2027-04-01', endDate: '2027-04-10' }],
+        nameOf: id => ({ PRT: 'Portugal', FRA: 'France' })[id],
+        now: new Date('2026-10-26T09:30:15Z')
+    });
+    const lines = calendar.split('\r\n');
+    assert.ok(calendar.endsWith('END:VCALENDAR\r\n'));
+    assert.equal(lines.filter(line => line === 'BEGIN:VEVENT').length, 2, 'the undated trip and the trip\'s own stay are left out');
+    assert.ok(lines.includes('UID:trip-7@travelmapster') && lines.includes('UID:plan-p1@travelmapster'));
+    assert.ok(lines.includes('DTSTART;VALUE=DATE:20270227') && lines.includes('DTEND;VALUE=DATE:20270302'), 'across the end of February');
+    assert.ok(lines.includes(String.raw`SUMMARY:Summer in Portugal\; sun\, sea`));
+    assert.ok(lines.includes('SUMMARY:Planned stay: France') && lines.includes('DTEND;VALUE=DATE:20270411'));
+    assert.ok(!calendar.includes('Secret plan'), 'never the plans');
+});

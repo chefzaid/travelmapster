@@ -205,6 +205,9 @@ export function createGuestApi(storage, now = () => new Date().toISOString()) {
         // What a guest map cannot do without the server.
         logout: async () => null,
         changePassword: needsAccount(t('A password needs an account.')),
+        getCalendarFeed: async () => ({ active: false, createdAt: null }),
+        createCalendarFeed: needsAccount(t('A calendar link needs an account.')),
+        deleteCalendarFeed: async () => undefined,
         deleteAccount: needsAccount(t('A guest map has no account to delete; clear it from the menu instead.')),
         geocodeCity: needsAccount(t('Searching every town in the world needs an account.')),
         getPublicMap: needsAccount(t('A shared map needs an account.')),
