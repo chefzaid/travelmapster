@@ -42,3 +42,13 @@ test('the flags line lists each country\'s flag and the count', async () => {
     assert.equal(flagLine([{ flag: '🇵🇹', name: 'Portugal' }]), '🇵🇹 1 country');
     assert.equal(flagLine([{ flag: '', name: 'Somewhere' }, { flag: '🇪🇸', name: 'Spain' }]), '🇪🇸 2 countries', 'a territory without a flag still counts');
 });
+
+test('the countdown card shows the days to go and the flags, never the trip\'s title or dates', async () => {
+    const { countdownCard } = await load();
+    const card = countdownCard({ username: 'Ana', days: 12, underWay: false, flags: ['🇵🇹', '🇪🇸'] });
+    wellFormed(card);
+    assert.ok(card.includes('Ana&apos;s next trip') && card.includes('>12</text>') && card.includes('>days to go</text>') && card.includes('🇵🇹🇪🇸'));
+    assert.ok(countdownCard({ username: 'Ana', days: 1, underWay: false, flags: [] }).includes('>day to go</text>'));
+    assert.ok(countdownCard({ username: 'Ana', days: 0, underWay: false, flags: [] }).includes('Leaving today!'));
+    assert.ok(countdownCard({ username: 'Ana', days: 0, underWay: true, flags: [] }).includes('On the road!'));
+});

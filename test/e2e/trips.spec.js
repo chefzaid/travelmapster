@@ -2,7 +2,7 @@
 
 // Trip planning: itineraries, calendar export, the ledger, recording a trip as a visit, printing.
 const { test, expect } = require('@playwright/test');
-const { signUp, stubThirdParties, trackErrors } = require('./helpers');
+const { browserDay, signUp, stubThirdParties, trackErrors } = require('./helpers');
 
 test.beforeEach(({ page }) => stubThirdParties(page));
 
@@ -34,6 +34,20 @@ test('a traveler plans a trip that is saved to their account', async ({ page }) 
     const download = page.waitForEvent('download');
     await trips.getByRole('button', { name: '📅 Calendar' }).click();
     expect((await download).suggestedFilename()).toBe('pastel-de-nata-tour.ics');
+
+    // The countdown to it, on the Explore tab and the passport, which shares it as a picture.
+    const today = await browserDay(page, 0);
+    const daysToGo = Math.round((Date.parse('2030-05-01') - Date.parse(today)) / 86_400_000).toLocaleString('en');
+    await page.click('#tab-explore');
+    await expect(page.locator('.countdown')).toContainText(`🇵🇹Pastel de nata tour in ${daysToGo} days`);
+    await page.click('#tab-passport');
+    await expect(page.locator('#passport-tab .stat', { hasText: 'Pastel de nata tour' })).toContainText(`✈️ ${daysToGo}`);
+    const card = page.waitForEvent('download');
+    await page.getByRole('button', { name: '✈️ Countdown' }).click();
+    expect((await card).suggestedFilename()).toBe(`travelmapster-countdown-${today}.png`);
+    await page.click('#tab-explore');
+    await page.locator('.countdown-btn').click();
+    await expect(trips).toBeVisible();
 
     // Planned in the ledger, the trip's stay follows its dates.
     await trips.getByRole('button', { name: '📒 Plan in ledger' }).click();

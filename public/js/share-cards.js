@@ -95,6 +95,21 @@ export function yearRecapCard({ username, year, countries, newCountries, trips, 
     ].join(''), 'TravelMapster');
 }
 
+/**
+ * The countdown to the next trip: the days to go and the flags of its countries, never its
+ * title, towns or dates.
+ */
+export function countdownCard({ username, days, underWay, flags }) {
+    const [big, small] = underWay ? ['✈️', t('On the road!')]
+        : days ? [String(days), tn(days, 'day to go', 'days to go')] : ['✈️', t('Leaving today!')];
+    return frame([
+        text(540, 200, 46, t('{username}\'s next trip', { username }), { weight: 500 }),
+        text(540, 470, 230, big, big === '✈️' ? { font: EMOJI_FONT } : {}),
+        text(540, 570, 64, small),
+        flags.length ? text(540, 740, 96, flags.slice(0, 8).join(''), { font: EMOJI_FONT }) : ''
+    ].join(''), 'TravelMapster');
+}
+
 /** The card as a data: URL, which the page's Content Security Policy lets it draw. */
 export function svgDataUrl(svg) {
     return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;

@@ -5,8 +5,9 @@ import { HOME } from './status.js';
 import { countryList, shareLabel } from './lists.js';
 import { localToday } from './days.js';
 import { goalsSection } from './passport-goals.js';
-import { shareCardsSection } from './passport-share.js';
+import { shareCardsSection, stampedCountries } from './passport-share.js';
 import { flagLine } from './share-cards.js';
+import { countdownLabel, upcomingTrip } from './trip-countdown.js';
 import { friendsSection } from './friends.js';
 import { EARTH_CIRCUMFERENCE_KM, countriesByYear, daysAwayByYear, distanceTraveled, longestTrip, yearStreak } from './travel-stats.js';
 import { formatList, formatNumber, t, tn } from './i18n.js';
@@ -62,12 +63,6 @@ function stampRibbon(stats, id) {
     return stats.livedIds.has(id) ? t('🔑 Lived') : '';
 }
 
-// The countries stamped in the passport: those been to that the chosen list counts, by name.
-function stampedCountries(stats, index) {
-    return [...stats.visitedIds].filter(id => stats.countedIds.has(id)).map(id => index.byId.get(id)).filter(Boolean)
-        .sort((a, b) => a.name.localeCompare(b.name));
-}
-
 function stamps(stats, index, onPick) {
     const visited = stampedCountries(stats, index);
     if (!visited.length) {
@@ -89,6 +84,13 @@ function stamps(stats, index, onPick) {
             )
         );
     }));
+}
+
+// Days to the next trip, or that it is under way.
+function nextTripTile(ctx) {
+    const next = upcomingTrip(ctx);
+    if (!next) return null;
+    return statTile(next.days ? `✈️ ${formatNumber(next.days)}` : '✈️', countdownLabel(next));
 }
 
 // The stamps as a line of flags, for a social bio or a message.
@@ -231,7 +233,8 @@ export function renderPassport(container, ctx) {
             stats.livedCountries ? statTile(stats.livedCountries, t('lived in'), 'tone-lived') : null,
             stats.transitCountries ? statTile(stats.transitCountries, t('transit only'), 'tone-transit') : null,
             statTile(stats.wishlistCountries, tn(stats.wishlistCountries, 'dream country', 'dream countries'), 'tone-wishlist'),
-            statTile(ctx.state.trips.length, tn(ctx.state.trips.length, 'trip planned', 'trips planned'))
+            statTile(ctx.state.trips.length, tn(ctx.state.trips.length, 'trip planned', 'trips planned')),
+            nextTripTile(ctx)
         ),
         goalsSection(ctx),
         h('section', {}, h('h3', { class: 'section-title' }, t('Continents')), continentBars(stats)),

@@ -137,3 +137,23 @@ test('a trip destination resolves to a country, then becomes a planned stay that
     assert.deepEqual(syncPlannedStays([stay, other], tour, stays), [...stays, other], 'in the place of the old one');
     assert.deepEqual(tripPlannedStays({ ...tour, stops: [...tour.stops.slice(0, 2), { destination: 'Atlantis', days: 2 }] }, countryOf), { unknown: 'Atlantis' });
 });
+
+test('the next trip is the soonest one ahead or under way, with the days until it starts', async () => {
+    const { nextTrip } = await load();
+    const days = n => Array.from({ length: n }, () => ({ morning: '', afternoon: '', evening: '' }));
+    const trips = [
+        { id: 1, title: 'Past', startDate: '2026-05-01', plan: days(3) },
+        { id: 2, title: 'Later', startDate: '2026-09-01', plan: days(2) },
+        { id: 3, title: 'Soon', startDate: '2026-06-20', plan: days(4) },
+        { id: 4, title: 'Undated', startDate: null, plan: days(2) }
+    ];
+    const pick = today => {
+        const next = nextTrip(trips, today);
+        return next && [next.trip.title, next.days, next.underWay];
+    };
+    assert.deepEqual(pick('2026-06-14'), ['Soon', 6, false]);
+    assert.deepEqual(pick('2026-06-20'), ['Soon', 0, false], 'on its first day');
+    assert.deepEqual(pick('2026-06-23'), ['Soon', 0, true], 'on its last day');
+    assert.deepEqual(pick('2026-06-24'), ['Later', 69, false]);
+    assert.equal(pick('2026-09-03'), null);
+});

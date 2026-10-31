@@ -1,6 +1,7 @@
 // Itineraries: their stops, and the trip outside the app: as text, as an iCalendar file with an
 // all-day event per day, as a template copy without dates, and as planned stays in the day
 // ledger. Pure, unit tested in Node.
+import { dayNumber } from './days.js';
 import { joinList, locale, t, tk } from './i18n.js';
 
 export const SLOTS = [
@@ -63,6 +64,18 @@ export function dayDate(startDate, offset) {
 /** The trip's last day (YYYY-MM-DD), or '' without a start date. */
 export function tripEndDate(trip) {
     return isoDate(trip.startDate, trip.plan.length - 1);
+}
+
+/**
+ * The trip coming up next, or under way today: `{ trip, days, underWay }` with the days until it
+ * starts (0 on its first day and while under way), or null when no dated trip lies ahead.
+ */
+export function nextTrip(trips, today) {
+    const [trip] = trips.filter(item => item.startDate && tripEndDate(item) >= today)
+        .sort((a, b) => a.startDate.localeCompare(b.startDate) || a.title.localeCompare(b.title));
+    if (!trip) return null;
+    const days = Math.max(0, dayNumber(trip.startDate) - dayNumber(today));
+    return { trip, days, underWay: trip.startDate < today };
 }
 
 export function tripAsText(trip) {
