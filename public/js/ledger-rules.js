@@ -1,4 +1,5 @@
-// Checking the rules and planned stays edited in the Ledger tab the way the API does (ADR 0010).
+// Checking the rules, planned stays and periods that do not count edited in the Ledger tab the
+// way the API does (ADR 0010).
 import { DAY_RULES, SCHENGEN_AREA, dayNumber } from './days.js';
 import { isValidDate } from './visits.js';
 import { t } from './i18n.js';
@@ -71,6 +72,22 @@ export function checkPlannedStay(record) {
     if (stay.endDate < stay.startDate) return { error: t('The planned stay must end on or after the day it starts.') };
     if (dayNumber(stay.endDate) - dayNumber(stay.startDate) >= 3660) return { error: t('A planned stay can last at most 3,660 days.') };
     return { stay };
+}
+
+/** A period whose days do not count, checked as the API checks it, with its countries' ids. */
+export function checkExemption(record, countries) {
+    const period = {
+        id: record?.id,
+        label: String(record?.label ?? '').trim(),
+        countries,
+        startDate: String(record?.startDate ?? '').trim(),
+        endDate: String(record?.endDate ?? '').trim()
+    };
+    if (!period.label || period.label.length > 80) return { error: t('Name the permit or visa in 1 to 80 characters.') };
+    if (!countries.length) return { error: t('Name at least one country.') };
+    if (!isValidDate(period.startDate) || !isValidDate(period.endDate)) return { error: t('Choose the first and last day of the period.') };
+    if (period.endDate < period.startDate) return { error: t('A period must end on or after the day it starts.') };
+    return { period };
 }
 
 /** A short random id for rules and planned stays. */

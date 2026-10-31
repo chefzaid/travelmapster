@@ -177,6 +177,19 @@ function lowerBound(days, value) {
     return low;
 }
 
+/**
+ * The days a stay rule counts in its countries, without the days spent in a country while a
+ * residence permit or long-stay visa (`exempt` periods) covers it: such days do not count.
+ */
+export function stayDays(ledger, countries, exempt = []) {
+    const days = daysIn(ledger, countries);
+    const periods = exempt.map(period => ({ ids: new Set(period.countries), first: dayNumber(period.startDate), last: dayNumber(period.endDate) }));
+    if (!periods.length) return days;
+    const counts = day => countries.some(id => ledger.countries.get(id)?.has(day)
+        && !periods.some(period => period.ids.has(id) && day >= period.first && day <= period.last));
+    return days.filter(counts);
+}
+
 /** Days between two day numbers, both included. */
 export function countBetween(days, from, to) {
     return to < from ? 0 : lowerBound(days, to + 1) - lowerBound(days, from);
@@ -372,7 +385,7 @@ export function ledgerOverview({ markers, countryOf, settings, today, nameOf = i
 
     const stays = stayRules(settings).map(rule => ({
         rule,
-        ...stayStatus(daysIn(ledgerFor(rule.dayRule), rule.countries), rule, today)
+        ...stayStatus(stayDays(ledgerFor(rule.dayRule), rule.countries, settings?.exempt), rule, today)
     }));
 
     // The 183-day rule applies to each country with days in the current year.
@@ -452,8 +465,8 @@ export function simulatePlans({ settings, ledgerFor }) {
         const relevant = touching(rule.countries);
         if (!relevant.length) continue;
         const { first, last } = spanOf(relevant);
-        const before = new Set(breaches(daysIn(ledgerFor(rule.dayRule), rule.countries), rule));
-        const days = daysIn(ledgerFor(rule.dayRule, true), rule.countries);
+        const before = new Set(breaches(stayDays(ledgerFor(rule.dayRule), rule.countries, settings.exempt), rule));
+        const days = stayDays(ledgerFor(rule.dayRule, true), rule.countries, settings.exempt);
         const newBreach = breaches(days, rule).find(day => day >= first && !before.has(day));
         stays.push({
             rule,

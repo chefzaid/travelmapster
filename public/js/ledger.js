@@ -4,7 +4,7 @@
 import { h, fill, toast, formDialog, formatDate } from './ui.js';
 import {
     DAY_RULES, SCHENGEN_RULE, SCHENGEN_MEMBERS, SCHENGEN_OPEN_BORDERS, TAX_RESIDENCY_RULE,
-    addDays, countryCounters, dayNumber, daysIn, isoDay, localToday, maxStayFrom
+    addDays, countryCounters, dayNumber, isoDay, localToday, maxStayFrom, stayDays
 } from './days.js';
 import { checkPlannedStay, checkRule, newId, parseCountryList } from './ledger-rules.js';
 import { adviceNote, countryName, historySection, reportSection } from './ledger-report.js';
@@ -14,6 +14,7 @@ import { orgRulesSections } from './ledger-org.js';
 import { formatList, joinList, t, tn } from './i18n.js';
 import { whereSection } from './ledger-where.js';
 import { healthSection } from './ledger-health.js';
+import { exemptSection } from './ledger-exempt.js';
 import { travelHistorySection } from './ledger-history.js';
 
 const view = { entry: '', period: '', showAllStays: false };
@@ -100,7 +101,7 @@ function entryResult(days, entry) {
 
 function schengenSection(ctx, overview) {
     const schengen = overview.stays.find(item => item.rule.id === SCHENGEN_RULE.id);
-    const days = daysIn(overview.presence, SCHENGEN_RULE.countries);
+    const days = stayDays(overview.presence, SCHENGEN_RULE.countries, ctx.state.ledger.settings.exempt);
     const today = localToday();
     const entry = view.entry || today;
     const result = h('p', { class: 'entry-result', 'aria-live': 'polite' }, entryResult(days, entry));
@@ -452,6 +453,7 @@ export function renderLedger(container, ctx) {
         schengenSection(ctx, overview),
         plansSection(ctx, overview),
         staysSection(ctx, overview),
+        exemptSection(ctx),
         thresholdsSection(ctx, overview),
         orgRulesSections(ctx),
         countersSection(ctx, overview),

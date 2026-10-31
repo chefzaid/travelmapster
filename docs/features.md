@@ -158,6 +158,9 @@ counting rules are in [ADR 0010](adr/0010-day-ledger.md).
   warns ahead of time, including when a stay still going on would reach it.
 - **Plan ahead**: try planned stays against every rule and threshold they touch before you go,
   typed in or taken from a dated trip.
+- **Days that do not count**: periods under a residence permit or long-stay visa, with their
+  countries and first and last day; the days spent in those countries during the period leave
+  every stay rule (Schengen 90/180 included, and plans), while tax thresholds still count them.
 - **Ledger health**: what would make the record doubtful when it matters, each with its place
   to open and fix: a visit whose end was never recorded (only its first day counts), a stay
   marked "still there" although a later visit is in a country not next to it, and two

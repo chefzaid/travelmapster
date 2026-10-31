@@ -20,7 +20,8 @@ const taxRule = Object.freeze({
 const settings = Object.freeze({
     dayRule: 'midnight',
     rules: [schengenish, taxRule, { id: 'r3', kind: 'threshold', name: 'Rolling', countries: ['ESP'], maxDays: 100, period: 'rolling', windowDays: 365, warnDays: 0 }],
-    planned: [{ id: 'p1', countryId: 'PRT', startDate: '2027-01-01', endDate: '2027-01-20' }]
+    planned: [{ id: 'p1', countryId: 'PRT', startDate: '2027-01-01', endDate: '2027-01-20' }],
+    exempt: [{ id: 'e1', label: 'French residence permit', countries: ['FRA'], startDate: '2025-09-01', endDate: '2027-08-31' }]
 });
 
 test('ledger routes require authentication and a CSRF token', async () => {
@@ -40,13 +41,14 @@ test('settings start with the defaults and are saved per traveler', async () => 
     await client.register('ledger_owner', 'ledger owner password');
     const initial = await client.get('/api/ledger');
     assert.equal(initial.status, 200);
-    assert.deepEqual(initial.body, { dayRule: 'presence', rules: [], planned: [], updatedAt: null });
+    assert.deepEqual(initial.body, { dayRule: 'presence', rules: [], planned: [], exempt: [], updatedAt: null });
 
     const saved = await client.put('/api/ledger', { ...settings, rules: [{ ...schengenish, name: '  Nordic 30/60  ', extra: 'dropped' }, ...settings.rules.slice(1)] });
     assert.equal(saved.status, 200);
     assert.equal(saved.body.dayRule, 'midnight');
     assert.deepEqual(saved.body.rules, settings.rules, 'rules are trimmed and unknown fields dropped');
     assert.deepEqual(saved.body.planned, settings.planned);
+    assert.deepEqual(saved.body.exempt, settings.exempt);
     assert.ok(saved.body.updatedAt);
 
     const again = await client.put('/api/ledger', { dayRule: 'presence', rules: [], planned: [] });
@@ -68,6 +70,8 @@ test('invalid ledger settings are rejected', async () => {
     const withRule = rule => ({ dayRule: 'presence', rules: [rule] });
     const withStay = stay => ({ dayRule: 'presence', planned: [stay] });
     const stay = settings.planned[0];
+    const withPeriod = period => ({ dayRule: 'presence', exempt: [period] });
+    const period = settings.exempt[0];
     const cases = [
         [],
         { dayRule: 'noon' },
@@ -97,7 +101,14 @@ test('invalid ledger settings are rejected', async () => {
         withStay({ ...stay, startDate: '2027-02-30' }),
         withStay({ ...stay, endDate: '2038-01-01' }),
         withStay({ ...stay, id: '' }),
-        { dayRule: 'presence', planned: Array.from({ length: 31 }, (_, i) => ({ ...stay, id: `p${i}` })) }
+        { dayRule: 'presence', planned: Array.from({ length: 31 }, (_, i) => ({ ...stay, id: `p${i}` })) },
+        { dayRule: 'presence', exempt: 'always' },
+        withPeriod({ ...period, label: '' }),
+        withPeriod({ ...period, label: 'x'.repeat(81) }),
+        withPeriod({ ...period, countries: ['France'] }),
+        withPeriod({ ...period, endDate: '2025-08-31' }),
+        withPeriod({ ...period, startDate: 'soon' }),
+        { dayRule: 'presence', exempt: Array.from({ length: 21 }, (_, i) => ({ ...period, id: `e${i}` })) }
     ];
     for (const body of cases) {
         const res = await client.put('/api/ledger', body);

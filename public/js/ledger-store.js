@@ -4,7 +4,7 @@ import { $, toast, formatDate } from './ui.js';
 import { ledgerOverview, localToday } from './days.js';
 import { t, tn } from './i18n.js';
 
-export const emptyLedger = () => ({ settings: { dayRule: 'presence', rules: [], planned: [] }, changes: null, overview: null, alerted: false });
+export const emptyLedger = () => ({ settings: { dayRule: 'presence', rules: [], planned: [], exempt: [] }, changes: null, overview: null, alerted: false });
 
 export function currentLedger(ctx) {
     const { state } = ctx;
