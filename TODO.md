@@ -238,7 +238,7 @@ Small, everyday things travelers ask for, built on data the app already has or a
 
 - [x] Countdown to the next trip ("Lisbon in 12 days") in the Explore tab and on the passport, and as a share card. Done: the card shows the days to go and the countries' flags only, as the other share cards promise no places or dates.
 - [ ] Travel companions: names of who came along on a visit or trip (names only, no accounts), and the map filtered to one of them ("everywhere I've been with Sam").
-- [ ] Packing list templates: save a list as a named template (beach, city, business, ski) and start a new trip's list from one.
+- [x] Packing list templates: save a list as a named template (beach, city, business, ski) and start a new trip's list from one. Done: ready-made templates for the basics, the beach, a city, business and skiing, and up to 20 of the traveler's own saved on the account (migration 024), from the trip's packing list.
 - [ ] Before you go: emergency number, driving side, plug types and the time difference on each destination of a trip, from a small table bundled from Wikidata (CC0).
 - [ ] Family view of a trip: a private, revocable read-only link to a trip's days and stops (no notes, no bookings), so family knows where the traveler is this week without an account.
 

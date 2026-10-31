@@ -124,7 +124,8 @@ test('a trip keeps a packing list and a budget in any currency', async ({ page }
     const trips = page.locator('#trips-tab');
 
     await trips.getByText('🎒 Packing list').click();
-    await trips.getByRole('button', { name: '✨ Add the basics' }).click();
+    // The basics are the template picked at first.
+    await trips.getByRole('button', { name: '✨ Add these' }).click();
     await trips.getByLabel('Item to pack').fill('Snorkel');
     await trips.getByLabel('Item to pack').press('Enter');
     await trips.getByRole('checkbox', { name: 'Passport or ID' }).check();
@@ -162,6 +163,29 @@ test('a trip keeps a packing list and a budget in any currency', async ({ page }
     await trips.getByRole('button', { name: '🖨️ Print' }).click();
     await expect(page.locator('#report-view .report-checklist')).toContainText('☑ Passport or ID');
     await expect(page.locator('#report-view')).toContainText('Spent so far: €780.00');
+    await page.keyboard.press('Escape');
+
+    // The list becomes a template of the traveler's own, kept on the account, beside the
+    // ready-made ones.
+    await trips.getByText('🎒 Packing list').click();
+    await trips.getByRole('button', { name: '📋 Save as template' }).click();
+    await page.fill('#dialog-name', 'Tokyo kit');
+    await page.getByRole('button', { name: 'Save template' }).click();
+    await expect(page.locator('.toast-success', { hasText: 'Saved the template Tokyo kit.' })).toBeVisible();
+    const picker = trips.getByLabel('Packing list template');
+    await expect(picker).toHaveValue('own:Tokyo kit');
+    await picker.selectOption('beach');
+    await trips.getByRole('button', { name: '✨ Add these' }).click();
+    await expect(trips.locator('.trip-extra summary', { hasText: 'Packing list' })).toContainText('1 of 19 packed');
+    await page.reload();
+    await expect(page.locator('#main-view')).toBeVisible();
+    await page.click('#tab-trips');
+    await page.locator('.trip-card').first().click();
+    await trips.getByText('🎒 Packing list').click();
+    await picker.selectOption({ label: 'Tokyo kit' });
+    await trips.getByRole('button', { name: '🗑️ Remove template' }).click();
+    await expect(page.locator('.toast-success', { hasText: 'Removed the template Tokyo kit.' })).toBeVisible();
+    await expect(picker.locator('option', { hasText: 'Tokyo kit' })).toHaveCount(0);
     expect(errors).toEqual([]);
 });
 

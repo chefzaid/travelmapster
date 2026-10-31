@@ -12,6 +12,8 @@ const TRIP_SLOT_MAX_LENGTH = 500;
 const TRIP_MAX_STOPS = 10;
 const DESTINATION_MAX_LENGTH = 160;
 const PACKING_MAX_ITEMS = 200;
+const TEMPLATES_MAX = 20;
+const TEMPLATE_NAME_MAX_LENGTH = 40;
 const EXPENSES_MAX = 300;
 const RATES_MAX = 30;
 const LABEL_MAX_LENGTH = 80;
@@ -79,6 +81,29 @@ function parsePacking(value) {
         packing.push({ item, packed: entry.packed === true });
     }
     return { packing };
+}
+
+/**
+ * Packing list templates saved on the account: at most 20, each a name of 40 characters or
+ * fewer, unique without case, and from 1 to 200 items to pack.
+ */
+function parsePackingTemplates(value) {
+    if (!Array.isArray(value) || value.length > TEMPLATES_MAX) {
+        return { error: 'Save at most 20 packing list templates.' };
+    }
+    const templates = [];
+    const names = new Set();
+    for (const entry of value) {
+        const name = plainObject(entry) ? normalizeText(entry.name) : '';
+        const items = plainObject(entry) && Array.isArray(entry.items) ? entry.items.map(label) : [];
+        if (!name || name.length > TEMPLATE_NAME_MAX_LENGTH || !items.length || items.length > PACKING_MAX_ITEMS || items.includes(null)) {
+            return { error: 'Each packing list template needs a name of 40 characters or fewer and from 1 to 200 items.' };
+        }
+        if (names.has(name.toLowerCase())) return { error: 'Give each packing list template its own name.' };
+        names.add(name.toLowerCase());
+        templates.push({ name, items });
+    }
+    return { templates };
 }
 
 const amountIn = (value, max) => typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= max;
@@ -190,4 +215,4 @@ function parseTripPayload(body) {
     return { trip };
 }
 
-module.exports = { parseTripPayload };
+module.exports = { parsePackingTemplates, parseTripPayload };

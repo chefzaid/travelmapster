@@ -2,7 +2,7 @@
 
 const { isValidTravelDate, normalizeText } = require('./validation-text');
 const { COUNTRY_ID_PATTERN, parseLedgerSettings, plainObject, wholeNumber } = require('./ledger-validation');
-const { parseTripPayload } = require('./trip-validation');
+const { parsePackingTemplates, parseTripPayload } = require('./trip-validation');
 
 const MARKER_TYPES = new Set(['visited', 'wishlist']);
 // How the traveler was at a place they have been to (ADR 0014); wishlist places are always 'visit'.
@@ -435,8 +435,13 @@ function parseProfile(body) {
         if (error) return { error };
         profile.goals = goals;
     }
+    if (body.packingTemplates !== undefined) {
+        const { templates, error } = parsePackingTemplates(body.packingTemplates);
+        if (error) return { error };
+        profile.packingTemplates = templates;
+    }
     if (!Object.keys(profile).length) {
-        return { error: 'Send profileVisibility, homeCountry, countryList, mapPalette, publicJourneys, publicIndexing or goals.' };
+        return { error: 'Send profileVisibility, homeCountry, countryList, mapPalette, publicJourneys, publicIndexing, goals or packingTemplates.' };
     }
     return { profile };
 }

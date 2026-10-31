@@ -256,8 +256,11 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
 - A printable itinerary, one row per day, to print or save as PDF from the browser.
 - Duplicating a saved trip as a template: the same days, plans and packing list (unpacked),
   named "(copy)", without dates or expenses.
-- **Packing list**: items to tick off as they are packed, your own or a set of basics (passport,
-  charger, plug adapter…), shown on the printed itinerary as a checklist.
+- **Packing list**: items to tick off as they are packed, shown on the printed itinerary as a
+  checklist. Add your own, or start from a template: ready-made ones for the basics (passport,
+  charger, plug adapter…), the beach, a city, business and skiing, or your own. **Save as
+  template** keeps a trip's list, unticked, on the account (up to 20, a name each; saving under a
+  known name replaces it) to start a later trip's list from.
 - **Budget**: expenses by category (transport, stay, food and drink, activities, other) in any
   currency, totalled in the traveler's home currency with the exchange rate they enter for each
   other currency (the rate they actually got; no rate service is called), against an optional

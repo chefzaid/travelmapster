@@ -22,13 +22,13 @@ const VISIT_COLUMNS = `v.id, v.start_date AS "startDate", v.end_date AS "endDate
     v.notes, v.photo_url AS "photoUrl", v.purpose, v.organization_id AS "organizationId"`;
 
 // Account settings by API field and column.
-// Goals are JSON, so they are written as text and cast.
+// Goals and packing templates are JSON, so they are written as text and cast.
 const PROFILE_COLUMNS = [
     ['profileVisibility', 'profile_visibility'], ['homeCountry', 'home_country'], ['countryList', 'country_list'],
     ['mapPalette', 'map_palette'], ['publicJourneys', 'public_journeys'], ['publicIndexing', 'public_indexing'],
-    ['goals', 'goals', 'jsonb']
+    ['goals', 'goals', 'jsonb'], ['packingTemplates', 'packing_templates', 'jsonb']
 ];
-const USER_COLUMNS = 'id, username, profile_visibility, home_country, country_list, map_palette, public_journeys, public_indexing, goals';
+const USER_COLUMNS = 'id, username, profile_visibility, home_country, country_list, map_palette, public_journeys, public_indexing, goals, packing_templates';
 
 function createUserRepository(db) {
     return {
@@ -101,7 +101,7 @@ function createUserRepository(db) {
                 `UPDATE users SET ${set}updated_at = now() WHERE id = $1
                  RETURNING profile_visibility AS "profileVisibility", home_country AS "homeCountry",
                     country_list AS "countryList", map_palette AS "mapPalette", public_journeys AS "publicJourneys",
-                    public_indexing AS "publicIndexing", goals`,
+                    public_indexing AS "publicIndexing", goals, packing_templates AS "packingTemplates"`,
                 values
             );
             return rows[0] || null;
