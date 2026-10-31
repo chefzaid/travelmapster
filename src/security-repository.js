@@ -1,12 +1,40 @@
 'use strict';
 
-// Passkeys, two-step sign-in secrets and recovery codes (ADR 0027).
+// Passkeys, two-step sign-in secrets, recovery codes and the security activity (ADR 0027).
 const { withTransaction } = require('./db/pool');
 
 const PASSKEY_COLUMNS = `id, name, transports, created_at AS "createdAt", last_used_at AS "lastUsedAt"`;
 
+const EVENTS_KEPT = 50;
+
 function createSecurityRepository(db) {
     return {
+        /**
+         * Records a sign-in or a change to how the account signs in, with the device's browser and
+         * system names (src/sessions.js), keeping the latest 50.
+         */
+        async recordEvent(userId, kind, { method = null, browser = null, os = null } = {}) {
+            await db.query(
+                'INSERT INTO security_events (user_id, kind, method, browser, os) VALUES ($1, $2, $3, $4, $5)',
+                [userId, kind, method, browser, os]
+            );
+            await db.query(
+                `DELETE FROM security_events WHERE user_id = $1 AND id NOT IN (
+                    SELECT id FROM security_events WHERE user_id = $1 ORDER BY created_at DESC, id DESC LIMIT $2)`,
+                [userId, EVENTS_KEPT]
+            );
+        },
+
+        /** The latest activity, newest first. */
+        async listEvents(userId, limit = EVENTS_KEPT) {
+            const { rows } = await db.query(
+                `SELECT kind, method, browser, os, created_at AS "at" FROM security_events
+                 WHERE user_id = $1 ORDER BY created_at DESC, id DESC LIMIT $2`,
+                [userId, limit]
+            );
+            return rows;
+        },
+
         /** The passkeys of a user, without their keys, newest first. */
         async listPasskeys(userId) {
             const { rows } = await db.query(`SELECT ${PASSKEY_COLUMNS} FROM passkeys WHERE user_id = $1 ORDER BY created_at DESC, id`, [userId]);

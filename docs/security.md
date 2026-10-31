@@ -26,6 +26,10 @@
   security can list the devices signed in. They are named to the traveler by a SHA-256 hash of
   the session id, never the id; any other one can be ended, and ending them all keeps the
   current one (`src/sessions.js`).
+- **Security activity**: sign-ins and changes to the password, passkeys and two-step sign-in are
+  recorded with the method and the device's browser and system names (no address or
+  User-Agent), the latest 50 per account (migration 022); Sign-in security shows the latest 20
+  and the account export holds them.
 - Production refuses to start without a `SESSION_SECRET` of at least 32 characters.
 - **Passkeys** (WebAuthn, [ADR 0027](adr/0027-passkeys-and-two-step-sign-in.md)) must be
   discoverable and verify the user; registrations and sign-ins are checked by

@@ -16,8 +16,9 @@ const codeFor = (secret, offset = 0) => totp.hotp(totp.base32Decode(secret), Mat
 test('two-step sign-in asks for a code after the password, and recovery codes work once', async () => {
     const client = createClient(ctx.server);
     await client.register('stepper', 'stepper password');
-    const { sessions, ...status } = (await client.get('/api/security')).body;
+    const { sessions, activity, ...status } = (await client.get('/api/security')).body;
     assert.deepEqual(status, { passkeys: [], twoStep: { enabled: false, recoveryCodesLeft: 0 } });
+    assert.deepEqual(activity, [], 'a new account has no activity yet');
     assert.equal(sessions.length, 1);
 
     assert.equal((await client.post('/api/security/two-step/enable', { code: '123456' })).status, 400, 'set up first');
@@ -184,4 +185,29 @@ test('the devices signed in are listed, and any other one can be signed out', as
     assert.equal((await desktop.get('/api/auth/me')).status, 401, 'every other device is signed out');
     assert.equal((await laptop.get('/api/auth/me')).status, 200, 'but not this one');
     assert.equal((await laptop.get('/api/security')).body.sessions.length, 1);
+});
+
+test('sign-ins and changes to how the account signs in are listed, newest first', async () => {
+    const client = createClient(ctx.server, { userAgent: 'Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0' });
+    await client.register('watcher', 'watcher password');
+    await client.post('/api/auth/logout');
+    await client.post('/api/auth/login', { username: 'watcher', password: 'watcher password' });
+    const setup = await client.post('/api/security/two-step/setup');
+    await client.post('/api/security/two-step/enable', { code: codeFor(setup.body.secret) });
+    await client.post('/api/security/two-step/disable', { password: 'watcher password' });
+    await client.post('/api/auth/password', { currentPassword: 'watcher password', newPassword: 'watcher password 2' });
+    const kinds = activity => activity.map(({ kind, method }) => (method ? `${kind}:${method}` : kind));
+    const { activity } = (await client.get('/api/security')).body;
+    assert.deepEqual(kinds(activity), ['password_changed', 'two_step_off', 'two_step_on', 'sign_in:password']);
+    assert.deepEqual([activity[0].browser, activity[0].os], ['Firefox', 'Linux']);
+    assert.ok(Date.parse(activity[0].at));
+    // Someone else's sign-in never shows here; only the latest 50 are kept.
+    const { rows: [{ count }] } = await ctx.pool.query("SELECT count(*)::int FROM security_events WHERE user_id = (SELECT id FROM users WHERE username = 'watcher')");
+    assert.equal(count, 4);
+    const userId = (await ctx.pool.query("SELECT id FROM users WHERE username = 'watcher'")).rows[0].id;
+    await ctx.pool.query("INSERT INTO security_events (user_id, kind, method) SELECT $1, 'sign_in', 'password' FROM generate_series(1, 60)", [userId]);
+    await client.post('/api/auth/logout');
+    await client.post('/api/auth/login', { username: 'watcher', password: 'watcher password 2' });
+    assert.equal((await ctx.pool.query('SELECT count(*)::int FROM security_events WHERE user_id = $1', [userId])).rows[0].count, 50);
+    assert.equal((await client.get('/api/security')).body.activity.length, 20, 'the dialog shows the latest 20');
 });

@@ -7,7 +7,7 @@ const { Strategy: LocalStrategy } = require('passport-local');
 const { parseCredentials, parsePasswordChange, readPassword } = require('../validation');
 const { getOrCreateToken } = require('../middleware/csrf');
 const { checkSecondStep, needsSecondStep } = require('./security');
-const { login } = require('../sessions');
+const { login, recordChange } = require('../sessions');
 
 const BCRYPT_ROUNDS = 12;
 
@@ -103,7 +103,7 @@ function createAuthRouter({ passport, users, security, config, authLimiter, regi
             try {
                 // With two-step sign-in on, the session opens only after the code (ADR 0027).
                 if (await needsSecondStep(req, user, security)) return res.json({ secondStep: true });
-                await login(req, user);
+                await login(req, user, { security, method: 'password' });
             } catch (loginErr) {
                 return next(loginErr);
             }
@@ -113,12 +113,12 @@ function createAuthRouter({ passport, users, security, config, authLimiter, regi
     });
 
     router.post('/login/second-step', authLimiter, async (req, res) => {
-        const { user, status, error } = await checkSecondStep(req, { config, users, security });
+        const { user, method, status, error } = await checkSecondStep(req, { config, users, security });
         if (!user) {
             metrics.authEvents.inc({ event: 'second_step', outcome: 'failure' });
             return res.status(status).json({ error });
         }
-        await login(req, user);
+        await login(req, user, { security, method });
         metrics.authEvents.inc({ event: 'login', outcome: 'success' });
         return res.json({ user: publicUser(user), csrfToken: getOrCreateToken(req) });
     });
@@ -148,6 +148,7 @@ function createAuthRouter({ passport, users, security, config, authLimiter, regi
         // A fresh session here, and every other device signed out.
         await login(req, req.user);
         await users.endSessions(req.user.id, req.sessionID);
+        await recordChange(security, req, 'password_changed');
         metrics.authEvents.inc({ event: 'password_change', outcome: 'success' });
         logger.info({ userId: req.user.id }, 'Password changed');
         return res.json({ csrfToken: getOrCreateToken(req) });

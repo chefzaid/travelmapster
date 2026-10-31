@@ -242,6 +242,11 @@ export function formatDate(value) {
     return new Date(Date.UTC(year, month - 1, day)).toLocaleDateString(locale(), { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
 }
 
+/** A moment (an ISO timestamp) with its date and time, in the interface's language. */
+export function formatDateTime(value) {
+    return value ? new Date(value).toLocaleString(locale(), { dateStyle: 'medium', timeStyle: 'short' }) : '';
+}
+
 // replaceChildren, skipping the null/false placeholders used for optional sections.
 export function fill(container, ...children) {
     container.replaceChildren(...children.flat().filter(child => child !== null && child !== undefined && child !== false));

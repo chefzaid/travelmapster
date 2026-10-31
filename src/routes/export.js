@@ -16,7 +16,7 @@ function createExportRouter({ markers, trips, ledger, security, follows, orgs, m
 
     router.get('/', async (req, res) => {
         const userId = req.user.id;
-        const [places, itineraries, settings, changes, passkeys, secret, followed, memberships, audit] = await Promise.all([
+        const [places, itineraries, settings, changes, passkeys, secret, activity, followed, memberships, audit] = await Promise.all([
             markers.listForUser(userId),
             // The traveler's own trips, never those others share with them (ADR 0028).
             trips.listOwned(userId),
@@ -24,6 +24,7 @@ function createExportRouter({ markers, trips, ledger, security, follows, orgs, m
             ledger.listChanges(userId, null),
             security.listPasskeys(userId),
             security.findTotp(userId),
+            security.listEvents(userId),
             follows.list(userId),
             orgs.listForUser(userId),
             orgs.auditFor(userId, 10_000)
@@ -44,7 +45,8 @@ function createExportRouter({ markers, trips, ledger, security, follows, orgs, m
             // How the account signs in, never the keys or secrets themselves (ADR 0027).
             security: {
                 passkeys: passkeys.map(({ name, createdAt, lastUsedAt }) => ({ name, createdAt, lastUsedAt })),
-                twoStep: Boolean(secret?.enabled)
+                twoStep: Boolean(secret?.enabled),
+                activity
             }
         });
     });
