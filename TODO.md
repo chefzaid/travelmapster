@@ -214,3 +214,30 @@ Ideas that follow the product direction: a travel record people rely on for visa
 ### Accessibility
 
 - [ ] A list view of the map: every country and its status in a table that screen-reader and keyboard users can browse and mark, as an equal alternative to clicking the map.
+
+## More ideas (added 2026-10-31)
+
+Small, everyday things travelers ask for, built on data the app already has or a small bundled table. None needs a new external service, and none should grow beyond what its line says.
+
+### Atlas
+
+- [ ] "I'm here" check-in: one tap reads the browser's location once, finds the country and town from the map data in the browser, and records today as a visit (or extends the ongoing one); the position itself is never sent or stored. Keeps the ledger right with no typing.
+- [ ] Copy my flags: the visited countries as a line of flag emoji (🇫🇷🇯🇵🇲🇦…) with the count, to paste into a social bio or a message.
+- [ ] How much of the world: the share of the world's land area and population in the countries visited, beside the country count on the passport (areas from the map shapes, populations already bundled).
+- [ ] One border away: countries not yet visited that border ones already visited, as easy next trips in the Explore tab (neighbors worked out once when the map data is built).
+- [ ] Long time no see: countries and towns last visited five or more years ago, as a gentle "go back" list in the Explore tab, from the visit dates.
+- [ ] Travel streak: consecutive years with a new country, and with any trip abroad, on the passport, with the current and the best streak.
+
+### Trips
+
+- [ ] Countdown to the next trip ("Lisbon in 12 days") in the Explore tab and on the passport, and as a share card.
+- [ ] Travel companions: names of who came along on a visit or trip (names only, no accounts), and the map filtered to one of them ("everywhere I've been with Sam").
+- [ ] Packing list templates: save a list as a named template (beach, city, business, ski) and start a new trip's list from one.
+- [ ] Before you go: emergency number, driving side, plug types and the time difference on each destination of a trip, from a small table bundled from Wikidata (CC0).
+- [ ] Family view of a trip: a private, revocable read-only link to a trip's days and stops (no notes, no bookings), so family knows where the traveler is this week without an account.
+
+### Comfort
+
+- [ ] Theme in Settings: follow the system, light or dark, for people whose system theme does not suit the map.
+- [ ] Kilometers or miles in Settings for distances on the passport and trips, following the language at first.
+- [ ] Keyboard shortcuts: `?` lists them (`/` search, Escape and the timeline's keys today), with a few more: `T` timeline, `D` days on the map, `[` to fold the panel.
