@@ -158,6 +158,11 @@ counting rules are in [ADR 0010](adr/0010-day-ledger.md).
   warns ahead of time, including when a stay still going on would reach it.
 - **Plan ahead**: try planned stays against every rule and threshold they touch before you go,
   typed in or taken from a dated trip.
+- **Ledger health**: what would make the record doubtful when it matters, each with its place
+  to open and fix: a visit whose end was never recorded (only its first day counts), a stay
+  marked "still there" although a later visit is in a country not next to it, and two
+  countries that do not border each other on two or more of the same days (one shared day is a
+  travel day); or "All good".
 - **Where was I?** For any period (the last 30 days at first), the countries and towns of each
   day, in runs of days, with the days no visit covers; travel days show both countries.
 - **Days per country** for any calendar year or the last 365, 180 or 90 days, and a **timeline**

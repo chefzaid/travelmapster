@@ -98,6 +98,11 @@ test('a traveler records several visits to the same city', async ({ page }) => {
     await addVisit(page, '2023-04-01');
     await expect(card.locator('.visits-title')).toHaveText('Visited 2 times');
     await expect(page.locator('#long-ago')).toHaveCount(0);
+    // A visit without an end counts its first day only, and the ledger asks for the end.
+    await page.click('#tab-ledger');
+    await expect(page.locator('#ledger-health li')).toContainText('Lisbon, Portugal: when did you leave?');
+    await page.locator('#ledger-health').getByRole('button', { name: 'Open Lisbon' }).click();
+    await expect(card.locator('h3')).toHaveText('Lisbon');
     // Newest first.
     await expect(card.locator('.visit').first()).toContainText('2023');
 
