@@ -103,3 +103,18 @@ export function matchesLastVisit(marker, filter) {
     if (filter === 'none') return !date;
     return date.startsWith(`${filter}-`);
 }
+
+/**
+ * What checking in today does to a place's visits: nothing when one already covers today
+ * (still going on, or ending today or later); `extend` the visit that ended yesterday to
+ * today; otherwise `add` a one-day visit.
+ */
+export function checkInPlan(visits = [], today) {
+    const yesterday = new Date(Date.parse(today) - DAY_MS).toISOString().slice(0, 10);
+    const last = visit => visit.endDate || visit.startDate;
+    const covers = visit => visit.startDate <= today && (last(visit) >= today || (visit.ongoing && !visit.endDate));
+    if (visits.some(covers)) return { action: 'none' };
+    const previous = visits.find(visit => last(visit) === yesterday);
+    if (previous) return { action: 'extend', visit: { ...previous, endDate: today, ongoing: false } };
+    return { action: 'add', visit: { startDate: today, endDate: today, notes: '', photoUrl: '', ongoing: false } };
+}

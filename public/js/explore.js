@@ -158,7 +158,9 @@ export function renderExplore(container, ctx) {
             h('h2', {}, t('Hi {username}!', { username: state.user.username }), ' ', h('span', { 'aria-hidden': 'true' }, '👋')),
             h('p', { class: 'muted' }, stats.visitedCountries
                 ? tn(stats.visitedCountries, 'You\'ve colored in {count} country, {percent}% {share}.', 'You\'ve colored in {count} countries, {percent}% {share}.', { percent: stats.worldPercent, share: shareLabel(stats.countryList) })
-                : t('Click any country you have visited to color it in.'))
+                : t('Click any country you have visited to color it in.')),
+            // Loaded when first used, so the first page stays light.
+            h('button', { type: 'button', class: 'btn btn-sm btn-ghost', id: 'checkin-btn', onclick: () => import('./checkin.js').then(module => module.checkIn(ctx)) }, t('📍 I\'m here'))
         ),
         countdownSection(ctx),
         state.markers.length === 0 ? h('section', { class: 'onboarding' },

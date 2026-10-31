@@ -97,6 +97,9 @@ a SHA-256 hash; each works once, for seven days, and is revoked by the admin or 
 - Photos and location history files chosen for an import are read in the browser and never
   uploaded; only the nearest town (or country) and the visit dates are sent, after the traveler
   reviews them ([ADR 0025](adr/0025-imports-from-photos-and-location-history.md)).
+- "I'm here" reads the browser's location once, only when the traveler presses it and the
+  browser allows it; the town is found in the bundled map data and only that town, at the map
+  data's coordinates, is sent once the traveler confirms. The position is never sent or kept.
 - Places are stored at town or country level: the app saves the bundled map coordinates of a
   town or a country label, and a place from the world search is rounded to two decimals (about
   a kilometer). Only an import keeps the coordinates written in the file, as the traveler chose

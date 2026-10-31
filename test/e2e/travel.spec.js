@@ -293,3 +293,34 @@ test('login errors are shown inline', async ({ page }) => {
     await page.click('#auth-submit');
     await expect(page.locator('#auth-error')).toHaveText('Invalid username or password.');
 });
+
+test.describe('in Lisbon', () => {
+    test.use({ geolocation: { latitude: 38.7139, longitude: -9.1394 }, permissions: ['geolocation'] });
+
+    test('a traveler checks in where they are, once a day', async ({ page }) => {
+        const errors = trackErrors(page);
+        await signUp(page, `e2e_checkin_${Date.now()}`);
+        await page.click('#tab-explore');
+        await page.click('#checkin-btn');
+        const dialog = page.getByRole('dialog', { name: 'You are in Lisbon, Portugal' });
+        await expect(dialog).toContainText('never your exact position');
+        const saved = page.waitForRequest(request => request.method() === 'POST' && request.url().endsWith('/api/markers'));
+        await dialog.getByRole('button', { name: 'Record today' }).click();
+        await expect(page.locator('.toast', { hasText: 'Checked in: Lisbon, Portugal, today.' })).toBeVisible();
+        // Only the town leaves the browser, at the map data's coordinates, never the position.
+        const place = (await saved).postDataJSON();
+        expect([place.lat, place.lng]).not.toEqual([38.7139, -9.1394]);
+        expect(JSON.stringify(place)).not.toContain('38.7139');
+        await expect(page.locator('#legend-visited')).toHaveText('1');
+        // The place is the town, at the map data's coordinates, with a visit today.
+        await page.click('#tab-places');
+        await expect(page.locator('#places-tab .place')).toContainText('Lisbon, Portugal');
+        await expect(page.locator('#places-tab .place')).toContainText('1 visit');
+
+        await page.click('#tab-explore');
+        await page.click('#checkin-btn');
+        await page.getByRole('dialog').getByRole('button', { name: 'Record today' }).click();
+        await expect(page.locator('.toast', { hasText: 'Today is already recorded in Lisbon, Portugal.' })).toBeVisible();
+        expect(errors).toEqual([]);
+    });
+});

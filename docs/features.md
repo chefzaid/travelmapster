@@ -115,6 +115,10 @@ The reasoning and what each rule rules out are in [ADR 0017](adr/0017-product-pr
   years ("2 years ago today, you arrived in Lisbon"), each showing its place on the map; a visit
   that began on 29 February comes back on 28 February in other years. Layovers and wishes are
   left out.
+- **I'm here**: one tap on the Explore tab reads the browser's location once, finds the town
+  and country in the map data, and, once confirmed, records today as a visit there (or extends
+  yesterday's); a wish becomes a place been to. Only the town is saved, at the map data's own
+  coordinates; the position itself is never sent or kept.
 - **Countdown to the next trip** ("Lisbon long weekend in 12 days", or that it starts today or
   is under way) at the top of the Explore tab, with the flags of its countries, and on the
   passport; it opens the Trips tab.
