@@ -14,7 +14,7 @@ test('a traveler changes their password, downloads all their data, then deletes 
     await signUp(page, username);
 
     // Dark in a light browser, kept after a reload, then back to the system's light.
-    const ocean = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+    const ocean = () => page.evaluate(() => globalThis.getComputedStyle(globalThis.document.body).backgroundColor);
     const light = await ocean();
     await page.click('#account-btn');
     await page.click('#settings-btn');
