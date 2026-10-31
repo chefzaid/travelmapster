@@ -140,6 +140,9 @@ export const api = {
     getVisitChanges: () => request('GET', '/ledger/changes'),
 
     getTrips: () => request('GET', '/trips'),
+    getCalendarFeed: () => request('GET', '/calendar-feed'),
+    createCalendarFeed: () => request('POST', '/calendar-feed', {}),
+    deleteCalendarFeed: () => request('DELETE', '/calendar-feed'),
     exportAccount: () => request('GET', '/export'),
     createTrip: trip => request('POST', '/trips', trip),
     updateTrip: (id, trip) => request('PUT', `/trips/${Number(id)}`, trip),

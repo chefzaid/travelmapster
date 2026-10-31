@@ -249,6 +249,10 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
 - A travel-ideas panel for any country or city, and copying an itinerary as text.
 - Exporting an itinerary to a calendar: an `.ics` file with an all-day event per day holding
   that day's plans (it needs a start date), which any calendar app imports.
+- **Subscribe in your calendar**: a private link to a feed of every dated trip (its title, route
+  and days, never its plans) and every planned stay of the ledger, which Google, Apple or Outlook
+  calendars keep up to date. It is shown once when made; a new link ends the old one, and the
+  feed can be turned off.
 - A printable itinerary, one row per day, to print or save as PDF from the browser.
 - Duplicating a saved trip as a template: the same days, plans and packing list (unpacked),
   named "(copy)", without dates or expenses.

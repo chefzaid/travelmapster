@@ -230,6 +230,30 @@ export function tripCalendar(trip, now = new Date()) {
     return { calendar: `${lines.map(fold).join('\r\n')}\r\n` };
 }
 
+/**
+ * The calendar a subscription feed serves: an all-day event for each dated trip (its title, its
+ * route and its days, never its plans) and for each planned stay of the ledger that no trip
+ * made, with stable ids so calendars update them in place. `nameOf(countryId)` names countries.
+ */
+export function feedCalendar({ trips, planned = [], nameOf = id => id, now = new Date() }) {
+    const stamp = `${now.toISOString().slice(0, 19).replace(/[-:]/g, '')}Z`;
+    const event = (uid, startDate, lastDate, summary, location) => [
+        'BEGIN:VEVENT', `UID:${uid}@travelmapster`, `DTSTAMP:${stamp}`,
+        `DTSTART;VALUE=DATE:${compactDate(shiftDate(startDate, 0))}`, `DTEND;VALUE=DATE:${compactDate(shiftDate(lastDate, 1))}`,
+        `SUMMARY:${escapeText(summary)}`, ...(location ? [`LOCATION:${escapeText(location)}`] : []), 'TRANSP:TRANSPARENT', 'END:VEVENT'
+    ];
+    const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//TravelMapster//Trips//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
+        `X-WR-CALNAME:${escapeText(t('TravelMapster trips'))}`];
+    for (const trip of trips.filter(item => item.startDate && item.plan?.length)) {
+        lines.push(...event(`trip-${trip.id}`, trip.startDate, tripEndDate(trip), trip.title, tripRoute(trip)));
+    }
+    for (const stay of planned.filter(item => !String(item.id).startsWith('trip-'))) {
+        lines.push(...event(`plan-${stay.id}`, stay.startDate, stay.endDate, t('Planned stay: {country}', { country: nameOf(stay.countryId) }), nameOf(stay.countryId)));
+    }
+    lines.push('END:VCALENDAR');
+    return `${lines.map(fold).join('\r\n')}\r\n`;
+}
+
 /** A file name from the trip title, such as "summer-in-portugal.ics". */
 export function tripFileName(trip, extension) {
     const slug = trip.title.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase()

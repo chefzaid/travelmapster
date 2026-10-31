@@ -21,6 +21,8 @@ const { createAuthRouter, createPassport, publicUser, requireAuth } = require('.
 const { createSecurityRouter } = require('./routes/security');
 const { createSecurityRepository } = require('./security-repository');
 const { createSessionRepository } = require('./sessions');
+const { calendarFeedHandler, createCalendarFeedRepository } = require('./calendar-feed');
+const { createCalendarFeedRouter } = require('./routes/calendar-feed');
 const { createMarkerRouter } = require('./routes/markers');
 const { createVisitRouter } = require('./routes/visits');
 const { createLedgerRouter } = require('./routes/ledger');
@@ -59,6 +61,7 @@ function createApp({ config, pool, logger, metrics, geocoder, places, state = { 
     const visits = createVisitRepository(pool);
     const ledger = createLedgerRepository(pool);
     const trips = createTripRepository(pool);
+    const feeds = createCalendarFeedRepository(pool);
     const security = createSecurityRepository(pool);
     const sessions = createSessionRepository(pool, config.session.maxAgeMs);
     const follows = createFollowRepository(pool);
@@ -143,6 +146,8 @@ function createApp({ config, pool, logger, metrics, geocoder, places, state = { 
         if (req.fresh) return res.status(304).end();
         return res.type('png').send(png);
     });
+    // A traveler's calendar subscription, fetched by calendar apps with the private link.
+    app.get('/calendar/:file', jsonLimiter(pool, 'calendar', 60, 60_000, 'Too many requests, please slow down.'), calendarFeedHandler({ feeds, trips, ledger }));
     app.get('/schengen-calculator', (req, res) => sendPage(res, 'schengen-calculator.html'));
     // A public map other websites may frame (ADR 0020): only this page relaxes framing, and it
     // stays out of search results like shared maps.
@@ -218,6 +223,7 @@ function createApp({ config, pool, logger, metrics, geocoder, places, state = { 
     api.use('/visits', requireAuth, createVisitRouter({ visits, orgs }));
     api.use('/ledger', requireAuth, createLedgerRouter({ ledger, metrics }));
     api.use('/trips', requireAuth, createTripRouter({ trips, users, orgs }));
+    api.use('/calendar-feed', requireAuth, createCalendarFeedRouter({ feeds, config }));
     api.use('/follows', requireAuth, createFollowRouter({ users, follows }));
     api.use('/orgs', requireAuth, createOrgRouter({ orgs, users, security }));
     api.use('/export', requireAuth, createExportRouter({ markers, trips, ledger, security, follows, orgs, metrics }));

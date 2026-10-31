@@ -201,7 +201,7 @@ Ideas that follow the product direction: a travel record people rely on for visa
 
 - [ ] Shared trip expenses: on a trip planned together, who paid what and who owes whom, in the trip's currency.
 - [ ] Reservations: flights, stays and bookings with times, addresses and confirmation codes in a trip's days, included in the calendar export.
-- [ ] Calendar subscription: a private, revocable feed URL of trips and planned stays for Google, Apple or Outlook calendars.
+- [x] Calendar subscription: a private, revocable feed URL of trips and planned stays for Google, Apple or Outlook calendars. Done: Subscribe in your calendar on the Trips tab; only a hash of the link's token is stored (migration 023).
 - [x] Import trips and flights from a calendar file (`.ics`), read in the browser and reviewed like other imports. Done: 📅 Calendar among the Places tab's imports; travel-like events only, the home country left out.
 - [ ] Public holidays and typical weather at the destination during a trip. *(waiting: see Needs Input › Public holidays and climate data)*
 
