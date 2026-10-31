@@ -254,6 +254,7 @@
   "{name}: transit only, not counted as a visit.": "{name}: nur Transit, zählt nicht als Besuch.",
   "{owner} can share it with you again.": "{owner} kann sie wieder mit dir teilen.",
   "{packed} of {total} packed": "{packed} von {total} gepackt",
+  "{place}: a visit from {from} to {to}": "{place}: ein Besuch vom {from} bis {to}",
   "{places} with {visits}.": "{places} mit {visits}.",
   "{range}: {count} countries": {
     "one": "{range}: {count} Land",
@@ -289,6 +290,8 @@
   "{verb} {name} on the demo map.": "{name} auf der Demokarte: {verb}.",
   "{verb} {name}!": "{verb} {name}!",
   "{visits} to {places}, by the nearest town.": "{visits} an {places}, nach nächstgelegenem Ort.",
+  "{visits}, and wishes move from your wishlist to the places you have been.": "{visits}, und Wünsche wandern von deiner Wunschliste zu den besuchten Orten.",
+  "{visits}.": "{visits}.",
   "{year} in travel": "{year} unterwegs",
   "＋ Add": "＋ Hinzufügen",
   "＋ Add a day": "＋ Tag hinzufügen",
@@ -1621,6 +1624,7 @@
   "Trip payload must be a JSON object.": "Die Reisedaten müssen ein JSON-Objekt sein.",
   "Trip saved.": "Reise gespeichert.",
   "Trip title is required and must be 120 characters or fewer.": "Der Reisetitel ist erforderlich und darf höchstens 120 Zeichen haben.",
+  "Trip: {title}": "Reise: {title}",
   "Trips": "Reisen",
   "trips planned": {
     "one": "Reise geplant",
@@ -1752,6 +1756,7 @@
   "You are offline: this change was not saved. Try again once you are back online.": "Du bist offline: Diese Änderung wurde nicht gespeichert. Versuch es erneut, sobald du wieder online bist.",
   "You are offline: your map shows as last loaded, and changes will not save until you are back online.": "Du bist offline: Deine Karte zeigt den zuletzt geladenen Stand, und Änderungen werden erst gespeichert, wenn du wieder online bist.",
   "You become its admin: invite your team, set the rules that matter to you and see business days per country. Running one needs a passkey or two-step sign-in.": "Du wirst ihr Admin: Lade dein Team ein, leg die für euch wichtigen Regeln fest und sieh Geschäftsreisetage pro Land. Zum Leiten brauchst du einen Passkey oder die Zwei-Schritt-Anmeldung.",
+  "You can edit visits on the place's card.": "Besuche lassen sich auf der Karte des Ortes bearbeiten.",
   "You can view this trip but not change it.": "Du kannst diese Reise ansehen, aber nicht ändern.",
   "You can't enter on {date}: the 180 days up to then already hold 90 days in the area.": "Du kannst am {date} nicht einreisen: Die 180 Tage bis dahin enthalten schon 90 Tage im Raum.",
   "You do not follow that map.": "Du folgst dieser Karte nicht.",

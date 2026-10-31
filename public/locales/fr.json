@@ -298,6 +298,7 @@
   "{name}: transit only, not counted as a visit.": "{name} : en transit, non compté comme une visite.",
   "{owner} can share it with you again.": "{owner} pourra le partager à nouveau avec vous.",
   "{packed} of {total} packed": "{packed} sur {total} dans la valise",
+  "{place}: a visit from {from} to {to}": "{place} : une visite du {from} au {to}",
   "{places} with {visits}.": "{places} avec {visits}.",
   "{range}: {count} countries": {
     "one": "{range} : {count} pays",
@@ -336,6 +337,8 @@
   "{verb} {name} on the demo map.": "{verb} {name} sur la carte de démo.",
   "{verb} {name}!": "{verb} {name} !",
   "{visits} to {places}, by the nearest town.": "{visits} dans {places}, d'après la ville la plus proche.",
+  "{visits}, and wishes move from your wishlist to the places you have been.": "{visits}, et les envies passent de votre liste d'envies aux lieux visités.",
+  "{visits}.": "{visits}.",
   "{year} in travel": "{year} en voyage",
   "＋ Add": "＋ Ajouter",
   "＋ Add a day": "＋ Ajouter un jour",
@@ -1695,6 +1698,7 @@
   "Trip payload must be a JSON object.": "Les données du voyage doivent être un objet JSON.",
   "Trip saved.": "Voyage enregistré.",
   "Trip title is required and must be 120 characters or fewer.": "Le titre du voyage est requis et doit faire au plus 120 caractères.",
+  "Trip: {title}": "Voyage : {title}",
   "Trips": "Voyages",
   "trips planned": {
     "one": "voyage prévu",
@@ -1831,6 +1835,7 @@
   "You are offline: this change was not saved. Try again once you are back online.": "Vous êtes hors ligne : cette modification n'a pas été enregistrée. Réessayez une fois de retour en ligne.",
   "You are offline: your map shows as last loaded, and changes will not save until you are back online.": "Vous êtes hors ligne : votre carte s'affiche telle que chargée la dernière fois, et les modifications ne seront pas enregistrées avant votre retour en ligne.",
   "You become its admin: invite your team, set the rules that matter to you and see business days per country. Running one needs a passkey or two-step sign-in.": "Vous en devenez l'admin : invitez votre équipe, définissez les règles qui comptent pour vous et consultez les jours d'affaires par pays. Gérer une organisation nécessite une clé d'accès ou la connexion en deux étapes.",
+  "You can edit visits on the place's card.": "Vous pouvez modifier les visites sur la fiche du lieu.",
   "You can view this trip but not change it.": "Vous pouvez consulter ce voyage mais pas le modifier.",
   "You can't enter on {date}: the 180 days up to then already hold 90 days in the area.": "Vous ne pouvez pas entrer le {date} : les 180 jours qui précèdent comptent déjà 90 jours dans l'espace.",
   "You do not follow that map.": "Vous ne suivez pas cette carte.",

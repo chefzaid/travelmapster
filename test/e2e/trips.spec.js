@@ -188,6 +188,7 @@ test('a trip goes to several places, each planned in the ledger and recorded as 
     await trips.getByRole('button', { name: '✅ Record as a visit' }).click();
     await expect(page.locator('dialog.dialog')).toContainText('Lisbon, Portugal: a visit from');
     await expect(page.locator('dialog.dialog')).toContainText('Madrid, Spain: a visit from');
+    await expect(page.locator('dialog.dialog')).toContainText('You can edit visits on the place\'s card.');
     await page.getByRole('button', { name: 'Add the visits' }).click();
     // Two places are saved one after the other.
     await expect(trips.getByRole('button', { name: '✓ Recorded as a visit' })).toBeDisabled({ timeout: 15_000 });

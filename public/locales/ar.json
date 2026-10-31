@@ -430,6 +430,7 @@
   "{name}: transit only, not counted as a visit.": "{name}: عبور فقط، لا يُحتسب زيارة.",
   "{owner} can share it with you again.": "يمكن لـ {owner} مشاركتها معك مرة أخرى.",
   "{packed} of {total} packed": "تم توضيب {packed} من {total}",
+  "{place}: a visit from {from} to {to}": "{place}: زيارة من {from} إلى {to}",
   "{places} with {visits}.": "{places} مع {visits}.",
   "{range}: {count} countries": {
     "zero": "{range}: لا دول",
@@ -477,6 +478,8 @@
   "{verb} {name} on the demo map.": "{verb} {name} على الخريطة التجريبية.",
   "{verb} {name}!": "{verb} {name}!",
   "{visits} to {places}, by the nearest town.": "{visits} إلى {places}، حسب أقرب بلدة.",
+  "{visits}, and wishes move from your wishlist to the places you have been.": "{visits}، وتنتقل الأمنيات من قائمة أمنياتك إلى الأماكن التي زرتها.",
+  "{visits}.": "{visits}.",
   "{year} in travel": "{year} في السفر",
   "＋ Add": "＋ إضافة",
   "＋ Add a day": "＋ إضافة يوم",
@@ -1917,6 +1920,7 @@
   "Trip payload must be a JSON object.": "يجب أن تكون بيانات الرحلة كائن JSON.",
   "Trip saved.": "تم حفظ الرحلة.",
   "Trip title is required and must be 120 characters or fewer.": "عنوان الرحلة مطلوب ويجب ألا يتجاوز 120 حرفًا.",
+  "Trip: {title}": "رحلة: {title}",
   "Trips": "الرحلات",
   "trips planned": {
     "zero": "رحلة مخططة",
@@ -2068,6 +2072,7 @@
   "You are offline: this change was not saved. Try again once you are back online.": "أنت غير متصل بالإنترنت: لم يُحفظ هذا التغيير. حاول مرة أخرى عند عودة الاتصال.",
   "You are offline: your map shows as last loaded, and changes will not save until you are back online.": "أنت غير متصل بالإنترنت: تظهر خريطتك كما حُمّلت آخر مرة، ولن تُحفظ التغييرات حتى يعود الاتصال.",
   "You become its admin: invite your team, set the rules that matter to you and see business days per country. Running one needs a passkey or two-step sign-in.": "ستصبح مسؤولها: ادعُ فريقك، وحدد القواعد التي تهمك، واطّلع على أيام العمل لكل دولة. تتطلب إدارتها مفتاح مرور أو تسجيل الدخول بخطوتين.",
+  "You can edit visits on the place's card.": "يمكنك تعديل الزيارات من بطاقة المكان.",
   "You can view this trip but not change it.": "يمكنك عرض هذه الرحلة لكن لا يمكنك تغييرها.",
   "You can't enter on {date}: the 180 days up to then already hold 90 days in the area.": "لا يمكنك الدخول في {date}: الـ 180 يومًا حتى ذلك التاريخ تتضمن بالفعل 90 يومًا في المنطقة.",
   "You do not follow that map.": "أنت لا تتابع هذه الخريطة.",
