@@ -187,6 +187,6 @@ export function renderExplore(container, ctx) {
                 ));
             }))
         ) : null,
-        h('p', { class: 'muted small tip' }, tParts('Tip: press {key} to search, zoom in to see more cities.', { key: h('kbd', {}, '/') }))
+        h('p', { class: 'muted small tip' }, tParts('Tip: press {key} to search, {help} for every shortcut, and zoom in to see more cities.', { key: h('kbd', {}, '/'), help: h('kbd', {}, '?') }))
     );
 }

@@ -149,14 +149,6 @@ export function setupSearch(ctx) {
             search.input.setAttribute('aria-expanded', 'false');
         }, 100);
     });
-    document.addEventListener('keydown', event => {
-        const active = /** @type {HTMLElement | null} */ (document.activeElement);
-        const typing = /INPUT|TEXTAREA|SELECT/.test(active?.tagName) || active?.isContentEditable;
-        if (event.key === '/' && !typing) {
-            event.preventDefault();
-            search.input.focus();
-        }
-    });
     $('#surprise-btn').addEventListener('click', () => surprise(ctx));
 }
 

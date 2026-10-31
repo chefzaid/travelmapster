@@ -54,6 +54,24 @@ test('the panel folds away on wide screens so the whole map can be used, and ope
     await fold.click();
     await expect(page.locator('#panel')).toBeVisible();
 
+    // The keyboard does the same, lists its shortcuts, and opens the timeline and days on the map.
+    await page.keyboard.press('[');
+    await expect(page.locator('#panel')).toBeHidden();
+    await page.keyboard.press('[');
+    await expect(page.locator('#panel')).toBeVisible();
+    await page.keyboard.press('?');
+    await expect(page.getByRole('dialog', { name: 'Keyboard shortcuts' })).toContainText('Open or close the timeline');
+    await page.keyboard.press('Escape');
+    await expect(page.locator('dialog')).toHaveCount(0);
+    await page.keyboard.press('t');
+    await expect(page.locator('#time-bar')).toBeVisible();
+    await page.locator('#time-close').click();
+    await expect(page.locator('#time-bar')).toBeHidden();
+    await page.keyboard.press('d');
+    await expect(page.locator('#legend-days')).toHaveAttribute('aria-pressed', 'true');
+    await page.keyboard.press('d');
+    await expect(page.locator('#legend-days')).toHaveAttribute('aria-pressed', 'false');
+
     // Phones keep the bottom sheet and its handle.
     await page.setViewportSize({ width: 390, height: 844 });
     await expect(fold).toBeHidden();

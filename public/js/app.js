@@ -23,6 +23,7 @@ import { markContinent, setupSelectBar, startSelecting, stopSelecting, toggleSel
 import { countryMarker, showCityCard, showCountryCard, showMarker, showSavedCityCard } from './cards.js';
 import { editPlace } from './place-form.js';
 import { setupSearch } from './search.js';
+import { setupShortcuts } from './shortcuts.js';
 import { showIdeas } from './explore.js';
 import { closeAccountMenu, openAuth, renderDemoLedger, setupAccountMenu, setupAuth } from './account.js';
 import { AUTH_HASHES, hideHome, offerHome, rememberSignedIn, setupHome, wasSignedIn } from './home.js';
@@ -430,6 +431,7 @@ async function init() {
     }
     await mapReady;
     setupSearch(context);
+    setupShortcuts();
     setupTabs(context);
     setupAccountMenu(context);
     setupPanel();
