@@ -312,6 +312,8 @@ fieldset.trip-stops { padding: 8px 10px; border: 2px solid var(--ink); border-ra
     list-style: none;
 }
 
+.copy-flags { margin-top: 10px; }
+
 .stamp {
     display: grid;
     justify-items: center;

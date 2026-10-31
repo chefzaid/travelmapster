@@ -222,7 +222,7 @@ Small, everyday things travelers ask for, built on data the app already has or a
 ### Atlas
 
 - [ ] "I'm here" check-in: one tap reads the browser's location once, finds the country and town from the map data in the browser, and records today as a visit (or extends the ongoing one); the position itself is never sent or stored. Keeps the ledger right with no typing.
-- [ ] Copy my flags: the visited countries as a line of flag emoji (🇫🇷🇯🇵🇲🇦…) with the count, to paste into a social bio or a message.
+- [x] Copy my flags: the visited countries as a line of flag emoji (🇫🇷🇯🇵🇲🇦…) with the count, to paste into a social bio or a message. Done: 📋 Copy my flags under the passport's stamps.
 - [ ] How much of the world: the share of the world's land area and population in the countries visited, beside the country count on the passport (areas from the map shapes, populations already bundled).
 - [ ] One border away: countries not yet visited that border ones already visited, as easy next trips in the Explore tab (neighbors worked out once when the map data is built).
 - [ ] Long time no see: countries and towns last visited five or more years ago, as a gentle "go back" list in the Explore tab, from the visit dates.

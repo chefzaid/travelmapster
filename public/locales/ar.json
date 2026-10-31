@@ -535,6 +535,7 @@
     "other": "📋 {count} مهمة قبل السفر"
   },
   "📋 Copy": "📋 نسخ",
+  "📋 Copy my flags": "📋 نسخ أعلامي",
   "📋 Copy the link": "📋 نسخ الرابط",
   "📋 Paste countries": "📋 لصق الدول",
   "📏 Rules": "📏 القواعد",
@@ -1031,6 +1032,7 @@
   "First day": "اليوم الأول",
   "First stamp": "الختم الأول",
   "Fix the dates above to see your days.": "صحّح التواريخ أعلاه لترى أيامك.",
+  "Flags copied: {line}": "تم نسخ الأعلام: {line}",
   "Flipping through the guidebook…": "نتصفح دليل السفر…",
   "Fly somewhere you haven't been": "سافر إلى مكان لم تزره من قبل",
   "Follow": "متابعة",
@@ -1986,6 +1988,7 @@
   "Your cities here": "مدنك هنا",
   "Your data archive is downloaded.": "تم تنزيل أرشيف بياناتك.",
   "Your device keeps the key and unlocks it with your fingerprint, face or screen lock. Name it to know it again.": "يحتفظ جهازك بالمفتاح ويفتحه ببصمتك أو وجهك أو قفل الشاشة. سمِّه لتتعرف عليه لاحقًا.",
+  "Your flags: {line}": "أعلامك: {line}",
   "Your guest map is now part of your account. 🎉": "أصبحت خريطة الضيف الآن جزءًا من حسابك. 🎉",
   "Your guest map is now saved in your account. 🎉": "تم حفظ خريطة الضيف في حسابك الآن. 🎉",
   "Your guest map stays in this browser: try again from the account menu once you are back online.": "تبقى خريطة الضيف في هذا المتصفح: حاول مرة أخرى من قائمة الحساب عند عودة الاتصال.",

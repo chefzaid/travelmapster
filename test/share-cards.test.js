@@ -35,3 +35,10 @@ test('cards show counts and country names only, escaped', async () => {
 
     assert.ok(svgDataUrl('<svg>é</svg>').startsWith('data:image/svg+xml;charset=utf-8,%3Csvg%3E%C3%A9'));
 });
+
+test('the flags line lists each country\'s flag and the count', async () => {
+    const { flagLine } = await load();
+    assert.equal(flagLine([{ flag: '🇫🇷', name: 'France' }, { flag: '🇯🇵', name: 'Japan' }, { flag: '🇲🇦', name: 'Morocco' }]), '🇫🇷🇯🇵🇲🇦 3 countries');
+    assert.equal(flagLine([{ flag: '🇵🇹', name: 'Portugal' }]), '🇵🇹 1 country');
+    assert.equal(flagLine([{ flag: '', name: 'Somewhere' }, { flag: '🇪🇸', name: 'Spain' }]), '🇪🇸 2 countries', 'a territory without a flag still counts');
+});

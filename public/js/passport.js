@@ -1,11 +1,12 @@
 // Passport tab: rank, counts, continents, stamps, badges and travel statistics; and the
 // counts shown on a public map.
-import { h, $, fill, formatDate } from './ui.js';
+import { h, $, fill, formatDate, copyText } from './ui.js';
 import { HOME } from './status.js';
 import { countryList, shareLabel } from './lists.js';
 import { localToday } from './days.js';
 import { goalsSection } from './passport-goals.js';
 import { shareCardsSection } from './passport-share.js';
+import { flagLine } from './share-cards.js';
 import { friendsSection } from './friends.js';
 import { EARTH_CIRCUMFERENCE_KM, countriesByYear, daysAwayByYear, distanceTraveled, longestTrip } from './travel-stats.js';
 import { formatNumber, t, tn } from './i18n.js';
@@ -61,9 +62,14 @@ function stampRibbon(stats, id) {
     return stats.livedIds.has(id) ? t('🔑 Lived') : '';
 }
 
-function stamps(stats, index, onPick) {
-    const visited = [...stats.visitedIds].filter(id => stats.countedIds.has(id)).map(id => index.byId.get(id)).filter(Boolean)
+// The countries stamped in the passport: those been to that the chosen list counts, by name.
+function stampedCountries(stats, index) {
+    return [...stats.visitedIds].filter(id => stats.countedIds.has(id)).map(id => index.byId.get(id)).filter(Boolean)
         .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function stamps(stats, index, onPick) {
+    const visited = stampedCountries(stats, index);
     if (!visited.length) {
         return h('p', { class: 'muted small' }, t('Your passport is empty. Every country you visit earns a stamp.'));
     }
@@ -83,6 +89,20 @@ function stamps(stats, index, onPick) {
             )
         );
     }));
+}
+
+// The stamps as a line of flags, for a social bio or a message.
+function copyFlagsButton(stats, index) {
+    const countries = stampedCountries(stats, index);
+    if (!countries.length) return null;
+    return h('button', {
+        type: 'button',
+        class: 'btn btn-ghost btn-sm copy-flags',
+        onclick: () => {
+            const line = flagLine(countries);
+            copyText(line, t('Flags copied: {line}', { line }), t('Your flags: {line}', { line }));
+        }
+    }, t('📋 Copy my flags'));
 }
 
 // Territories been to that the chosen list leaves out are named, not stamped.
@@ -202,6 +222,7 @@ export function renderPassport(container, ctx) {
             stamps(stats, index, country => {
                 ctx.map.flyToCountry(country);
             }),
+            copyFlagsButton(stats, index),
             uncountedNote(stats, index),
             transitNote(stats, index),
             h('p', { class: 'muted small' }, t('Counting {list} ({total}). Change it in ⚙️ Settings.', { list: countryList(stats.countryList).phrase, total: stats.totalCountries }))
