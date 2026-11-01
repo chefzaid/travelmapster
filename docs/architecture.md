@@ -147,6 +147,7 @@ JSON under `/api`, described in full in [OpenAPI](api/openapi.json) and kept bac
 | `public/js/map-days.js`, `heat-map.js` | Days on the map: the legend's switch and steps, and the days per country and their steps (pure `heat-map.js`, unit tested) |
 | `public/js/us-presence.js`, `ledger-us.js` | The US Substantial Presence Test, a weighted three-year count no rule can express, among the tax-residency thresholds (pure `us-presence.js`, unit tested) |
 | `public/js/rule-templates.js`, `ledger-templates.js` | Ready-made stay rules and thresholds with their sources (pure `rule-templates.js`, unit tested against the API's validation) and the picker that starts the rule dialog from one |
+| `public/js/documents.js`, `ledger-documents.js` | Travel documents: validity, expiry warnings and the trips ahead they do not cover (pure, unit tested), and their Ledger tab section |
 | `public/js/ledger-exempt.js` | Days that do not count: periods under a residence permit or long-stay visa, edited in the Ledger tab and left out of stay rules by `stayDays()` in `days.js` |
 | `public/js/ledger-health.js`, `ledger-checks.js` | Ledger health: ends never recorded, "still there" after being elsewhere, and countries far apart on the same days (pure `ledger-checks.js`, unit tested) |
 | `public/js/ledger-where.js`, `ledger-history.js`, `travel-history.js` | "Where was I?" for any period, and the travel history for visa forms with its printable page and CSV (pure `travel-history.js`, unit tested) |

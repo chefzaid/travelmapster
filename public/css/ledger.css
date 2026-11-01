@@ -421,3 +421,8 @@
 /* Where was I? (Ledger tab): days no visit covers stay quiet */
 .whereabouts .is-empty strong { color: var(--muted); }
 .whereabouts small { display: block; }
+
+/* Travel documents: the trips ahead they do not cover, and each one's validity. */
+.document-warnings { display: grid; gap: 6px; margin: 0 0 8px; padding: 8px 12px; list-style: none; background: var(--paper-2); border: 2px solid var(--line); border-radius: 12px; }
+.document-status.is-near,
+.document-status.is-over { font-weight: 800; color: var(--text); }

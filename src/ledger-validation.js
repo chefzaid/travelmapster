@@ -1,7 +1,7 @@
 'use strict';
 
 // Validation of the day ledger's settings (ADR 0010): stay rules, thresholds, planned stays and
-// periods whose days do not count,
+// periods whose days do not count, travel documents,
 // and an organization's pre-trip checklist (ADR 0030), which shares their ids and countries.
 // src/validation.js re-exports parseLedgerSettings and shares the small helpers below.
 const { isValidTravelDate, normalizeText } = require('./validation-text');
@@ -10,6 +10,8 @@ const DAY_RULES = new Set(['presence', 'midnight']);
 const LEDGER_MAX_RULES = 20;
 const LEDGER_MAX_PLANNED = 30;
 const LEDGER_MAX_EXEMPT = 20;
+const LEDGER_MAX_DOCUMENTS = 30;
+const DOCUMENT_KINDS = new Set(['passport', 'id_card', 'visa', 'residence_permit', 'other']);
 const LEDGER_MAX_COUNTRIES = 80;
 const LEDGER_MAX_WINDOW_DAYS = 3660;
 const LEDGER_ID_PATTERN = /^[A-Za-z0-9_-]{1,40}$/;
@@ -114,6 +116,25 @@ function parseExemption(body) {
     return { item: { id, label, countries, startDate, endDate } };
 }
 
+/** A travel document: its kind, a name, the country that issued it or that it is for, and when it is valid; never its number. */
+function parseDocument(body) {
+    if (!plainObject(body)) return { error: 'Each travel document must be an object.' };
+    const id = normalizeText(body.id);
+    const label = normalizeText(body.label);
+    const validFrom = normalizeText(body.validFrom);
+    const validUntil = normalizeText(body.validUntil);
+    const country = body.country ?? null;
+    if (!LEDGER_ID_PATTERN.test(id)) return { error: 'Each travel document needs an id of up to 40 letters, digits, dashes or underscores.' };
+    if (!DOCUMENT_KINDS.has(body.kind)) return { error: 'A travel document is a passport, an ID card, a visa, a residence permit or another document.' };
+    if (!label || label.length > 80) return { error: 'Name the document in 1 to 80 characters.' };
+    if (country !== null && !(typeof country === 'string' && COUNTRY_ID_PATTERN.test(country))) return { error: 'Countries must be three-letter map codes such as FRA.' };
+    if (!isValidTravelDate(validUntil) || (validFrom && !isValidTravelDate(validFrom))) {
+        return { error: 'A travel document needs a valid YYYY-MM-DD expiry date, and a valid first day if it has one.' };
+    }
+    if (validFrom && validUntil < validFrom) return { error: 'A travel document must expire on or after its first day.' };
+    return { item: { id, kind: body.kind, label, country, validFrom: validFrom || null, validUntil } };
+}
+
 function parseList(value, max, label, parseItem) {
     if (!Array.isArray(value)) return { error: `${label} must be an array.` };
     if (value.length > max) return { error: `${label} can hold at most ${max} entries.` };
@@ -139,7 +160,14 @@ function parseLedgerSettings(body) {
     if (planned.error) return { error: planned.error };
     const exempt = parseList(body.exempt ?? [], LEDGER_MAX_EXEMPT, 'Period', parseExemption);
     if (exempt.error) return { error: exempt.error };
-    return { settings: { dayRule: body.dayRule, rules: rules.items, planned: planned.items, exempt: exempt.items } };
+    // Left out, as by a release before travel documents, the stored ones stay.
+    let documents;
+    if (body.documents !== undefined) {
+        const parsed = parseList(body.documents, LEDGER_MAX_DOCUMENTS, 'Document', parseDocument);
+        if (parsed.error) return { error: parsed.error };
+        documents = parsed.items;
+    }
+    return { settings: { dayRule: body.dayRule, rules: rules.items, planned: planned.items, exempt: exempt.items, documents } };
 }
 
 /** An employer's rules, in the ledger's own format (ADR 0029). */

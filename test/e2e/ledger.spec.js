@@ -157,3 +157,45 @@ test('days in the United States add up to the Substantial Presence Test', async 
     await expect(item).toContainText('✓ On track');
     expect(errors).toEqual([]);
 });
+
+test('a passport that runs out too soon after a trip ahead is flagged, until it is renewed', async ({ page }) => {
+    const errors = trackErrors(page);
+    await signUp(page, `e2e_documents_${Date.now()}`);
+    await page.click('#tab-trips');
+    await page.getByRole('button', { name: 'Plan my first trip' }).click();
+    await page.getByLabel('Where to?').fill('Tokyo');
+    await page.getByLabel('Trip name').fill('Tokyo spring');
+    await page.getByLabel('How many days?').fill('5');
+    await page.getByRole('button', { name: 'Create trip' }).click();
+    const trips = page.locator('#trips-tab');
+    await trips.getByLabel('Start date').fill(await browserDay(page, 30));
+    await trips.getByLabel('Start date').dispatchEvent('change');
+    await trips.getByRole('button', { name: '💾 Save' }).click();
+    await expect(page.locator('.toast-success', { hasText: 'Trip saved.' })).toBeVisible();
+
+    await page.click('#tab-ledger');
+    const ledger = page.locator('#ledger-tab');
+    await ledger.getByRole('button', { name: '＋ Add a document' }).click();
+    await expect(page.locator('dialog.dialog')).toContainText('never enter a document\'s number');
+    await page.locator('#dialog-kind').selectOption('passport');
+    await page.fill('#dialog-label', 'My passport');
+    await page.fill('#dialog-country', 'Portugal');
+    await page.fill('#dialog-validUntil', await browserDay(page, 60));
+    await page.getByRole('button', { name: 'Add document' }).click();
+    await expect(ledger.locator('#documents-list')).toContainText('Expires in 60 days');
+    await expect(ledger.locator('#documents-list')).toContainText('Passport · 🇵🇹 Portugal');
+    await expect(ledger.locator('#document-warnings')).toContainText('Tokyo spring: My passport expires on');
+    await expect(ledger.locator('#document-warnings')).toContainText('less than six months after the trip');
+
+    // Renewed: valid for ten more years, nothing to warn about.
+    await ledger.getByRole('button', { name: 'Edit My passport' }).click();
+    await page.fill('#dialog-validUntil', await browserDay(page, 3650));
+    await page.getByRole('button', { name: 'Save document' }).click();
+    await expect(ledger.locator('#document-warnings')).toHaveCount(0);
+    await expect(ledger.locator('#documents-list')).toContainText('Valid until');
+    await page.reload();
+    await expect(page.locator('#main-view')).toBeVisible();
+    await page.click('#tab-ledger');
+    await expect(ledger.locator('#documents-list li')).toHaveCount(1);
+    expect(errors).toEqual([]);
+});

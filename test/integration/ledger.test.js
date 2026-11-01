@@ -41,7 +41,7 @@ test('settings start with the defaults and are saved per traveler', async () => 
     await client.register('ledger_owner', 'ledger owner password');
     const initial = await client.get('/api/ledger');
     assert.equal(initial.status, 200);
-    assert.deepEqual(initial.body, { dayRule: 'presence', rules: [], planned: [], exempt: [], updatedAt: null });
+    assert.deepEqual(initial.body, { dayRule: 'presence', rules: [], planned: [], exempt: [], documents: [], updatedAt: null });
 
     const saved = await client.put('/api/ledger', { ...settings, rules: [{ ...schengenish, name: '  Nordic 30/60  ', extra: 'dropped' }, ...settings.rules.slice(1)] });
     assert.equal(saved.status, 200);
@@ -195,4 +195,30 @@ test('writes of the previous release are recorded too, and the history goes with
         const { rows } = await ctx.pool.query(`SELECT count(*)::int AS n FROM ${table} WHERE user_id = $1`, [user.id]);
         assert.equal(rows[0].n, 0, `${table} rows go with the account`);
     }
+});
+
+test('travel documents are saved with the ledger, kept when a save leaves them out, and checked', async () => {
+    const client = createClient(ctx.server);
+    await client.register('document_keeper', 'document keeper password');
+    const passport = { id: 'pp', kind: 'passport', label: ' Portuguese passport ', country: 'PRT', validUntil: '2027-03-01', number: 'never kept' };
+    const visa = { id: 'v1', kind: 'visa', label: 'US visa', country: 'USA', validFrom: '2026-01-01', validUntil: '2028-01-01' };
+    const saved = await client.put('/api/ledger', { dayRule: 'presence', documents: [passport, visa] });
+    assert.equal(saved.status, 200);
+    assert.deepEqual(saved.body.documents, [
+        { id: 'pp', kind: 'passport', label: 'Portuguese passport', country: 'PRT', validFrom: null, validUntil: '2027-03-01' },
+        { id: 'v1', kind: 'visa', label: 'US visa', country: 'USA', validFrom: '2026-01-01', validUntil: '2028-01-01' }
+    ]);
+    // A save from a release before documents leaves them alone.
+    await client.put('/api/ledger', { dayRule: 'midnight', rules: [], planned: [] });
+    assert.equal((await client.get('/api/ledger')).body.documents.length, 2);
+    assert.equal((await client.get('/api/export')).body.ledger.settings.documents.length, 2);
+
+    for (const bad of [
+        'list', [{ ...visa, kind: 'ticket' }], [{ ...visa, label: '' }], [{ ...visa, country: 'us' }], [{ ...visa, validUntil: '2028-02-30' }],
+        [{ ...visa, validFrom: '2029-01-01' }], [{ ...visa, id: 'no spaces' }], [visa, visa], [null],
+        Array.from({ length: 31 }, (_, i) => ({ ...visa, id: `d${i}` }))
+    ]) {
+        assert.equal((await client.put('/api/ledger', { dayRule: 'presence', documents: bad })).status, 400, JSON.stringify(bad).slice(0, 80));
+    }
+    assert.deepEqual((await client.put('/api/ledger', { dayRule: 'presence', documents: [] })).body.documents, []);
 });

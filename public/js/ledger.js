@@ -15,6 +15,7 @@ import { formatList, joinList, t, tn } from './i18n.js';
 import { whereSection } from './ledger-where.js';
 import { healthSection } from './ledger-health.js';
 import { exemptSection } from './ledger-exempt.js';
+import { documentsSection } from './ledger-documents.js';
 import { pickTemplate } from './ledger-templates.js';
 import { templateDraft } from './rule-templates.js';
 import { usPresenceItem } from './ledger-us.js';
@@ -463,6 +464,7 @@ export function renderLedger(container, ctx) {
         plansSection(ctx, overview),
         staysSection(ctx, overview),
         exemptSection(ctx),
+        documentsSection(ctx),
         thresholdsSection(ctx, overview),
         orgRulesSections(ctx),
         countersSection(ctx, overview),

@@ -81,9 +81,12 @@ test('a guest map keeps trips, the ledger\'s settings and the account settings',
     await assert.rejects(api.updateTrip(99, dated), { status: 404 });
     await assert.rejects(api.deleteTrip(99), { status: 404 });
 
-    assert.deepEqual(await api.getLedger(), { dayRule: 'presence', rules: [], planned: [], exempt: [] });
+    assert.deepEqual(await api.getLedger(), { dayRule: 'presence', rules: [], planned: [], exempt: [], documents: [] });
     const settings = { dayRule: 'midnight', rules: [{ id: 'r1' }], planned: [], exempt: [{ id: 'e1' }], other: true };
-    assert.deepEqual(await api.saveLedger(settings), { dayRule: 'midnight', rules: [{ id: 'r1' }], planned: [], exempt: [{ id: 'e1' }] });
+    assert.deepEqual(await api.saveLedger(settings), { dayRule: 'midnight', rules: [{ id: 'r1' }], planned: [], exempt: [{ id: 'e1' }], documents: [] });
+    const passport = { id: 'd1', kind: 'passport', label: 'Passport', country: 'PRT', validFrom: null, validUntil: '2030-01-01' };
+    assert.deepEqual((await api.saveLedger({ ...settings, documents: [passport] })).documents, [passport]);
+    assert.deepEqual((await api.saveLedger(settings)).documents, [passport], 'documents left out stay');
     assert.deepEqual(await api.getVisitChanges(), []);
 
     const profile = await api.saveProfile({ homeCountry: 'PRT', mapPalette: 'print', profileVisibility: 'public' });
