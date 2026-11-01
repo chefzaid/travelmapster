@@ -179,6 +179,11 @@ counting rules are in [ADR 0010](adr/0010-day-ledger.md).
 - **Days that do not count**: periods under a residence permit or long-stay visa, with their
   countries and first and last day; the days spent in those countries during the period leave
   every stay rule (Schengen 90/180 included, and plans), while tax thresholds still count them.
+- **Travel documents**: passports, ID cards, visas and residence permits with the country and
+  the days they are valid, never their numbers. Each shows how long it is still valid and is
+  flagged 90 days before it expires; the trips ahead are checked against them: a passport that
+  expires during a trip or less than six months after it (as many countries ask), and a visa
+  for one of the trip's countries that does not cover all of its days.
 - **Ledger health**: what would make the record doubtful when it matters, each with its place
   to open and fix: a visit whose end was never recorded (only its first day counts), a stay
   marked "still there" although a later visit is in a country not next to it, and two

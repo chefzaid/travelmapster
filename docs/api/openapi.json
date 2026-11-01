@@ -5020,6 +5020,14 @@
             ],
             "format": "date-time",
             "readOnly": true
+          },
+          "documents": {
+            "type": "array",
+            "maxItems": 30,
+            "items": {
+              "$ref": "#/components/schemas/TravelDocument"
+            },
+            "description": "Travel documents with their validity; left out of a save, the stored ones stay."
           }
         }
       },
@@ -6293,6 +6301,56 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "TravelDocument": {
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "label",
+          "validUntil"
+        ],
+        "description": "A travel document: names and dates only, never its number.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{1,40}$"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "passport",
+              "id_card",
+              "visa",
+              "residence_permit",
+              "other"
+            ]
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "country": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[A-Z]{3}$",
+            "description": "The country that issued it, or the one a visa is for."
+          },
+          "validFrom": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date"
           }
         }
       }

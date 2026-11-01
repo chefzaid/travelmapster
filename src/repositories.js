@@ -397,7 +397,7 @@ function createVisitRepository(db) {
     };
 }
 
-const LEDGER_DEFAULTS = Object.freeze({ dayRule: 'presence', rules: [], planned: [], exempt: [] });
+const LEDGER_DEFAULTS = Object.freeze({ dayRule: 'presence', rules: [], planned: [], exempt: [], documents: [] });
 
 const CHANGE_COLUMNS = `id, visit_id AS "visitId", marker_id AS "markerId", place_name AS "placeName", action,
     old_start_date AS "oldStartDate", old_end_date AS "oldEndDate", old_ongoing AS "oldOngoing",
@@ -410,22 +410,27 @@ function createLedgerRepository(db) {
         /** The traveler's settings, or the defaults until they first save. */
         async findSettings(userId) {
             const { rows } = await db.query(
-                `SELECT day_rule AS "dayRule", rules, planned, exempt, updated_at AS "updatedAt"
+                `SELECT day_rule AS "dayRule", rules, planned, exempt, documents, updated_at AS "updatedAt"
                  FROM ledger_settings WHERE user_id = $1`,
                 [userId]
             );
             return rows[0] || { ...LEDGER_DEFAULTS, updatedAt: null };
         },
 
-        /** Saves the settings; `firstSave` tells whether the traveler had none before. */
+        /**
+         * Saves the settings; `firstSave` tells whether the traveler had none before. Travel
+         * documents left out keep the stored ones.
+         */
         async saveSettings(userId, settings) {
+            const documents = settings.documents === undefined ? null : JSON.stringify(settings.documents);
             const { rows } = await db.query(
-                `INSERT INTO ledger_settings (user_id, day_rule, rules, planned, exempt)
-                 VALUES ($1, $2, $3::jsonb, $4::jsonb, $5::jsonb)
+                `INSERT INTO ledger_settings AS s (user_id, day_rule, rules, planned, exempt, documents)
+                 VALUES ($1, $2, $3::jsonb, $4::jsonb, $5::jsonb, COALESCE($6::jsonb, '[]'::jsonb))
                  ON CONFLICT (user_id) DO UPDATE SET day_rule = EXCLUDED.day_rule, rules = EXCLUDED.rules,
-                    planned = EXCLUDED.planned, exempt = EXCLUDED.exempt, updated_at = now()
-                 RETURNING day_rule AS "dayRule", rules, planned, exempt, updated_at AS "updatedAt", (xmax = 0) AS "firstSave"`,
-                [userId, settings.dayRule, JSON.stringify(settings.rules), JSON.stringify(settings.planned), JSON.stringify(settings.exempt || [])]
+                    planned = EXCLUDED.planned, exempt = EXCLUDED.exempt,
+                    documents = COALESCE($6::jsonb, s.documents), updated_at = now()
+                 RETURNING day_rule AS "dayRule", rules, planned, exempt, documents, updated_at AS "updatedAt", (xmax = 0) AS "firstSave"`,
+                [userId, settings.dayRule, JSON.stringify(settings.rules), JSON.stringify(settings.planned), JSON.stringify(settings.exempt || []), documents]
             );
             const { firstSave, ...saved } = rows[0];
             return { settings: saved, firstSave };
