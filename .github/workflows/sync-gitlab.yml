@@ -109,7 +109,20 @@ jobs:
 
           # One-off after the history rewrite: GitLab takes GitHub's branches and tags exactly,
           # so the reconciliation below finds them equal instead of merging the old history back.
+          # GitLab protects main against force pushes: lift that for this push only, and put it back
+          # whatever happens.
+          project_path="${GITLAB_REPOSITORY#https://*/}"
+          project_id="$(jq -rn --arg path "${project_path%.git}" '$path | @uri')"
+          protection() {
+            curl --fail-with-body --silent --show-error --request PATCH \
+              --header "PRIVATE-TOKEN: $GITLAB_TOKEN" \
+              "$GITLAB_API_URL/projects/$project_id/protected_branches/main?allow_force_push=$1" >/dev/null
+          }
+          protection true
+          trap 'protection false; rm -f "$askpass"' EXIT
           git push --force gitlab 'refs/remotes/github/main:refs/heads/main'
+          protection false
+          trap 'rm -f "$askpass"' EXIT
           for tag in $(git for-each-ref --format='%(refname:strip=2)' refs/github-tags); do
             git push --force gitlab "refs/github-tags/$tag:refs/tags/$tag"
           done
