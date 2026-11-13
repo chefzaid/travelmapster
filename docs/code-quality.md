@@ -16,7 +16,7 @@ type error ([testing](testing.md#continuous-integration)).
 
 ## SonarQube
 
-Project `swirlit:travelmapster` analyzes `src/`, `public/js/`, `public/index.html` and
+Project `swirl:travelmapster` analyzes `src/`, `public/js/`, `public/index.html` and
 `public/css/`, with `test/` as tests and coverage from `coverage/lcov.info`. Bundled data
 and vendor files are excluded. Settings live in [sonar-project.properties](../sonar-project.properties).
 

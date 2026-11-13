@@ -10,7 +10,7 @@ data:
   PORT: "3000"
   METRICS_PORT: "9464"
   LOG_LEVEL: info
-  PGHOST: postgres.swirlit.internal
+  PGHOST: postgres.swirl.internal
   PGPORT: "5432"
   PGDATABASE: travelmapster
   PGUSER: travelmapster_user
@@ -56,7 +56,7 @@ spec:
         - name: travelmapster-registry-auth
       containers:
         - name: travelmapster
-          image: registry.swirlit.dev/swirlit/travelmapster/travelmapster:initial
+          image: registry.swirlit.dev/swirl/travelmapster/travelmapster:initial
           ports:
             - name: http
               containerPort: 3000

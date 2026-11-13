@@ -35,7 +35,7 @@ spec:
             - |
               set -e
               export PGPASSWORD="${POSTGRES_ADMIN_PASSWORD}"
-              PSQL="psql -v ON_ERROR_STOP=1 -h postgres.swirlit.internal -U ${POSTGRES_ADMIN_USER} -d postgres"
+              PSQL="psql -v ON_ERROR_STOP=1 -h postgres.swirl.internal -U ${POSTGRES_ADMIN_USER} -d postgres"
 
               echo "Ensuring travelmapster_user exists with the current password..."
               $PSQL --set=app_password="$APP_DB_PASSWORD" <<'SQL'
@@ -53,7 +53,7 @@ spec:
               $PSQL -c "GRANT CONNECT ON DATABASE travelmapster TO travelmapster_user;"
 
               PGPASSWORD="${APP_DB_PASSWORD}" psql -v ON_ERROR_STOP=1 \
-                -h postgres.swirlit.internal -U travelmapster_user -d travelmapster \
+                -h postgres.swirl.internal -U travelmapster_user -d travelmapster \
                 -c "GRANT ALL ON SCHEMA public TO travelmapster_user;"
               echo "Database setup complete."
           env:

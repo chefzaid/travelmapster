@@ -21,15 +21,15 @@
   ],
   "replacements": [
     {
-      "from": "registry.swirlit.dev/swirlit/travelmapster",
+      "from": "registry.swirlit.dev/swirl/travelmapster",
       "to": "{{REGISTRY_HOST}}/{{GITLAB_PROJECT_PATH}}"
     },
     {
-      "from": "http://gitlab.swirlit.internal/swirlit/travelmapster",
+      "from": "http://gitlab.swirl.internal/swirl/travelmapster",
       "to": "{{GITLAB_INTERNAL_URL}}/{{GITLAB_PROJECT_PATH}}"
     },
     {
-      "from": "gitlab-registry.swirlit.internal:5050",
+      "from": "gitlab-registry.swirl.internal:5050",
       "to": "{{REGISTRY_PUSH_HOST}}"
     },
     {
@@ -37,7 +37,7 @@
       "to": "{{APP_HOST}}"
     },
     {
-      "from": ".swirlit.internal",
+      "from": ".swirl.internal",
       "to": ".{{INTERNAL_DNS_ZONE}}"
     },
     {
@@ -45,7 +45,7 @@
       "to": "{{TLS_SECRET_NAME}}"
     },
     {
-      "from": "swirlit:travelmapster",
+      "from": "swirl:travelmapster",
       "to": "{{SONAR_PROJECT_KEY}}"
     },
     {

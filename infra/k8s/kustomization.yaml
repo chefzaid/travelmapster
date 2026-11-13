@@ -12,7 +12,7 @@ resources:
   - ingress.yaml
   - network-policy.yaml
 images:
-  - name: registry.swirlit.dev/swirlit/travelmapster/travelmapster
+  - name: registry.swirlit.dev/swirl/travelmapster/travelmapster
     newTag: 1.11.36
   - name: postgres
     newName: docker.io/library/postgres
