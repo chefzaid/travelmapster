@@ -11,12 +11,12 @@ const EXPORT_VERSION = 1;
  * their visits, trips, ledger settings and the whole history of visit dates. The browser packs
  * it into the downloadable archive (ADR 0017: a record you can keep).
  */
-function createExportRouter({ markers, trips, ledger, security, follows, orgs, flights, metrics }) {
+function createExportRouter({ markers, trips, ledger, security, follows, orgs, flights, apiTokens, metrics }) {
     const router = express.Router();
 
     router.get('/', async (req, res) => {
         const userId = req.user.id;
-        const [places, itineraries, settings, changes, passkeys, secret, activity, followed, memberships, audit, flown] = await Promise.all([
+        const [places, itineraries, settings, changes, passkeys, secret, activity, followed, memberships, audit, flown, tokens] = await Promise.all([
             markers.listForUser(userId),
             // The traveler's own trips, never those others share with them (ADR 0028).
             trips.listOwned(userId),
@@ -28,7 +28,8 @@ function createExportRouter({ markers, trips, ledger, security, follows, orgs, f
             follows.list(userId),
             orgs.listForUser(userId),
             orgs.auditFor(userId, 10_000),
-            flights.list(userId)
+            flights.list(userId),
+            apiTokens.list(userId)
         ]);
         metrics.exports.inc();
         res.json({
@@ -48,6 +49,8 @@ function createExportRouter({ markers, trips, ledger, security, follows, orgs, f
             security: {
                 passkeys: passkeys.map(({ name, createdAt, lastUsedAt }) => ({ name, createdAt, lastUsedAt })),
                 twoStep: Boolean(secret?.enabled),
+                // The tokens' names and dates, never the tokens or their hashes.
+                apiTokens: tokens,
                 activity
             }
         });

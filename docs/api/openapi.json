@@ -1403,6 +1403,9 @@
         "security": [
           {
             "session": []
+          },
+          {
+            "apiToken": []
           }
         ]
       },
@@ -2503,6 +2506,9 @@
         "security": [
           {
             "session": []
+          },
+          {
+            "apiToken": []
           }
         ]
       }
@@ -2698,6 +2704,9 @@
         "security": [
           {
             "session": []
+          },
+          {
+            "apiToken": []
           }
         ]
       },
@@ -2862,6 +2871,9 @@
         "security": [
           {
             "session": []
+          },
+          {
+            "apiToken": []
           }
         ]
       },
@@ -2969,6 +2981,9 @@
         "security": [
           {
             "session": []
+          },
+          {
+            "apiToken": []
           }
         ]
       }
@@ -3381,6 +3396,9 @@
         "security": [
           {
             "session": []
+          },
+          {
+            "apiToken": []
           }
         ]
       }
@@ -3624,6 +3642,9 @@
         "security": [
           {
             "session": []
+          },
+          {
+            "apiToken": []
           }
         ]
       },
@@ -3838,6 +3859,9 @@
         "security": [
           {
             "session": []
+          },
+          {
+            "apiToken": []
           }
         ],
         "parameters": [
@@ -4005,6 +4029,9 @@
         "security": [
           {
             "session": []
+          },
+          {
+            "apiToken": []
           }
         ],
         "parameters": [
@@ -4199,6 +4226,9 @@
         "security": [
           {
             "session": []
+          },
+          {
+            "apiToken": []
           }
         ]
       },
@@ -4314,6 +4344,162 @@
           }
         ]
       }
+    },
+    "/api/api-tokens": {
+      "get": {
+        "summary": "The traveler's API tokens, never the tokens themselves",
+        "tags": [
+          "Account"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ApiToken"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "Make an API token, shown once",
+        "tags": [
+          "Account"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 60
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NewApiToken"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid name",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Ten tokens already",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/CsrfRejected"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "security": [
+          {
+            "session": [],
+            "csrf": []
+          }
+        ]
+      }
+    },
+    "/api/api-tokens/{id}": {
+      "delete": {
+        "summary": "Revoke an API token",
+        "tags": [
+          "Account"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Revoked"
+          },
+          "404": {
+            "description": "Not one of the traveler's tokens",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/CsrfRejected"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "security": [
+          {
+            "session": [],
+            "csrf": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -4329,6 +4515,11 @@
         "in": "header",
         "name": "X-CSRF-Token",
         "description": "Required on every POST, PUT, PATCH and DELETE: the token from `GET /api/csrf-token` or the last auth response."
+      },
+      "apiToken": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "A personal API token (\"tmk_…\") made in Sign-in security: it reads (GET) every route the traveler can, except sign-in security and the tokens; any other method answers 403."
       }
     },
     "responses": {
@@ -6621,6 +6812,56 @@
             "properties": {
               "id": {
                 "type": "integer"
+              }
+            }
+          }
+        ]
+      },
+      "ApiToken": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "createdAt",
+          "lastUsedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastUsedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "NewApiToken": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiToken"
+          },
+          {
+            "type": "object",
+            "required": [
+              "token"
+            ],
+            "properties": {
+              "token": {
+                "type": "string",
+                "pattern": "^tmk_[A-Za-z0-9_-]{43}$",
+                "description": "Shown only in this answer."
               }
             }
           }

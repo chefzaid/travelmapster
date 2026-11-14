@@ -201,7 +201,8 @@ function createOrgRouter({ orgs, users, security }) {
         const [visits, trips, rules] = await Promise.all([orgs.businessVisits(org.id, ids), orgs.businessTrips(org.id, ids, today), orgs.rules(org.id)]);
         const rows = await orgReport({ members, visits, trips, rules, ...period, today });
         // Every look at the counts is on the record, for each member shown.
-        await orgs.audit(org.id, req.user.id, members.map(member => member.id), 'viewed business-day counts');
+        await orgs.audit(org.id, req.user.id, members.map(member => member.id),
+            req.apiToken ? 'viewed business-day counts through an API token' : 'viewed business-day counts');
         res.set('Cache-Control', 'no-store');
         return res.json({ ...period, rules, members: rows });
     });

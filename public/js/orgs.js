@@ -5,9 +5,14 @@ import { h, toast, formDialog, formatDate, steppedDialog, STAY_CLOSED } from './
 import { invitationToken } from './org-data.js';
 import { INVITATION_KEY } from './home.js';
 import { manageOrg, orgError, roleLabel } from './org-manage.js';
-import { t, tn } from './i18n.js';
+import { t, tk, tn } from './i18n.js';
 
 const PENDING_KEY = INVITATION_KEY;
+// What the audit log records (src/routes/orgs.js), in the interface's language.
+const AUDIT_ACTIONS = {
+    'viewed business-day counts': tk('viewed business-day counts'),
+    'viewed business-day counts through an API token': tk('viewed business-day counts through an API token')
+};
 
 /**
  * Keeps the token of an opened invitation link (`/#join=<token>`) for after signing in, and
@@ -154,7 +159,7 @@ export function openOrgs(ctx) {
             h('section', { class: 'dialog-section', 'aria-labelledby': 'audit-title' },
                 h('h4', { id: 'audit-title' }, t('👀 Who looked at your days')),
                 audit.length ? h('ul', { class: 'dialog-list' }, audit.map(entry => h('li', { class: 'dialog-item' },
-                    h('span', {}, h('strong', {}, entry.actor || t('A deleted account')), h('small', {}, `${entry.organization} · ${entry.action} · ${formatDate(entry.at.slice(0, 10))}`)))))
+                    h('span', {}, h('strong', {}, entry.actor || t('A deleted account')), h('small', {}, `${entry.organization} · ${t(AUDIT_ACTIONS[entry.action] || entry.action)} · ${formatDate(entry.at.slice(0, 10))}`)))))
                     : h('p', { class: 'muted small' }, t('Nobody has looked at your business days yet.'))),
             h('div', { class: 'dialog-actions' }, h('button', { type: 'button', class: 'btn btn-primary', onclick: close }, t('Done')))
         ]

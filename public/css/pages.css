@@ -337,3 +337,4 @@ input[aria-invalid='true'] { border-color: var(--danger); }
 [dir="rtl"] .story-link [aria-hidden],
 [dir="rtl"] .link-button [aria-hidden],
 [dir="rtl"] .chevron { display: inline-block; transform: scaleX(-1); }
+.token-value { width: 100%; font-family: ui-monospace, monospace; }

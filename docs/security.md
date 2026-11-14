@@ -40,6 +40,11 @@
 - **Bookings**: confirmation codes and addresses of a trip's bookings are kept in its plan, so
   only the owner and the people it is shared with see them; neither link (the family view, the
   calendar feed) carries them, and the trip's copy as text leaves the codes out.
+- **API tokens** ([ADR 0032](adr/0032-api-tokens.md)): 32 random bytes after `tmk_`, only
+  the SHA-256 hash stored, shown once. A token signs in `GET` and `HEAD` requests only (403
+  otherwise, so no CSRF token is needed) and never reaches `/api/security` or `/api/api-tokens`;
+  a token of an account being deleted is refused. Making and revoking one are in the security
+  activity, and organization reports read with one are on the audit log (`src/api-tokens.js`).
 - **Security activity**: sign-ins and changes to the password, passkeys and two-step sign-in are
   recorded with the method and the device's browser and system names (no address or
   User-Agent), the latest 50 per account (migration 022); Sign-in security shows the latest 20

@@ -25,6 +25,8 @@ const { calendarFeedHandler, createCalendarFeedRepository } = require('./calenda
 const { createCalendarFeedRouter } = require('./routes/calendar-feed');
 const { createFamilyLinkRepository } = require('./family-links');
 const { createFlightRepository } = require('./flights');
+const { apiTokenAuth, createApiTokenRepository } = require('./api-tokens');
+const { createApiTokenRouter } = require('./routes/api-tokens');
 const { createFlightRouter } = require('./routes/flights');
 const { createFamilyLinkRouter, createFamilyViewRouter } = require('./routes/family-links');
 const { createMarkerRouter } = require('./routes/markers');
@@ -68,6 +70,7 @@ function createApp({ config, pool, logger, metrics, geocoder, places, state = { 
     const feeds = createCalendarFeedRepository(pool);
     const familyLinks = createFamilyLinkRepository(pool);
     const flights = createFlightRepository(pool);
+    const apiTokens = createApiTokenRepository(pool);
     const security = createSecurityRepository(pool);
     const sessions = createSessionRepository(pool, config.session.maxAgeMs);
     const follows = createFollowRepository(pool);
@@ -214,6 +217,8 @@ function createApp({ config, pool, logger, metrics, geocoder, places, state = { 
         res.set('Cache-Control', 'no-store');
         next();
     });
+    // A personal API token signs the request in, read-only, in place of a session.
+    api.use(apiTokenAuth({ tokens: apiTokens, users }));
     api.use(jsonLimiter(pool, 'api', config.rateLimit.apiPerMinute, 60_000, 'Too many requests, please slow down.'));
     api.get('/csrf-token', csrfTokenRoute);
     api.use(csrfProtection);
@@ -238,9 +243,10 @@ function createApp({ config, pool, logger, metrics, geocoder, places, state = { 
     api.use('/family', jsonLimiter(pool, 'family', 60, 60_000, 'Too many requests, please slow down.'), createFamilyViewRouter({ links: familyLinks }));
     api.use('/calendar-feed', requireAuth, createCalendarFeedRouter({ feeds, config }));
     api.use('/flights', requireAuth, createFlightRouter({ flights }));
+    api.use('/api-tokens', requireAuth, createApiTokenRouter({ tokens: apiTokens, security }));
     api.use('/follows', requireAuth, createFollowRouter({ users, follows }));
     api.use('/orgs', requireAuth, createOrgRouter({ orgs, users, security }));
-    api.use('/export', requireAuth, createExportRouter({ markers, trips, ledger, security, follows, orgs, flights, metrics }));
+    api.use('/export', requireAuth, createExportRouter({ markers, trips, ledger, security, follows, orgs, flights, apiTokens, metrics }));
     api.use((req, res) => res.status(404).json({ error: 'Not found.' }));
     app.use('/api', api);
 

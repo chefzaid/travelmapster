@@ -219,6 +219,9 @@ export function createGuestApi(storage, now = () => new Date().toISOString()) {
         // What a guest map cannot do without the server.
         logout: async () => null,
         changePassword: needsAccount(t('A password needs an account.')),
+        getApiTokens: async () => [],
+        createApiToken: needsAccount(t('An API token needs an account.')),
+        revokeApiToken: async () => undefined,
         getFamilyLink: async () => ({ active: false, createdAt: null }),
         createFamilyLink: needsAccount(t('A family link needs an account.')),
         deleteFamilyLink: async () => undefined,

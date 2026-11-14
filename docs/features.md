@@ -353,6 +353,10 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   the password (signing out other devices) or delete the account and all its data from the
   account menu. A deleted account is signed out everywhere and hidden at once, and deleted for
   good after 30 days; signing in before then restores everything.
+- **API tokens** in Sign-in security: read-only tokens for an accountant's or HR system's
+  integration (up to 10, shown once, revocable), sent as `Authorization: Bearer` on the
+  documented API; they never change anything nor reach sign-in security, and an organization
+  report read with one goes on its audit log as such ([ADR 0032](adr/0032-api-tokens.md)).
 - **Sign-in security** in the account menu ([ADR 0027](adr/0027-passkeys-and-two-step-sign-in.md)):
   passkeys, to log in with a fingerprint, face or screen lock instead of the password (up to 10,
   named, removable), and two-step sign-in, where a password sign-in also asks for a code from an

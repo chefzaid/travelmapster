@@ -2,7 +2,7 @@
 
 // Sign-in security (ADR 0027): a passkey made with Chromium's virtual authenticator, and
 // two-step sign-in with codes computed like an authenticator app's.
-const { test, expect } = require('@playwright/test');
+const { test, expect, request } = require('@playwright/test');
 const { signUp, stubThirdParties, trackErrors } = require('./helpers');
 const totp = require('../../src/totp');
 
@@ -105,5 +105,36 @@ test('a traveler sees the devices signed in and signs another one out', async ({
     await phonePage.reload();
     await expect(phonePage.locator('#app[data-map="ready"] #welcome-view')).toBeVisible();
     await phone.close();
+    expect(errors).toEqual([]);
+});
+
+test('a traveler makes a read-only API token for an integration, then revokes it', async ({ page, baseURL }) => {
+    const errors = trackErrors(page);
+    await signUp(page, `e2e_tokens_${Date.now()}`);
+    await page.click('#account-btn');
+    await page.click('#security-btn');
+    const security = page.locator('dialog.dialog', { hasText: 'Sign-in security' });
+    await security.getByRole('button', { name: '＋ Make a token' }).click();
+    await page.fill('#dialog-name', 'My accountant');
+    await page.getByRole('button', { name: 'Make token' }).click();
+    const token = await page.locator('#api-token-value').inputValue();
+    expect(token).toMatch(/^tmk_[A-Za-z0-9_-]{43}$/);
+    await page.locator('dialog.dialog', { hasText: 'shown only once' }).getByRole('button', { name: 'Done' }).click();
+    await expect(security.locator('#api-tokens')).toContainText('My accountant');
+    await expect(security.locator('#api-tokens')).toContainText('not used yet');
+
+    // The integration reads with the token alone, and cannot write.
+    const anonymous = await request.newContext({ baseURL });
+    const read = await anonymous.get('/api/markers', { headers: { Authorization: `Bearer ${token}` } });
+    expect(read.status()).toBe(200);
+    const write = await anonymous.post('/api/markers', { headers: { Authorization: `Bearer ${token}` }, data: {} });
+    expect(write.status()).toBe(403);
+
+    await security.getByRole('button', { name: 'Revoke the API token My accountant' }).click();
+    await page.getByRole('button', { name: 'Revoke', exact: true }).last().click();
+    await expect(security.locator('#api-tokens')).toHaveCount(0);
+    await expect(security.locator('#security-activity')).toContainText('API token revoked');
+    expect((await anonymous.get('/api/markers', { headers: { Authorization: `Bearer ${token}` } })).status()).toBe(401);
+    await anonymous.dispose();
     expect(errors).toEqual([]);
 });

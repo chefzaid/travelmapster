@@ -1,8 +1,10 @@
 // Sign-in security (ADR 0027), from the account menu: passkeys to add and remove, and two-step
-// sign-in with an authenticator app, its QR code and recovery codes.
+// sign-in with an authenticator app, its QR code and recovery codes, the devices signed in,
+// API tokens and the recent activity.
 import { h, toast, formDialog, formatDate, formatDateTime, downloadFile, steppedDialog } from './ui.js';
 import { createPasskey, passkeysSupported } from './webauthn.js';
 import { qrSvg } from './qr.js';
+import { tokensSection } from './security-tokens.js';
 import { t, tk, tn, tParts } from './i18n.js';
 
 const MAX_PASSKEYS = 10;
@@ -99,7 +101,8 @@ function passkeyItem(ctx, passkey, step) {
 const ACTIVITY = {
     sign_in: tk('Signed in'), password_changed: tk('Password changed'), passkey_added: tk('Passkey added'),
     passkey_removed: tk('Passkey removed'), two_step_on: tk('Two-step sign-in turned on'), two_step_off: tk('Two-step sign-in turned off'),
-    deletion_requested: tk('Account deletion asked for'), account_restored: tk('Account restored by signing in')
+    deletion_requested: tk('Account deletion asked for'), account_restored: tk('Account restored by signing in'),
+    api_token_created: tk('API token made'), api_token_revoked: tk('API token revoked')
 };
 const METHODS = { password: tk('with the password'), authenticator: tk('with an authenticator code'), recovery_code: tk('with a recovery code'), passkey: tk('with a passkey') };
 
@@ -132,9 +135,9 @@ function sessionItem(ctx, session, step) {
 export function openSecurity(ctx) {
     return steppedDialog({
         labelledBy: 'security-title',
-        load: () => ctx.api.security(),
+        load: async () => ({ ...(await ctx.api.security()), apiTokens: await ctx.api.getApiTokens() }),
         onError: ctx.handleError,
-        draw: ({ passkeys, twoStep, sessions = [], activity = [] }, step, close) => [
+        draw: ({ passkeys, twoStep, sessions = [], activity = [], apiTokens = [] }, step, close) => [
             h('h3', { id: 'security-title' }, t('Sign-in security')),
             h('section', { class: 'dialog-section' },
                 h('h4', {}, t('🔑 Passkeys')),
@@ -163,6 +166,7 @@ export function openSecurity(ctx) {
                         toast(t('Signed out everywhere else.'));
                     })
                 }, t('Sign out everywhere else')) : null),
+            tokensSection(ctx, apiTokens, step),
             activity.length ? h('section', { class: 'dialog-section' },
                 h('h4', {}, t('🛡️ Recent activity')),
                 h('p', { class: 'small' }, t('Sign-ins and changes to how you sign in. Something you did not do? Sign out the other devices and change your password.')),

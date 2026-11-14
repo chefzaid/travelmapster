@@ -76,6 +76,8 @@ JSON under `/api`, described in full in [OpenAPI](api/openapi.json) and kept bac
 | GET, POST | `/api/trips` | List or create itineraries, the caller's own and those shared with them; `organizationId` makes one a business trip |
 | PUT, DELETE | `/api/trips/:id` | Replace (owner or editor; 409 when changed meanwhile) or remove (owner) an itinerary |
 | GET, PUT, DELETE | `/api/trips/:id/members[/:username]` | Who a trip is shared with, to edit or view ([ADR 0028](adr/0028-friends-and-shared-trips.md)) |
+| GET, POST | `/api/api-tokens` | The traveler's API tokens, or a new one (`name`), shown once ([ADR 0032](adr/0032-api-tokens.md)) |
+| DELETE | `/api/api-tokens/:id` | Revoke a token |
 | GET, POST | `/api/flights` | The flight log, the latest first, or a new flight (`date`, `from` and `to` IATA codes, optional `number`); at most 2,000 |
 | DELETE | `/api/flights/:id` | Remove one of the traveler's flights |
 | GET, POST, DELETE | `/api/trips/:id/family-link` | The trip's family link, owner only (404 for anyone else): whether it is on, a new link (shown once, ending the old one) or turning it off |
@@ -150,6 +152,7 @@ JSON under `/api`, described in full in [OpenAPI](api/openapi.json) and kept bac
 | `public/js/us-presence.js`, `ledger-us.js` | The US Substantial Presence Test, a weighted three-year count no rule can express, among the tax-residency thresholds (pure `us-presence.js`, unit tested) |
 | `public/js/rule-templates.js`, `ledger-templates.js` | Ready-made stay rules and thresholds with their sources (pure `rule-templates.js`, unit tested against the API's validation) and the picker that starts the rule dialog from one |
 | `public/js/regions.js`, `passport-regions.js`, `scripts/build-regions.js`, `scripts/geometry.js` | States and provinces of the largest countries: which a town been to lies in (pure, unit tested), the passport section, and their outlines built from Natural Earth with the shared simplification |
+| `src/api-tokens.js`, `src/routes/api-tokens.js`, `public/js/security-tokens.js` | Personal API tokens: the read-only bearer sign-in for integrations, their routes, and their section of Sign-in security ([ADR 0032](adr/0032-api-tokens.md)) |
 | `src/flights.js`, `src/routes/flights.js`, `public/js/flight-log.js`, `passport-flights.js`, `scripts/build-airports.js` | The flight log: stored flights, their distance, CO₂ and arcs (pure, unit tested), the passport section, and the airport list built from OurAirports |
 | `public/js/documents.js`, `ledger-documents.js` | Travel documents: validity, expiry warnings and the trips ahead they do not cover (pure, unit tested), and their Ledger tab section |
 | `public/js/ledger-exempt.js` | Days that do not count: periods under a residence permit or long-stay visa, edited in the Ledger tab and left out of stay rules by `stayDays()` in `days.js` |
@@ -258,5 +261,6 @@ number (`NNNN-short-title.md`) and the template below. Statuses: **Proposed**, *
 - [ADR 0029: Organizations, business visits and employer rules](adr/0029-organizations-and-business-days.md)
 - [ADR 0030: Pre-trip checklists from the organization](adr/0030-pre-trip-checklists.md)
 - [ADR 0031: Localization](adr/0031-localization.md)
+- [ADR 0032: Personal API tokens](adr/0032-api-tokens.md)
 
 Superseded: [ADR 0007: Draw towns on a canvas layer](adr/0007-canvas-towns.md).
