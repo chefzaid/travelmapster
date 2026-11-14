@@ -338,3 +338,29 @@ test('family follow a trip from a private link without an account, until it is t
     await family.context().close();
     expect(errors).toEqual([]);
 });
+
+test('on a phone, a trip opens the share sheet with its days, and never its confirmation codes', async ({ page }) => {
+    // A stand-in share sheet that keeps what it is given.
+    await page.addInitScript(() => {
+        Object.defineProperty(globalThis.navigator, 'share', { configurable: true, value: async data => { globalThis.shared = data; } });
+    });
+    const errors = trackErrors(page);
+    await signUp(page, `e2e_share_${Date.now()}`);
+    await page.click('#tab-trips');
+    await page.getByRole('button', { name: 'Plan my first trip' }).click();
+    await page.getByLabel('Where to?').fill('Kyoto');
+    await page.getByLabel('Trip name').fill('Temples');
+    await page.getByRole('button', { name: 'Create trip' }).click();
+    const trips = page.locator('#trips-tab');
+    await trips.locator('.day-card').first().getByRole('button', { name: '🎫 Add a booking' }).click();
+    await page.fill('#dialog-title', 'Hotel Kanra');
+    await page.locator('#dialog-kind').selectOption('stay');
+    await page.fill('#dialog-code', 'SECRET42');
+    await page.getByRole('button', { name: 'Add booking' }).click();
+    await trips.getByRole('button', { name: '📤 Share' }).click();
+    await expect.poll(() => page.evaluate(() => globalThis.shared?.title)).toBe('Temples');
+    const text = await page.evaluate(() => globalThis.shared.text);
+    expect(text).toContain('🏨 Hotel Kanra');
+    expect(text).not.toContain('SECRET42');
+    expect(errors).toEqual([]);
+});

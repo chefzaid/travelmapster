@@ -268,6 +268,6 @@ Next small steps on what shipped lately: the flight log, the states and province
 
 ### Atlas and trips
 
-- [ ] Firsts: the year each continent was first set foot on, and the first country of each, as a short timeline on the passport, from the visit dates.
+- [x] Firsts: the year each continent was first set foot on, and the first country of each, as a short timeline on the passport, from the visit dates. Done: 🥇 Firsts on the passport, one line per continent with its year and country; the first country of each continent is that line's.
 - [ ] Towns next door: on a town's card, the largest towns within 50 km not yet been to, from the bundled towns, as easy day trips to add to the wishlist.
-- [ ] Share a trip from a phone: the trip's "copy as text" also opens the phone's share sheet where the browser has one (Web Share), with the same text and no confirmation codes.
+- [x] Share a trip from a phone: the trip's "copy as text" also opens the phone's share sheet where the browser has one (Web Share), with the same text and no confirmation codes. Done: the trip's button reads 📤 Share where the browser has a share sheet, and copies otherwise (`shareText()` in `ui.js`).

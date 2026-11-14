@@ -7,6 +7,7 @@ import { localToday } from './days.js';
 import { goalsSection } from './passport-goals.js';
 import { flightsSection } from './passport-flights.js';
 import { regionsSection } from './passport-regions.js';
+import { continentFirsts } from './firsts.js';
 import { shareCardsSection, stampedCountries } from './passport-share.js';
 import { flagLine } from './share-cards.js';
 import { countdownLabel, upcomingTrip } from './trip-countdown.js';
@@ -15,7 +16,7 @@ import { worldShare } from './world-share.js';
 import { friendsSection } from './friends.js';
 import { EARTH_CIRCUMFERENCE_KM, countriesByYear, daysAwayByYear, distanceTraveled, longestTrip, yearStreak } from './travel-stats.js';
 import { formatList, formatNumber, joinList, t, tn } from './i18n.js';
-import { regionName } from './geo.js';
+import { CONTINENT_EMOJI, regionName } from './geo.js';
 
 function statTile(value, label, tone = '') {
     return h('div', { class: `stat ${tone}` }, h('strong', {}, value), h('small', {}, label));
@@ -31,6 +32,18 @@ function continentBars(stats) {
 }
 
 // Collections to complete, with what is left when only a few remain.
+// The year each continent was first set foot on, and in which country (firsts.js).
+function firstsSection(ctx, stats) {
+    const firsts = continentFirsts(ctx.state.markers, marker => stats.markerCountry.get(marker.id));
+    if (!firsts.length) return null;
+    return h('section', { 'aria-labelledby': 'firsts-title' },
+        h('h3', { class: 'section-title', id: 'firsts-title' }, t('🥇 Firsts')),
+        h('ol', { class: 'firsts' }, firsts.map(({ continent, date, country }) => h('li', {},
+            h('span', { 'aria-hidden': 'true' }, `${CONTINENT_EMOJI[continent] || '🌍'} `),
+            h('strong', {}, regionName(continent)), ' ',
+            `${date.slice(0, 4)} · ${[country.flag, country.name].filter(Boolean).join(' ')}`))));
+}
+
 function collectionsSection(stats, index) {
     return h('section', { id: 'collections' },
         h('h3', { class: 'section-title' }, t('Collections')),
@@ -251,6 +264,7 @@ export function renderPassport(container, ctx) {
         ),
         goalsSection(ctx),
         h('section', {}, h('h3', { class: 'section-title' }, t('Continents')), continentBars(stats)),
+        firstsSection(ctx, stats),
         collectionsSection(stats, index),
         regionsSection(ctx),
         h('section', {},

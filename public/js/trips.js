@@ -1,7 +1,7 @@
 // Trips tab: day-by-day itineraries to one destination or several, with ideas from Wikivoyage,
 // copied as text, exported to a calendar, printed, duplicated as a template, or planned in the
 // day ledger; with a packing list and a budget.
-import { h, fill, toast, formDialog, formatDate, downloadFile, copyText } from './ui.js';
+import { h, fill, toast, formDialog, formatDate, downloadFile, canShareText, shareText } from './ui.js';
 import { fetchIdeas, buildItinerary } from './ideas.js';
 import {
     SLOTS, dayDate, emptyDay, isTripPlan, stopOfDay, syncPlannedStays, tripAsText, tripCalendar, tripEndDate, tripFileName,
@@ -350,8 +350,9 @@ function renderEditor(container, ctx, trip) {
             h('button', {
                 type: 'button',
                 class: 'btn btn-ghost btn-sm',
-                onclick: () => copyText(tripAsText(draft), t('Itinerary copied to your clipboard.'))
-            }, t('📋 Copy')),
+                // A copy meant for others, without confirmation codes (itinerary.js).
+                onclick: () => shareText({ title: draft.title, text: tripAsText(draft) }, t('Itinerary copied to your clipboard.'))
+            }, canShareText() ? t('📤 Share') : t('📋 Copy')),
             h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => ctx.showIdeas(draft.destination) }, t('💡 Ideas')),
             h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => exportCalendar(draft) }, t('📅 Calendar')),
             h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: event => printTrip(draft, event.currentTarget) }, t('🖨️ Print')),

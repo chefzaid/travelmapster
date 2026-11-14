@@ -227,6 +227,22 @@ export async function copyText(text, done, fallback = t('Copying is not availabl
     }
 }
 
+/** Whether this browser has a share sheet (Web Share), as phones do. */
+export const canShareText = () => typeof globalThis.navigator?.share === 'function';
+
+/** Opens the share sheet with the text where the browser has one, and copies it otherwise. */
+export async function shareText({ title, text }, copied) {
+    if (canShareText()) {
+        try {
+            await navigator.share({ title, text });
+            return;
+        } catch (error) {
+            if (error.name === 'AbortError') return;
+        }
+    }
+    await copyText(text, copied);
+}
+
 export function downloadFile(fileName, content, mimeType) {
     const url = URL.createObjectURL(new Blob([content], { type: `${mimeType};charset=utf-8` }));
     const link = h('a', { href: url, download: fileName });

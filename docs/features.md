@@ -255,7 +255,8 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   dragging their handle or with the ↑ ↓ buttons (the stops keep their days, so a day's plans can
   move to another stop), and a slot's plans swap with another slot's when dragged onto it.
 - New itineraries are pre-filled with sights, activities and food ideas from Wikivoyage, fetched by the browser.
-- A travel-ideas panel for any country or city, and copying an itinerary as text.
+- A travel-ideas panel for any country or city, and an itinerary as text: 📤 Share opens the
+  phone's share sheet where the browser has one (Web Share), and 📋 Copy copies it elsewhere.
 - **Bookings** on each day: flights, trains, buses, stays, cars, events and others, with a local
   time, an address and a confirmation code when they have them. They move with their day, show
   on the printed itinerary, and a booking with a time is its own event in the calendar export;
@@ -320,6 +321,8 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   list) or new cities first visited that year, or trips begun in it, with a progress bar each
   and a confetti celebration when one is reached. One goal per kind and year; goals are never
   on the public map.
+- **Firsts**: the year each continent was first set foot on, and the country it was, from the
+  visit dates of places been to.
 - **States and provinces** of the largest countries (Australia, Brazil, Canada, China, India,
   Indonesia, Russia, South Africa and the United States, from Natural Earth's admin-1 layer):
   each counts once a town been to lies in it, such as "United States of America: 2 of 51" with
