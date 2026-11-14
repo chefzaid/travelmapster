@@ -1,6 +1,7 @@
 // Journey lines (ADR 0016): every dated visit in the order it happened, joined by cartoon
 // arcs, and grouped into trips to replay. Pure, unit tested in Node.
 import { visitLastDay } from './timeline.js';
+import { shortPlaceName } from './geo.js';
 
 const DAY_MS = 86_400_000;
 // Days between leaving one place and reaching the next that still make one trip.
@@ -27,7 +28,7 @@ export function journeyStops(markers, { countryOf, today }) {
         const city = marker.category === 'City';
         const [lat, lng] = !city && country?.label ? country.label : [Number(marker.lat), Number(marker.lng)];
         if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
-        const name = String(marker.name || '').split(',')[0].trim();
+        const name = shortPlaceName(marker.name);
         for (const visit of marker.visits || []) {
             if (!visit?.startDate) continue;
             stops.push({

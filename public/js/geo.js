@@ -83,6 +83,11 @@ const EXTRA_ALIASES = {
     TUR: ['turkey', 'turkiye']
 };
 
+/** A place's own name, without the country after its comma: "Austin, United States" is Austin. */
+export function shortPlaceName(name) {
+    return String(name ?? '').split(',')[0].trim();
+}
+
 export function normalizeName(value) {
     return String(value ?? '')
         .normalize('NFD')

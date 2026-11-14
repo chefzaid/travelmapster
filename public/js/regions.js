@@ -1,7 +1,7 @@
 // Regions: the states, provinces and regions of the largest countries (Natural Earth admin-1,
 // public domain, in public/data/regions.geojson). A region counts as visited once a town been
 // to lies in it, as a country counts once a place in it is visited. Pure, unit tested in Node.
-import { geometryContains } from './geo.js';
+import { geometryContains, shortPlaceName } from './geo.js';
 import { statusOf } from './status.js';
 
 // The bounding box of a Polygon or MultiPolygon, to skip most regions quickly.
@@ -87,7 +87,7 @@ export function regionProgress(index, markers, countryOf) {
         if (!region) continue;
         const entry = visited.get(region.id) || { region, towns: [] };
         // "Austin, United States of America" is Austin within its country.
-        entry.towns.push(String(marker.name).split(',')[0].trim());
+        entry.towns.push(shortPlaceName(marker.name));
         visited.set(region.id, entry);
     }
     const countries = new Map();

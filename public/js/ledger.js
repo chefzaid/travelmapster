@@ -20,6 +20,7 @@ import { pickTemplate } from './ledger-templates.js';
 import { templateDraft } from './rule-templates.js';
 import { usPresenceItem } from './ledger-us.js';
 import { travelHistorySection } from './ledger-history.js';
+import { shortPlaceName } from './geo.js';
 
 const view = { entry: '', period: '', showAllStays: false };
 const STAYS_SHOWN = 12;
@@ -405,7 +406,7 @@ function sourceLine(source) {
     const dates = source.endDate
         ? spanLabel(source.startDate, source.endDate)
         : `${formatDate(source.startDate)} – ${source.ongoing ? t('still there') : t('last day not recorded')}`;
-    return `${source.place.split(',')[0]} (${dates})`;
+    return `${shortPlaceName(source.place)} (${dates})`;
 }
 
 function timelineSection(ctx, overview) {

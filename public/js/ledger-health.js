@@ -6,11 +6,12 @@ import { ledgerHealth, healthCount } from './ledger-checks.js';
 import { countryLabel } from './ledger-parts.js';
 import { showMarker } from './cards.js';
 import { t } from './i18n.js';
+import { shortPlaceName } from './geo.js';
 
 // A button that opens a visit's place on the map, to fix its dates on the card.
 function openPlace(ctx, visit) {
     const marker = ctx.state.markers.find(item => item.id === visit.markerId);
-    return marker ? h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => showMarker(ctx, marker) }, t('Open {place}', { place: visit.place.split(',')[0] })) : null;
+    return marker ? h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => showMarker(ctx, marker) }, t('Open {place}', { place: shortPlaceName(visit.place) })) : null;
 }
 
 const item = (text, detail, ...actions) => h('li', { class: 'ledger-item' },

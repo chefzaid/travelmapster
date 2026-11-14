@@ -421,3 +421,11 @@ test('the passport counts against every territory or the UN list, by a documente
     assert.equal(lists.shareLabel('un'), 'of UN countries');
     assert.equal(lists.shareLabel('all'), 'of the world');
 });
+
+test('a place\'s short name drops the country after its comma', async () => {
+    const { shortPlaceName } = await load('geo.js');
+    assert.equal(shortPlaceName('Austin, United States of America'), 'Austin');
+    assert.equal(shortPlaceName(' Lisbon '), 'Lisbon');
+    assert.equal(shortPlaceName('Portugal'), 'Portugal');
+    assert.equal(shortPlaceName(undefined), '');
+});

@@ -2,7 +2,7 @@
 // years and next door, next dream, continents and recent places, and the travel ideas from
 // Wikivoyage, which also show beside the landing page and public maps.
 import { h, $, fill } from './ui.js';
-import { CONTINENTS, CONTINENT_EMOJI, regionName } from './geo.js';
+import { CONTINENT_EMOJI, CONTINENTS, regionName, shortPlaceName } from './geo.js';
 import { monthsLabel, nextInSeason, priorityLabel } from './details.js';
 import { statusOf } from './status.js';
 import { shareLabel } from './lists.js';
@@ -181,7 +181,7 @@ export function renderExplore(container, ctx) {
                 nextDream.priority ? ` · ${priorityLabel(nextDream.priority)}` : '') : null,
             h('div', { class: 'row' },
                 h('button', { type: 'button', class: 'btn btn-sm btn-ghost', onclick: () => showMarker(ctx, nextDream) }, t('Show on map')),
-                h('button', { type: 'button', class: 'btn btn-sm btn-primary', onclick: () => openNewTrip(ctx, nextDream.name.split(',')[0]) }, t('Plan it'))
+                h('button', { type: 'button', class: 'btn btn-sm btn-primary', onclick: () => openNewTrip(ctx, shortPlaceName(nextDream.name)) }, t('Plan it'))
             )
         ) : null,
         h('section', {},

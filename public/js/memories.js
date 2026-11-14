@@ -2,6 +2,7 @@
 // see": countries last visited years ago, shown on the Explore tab. Pure, unit tested in Node.
 import { statusOf } from './status.js';
 import { tn } from './i18n.js';
+import { shortPlaceName } from './geo.js';
 
 const isLeapYear = year => (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
 
@@ -29,7 +30,7 @@ export function onThisDay(markers, today) {
 }
 
 export function memoryLabel({ marker, yearsAgo }) {
-    const place = marker.name.split(',')[0];
+    const place = shortPlaceName(marker.name);
     return statusOf(marker) === 'lived'
         ? tn(yearsAgo, 'A year ago today, you moved to {place}', '{count} years ago today, you moved to {place}', { place })
         : tn(yearsAgo, 'A year ago today, you arrived in {place}', '{count} years ago today, you arrived in {place}', { place });
@@ -56,7 +57,7 @@ export function longTimeNoSee(markers, { today, countryOf, homeId = null, years 
             const last = visit.ongoing && !visit.endDate ? today : visit.endDate || visit.startDate;
             if (last > entry.last) entry.last = last;
         }
-        if (marker.category === 'City') entry.places.add(marker.name.split(',')[0]);
+        if (marker.category === 'City') entry.places.add(shortPlaceName(marker.name));
     }
     return [...byCountry.values()]
         .filter(entry => entry.last <= cutoff)

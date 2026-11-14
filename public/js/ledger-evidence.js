@@ -3,6 +3,7 @@
 // on any day.
 import { DAY_RULES, dayNumber, daysIn, isoDay } from './days.js';
 import { t } from './i18n.js';
+import { shortPlaceName } from './geo.js';
 
 function spanText(start, end, ongoing, format) {
     if (!start) return '';
@@ -133,7 +134,7 @@ export function whereabouts(ledger, from, to) {
             const sources = days.get(day);
             if (!sources?.length) continue;
             const visits = sources.filter(source => source.kind === 'visit');
-            const places = [...new Set(visits.map(source => source.place.split(',')[0]))].sort((a, b) => a.localeCompare(b));
+            const places = [...new Set(visits.map(source => shortPlaceName(source.place)))].sort((a, b) => a.localeCompare(b));
             stays.push({ countryId, places, planned: !visits.length });
         }
         stays.sort((a, b) => a.countryId.localeCompare(b.countryId));

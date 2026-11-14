@@ -1,6 +1,7 @@
 // Collections to complete on the passport: the capital of every country, and every member of
 // the European Union, each counted on the traveler's country list. Pure, unit tested in Node.
 import { t } from './i18n.js';
+import { shortPlaceName } from './geo.js';
 
 // Member states of the European Union as of 2026, by map code.
 export const EU_MEMBERS = Object.freeze([
@@ -12,7 +13,7 @@ export const EU_MEMBERS = Object.freeze([
 // about 15 km of it.
 function isCapital(marker, capital, countryId, normalize) {
     if (countryId !== capital.countryId) return false;
-    if (normalize(String(marker.name).split(',')[0]) === normalize(capital.name)) return true;
+    if (normalize(shortPlaceName(marker.name)) === normalize(capital.name)) return true;
     return Math.abs(marker.lat - capital.lat) < 0.15 && Math.abs(marker.lng - capital.lng) < 0.15;
 }
 

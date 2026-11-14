@@ -5,6 +5,7 @@
 import { addDays, countryStays } from './days.js';
 import { csvField } from './ledger-evidence.js';
 import { t, tk } from './i18n.js';
+import { shortPlaceName } from './geo.js';
 
 export const HISTORY_YEARS = [5, 10];
 
@@ -42,7 +43,7 @@ export function travelHistory(ledger, { homeId = null, years, today }) {
             ongoing: stay.ongoing,
             unrecorded: stay.unrecorded,
             purpose: purposeOf(stay.sources),
-            places: [...new Set(stay.sources.filter(source => source.kind === 'visit').map(source => source.place.split(',')[0]))]
+            places: [...new Set(stay.sources.filter(source => source.kind === 'visit').map(source => shortPlaceName(source.place)))]
         }));
 }
 

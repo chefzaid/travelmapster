@@ -1,7 +1,7 @@
 // Map cards for countries and cities: status buttons, saved details, visits, the home country
 // and links to travel ideas and trip planning.
 import { h, toast } from './ui.js';
-import { countryLook, countryStatus, formatPopulation, CONTINENT_EMOJI, regionName } from './geo.js';
+import { CONTINENT_EMOJI, countryLook, countryStatus, formatPopulation, regionName, shortPlaceName } from './geo.js';
 import { monthsLabel, priorityLabel, ratingLabel, stars } from './details.js';
 import { HOME, STATUSES, statusFields, statusLabel, statusOf } from './status.js';
 import { openNewTrip } from './lazy.js';
@@ -213,7 +213,7 @@ export function showCountryCard(ctx, country, latlng) {
                 type: 'button',
                 class: `chip chip-${statusOf(marker)}`,
                 onclick: () => showSavedCityCard(ctx, marker)
-            }, marker.name.split(',')[0])))
+            }, shortPlaceName(marker.name))))
         ) : null,
         statusButtons(ctx, existing, place),
         savedDetails(ctx, existing),

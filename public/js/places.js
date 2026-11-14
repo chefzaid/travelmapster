@@ -1,5 +1,5 @@
 import { h, fill, toast, downloadFile, formatDate } from './ui.js';
-import { CONTINENTS, CONTINENT_EMOJI, regionName } from './geo.js';
+import { CONTINENT_EMOJI, CONTINENTS, regionName, shortPlaceName } from './geo.js';
 import { buildCsv, buildJson, parseImportContent, validatePlace, placeKey, mergePlaces } from './io.js';
 import { lastVisitDate, lastVisitYears, matchesLastVisit, visitCount } from './visits.js';
 import { groupByNextMonth, matchesDetails, monthsLabel, priorityLabel, ratingLabel, stars, usedTags } from './details.js';
@@ -77,7 +77,7 @@ function placeItem(marker, country, ctx) {
                 class: 'icon-btn',
                 'aria-label': t('Plan a trip to {name}', { name: marker.name }),
                 title: t('Plan a trip'),
-                onclick: () => openNewTrip(ctx, marker.name.split(',')[0])
+                onclick: () => openNewTrip(ctx, shortPlaceName(marker.name))
             }, '🗓️') : null,
             h('button', { type: 'button', class: 'icon-btn', 'aria-label': t('Edit {name}', { name: marker.name }), title: t('Edit'), onclick: () => ctx.editPlace(marker) }, '✏️'),
             h('button', {
