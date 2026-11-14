@@ -17,3 +17,13 @@ test('every map data file has an up-to-date Brotli copy (run scripts/compress-ma
         assert.ok(zlib.brotliDecompressSync(fs.readFileSync(`${file}.br`)).equals(fs.readFileSync(file)), `${name}.br is up to date`);
     }
 });
+
+test('overseas territories drawn on their own have their towns (GeoNames files them under their own codes)', () => {
+    const dataDir = path.join(publicDir, 'data');
+    const countryIds = new Set(JSON.parse(fs.readFileSync(path.join(dataDir, 'cities.json'), 'utf8')).map(city => city.countryId));
+    for (const file of fs.readdirSync(path.join(dataDir, 'cities')).filter(name => name.endsWith('.json'))) {
+        // Tiles hold compact rows: [name, countryId, capital, population, minZoom, lat, lng].
+        for (const row of JSON.parse(fs.readFileSync(path.join(dataDir, 'cities', file), 'utf8'))) countryIds.add(row[1]);
+    }
+    for (const id of ['GUF', 'GLP', 'MTQ', 'REU', 'MYT', 'SJM', 'BES']) assert.ok(countryIds.has(id), `${id} has towns`);
+});
