@@ -37,6 +37,8 @@ const state = {
     user: null,
     markers: [],
     trips: [],
+    // The flight log, loaded the first time the passport shows it.
+    flights: null,
     stats: null,
     index: null,
     cities: [],
@@ -213,6 +215,7 @@ function showSignedOut() {
     state.demo = true;
     state.markers = demoMarkers(localToday());
     state.trips = [];
+    state.flights = null;
     state.unlocked = null;
     state.reachedGoals = null;
     state.ideas = null;
@@ -240,6 +243,7 @@ async function startSession(known) {
     const user = known || await api.currentUser();
     await mapReady;
     state.user = user;
+    state.flights = null;
     state.demo = false;
     rememberSignedIn(true);
     showGuestControls(Boolean(user.guest));

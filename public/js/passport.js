@@ -5,6 +5,7 @@ import { HOME } from './status.js';
 import { countryList, shareLabel } from './lists.js';
 import { localToday } from './days.js';
 import { goalsSection } from './passport-goals.js';
+import { flightsSection } from './passport-flights.js';
 import { shareCardsSection, stampedCountries } from './passport-share.js';
 import { flagLine } from './share-cards.js';
 import { countdownLabel, upcomingTrip } from './trip-countdown.js';
@@ -274,6 +275,7 @@ export function renderPassport(container, ctx) {
         ),
         yearChart(t('Visits by year'), stats.years, row => `${row.year}: ${tn(row.count, '{count} visit', '{count} visits')}`),
         travelSections(ctx),
+        flightsSection(ctx),
         friendsSection(ctx),
         // A guest map is never public (ADR 0026).
         user.guest ? null : h('section', { class: 'share-card' },

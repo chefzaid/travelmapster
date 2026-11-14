@@ -125,3 +125,16 @@ test('a guest map merges two pins for one place as the API does', async () => {
         [wish.id, 'visited', 'Lisbon, Portugal', 'Trams\n\nPastéis', ['food'], 1, '2024-05-01']);
     assert.deepEqual((await api.getMarkers()).map(marker => marker.id), [wish.id]);
 });
+
+test('a guest map keeps a flight log, latest first, in the API\'s shapes', async () => {
+    const { createGuestApi } = await load();
+    const api = createGuestApi(memoryStorage(), () => '2026-10-26T10:00:00.000Z');
+    assert.deepEqual(await api.getFlights(), []);
+    const out = await api.addFlight({ date: '2026-05-01', from: 'LIS', to: 'KIX', number: 'TP 1352' });
+    await api.addFlight({ date: '2026-05-20', from: 'KIX', to: 'LIS' });
+    assert.deepEqual((await api.getFlights()).map(flight => [flight.date, flight.number]), [['2026-05-20', null], ['2026-05-01', 'TP 1352']]);
+    assert.equal((await api.exportAccount()).flights.length, 2);
+    await api.deleteFlight(out.id);
+    assert.equal((await api.getFlights()).length, 1);
+    await assert.rejects(api.deleteFlight(out.id), { status: 404 });
+});

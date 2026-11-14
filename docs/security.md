@@ -101,6 +101,7 @@ a SHA-256 hash; each works once, for seven days, and is revoked by the admin or 
 
 - Notes and photo links, of places and of visits, the names of who came along on a visit, and ratings, tags, emoji and wishlist plans
   of places are never included in public maps; only visit dates are ([ADR 0012](adr/0012-place-details.md)).
+  Flights are kept for their traveler only and never public.
   Travel documents are kept with the ledger settings, never public, and hold names and dates
   only: the form asks for no number, and the API keeps no field for one.
   Places the traveler hid from the public map are left out by the query itself, with their

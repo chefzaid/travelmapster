@@ -121,6 +121,14 @@ file, which the server sends to browsers that accept it. After editing a data fi
 `node scripts/compress-map-data.js`; a test fails while a copy is out of date. Review the size
 and the [data format](data-model.md#map-data) before committing.
 
+The flight log's airports come from OurAirports' `airports.csv` (public domain,
+[ourairports-data](https://github.com/davidmegginson/ourairports-data)):
+
+```bash
+node scripts/build-airports.js path/to/airports.csv
+node scripts/compress-map-data.js
+```
+
 ## Troubleshooting
 
 | Symptom | Check |

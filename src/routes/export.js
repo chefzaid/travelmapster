@@ -11,12 +11,12 @@ const EXPORT_VERSION = 1;
  * their visits, trips, ledger settings and the whole history of visit dates. The browser packs
  * it into the downloadable archive (ADR 0017: a record you can keep).
  */
-function createExportRouter({ markers, trips, ledger, security, follows, orgs, metrics }) {
+function createExportRouter({ markers, trips, ledger, security, follows, orgs, flights, metrics }) {
     const router = express.Router();
 
     router.get('/', async (req, res) => {
         const userId = req.user.id;
-        const [places, itineraries, settings, changes, passkeys, secret, activity, followed, memberships, audit] = await Promise.all([
+        const [places, itineraries, settings, changes, passkeys, secret, activity, followed, memberships, audit, flown] = await Promise.all([
             markers.listForUser(userId),
             // The traveler's own trips, never those others share with them (ADR 0028).
             trips.listOwned(userId),
@@ -27,7 +27,8 @@ function createExportRouter({ markers, trips, ledger, security, follows, orgs, m
             security.listEvents(userId),
             follows.list(userId),
             orgs.listForUser(userId),
-            orgs.auditFor(userId, 10_000)
+            orgs.auditFor(userId, 10_000),
+            flights.list(userId)
         ]);
         metrics.exports.inc();
         res.json({
@@ -37,6 +38,7 @@ function createExportRouter({ markers, trips, ledger, security, follows, orgs, m
             profile: { ...publicUser(req.user), lastActiveDay: req.user.last_seen_on ?? null },
             places,
             trips: itineraries,
+            flights: flown,
             ledger: { settings, changes },
             follows: followed.map(({ username, since }) => ({ username, since })),
             // Organizations and who looked at the traveler's business days (ADR 0022).

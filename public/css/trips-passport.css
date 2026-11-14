@@ -454,3 +454,9 @@ fieldset.trip-stops { padding: 8px 10px; border: 2px solid var(--ink); border-ra
 .booking-list { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
 .booking { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 8px; background: var(--paper-2); border-radius: 10px; overflow-wrap: anywhere; }
 .booking-actions { display: flex; flex: none; gap: 2px; }
+
+/* The passport's flight log. */
+.flight-add { align-items: flex-end; gap: 6px; margin: 8px 0; }
+.flight-add .field { flex: 0 1 auto; min-width: 0; }
+.flight-add .airport-code { width: 4.5rem; text-transform: uppercase; }
+.flight-years { display: grid; gap: 4px; margin: 6px 0; padding: 0; list-style: none; }

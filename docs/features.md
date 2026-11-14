@@ -320,6 +320,11 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   list) or new cities first visited that year, or trips begun in it, with a progress bar each
   and a confetti celebration when one is reached. One goal per kind and year; goals are never
   on the public map.
+- **Flight log**: flights by date and IATA airport codes (about 4,100 airports with scheduled
+  service, from OurAirports, public domain), with an optional flight number. The passport
+  shows the flights, distance and a rough CO₂ estimate (90 g per kilometre for an economy seat,
+  as it says) in all and per year, and replays them as arcs on the map. Flights are private,
+  in the account archive, and a guest keeps them in the browser until signing up.
 - **Share a picture**: square cards (1080 × 1080) of the country count, the passport stamps,
   this year's recap or the countdown to the next trip (the days to go and its countries' flags), shared through the phone's share sheet or downloaded as PNG. They show
   counts, country names and flags only: never notes, photos, places or dates.

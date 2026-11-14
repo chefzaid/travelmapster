@@ -5,6 +5,7 @@
 import { lastVisitDate, sortVisits } from './visits.js';
 import { toClientMarker, toClientVisit } from './api.js';
 import { mergedDetails } from './place-merge.js';
+import { latestFirst } from './flight-log.js';
 import { t } from './i18n.js';
 
 const KEY = 'travelmapster.guest';
@@ -21,7 +22,7 @@ const PLACE_FIELDS = ['lat', 'lng', 'type', 'stay', 'name', 'category', 'notes',
 const TRIP_FIELDS = ['title', 'destination', 'startDate', 'plan', 'stops', 'packing', 'budget'];
 
 const empty = () => ({
-    version: VERSION, nextId: 1, profile: {}, markers: [], trips: [],
+    version: VERSION, nextId: 1, profile: {}, markers: [], trips: [], flights: [],
     ledger: { dayRule: 'presence', rules: [], planned: [], exempt: [], documents: [] }
 });
 
@@ -197,10 +198,22 @@ export function createGuestApi(storage, now = () => new Date().toISOString()) {
             data.trips = data.trips.filter(trip => trip.id !== Number(id));
         }),
 
+        // The flight log, the latest first, as the API answers it.
+        getFlights: () => look(data => latestFirst(data.flights || [])),
+        addFlight: flight => change(data => {
+            const added = { id: data.nextId++, date: flight.date, from: flight.from, to: flight.to, number: flight.number || null };
+            data.flights = [...(data.flights || []), added];
+            return added;
+        }),
+        deleteFlight: id => change(data => {
+            if (!(data.flights || []).some(flight => flight.id === Number(id))) throw notFound(t('Flight not found.'));
+            data.flights = data.flights.filter(flight => flight.id !== Number(id));
+        }),
+
         exportAccount: () => look(data => ({
             format: 'travelmapster-account', version: 1, exportedAt: now(),
             profile: { ...GUEST_USER, ...data.profile }, places: data.markers, trips: sortedTrips(data.trips),
-            ledger: { settings: data.ledger, changes: [] }
+            flights: latestFirst(data.flights || []), ledger: { settings: data.ledger, changes: [] }
         })),
 
         // What a guest map cannot do without the server.

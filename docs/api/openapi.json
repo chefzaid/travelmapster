@@ -4168,6 +4168,152 @@
         },
         "security": []
       }
+    },
+    "/api/flights": {
+      "get": {
+        "summary": "The flight log, the latest flight first",
+        "tags": [
+          "Trips"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Flight"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "Add a flight",
+        "tags": [
+          "Trips"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FlightInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Flight"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid flight",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The log holds 2,000 flights already",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/CsrfRejected"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "security": [
+          {
+            "session": [],
+            "csrf": []
+          }
+        ]
+      }
+    },
+    "/api/flights/{id}": {
+      "delete": {
+        "summary": "Remove a flight",
+        "tags": [
+          "Trips"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Removed"
+          },
+          "404": {
+            "description": "Not one of the traveler's flights",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/CsrfRejected"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "security": [
+          {
+            "session": [],
+            "csrf": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -5556,6 +5702,12 @@
             "items": {
               "$ref": "#/components/schemas/AuditEntry"
             }
+          },
+          "flights": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Flight"
+            }
           }
         }
       },
@@ -6423,6 +6575,56 @@
             "format": "date"
           }
         }
+      },
+      "FlightInput": {
+        "type": "object",
+        "required": [
+          "date",
+          "from",
+          "to"
+        ],
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "from": {
+            "type": "string",
+            "pattern": "^[A-Za-z]{3}$",
+            "description": "IATA code of the airport left, upper-cased."
+          },
+          "to": {
+            "type": "string",
+            "pattern": "^[A-Za-z]{3}$",
+            "description": "IATA code of the airport landed at; not the one left."
+          },
+          "number": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 12,
+            "description": "Flight number such as TP 1352."
+          }
+        }
+      },
+      "Flight": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/FlightInput"
+          },
+          {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "type": "integer"
+              }
+            }
+          }
+        ]
       }
     }
   }

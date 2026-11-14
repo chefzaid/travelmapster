@@ -76,6 +76,8 @@ JSON under `/api`, described in full in [OpenAPI](api/openapi.json) and kept bac
 | GET, POST | `/api/trips` | List or create itineraries, the caller's own and those shared with them; `organizationId` makes one a business trip |
 | PUT, DELETE | `/api/trips/:id` | Replace (owner or editor; 409 when changed meanwhile) or remove (owner) an itinerary |
 | GET, PUT, DELETE | `/api/trips/:id/members[/:username]` | Who a trip is shared with, to edit or view ([ADR 0028](adr/0028-friends-and-shared-trips.md)) |
+| GET, POST | `/api/flights` | The flight log, the latest first, or a new flight (`date`, `from` and `to` IATA codes, optional `number`); at most 2,000 |
+| DELETE | `/api/flights/:id` | Remove one of the traveler's flights |
 | GET, POST, DELETE | `/api/trips/:id/family-link` | The trip's family link, owner only (404 for anyone else): whether it is on, a new link (shown once, ending the old one) or turning it off |
 | GET | `/api/family/:token` | A trip's family view for whoever holds the link, without a session: title, stops and dates and the owner's username, never plans, packing, budget or members; 60 a minute per address |
 | GET, POST, DELETE | `/api/follows[/:username]` | Public maps the caller follows, with their country counts |
@@ -147,6 +149,7 @@ JSON under `/api`, described in full in [OpenAPI](api/openapi.json) and kept bac
 | `public/js/map-days.js`, `heat-map.js` | Days on the map: the legend's switch and steps, and the days per country and their steps (pure `heat-map.js`, unit tested) |
 | `public/js/us-presence.js`, `ledger-us.js` | The US Substantial Presence Test, a weighted three-year count no rule can express, among the tax-residency thresholds (pure `us-presence.js`, unit tested) |
 | `public/js/rule-templates.js`, `ledger-templates.js` | Ready-made stay rules and thresholds with their sources (pure `rule-templates.js`, unit tested against the API's validation) and the picker that starts the rule dialog from one |
+| `src/flights.js`, `src/routes/flights.js`, `public/js/flight-log.js`, `passport-flights.js`, `scripts/build-airports.js` | The flight log: stored flights, their distance, CO₂ and arcs (pure, unit tested), the passport section, and the airport list built from OurAirports |
 | `public/js/documents.js`, `ledger-documents.js` | Travel documents: validity, expiry warnings and the trips ahead they do not cover (pure, unit tested), and their Ledger tab section |
 | `public/js/ledger-exempt.js` | Days that do not count: periods under a residence permit or long-stay visa, edited in the Ledger tab and left out of stay rules by `stayDays()` in `days.js` |
 | `public/js/ledger-health.js`, `ledger-checks.js` | Ledger health: ends never recorded, "still there" after being elsewhere, and countries far apart on the same days (pure `ledger-checks.js`, unit tested) |

@@ -67,15 +67,18 @@ export function labelGuestButtons() {
 
 /**
  * Moves the guest map of this browser into the account just opened: places with their visits,
- * trips, the ledger's rules and plans, and for a new account the settings too. An account that
+ * trips, the flight log, the ledger's rules, plans, periods that do not count and travel documents,
+ * and for a new account the settings too. An account that
  * already has a map asks first; declining keeps the guest map in this browser.
  */
 export async function moveGuestMap(ctx) {
     const store = storage();
     if (!store || !hasGuestMap(store)) return;
     const guest = createGuestApi(store);
-    const [places, trips, ledger, profile] = await Promise.all([guest.getMarkers(), guest.getTrips(), guest.getLedger(), guest.currentUser()]);
-    if (!places.length && !trips.length && !ledger.rules.length && !ledger.planned.length) {
+    const [places, trips, ledger, profile, flights] = await Promise.all([guest.getMarkers(), guest.getTrips(), guest.getLedger(), guest.currentUser(), guest.getFlights()]);
+    const exempt = ledger.exempt || [];
+    const documents = ledger.documents || [];
+    if (!places.length && !trips.length && !ledger.rules.length && !ledger.planned.length && !exempt.length && !documents.length && !flights.length) {
         clearGuestMap(store);
         return;
     }
@@ -95,9 +98,15 @@ export async function moveGuestMap(ctx) {
         const known = items => new Set(items.map(item => item.id));
         const rules = ledger.rules.filter(rule => !known(settings.rules).has(rule.id));
         const planned = ledger.planned.filter(stay => !known(settings.planned).has(stay.id));
-        if (rules.length || planned.length) {
-            await ctx.saveLedger({ ...settings, rules: [...settings.rules, ...rules], planned: [...settings.planned, ...planned] });
+        const periods = exempt.filter(period => !known(settings.exempt || []).has(period.id));
+        const papers = documents.filter(document => !known(settings.documents || []).has(document.id));
+        if (rules.length || planned.length || periods.length || papers.length) {
+            await ctx.saveLedger({
+                ...settings, rules: [...settings.rules, ...rules], planned: [...settings.planned, ...planned],
+                exempt: [...(settings.exempt || []), ...periods], documents: [...(settings.documents || []), ...papers]
+            });
         }
+        for (const flight of [...flights].reverse()) await ctx.api.addFlight(flight);
         if (!own) {
             const { homeCountry, countryList, mapPalette, goals, packingTemplates } = profile;
             await ctx.saveSettings({ homeCountry, countryList, mapPalette, goals, packingTemplates }, t('Your guest map is now saved in your account. 🎉'));
