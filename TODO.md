@@ -255,3 +255,19 @@ Small, everyday things travelers ask for, built on data the app already has or a
 - [x] Theme in Settings: follow the system, light or dark, for people whose system theme does not suit the map. Done: "Light or dark" in Settings, kept in the browser and applied before the page shows.
 - [x] Kilometers or miles in Settings for distances on the passport and trips, following the language at first. Done: "Distances in" in Settings, kept in the browser; trips show no distances today, so the passport's is the one that follows it.
 - [x] Keyboard shortcuts: `?` lists them (`/` search, Escape and the timeline's keys today), with a few more: `T` timeline, `D` days on the map, `[` to fold the panel. Done: all in `shortcuts.js`, waiting while the traveler types or a dialog is open.
+
+## Ideas (added 2026-11-14)
+
+Next small steps on what shipped lately: the flight log, the states and provinces, trips planned together. Each uses data the app already has, and none should grow beyond what its line says.
+
+### Flights and regions
+
+- [ ] Paste your flights: add many at once to the flight log from pasted lines such as "2026-05-01 LIS KIX TP1352" or a CSV with date, from and to columns (as airline and tracking apps export), with a preview of what will be added and what was not understood.
+- [ ] Visited states on the map: when zoomed into one of the nine countries with states and provinces, the ones with a town been to are tinted, the rest outlined, from the outlines the passport already loads.
+- [ ] A year in flights, as a picture: the passport's share cards gain one for the flight log (flights, distance and the longest flight of a year), like the countdown card.
+
+### Atlas and trips
+
+- [ ] Firsts: the year each continent was first set foot on, and the first country of each, as a short timeline on the passport, from the visit dates.
+- [ ] Towns next door: on a town's card, the largest towns within 50 km not yet been to, from the bundled towns, as easy day trips to add to the wishlist.
+- [ ] Share a trip from a phone: the trip's "copy as text" also opens the phone's share sheet where the browser has one (Web Share), with the same text and no confirmation codes.
