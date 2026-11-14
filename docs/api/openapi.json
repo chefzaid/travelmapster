@@ -5595,6 +5595,11 @@
               "other"
             ],
             "default": "other"
+          },
+          "paidBy": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{3,32}$",
+            "description": "On a trip planned together, the username of who paid it; the costs are split evenly between everyone on the trip."
           }
         }
       },

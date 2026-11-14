@@ -83,6 +83,24 @@ test('travelers follow each other\'s maps, compare countries, and plan a trip to
     await expect(page.locator('.toast-error')).toContainText('Someone else saved this trip');
     await expect(trips.locator('.day-card').first().getByPlaceholder('Morning plans…')).toHaveValue('Fushimi Inari at dawn');
 
+    // The costs split between the two: Ana paid the ryokan and Ben the dinner, so Ben owes her.
+    await trips.getByText('🧾 Budget').click();
+    await trips.getByLabel('Home currency').fill('EUR');
+    await trips.getByLabel('Home currency').dispatchEvent('change');
+    await trips.getByRole('button', { name: 'Start a budget' }).click();
+    for (const [label, amount] of [['Ryokan', '300'], ['Dinner', '60']]) {
+        await trips.getByLabel('New expense').fill(label);
+        await trips.getByLabel('Amount', { exact: true }).fill(amount);
+        await trips.getByLabel('Currency', { exact: true }).fill('EUR');
+        await trips.getByLabel('New expense').press('Enter');
+    }
+    await trips.getByText('🤝 Split costs').click();
+    await trips.getByLabel('Who paid Ryokan').selectOption(ana);
+    await trips.getByLabel('Who paid Dinner').selectOption(ben);
+    await expect(trips.locator('.split-transfers')).toHaveText(`${ben} pays ${ana} €120.00`);
+    await trips.getByRole('button', { name: '💾 Save' }).click();
+    await expect(page.locator('.toast-success', { hasText: 'Trip saved.' })).toBeVisible();
+
     // Viewing only: nothing to change. Then Ben leaves.
     await trips.getByRole('button', { name: '👥 Share' }).click();
     await sharing.getByLabel(`${ben}'s role`).selectOption('view');

@@ -16,6 +16,7 @@ import { openPrintView, printTable } from './print-view.js';
 import { budgetSection, packingSection, stopsSection } from './trip-extras.js';
 import { templateControls } from './trip-packing-templates.js';
 import { familySection } from './trip-family.js';
+import { splitSection } from './trip-split.js';
 import { budgetTotals, formatMoney, tidyBudget } from './trip-budget.js';
 import { checklistBadge, checklistSection, purposeField } from './trip-checklist.js';
 import { t, tn } from './i18n.js';
@@ -365,7 +366,8 @@ function renderEditor(container, ctx, trip) {
             h('div', { class: 'days' }, days),
             checklistSection(ctx, draft, { rerender, readOnly }),
             packingSection(draft, { rerender, markDirty, templates: templateControls(ctx, draft, { rerender }) }),
-            budgetSection(draft, { rerender, markDirty, trips: ctx.state.trips })
+            budgetSection(draft, { rerender, markDirty, trips: ctx.state.trips }),
+            splitSection(ctx, trip, draft, { markDirty })
         ),
         familySection(ctx, trip),
         h('div', { class: 'row trip-footer' },

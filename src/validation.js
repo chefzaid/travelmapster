@@ -1,6 +1,6 @@
 'use strict';
 
-const { isValidTravelDate, normalizeText, parseCompanions } = require('./validation-text');
+const { USERNAME_PATTERN, isValidTravelDate, normalizeText, parseCompanions } = require('./validation-text');
 const { COUNTRY_ID_PATTERN, parseLedgerSettings, plainObject, wholeNumber } = require('./ledger-validation');
 const { parsePackingTemplates, parseTripPayload } = require('./trip-validation');
 
@@ -13,7 +13,6 @@ const PROFILE_VISIBILITIES = new Set(['private', 'public']);
 const COUNTRY_LISTS = new Set(['all', 'un']);
 // Map colours: the cheerful default, colour-blind safe, or print-friendly (ADR 0016).
 const MAP_PALETTES = new Set(['standard', 'colorblind', 'print']);
-const USERNAME_PATTERN = /^[A-Za-z0-9_.-]{3,32}$/;
 const PASSWORD_MIN_LENGTH = 8;
 // bcrypt ignores everything after 72 bytes, so longer passwords are rejected.
 const PASSWORD_MAX_BYTES = 72;

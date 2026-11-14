@@ -12,6 +12,8 @@ function isValidTravelDate(value) {
     return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
 }
 
+// Usernames: 3–32 letters, digits, dots, dashes or underscores.
+const USERNAME_PATTERN = /^[A-Za-z0-9_.-]{3,32}$/;
 const COMPANIONS_MAX = 10;
 const COMPANION_MAX_LENGTH = 40;
 
@@ -27,4 +29,4 @@ function parseCompanions(value) {
     return { companions };
 }
 
-module.exports = { isValidTravelDate, normalizeText, parseCompanions };
+module.exports = { USERNAME_PATTERN, isValidTravelDate, normalizeText, parseCompanions };

@@ -442,3 +442,9 @@ fieldset.trip-stops { padding: 8px 10px; border: 2px solid var(--ink); border-ra
 }
 
 .year-chart small { font-weight: 800; color: var(--muted); }
+
+/* Split costs on a trip planned together: who paid each expense, and who pays whom. */
+.split-list, .split-transfers, .split-balances { display: grid; gap: 6px; margin: 8px 0; padding: 0; list-style: none; }
+.split-list li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.split-list select { min-width: 0; max-width: 12rem; }
+.split-balances { color: var(--muted); font-size: 0.85rem; }

@@ -3,7 +3,7 @@
 // Validation of trips: the day-by-day plan, the stops, the packing list, the budget and the
 // organization of a business trip.
 // src/validation.js re-exports parseTripPayload.
-const { isValidTravelDate, normalizeText } = require('./validation-text');
+const { USERNAME_PATTERN, isValidTravelDate, normalizeText } = require('./validation-text');
 const { plainObject } = require('./ledger-validation');
 
 const TRIP_SLOTS = ['morning', 'afternoon', 'evening'];
@@ -142,7 +142,13 @@ function parseExpenses(value) {
         if (!EXPENSE_CATEGORIES.has(category)) {
             return { error: 'Expense category must be transport, stay, food, activities or other.' };
         }
-        expenses.push({ label: name, amount: Math.round(entry.amount * 1000) / 1000, currency: entry.currency, category });
+        // On a trip planned together, who paid it: a username, to split the costs evenly.
+        const paidBy = entry.paidBy ?? null;
+        if (paidBy !== null && !(typeof paidBy === 'string' && USERNAME_PATTERN.test(paidBy))) {
+            return { error: 'Who paid an expense must be a username.' };
+        }
+        const expense = { label: name, amount: Math.round(entry.amount * 1000) / 1000, currency: entry.currency, category };
+        expenses.push(paidBy ? { ...expense, paidBy } : expense);
     }
     return { expenses };
 }

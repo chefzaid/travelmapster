@@ -283,7 +283,7 @@ export function budgetSection(draft, { rerender, markDirty, trips }) {
     }
     const { total } = budgetTotals(budget);
     const summary = budget.planned === null ? formatMoney(total, budget.currency)
-        : `${formatMoney(total, budget.currency)} of ${formatMoney(budget.planned, budget.currency)}`;
+        : t('{spent} of {planned}', { spent: formatMoney(total, budget.currency), planned: formatMoney(budget.planned, budget.currency) });
     const foreign = foreignCurrencies(budget);
     return section('budget', t('🧾 Budget'), h('small', {}, summary),
         h('div', { class: 'row extra-add' },

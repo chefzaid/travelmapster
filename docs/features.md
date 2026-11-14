@@ -280,6 +280,11 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   other currency (the rate they actually got; no rate service is called), against an optional
   planned budget. Expenses in a currency without a rate are left out of the total, and the
   budget says which rates are missing.
+- **Split costs** on a trip planned together: say who paid each expense, and the costs are split
+  evenly between everyone on the trip, owner included. It shows what each person paid and owes,
+  and the fewest payments that settle up ("ben pays ana €120.00"), in the budget's currency
+  with its exchange rates. Expenses nobody paid are not split; someone who left the trip still
+  counts for what they paid.
 - Planning a trip from a wishlist place, from its card or the 🗓️ button in the places list.
 - **Plan in ledger**: a dated trip becomes a planned stay in the day ledger, in the country of its
   destination ("Lisbon, Portugal", "Japan" or a town such as "Kyoto"), so the Ledger tab checks
