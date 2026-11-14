@@ -121,6 +121,14 @@ file, which the server sends to browsers that accept it. After editing a data fi
 `node scripts/compress-map-data.js`; a test fails while a copy is out of date. Review the size
 and the [data format](data-model.md#map-data) before committing.
 
+The passport's states and provinces come from Natural Earth's
+`ne_50m_admin_1_states_provinces.geojson`:
+
+```bash
+node scripts/build-regions.js path/to/ne_50m_admin_1_states_provinces.geojson
+node scripts/compress-map-data.js
+```
+
 The flight log's airports come from OurAirports' `airports.csv` (public domain,
 [ourairports-data](https://github.com/davidmegginson/ourairports-data)):
 

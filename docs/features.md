@@ -320,6 +320,11 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   list) or new cities first visited that year, or trips begun in it, with a progress bar each
   and a confetti celebration when one is reached. One goal per kind and year; goals are never
   on the public map.
+- **States and provinces** of the largest countries (Australia, Brazil, Canada, China, India,
+  Indonesia, Russia, South Africa and the United States, from Natural Earth's admin-1 layer):
+  each counts once a town been to lies in it, such as "United States of America: 2 of 51" with
+  the towns in each. A town near a coast counts for the region within about 25 km, and never
+  for one across a border. The outlines load only when the passport shows them.
 - **Flight log**: flights by date and IATA airport codes (about 4,100 airports with scheduled
   service, from OurAirports, public domain), with an optional flight number. The passport
   shows the flights, distance and a rough CO₂ estimate (90 g per kilometre for an economy seat,

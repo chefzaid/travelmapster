@@ -1,9 +1,9 @@
 'use strict';
 
-// The passport's flight log: flights by airport codes, the distance and CO₂ per year, the
-// replay on the map, and removing a flight.
+// The passport's flight log (flights by airport codes, the distance and CO₂ per year, the
+// replay on the map, removing a flight) and the states and provinces of the largest countries.
 const { test, expect } = require('@playwright/test');
-const { signUp, stubThirdParties, trackErrors } = require('./helpers');
+const { markCity, signUp, stubThirdParties, trackErrors } = require('./helpers');
 
 test.beforeEach(({ page }) => stubThirdParties(page));
 
@@ -45,5 +45,21 @@ test('a traveler logs flights by airport codes and sees how far they flew each y
     await expect(page.locator('#main-view')).toBeVisible();
     await page.click('#tab-passport');
     await expect(log.locator('#flight-list li')).toHaveCount(2);
+    expect(errors).toEqual([]);
+});
+
+test('towns been to count for the states and provinces of the largest countries', async ({ page }) => {
+    const errors = trackErrors(page);
+    await signUp(page, `e2e_regions_${Date.now()}`);
+    await expect(page.locator('#app[data-map="ready"] #main-view')).toBeVisible();
+    await page.click('#tab-passport');
+    const regions = page.locator('#passport-tab section', { has: page.locator('#regions-title') });
+    await expect(regions).toContainText('United States of America');
+    for (const town of ['Austin', 'Houston', 'Sydney']) await markCity(page, town);
+    await page.click('#tab-passport');
+    await expect(regions.locator('.region-list li')).toHaveCount(2);
+    await expect(regions.locator('.region-list li', { hasText: 'United States' })).toContainText('United States of America: 1 of 51');
+    await expect(regions.locator('.region-list li', { hasText: 'United States' })).toContainText('Texas (Austin and Houston)');
+    await expect(regions.locator('.region-list li', { hasText: 'Australia' })).toContainText('New South Wales (Sydney)');
     expect(errors).toEqual([]);
 });

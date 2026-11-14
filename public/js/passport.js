@@ -6,6 +6,7 @@ import { countryList, shareLabel } from './lists.js';
 import { localToday } from './days.js';
 import { goalsSection } from './passport-goals.js';
 import { flightsSection } from './passport-flights.js';
+import { regionsSection } from './passport-regions.js';
 import { shareCardsSection, stampedCountries } from './passport-share.js';
 import { flagLine } from './share-cards.js';
 import { countdownLabel, upcomingTrip } from './trip-countdown.js';
@@ -251,6 +252,7 @@ export function renderPassport(container, ctx) {
         goalsSection(ctx),
         h('section', {}, h('h3', { class: 'section-title' }, t('Continents')), continentBars(stats)),
         collectionsSection(stats, index),
+        regionsSection(ctx),
         h('section', {},
             h('h3', { class: 'section-title' }, t('Stamps'), h('span', { class: 'count' }, stats.visitedCountries)),
             stamps(stats, index, country => {

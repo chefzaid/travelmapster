@@ -200,7 +200,7 @@ Ideas that follow the product direction: a travel record people rely on for visa
 ### Atlas and places
 
 - [x] Days on the map: an option to color countries by days spent (from the ledger) instead of by status, as a heat map. Done: 🌡️ Days in the legend colors countries in four steps (under a month, 30, 90 and 183 days), with the countries in each step, the days on the country card, and the timeline's year when it is open.
-- [ ] Regions: states, provinces and regions (Natural Earth admin-1, public domain) as an optional deeper level for the largest countries, counted like countries; mind the map data budget.
+- [x] Regions: states, provinces and regions (Natural Earth admin-1, public domain) as an optional deeper level for the largest countries, counted like countries; mind the map data budget. Done: the passport's 🗺️ States and provinces for the nine countries Natural Earth's 1:50m admin-1 covers, counted from the towns been to; the outlines (159 KB compressed) load only with that section.
 - [x] Flight log: flights by airport codes (OurAirports, public domain) drawn as arcs, with distance per year and a rough CO₂ estimate on the passport. Done: the passport's ✈️ Flight log (migration 029, airports built from OurAirports), with distance and CO₂ per year and a replay on the map.
 - [x] Merge duplicate places (two pins for the same town, often after imports), keeping every visit. Done: 🔁 Possible duplicates in the Places tab and `POST /api/markers/{id}/merge`, which moves the visits with their ids and history in one transaction.
 

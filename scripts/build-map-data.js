@@ -15,6 +15,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
+const { round, simplifyGeometry } = require('./geometry');
 
 const [sourceDir, ...flags] = process.argv.slice(2);
 const countriesOnly = flags.includes('--countries-only');
@@ -24,8 +25,6 @@ if (!sourceDir) {
 }
 
 const outputDir = path.join(__dirname, '..', 'public', 'data');
-const PRECISION = 3; // ~100 m
-const TOLERANCE = 0.02; // degrees; friendly, cartoon coastlines that still hold at street-level zooms
 // Every GeoNames place of 500+ people gets the first zoom (in half steps) at which its
 // dot and name fit beside the places already shown, so each zoom step adds more.
 const MAX_MAP_ZOOM = 11;
@@ -52,74 +51,6 @@ const TERRITORY_SPLITS = {
 
 function readGeoJson(fileName) {
     return JSON.parse(fs.readFileSync(path.join(sourceDir, fileName), 'utf8'));
-}
-
-function round(value) {
-    const factor = 10 ** PRECISION;
-    return Math.round(value * factor) / factor;
-}
-
-function perpendicularDistance([x, y], [x1, y1], [x2, y2]) {
-    const dx = x2 - x1;
-    const dy = y2 - y1;
-    if (dx === 0 && dy === 0) return Math.hypot(x - x1, y - y1);
-    return Math.abs(dy * x - dx * y + x2 * y1 - y2 * x1) / Math.hypot(dx, dy);
-}
-
-// Ramer-Douglas-Peucker line simplification.
-function douglasPeucker(points) {
-    if (points.length < 3) return points;
-    const keep = new Uint8Array(points.length);
-    keep[0] = 1;
-    keep[points.length - 1] = 1;
-    const stack = [[0, points.length - 1]];
-    while (stack.length) {
-        const [start, end] = stack.pop();
-        let maxDistance = 0;
-        let index = -1;
-        for (let i = start + 1; i < end; i += 1) {
-            const distance = perpendicularDistance(points[i], points[start], points[end]);
-            if (distance > maxDistance) {
-                maxDistance = distance;
-                index = i;
-            }
-        }
-        if (maxDistance > TOLERANCE) {
-            keep[index] = 1;
-            stack.push([start, index], [index, end]);
-        }
-    }
-    return points.filter((_, i) => keep[i]);
-}
-
-function roundRing(ring) {
-    const result = [];
-    for (const [lng, lat] of ring) {
-        const point = [round(lng), round(lat)];
-        const previous = result[result.length - 1];
-        if (!previous || previous[0] !== point[0] || previous[1] !== point[1]) {
-            result.push(point);
-        }
-    }
-    return result;
-}
-
-// Tiny islands collapse under simplification, so keep their original outline.
-function simplifyRing(ring) {
-    const simplified = roundRing(douglasPeucker(ring));
-    if (simplified.length >= 4) return simplified;
-    const rounded = roundRing(ring);
-    return rounded.length >= 4 ? rounded : null;
-}
-
-function simplifyGeometry(geometry) {
-    const polygons = geometry.type === 'Polygon' ? [geometry.coordinates] : geometry.coordinates;
-    const simplified = polygons
-        .map(polygon => polygon.map(simplifyRing).filter(Boolean))
-        .filter(polygon => polygon.length > 0);
-    return simplified.length === 1
-        ? { type: 'Polygon', coordinates: simplified[0] }
-        : { type: 'MultiPolygon', coordinates: simplified };
 }
 
 function isoCode(properties) {
