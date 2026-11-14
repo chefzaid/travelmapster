@@ -3,6 +3,7 @@
 // ledger. Pure, unit tested in Node.
 import { dayNumber } from './days.js';
 import { joinList, locale, t, tk } from './i18n.js';
+import { bookingLine, sortedBookings } from './bookings.js';
 
 export const SLOTS = [
     ['morning', '🌅', tk('Morning')],
@@ -87,6 +88,8 @@ export function tripAsText(trip) {
         for (const [slot, , label] of SLOTS) {
             if (day[slot]) lines.push(`  ${t(label)}: ${day[slot]}`);
         }
+        // A copy to send on: bookings without their confirmation codes.
+        for (const booking of sortedBookings(day.bookings)) lines.push(`  ${bookingLine(booking, { code: false })}`);
         lines.push('');
     });
     return lines.join('\n').trim();
@@ -212,7 +215,8 @@ export function tripCalendar(trip, now = new Date()) {
         `X-WR-CALNAME:${escapeText(trip.title)}`
     ];
     trip.plan.forEach((day, i) => {
-        const plans = SLOTS.filter(([slot]) => day[slot]).map(([slot, , label]) => `${t(label)}: ${day[slot]}`);
+        const bookings = sortedBookings(day.bookings);
+        const plans = [...SLOTS.filter(([slot]) => day[slot]).map(([slot, , label]) => `${t(label)}: ${day[slot]}`), ...bookings.map(booking => bookingLine(booking))];
         lines.push(
             'BEGIN:VEVENT',
             `UID:trip-${trip.id ?? 'new'}-${trip.startDate}-day-${i + 1}@travelmapster`,
@@ -225,6 +229,20 @@ export function tripCalendar(trip, now = new Date()) {
             'TRANSP:TRANSPARENT',
             'END:VEVENT'
         );
+        // A booking at a time is an hour-long event of its own, at that local time.
+        for (const booking of bookings.filter(item => item.time)) {
+            lines.push(
+                'BEGIN:VEVENT',
+                `UID:trip-${trip.id ?? 'new'}-booking-${booking.id}@travelmapster`,
+                `DTSTAMP:${stamp}`,
+                `DTSTART:${compactDate(shiftDate(trip.startDate, i))}T${booking.time.replace(':', '')}00`,
+                'DURATION:PT1H',
+                `SUMMARY:${escapeText(bookingLine({ ...booking, time: null, address: null, code: null }))}`,
+                ...(booking.address ? [`LOCATION:${escapeText(booking.address)}`] : []),
+                ...(booking.code ? [`DESCRIPTION:${escapeText(t('Confirmation {code}', { code: booking.code }))}`] : []),
+                'END:VEVENT'
+            );
+        }
     });
     lines.push('END:VCALENDAR');
     return { calendar: `${lines.map(fold).join('\r\n')}\r\n` };

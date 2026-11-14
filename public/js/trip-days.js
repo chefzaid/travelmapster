@@ -1,9 +1,10 @@
 // The trip editor's day cards: each day's morning, afternoon and evening plans, its date and
 // stop, with days reordered by dragging or with the arrow buttons, and plans dragged from one
-// slot to another (they swap).
+// slot to another (they swap), and the day's bookings, which move with it.
 import { h } from './ui.js';
 import { SLOTS, dayDate, stopOfDay } from './itinerary.js';
 import { moveDay, removeTripDay, swapSlots } from './trip-stops.js';
+import { bookingsBlock } from './trip-bookings.js';
 import { t } from './i18n.js';
 
 const DAY_TYPE = 'application/x-travelmapster-day';
@@ -87,6 +88,7 @@ export function dayCards(draft, { rerender, markDirty, showStop, readOnly = fals
                     markDirty();
                 }
             }, day[slot])
-        ))
+        )),
+        bookingsBlock(day, { rerender, readOnly })
     ));
 }

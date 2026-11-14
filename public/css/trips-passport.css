@@ -448,3 +448,9 @@ fieldset.trip-stops { padding: 8px 10px; border: 2px solid var(--ink); border-ra
 .split-list li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
 .split-list select { min-width: 0; max-width: 12rem; }
 .split-balances { color: var(--muted); font-size: 0.85rem; }
+
+/* Bookings on a day card: flights, stays and other reservations. */
+.day-bookings { display: grid; gap: 6px; margin-top: 8px; }
+.booking-list { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.booking { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 8px; background: var(--paper-2); border-radius: 10px; overflow-wrap: anywhere; }
+.booking-actions { display: flex; flex: none; gap: 2px; }

@@ -256,6 +256,11 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   move to another stop), and a slot's plans swap with another slot's when dragged onto it.
 - New itineraries are pre-filled with sights, activities and food ideas from Wikivoyage, fetched by the browser.
 - A travel-ideas panel for any country or city, and copying an itinerary as text.
+- **Bookings** on each day: flights, trains, buses, stays, cars, events and others, with a local
+  time, an address and a confirmation code when they have them. They move with their day, show
+  on the printed itinerary, and a booking with a time is its own event in the calendar export;
+  the copy as text leaves the codes out, and they are never in the family view or the calendar
+  feed. A copy of the trip starts without them.
 - Exporting an itinerary to a calendar: an `.ics` file with an all-day event per day holding
   that day's plans (it needs a start date), which any calendar app imports.
 - **Subscribe in your calendar**: a private link to a feed of every dated trip (its title, route

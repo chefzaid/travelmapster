@@ -18,6 +18,7 @@ import { templateControls } from './trip-packing-templates.js';
 import { familySection } from './trip-family.js';
 import { splitSection } from './trip-split.js';
 import { budgetTotals, formatMoney, tidyBudget } from './trip-budget.js';
+import { bookingLine, sortedBookings } from './bookings.js';
 import { checklistBadge, checklistSection, purposeField } from './trip-checklist.js';
 import { t, tn } from './i18n.js';
 import { calendarFeedSection } from './trip-feed.js';
@@ -146,10 +147,11 @@ function printTrip(trip, opener) {
                     ? `${formatDate(trip.startDate)} – ${formatDate(tripEndDate(trip))}`
                     : tn(trip.plan.length, '{count} day, dates to choose', '{count} days, dates to choose'))
             ),
-            printTable([t('Day'), ...SLOTS.map(([, , label]) => t(label))], trip.plan.map((day, i) => h('tr', {},
+            printTable([t('Day'), ...SLOTS.map(([, , label]) => t(label)), t('Bookings')], trip.plan.map((day, i) => h('tr', {},
                 h('th', { scope: 'row' }, t('Day {number}', { number: i + 1 }), trip.startDate ? h('small', { class: 'report-edited' }, dayDate(trip.startDate, i)) : null,
                     trip.stops?.length ? h('small', { class: 'report-edited' }, stopOfDay(trip, i).destination) : null),
-                SLOTS.map(([slot]) => h('td', {}, day[slot]))
+                SLOTS.map(([slot]) => h('td', {}, day[slot])),
+                h('td', {}, sortedBookings(day.bookings).map(booking => h('div', {}, bookingLine(booking))))
             ))),
             trip.packing?.length ? h('section', {},
                 h('h2', {}, t('Packing list')),

@@ -31,9 +31,23 @@ test('a traveler plans a trip that is saved to their account', async ({ page }) 
     await trips.getByLabel('Start date').dispatchEvent('change');
     await trips.getByRole('button', { name: '💾 Save' }).click();
     await expect(page.locator('.toast-success', { hasText: 'Trip saved.' })).toBeVisible();
+    // A flight on the first day, which the calendar export adds at its time.
+    await trips.locator('.day-card').first().getByRole('button', { name: '🎫 Add a booking' }).click();
+    await page.locator('#dialog-kind').selectOption('flight');
+    await page.fill('#dialog-title', 'TP 1352');
+    await page.fill('#dialog-time', '09:30');
+    await page.fill('#dialog-code', 'K7Q2LM');
+    await page.getByRole('button', { name: 'Add booking' }).click();
+    await expect(trips.locator('.day-card').first().locator('.booking > span').first()).toHaveText('✈️ 09:30 TP 1352 · Confirmation K7Q2LM');
+    await trips.getByRole('button', { name: '💾 Save' }).click();
+    await expect(page.locator('.toast-success', { hasText: 'Trip saved.' }).last()).toBeVisible();
     const download = page.waitForEvent('download');
     await trips.getByRole('button', { name: '📅 Calendar' }).click();
-    expect((await download).suggestedFilename()).toBe('pastel-de-nata-tour.ics');
+    const ics = await download;
+    expect(ics.suggestedFilename()).toBe('pastel-de-nata-tour.ics');
+    const calendar = (await ics.createReadStream().then(stream => stream.toArray()).then(chunks => Buffer.concat(chunks).toString())).replace(/\r\n /g, '');
+    expect(calendar).toContain('DTSTART:20300501T093000');
+    expect(calendar).toContain('DESCRIPTION:Confirmation K7Q2LM');
 
     // The countdown to it, on the Explore tab and the passport, which shares it as a picture.
     const today = await browserDay(page, 0);

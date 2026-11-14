@@ -12,6 +12,10 @@ const TRIP_SLOT_MAX_LENGTH = 500;
 const TRIP_MAX_STOPS = 10;
 const DESTINATION_MAX_LENGTH = 160;
 const PACKING_MAX_ITEMS = 200;
+const BOOKINGS_MAX_PER_DAY = 10;
+const BOOKING_KINDS = new Set(['flight', 'train', 'bus', 'stay', 'car', 'event', 'other']);
+const BOOKING_ID_PATTERN = /^[A-Za-z0-9_-]{1,40}$/;
+const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
 const TEMPLATES_MAX = 20;
 const TEMPLATE_NAME_MAX_LENGTH = 40;
 const EXPENSES_MAX = 300;
@@ -38,9 +42,38 @@ function parsePlan(value) {
             }
             cleanDay[slot] = text;
         }
+        if (day.bookings !== undefined) {
+            const { bookings, error } = parseBookings(day.bookings);
+            if (error) return { error };
+            if (bookings.length) cleanDay.bookings = bookings;
+        }
         plan.push(cleanDay);
     }
     return { plan };
+}
+
+/**
+ * A day's reservations: flights, trains, stays and other bookings, each with a title, an
+ * optional local time ("HH:MM"), address and confirmation code. They move with their day.
+ */
+function parseBookings(value) {
+    if (!Array.isArray(value) || value.length > BOOKINGS_MAX_PER_DAY) return { error: `A day holds at most ${BOOKINGS_MAX_PER_DAY} bookings.` };
+    const bookings = [];
+    for (const entry of value) {
+        if (!plainObject(entry)) return { error: 'Each booking must be an object.' };
+        const id = normalizeText(entry.id);
+        const title = normalizeText(entry.title);
+        const time = normalizeText(entry.time);
+        const address = normalizeText(entry.address);
+        const code = normalizeText(entry.code);
+        if (!BOOKING_ID_PATTERN.test(id)) return { error: 'Each booking needs an id of up to 40 letters, digits, dashes or underscores.' };
+        if (!BOOKING_KINDS.has(entry.kind)) return { error: 'A booking is a flight, train, bus, stay, car, event or other booking.' };
+        if (!title || title.length > LABEL_MAX_LENGTH) return { error: 'Name each booking in 1 to 80 characters.' };
+        if (time && !TIME_PATTERN.test(time)) return { error: 'A booking time must be HH:MM, such as 09:30.' };
+        if (address.length > 200 || code.length > 40) return { error: 'A booking address holds at most 200 characters, and its confirmation code 40.' };
+        bookings.push({ id, kind: entry.kind, title, time: time || null, address: address || null, code: code || null });
+    }
+    return { bookings };
 }
 
 /**

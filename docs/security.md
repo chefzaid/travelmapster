@@ -37,6 +37,9 @@
   exist. The view needs no session, so it carries only the trip's title, stops, dates and the
   owner's username; it is rate-limited per address, `noindex`, and its page sends no referrer,
   so the token never leaks to a link it holds (`src/family-links.js`).
+- **Bookings**: confirmation codes and addresses of a trip's bookings are kept in its plan, so
+  only the owner and the people it is shared with see them; neither link (the family view, the
+  calendar feed) carries them, and the trip's copy as text leaves the codes out.
 - **Security activity**: sign-ins and changes to the password, passkeys and two-step sign-in are
   recorded with the method and the device's browser and system names (no address or
   User-Agent), the latest 50 per account (migration 022); Sign-in security shows the latest 20
