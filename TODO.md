@@ -272,3 +272,10 @@ Next small steps on what shipped lately: the flight log, the states and province
 - [x] Firsts: the year each continent was first set foot on, and the first country of each, as a short timeline on the passport, from the visit dates. Done: 🥇 Firsts on the passport, one line per continent with its year and country; the first country of each continent is that line's.
 - [x] Towns next door: on a town's card, the largest towns within 50 km not yet been to, from the bundled towns, as easy day trips to add to the wishlist. Done: 🚶 Towns next door on the card of a town been to, from `townsAround()` in `towns.js`.
 - [x] Share a trip from a phone: the trip's "copy as text" also opens the phone's share sheet where the browser has one (Web Share), with the same text and no confirmation codes. Done: the trip's button reads 📤 Share where the browser has a share sheet, and copies otherwise (`shareText()` in `ui.js`).
+
+### Everyday touches (added 2026-11-15)
+
+- [ ] Budget per day and per person: the trip's budget shows what was spent per day of the trip, and per person on a trip planned together, beside the total.
+- [ ] Packing at a glance: an upcoming trip's card in the trips list shows how much of its packing list is packed ("🎒 12 of 20"), as it shows the business checklist.
+- [ ] Wishes nearest you: on the Places tab, a "Near me" sort reads the browser's location once (as checking in does, never stored or sent) and lists the wishlist places nearest first, with their distance.
+- [ ] Flights in the year's recap: the passport's yearly recap picture adds the year's flights and distance when the flight log has any.
