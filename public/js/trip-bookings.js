@@ -2,12 +2,14 @@
 // with their time, address and confirmation code (bookings.js), added, edited and removed in
 // the trip's draft and saved with it.
 import { h, toast, formDialog, copyText } from './ui.js';
-import { BOOKINGS_MAX_PER_DAY, BOOKING_KINDS, bookingLine, checkBooking, sortedBookings } from './bookings.js';
+import { BOOKINGS_MAX_PER_DAY, BOOKING_KINDS, bookingLine, checkBooking, moveBooking, sortedBookings } from './bookings.js';
 import { newId } from './ledger-rules.js';
 import { t } from './i18n.js';
 
-async function bookingDialog(booking) {
-    let draft = booking || { kind: 'flight', title: '', time: '', address: '', code: '' };
+// The booking's form; editing one on a trip of several days also offers to move it to another
+// day (`days` names them). Resolves to { booking, day } or null.
+async function bookingDialog(booking, days = [], day = 0) {
+    let draft = booking ? { ...booking, day: String(day) } : { kind: 'flight', title: '', time: '', address: '', code: '' };
     for (;;) {
         const values = await formDialog({
             title: booking ? t('Edit {name}', { name: booking.title }) : t('Add a booking'),
@@ -17,12 +19,13 @@ async function bookingDialog(booking) {
                 { name: 'title', label: t('What'), value: draft.title, required: true, maxlength: 80, placeholder: t('TP 1352 to Kyoto, Hotel Kanra…'), autocomplete: 'off' },
                 { name: 'time', label: t('Time'), type: 'time', value: draft.time || '', hint: t('Optional: local time. With a time, the calendar export adds it as an event.') },
                 { name: 'address', label: t('Address'), value: draft.address || '', maxlength: 200, autocomplete: 'off' },
-                { name: 'code', label: t('Confirmation code'), value: draft.code || '', maxlength: 40, autocomplete: 'off', hint: t('Kept with the trip, never in shared copies or the family view.') }
-            ]
+                { name: 'code', label: t('Confirmation code'), value: draft.code || '', maxlength: 40, autocomplete: 'off', hint: t('Kept with the trip, never in shared copies or the family view.') },
+                booking && days.length > 1 ? { name: 'day', label: t('Day'), type: 'select', value: draft.day, options: days.map((label, i) => ({ value: String(i), label })) } : null
+            ].filter(Boolean)
         });
         if (!values) return null;
         const { booking: checked, error } = checkBooking(values, booking?.id || newId());
-        if (!error) return checked;
+        if (!error) return { booking: checked, day: values.day === undefined ? day : Number(values.day) };
         toast(error, { tone: 'error' });
         draft = values;
     }
@@ -46,7 +49,7 @@ function codeButton(code) {
 }
 
 /** A day's bookings with buttons to add, edit and remove them. */
-export function bookingsBlock(day, { rerender, readOnly }) {
+export function bookingsBlock(day, { rerender, readOnly, plan = [day], index = 0, days = [] }) {
     const bookings = day.bookings || [];
     const save = list => {
         if (list.length) day.bookings = list;
@@ -61,8 +64,14 @@ export function bookingsBlock(day, { rerender, readOnly }) {
             h('button', {
                 type: 'button', class: 'icon-btn', 'aria-label': t('Edit {name}', { name: booking.title }), title: t('Edit'),
                 onclick: async () => {
-                    const updated = await bookingDialog(booking);
-                    if (updated) save(bookings.map(item => (item.id === booking.id ? updated : item)));
+                    const result = await bookingDialog(booking, days, index);
+                    if (!result) return;
+                    const { booking: updated, day: to } = result;
+                    if (to === index) save(bookings.map(item => (item.id === booking.id ? updated : item)));
+                    else if (moveBooking(plan, index, to, updated)) {
+                        toast(t('Moved {name} to {day}.', { name: updated.title, day: days[to] }), { tone: 'success' });
+                        rerender();
+                    } else toast(t('{day} already holds {count} bookings.', { day: days[to], count: BOOKINGS_MAX_PER_DAY }), { tone: 'error' });
                 }
             }, '✏️'),
             h('button', {
@@ -75,8 +84,8 @@ export function bookingsBlock(day, { rerender, readOnly }) {
         readOnly || bookings.length >= BOOKINGS_MAX_PER_DAY ? null : h('button', {
             type: 'button', class: 'btn btn-ghost btn-sm',
             onclick: async () => {
-                const booking = await bookingDialog();
-                if (booking) save([...bookings, booking]);
+                const result = await bookingDialog();
+                if (result) save([...bookings, result.booking]);
             }
         }, t('🎫 Add a booking')));
 }

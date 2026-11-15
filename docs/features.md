@@ -265,6 +265,7 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   the copy as text leaves the codes out, and they are never in the family view or the calendar
   feed. A copy of the trip starts without them. A tap on a code copies it, for the check-in desk
   or an airline's app, and an address opens a map search for it (OpenStreetMap) in a new tab.
+  On a trip of several days, a booking's form moves it to another day, when that day has room.
 - Exporting an itinerary to a calendar: an `.ics` file with an all-day event per day holding
   that day's plans (it needs a start date), which any calendar app imports.
 - **Subscribe in your calendar**: a private link to a feed of every dated trip (its title, route

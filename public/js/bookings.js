@@ -45,3 +45,18 @@ export function bookingLine(booking, { code = true } = {}) {
     const head = [bookingKind(booking.kind).icon, booking.time, booking.title].filter(Boolean).join(' ');
     return [head, booking.address, code && booking.code ? t('Confirmation {code}', { code: booking.code }) : null].filter(Boolean).join(' · ');
 }
+
+/**
+ * Moves a booking from one day of the plan to another, in place; false, changing nothing, when
+ * the other day already holds its ten bookings.
+ */
+export function moveBooking(plan, from, to, booking) {
+    if (from === to) return true;
+    const target = plan[to];
+    if (!target || (target.bookings || []).length >= BOOKINGS_MAX_PER_DAY) return false;
+    const left = (plan[from].bookings || []).filter(item => item.id !== booking.id);
+    if (left.length) plan[from].bookings = left;
+    else delete plan[from].bookings;
+    target.bookings = [...(target.bookings || []), booking];
+    return true;
+}

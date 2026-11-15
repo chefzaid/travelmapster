@@ -293,3 +293,4 @@ Next small steps on what shipped lately: the flight log, the states and province
 - [x] The way back: a flight offers its return, the add form filled with the same airports the other way round, waiting for its day. Done: ↩️ `fillWayBack()` in `passport-flights.js`.
 - [x] A trip's expenses as a spreadsheet: the budget downloads as CSV, converted with the rates given, for claiming or sharing costs. Done: `budgetCsv()` in `trip-budget.js` and ⬇️ CSV in the budget.
 - [x] The longest flight: the flight log names it with its distance. Done: in the favourites line of `passport-flights.js`.
+- [x] Move a booking to another day: a rebooked flight or a hotel changed moves from its form instead of being typed again. Done: the Day picker of the booking form and `moveBooking()` in `bookings.js`.

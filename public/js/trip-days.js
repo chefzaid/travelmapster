@@ -11,6 +11,9 @@ const DAY_TYPE = 'application/x-travelmapster-day';
 const SLOT_TYPE = 'application/x-travelmapster-slot';
 
 // Accepts a drop of one of our own drags (text dragged in from elsewhere keeps its default).
+// "Day 2" or, on a dated trip, "Day 2 · Sat, 2 May", to name a day in a picker.
+const dayName = (draft, i) => [t('Day {number}', { number: i + 1 }), draft.startDate ? dayDate(draft.startDate, i) : null].filter(Boolean).join(' · ');
+
 function dropZone(type, onDrop) {
     const carries = event => event.dataTransfer?.types.includes(type);
     return {
@@ -89,6 +92,6 @@ export function dayCards(draft, { rerender, markDirty, showStop, readOnly = fals
                 }
             }, day[slot])
         )),
-        bookingsBlock(day, { rerender, readOnly })
+        bookingsBlock(day, { rerender, readOnly, plan: draft.plan, index: i, days: draft.plan.map((_, n) => dayName(draft, n)) })
     ));
 }

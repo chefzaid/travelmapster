@@ -53,3 +53,17 @@ test('the calendar export holds timed bookings as events of their own, and text 
     assert.ok(text.includes('✈️ 09:30 TP 1352 · Lisbon airport') && !text.includes('K7Q2LM'));
     assert.ok(!('bookings' in tripTemplate(trip).plan[0]), 'a copy of the trip starts without its bookings');
 });
+
+test('a booking moves to another day, unless that day is full', async () => {
+    const { moveBooking } = await load('bookings.js');
+    const plan = [{ bookings: [flight, hotel] }, {}];
+    assert.equal(moveBooking(plan, 0, 1, { ...flight, time: '10:00' }), true);
+    assert.deepEqual(plan[0].bookings, [hotel]);
+    assert.deepEqual(plan[1].bookings, [{ ...flight, time: '10:00' }], 'moved as edited');
+    assert.equal(moveBooking(plan, 0, 1, hotel), true);
+    assert.equal('bookings' in plan[0], false, 'a day left without bookings drops the list');
+    const full = [{ bookings: [flight] }, { bookings: Array.from({ length: 10 }, (_, i) => ({ ...hotel, id: `h${i}` })) }];
+    assert.equal(moveBooking(full, 0, 1, flight), false);
+    assert.deepEqual(full[0].bookings, [flight], 'nothing changes');
+    assert.equal(moveBooking(full, 0, 5, flight), false, 'no such day');
+});

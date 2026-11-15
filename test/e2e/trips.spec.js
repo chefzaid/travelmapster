@@ -384,6 +384,13 @@ test('on a phone, a trip opens the share sheet with its days, and never its conf
     // The address opens a map search for it.
     await expect(trips.getByRole('link', { name: '1 Higashi-Kujo, Kyoto on a map (opens in a new tab)' }))
         .toHaveAttribute('href', 'https://www.openstreetmap.org/search?query=1%20Higashi-Kujo%2C%20Kyoto');
+    // A booking moves to another day from its form.
+    await trips.getByRole('button', { name: 'Edit Hotel Kanra' }).click();
+    await page.locator('#dialog-day').selectOption({ label: 'Day 2' });
+    await page.getByRole('button', { name: 'Save booking' }).click();
+    await expect(page.locator('.toast-success', { hasText: 'Moved Hotel Kanra to Day 2.' })).toBeVisible();
+    await expect(trips.locator('.day-card').first().locator('.booking')).toHaveCount(0);
+    await expect(trips.locator('.day-card').nth(1).locator('.booking')).toContainText('Hotel Kanra');
     await trips.getByRole('button', { name: '📤 Share' }).click();
     await expect.poll(() => page.evaluate(() => globalThis.shared?.title)).toBe('Temples');
     const text = await page.evaluate(() => globalThis.shared.text);
