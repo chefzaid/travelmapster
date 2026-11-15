@@ -1,6 +1,6 @@
 'use strict';
 
-// The signed-in traveler's flight log (src/flights.js): listed, added and removed.
+// The signed-in traveler's flight log (src/flights.js): listed, added, changed and removed.
 const express = require('express');
 const { parseFlight, parseFlights } = require('../flights');
 const { parseMarkerId } = require('../validation');
@@ -21,6 +21,15 @@ function createFlightRouter({ flights }) {
         if (error) return res.status(400).json({ error });
         const added = await flights.addMany(req.user.id, given);
         return res.status(201).json({ flights: added, full: added.length < given.length });
+    });
+    router.put('/:id', async (req, res) => {
+        const id = parseMarkerId(req.params.id);
+        if (!id) return res.status(404).json({ error: 'Flight not found.' });
+        const { flight, error } = parseFlight(req.body);
+        if (error) return res.status(400).json({ error });
+        const changed = await flights.update(req.user.id, id, flight);
+        if (!changed) return res.status(404).json({ error: 'Flight not found.' });
+        return res.json(changed);
     });
     router.delete('/:id', async (req, res) => {
         const id = parseMarkerId(req.params.id);

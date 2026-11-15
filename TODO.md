@@ -288,3 +288,5 @@ Next small steps on what shipped lately: the flight log, the states and province
 - [x] Copy a confirmation code: on a day card, tapping a booking's confirmation code copies it, for the check-in desk or an airline's app. Done: 📋 code button in `trip-bookings.js`.
 - [x] Untick a packing list: one button clears every tick, to pack the same list for the way home or the next trip. Done: ↺ Untick all in `packingSection()`.
 - [x] Flights of one year: with flights in more than one year, the flight log's list narrows to the year picked. Done: `flightsOfYear()` in `flight-log.js` and the Show picker in `passport-flights.js`.
+- [x] Edit a flight: a typo in a logged flight is fixed in place instead of removed and typed again. Done: `PUT /api/flights/:id` (`update()` in `src/flights.js`) and ✏️ in the flight log.
+- [x] Directions to a booking: a booking's address opens a map search for it, for the way there on the day. Done: OpenStreetMap search link in `trip-bookings.js`.

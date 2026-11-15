@@ -53,6 +53,15 @@ function createFlightRepository(db) {
             );
             return rows;
         },
+        /** Changes one of the traveler's flights; null when it is not theirs. */
+        async update(userId, id, flight) {
+            const { rows } = await db.query(
+                `UPDATE flights SET flown_on = $3, origin = $4, destination = $5, flight_number = $6
+                 WHERE id = $1 AND user_id = $2 RETURNING ${COLUMNS}`,
+                [id, userId, flight.date, flight.from, flight.to, flight.number]
+            );
+            return rows[0] || null;
+        },
         async remove(userId, id) {
             const { rowCount } = await db.query('DELETE FROM flights WHERE id = $1 AND user_id = $2', [id, userId]);
             return rowCount > 0;

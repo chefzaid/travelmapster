@@ -264,7 +264,7 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   on the printed itinerary, and a booking with a time is its own event in the calendar export;
   the copy as text leaves the codes out, and they are never in the family view or the calendar
   feed. A copy of the trip starts without them. A tap on a code copies it, for the check-in desk
-  or an airline's app.
+  or an airline's app, and an address opens a map search for it (OpenStreetMap) in a new tab.
 - Exporting an itinerary to a calendar: an `.ics` file with an all-day event per day holding
   that day's plans (it needs a start date), which any calendar app imports.
 - **Subscribe in your calendar**: a private link to a feed of every dated trip (its title, route
@@ -340,7 +340,7 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   the map is first zoomed in that far.
 - **Flight log**: flights by date and IATA airport codes (about 4,100 airports with scheduled
   service, from OurAirports, public domain), with an optional flight number; a flight removed
-  by mistake comes back with Undo in its toast, and with flights in more than one year the list
+  by mistake comes back with Undo in its toast, ✏️ changes one in place, and with flights in more than one year the list
   narrows to one of them. The passport
   shows the flights, distance and a rough CO₂ estimate (90 g per kilometre for an economy seat,
   as it says) in all and per year, and replays them as arcs on the map. **Paste flights** adds

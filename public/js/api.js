@@ -150,6 +150,7 @@ export const api = {
     getFlights: () => request('GET', '/flights'),
     addFlight: flight => request('POST', '/flights', flight),
     importFlights: flights => request('POST', '/flights/import', { flights }),
+    updateFlight: (id, flight) => request('PUT', `/flights/${Number(id)}`, flight),
     deleteFlight: id => request('DELETE', `/flights/${Number(id)}`),
     getCalendarFeed: () => request('GET', '/calendar-feed'),
     createCalendarFeed: () => request('POST', '/calendar-feed', {}),

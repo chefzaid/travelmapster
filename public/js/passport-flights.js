@@ -85,6 +85,39 @@ async function pasteFlights(ctx, redraw) {
     }
 }
 
+// Changes a flight in a dialog, kept open with what was typed until it checks out.
+async function editFlight(ctx, flight, redraw) {
+    let draft = flight;
+    for (;;) {
+        const values = await formDialog({
+            title: t('Edit the flight'),
+            submitLabel: t('Save flight'),
+            fields: [
+                { name: 'date', label: t('Date'), type: 'date', value: draft.date, required: true },
+                { name: 'from', label: t('From airport code'), value: draft.from, required: true, maxlength: 3, autocomplete: 'off' },
+                { name: 'to', label: t('To airport code'), value: draft.to, required: true, maxlength: 3, autocomplete: 'off' },
+                { name: 'number', label: t('Flight number'), value: draft.number || '', maxlength: 12, autocomplete: 'off', placeholder: 'TP 1352' }
+            ]
+        });
+        if (!values) return;
+        const { flight: checked, error } = checkFlight(values);
+        if (error) {
+            toast(error, { tone: 'error' });
+            draft = { ...values, id: flight.id };
+            continue;
+        }
+        try {
+            const changed = await ctx.api.updateFlight(flight.id, checked);
+            ctx.state.flights = latestFirst(ctx.state.flights.map(item => (item.id === flight.id ? changed : item)));
+            toast(t('Flight saved.'), { tone: 'success' });
+            redraw();
+        } catch (failure) {
+            ctx.handleError(failure);
+        }
+        return;
+    }
+}
+
 // Puts a removed flight back, from the Undo of its toast.
 async function restoreFlight(ctx, flight, redraw) {
     try {
@@ -101,6 +134,11 @@ function flightItem(ctx, airports, flight, redraw) {
         h('span', { class: 'ledger-item-text' },
             h('strong', {}, `${airportLabel(airports, flight.from)} → ${airportLabel(airports, flight.to)}`),
             h('small', {}, [formatDate(flight.date), flight.number, km === null ? null : formatDistance(km)].filter(Boolean).join(' · '))),
+        h('button', {
+            type: 'button', class: 'icon-btn', title: t('Edit'),
+            'aria-label': t('Edit the flight of {date} from {from} to {to}', { date: formatDate(flight.date), from: flight.from, to: flight.to }),
+            onclick: () => editFlight(ctx, flight, redraw)
+        }, '✏️'),
         h('button', {
             type: 'button', class: 'icon-btn', title: t('Remove'),
             'aria-label': t('Remove the flight of {date} from {from} to {to}', { date: formatDate(flight.date), from: flight.from, to: flight.to }),

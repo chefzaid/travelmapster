@@ -27,6 +27,14 @@ test('flights are added, listed latest first, exported and removed, each travele
     assert.deepEqual((await other.get('/api/flights')).body, []);
     assert.equal((await other.delete(`/api/flights/${out.body.id}`)).status, 404);
 
+    // A flight changes in place, only for its traveler, and checked as a new one is.
+    const changed = await client.put(`/api/flights/${out.body.id}`, { date: '2027-05-02', from: 'LIS', to: 'NRT', number: 'tp 1350' });
+    assert.equal(changed.status, 200);
+    assert.deepEqual(changed.body, { id: out.body.id, date: '2027-05-02', from: 'LIS', to: 'NRT', number: 'TP 1350' });
+    assert.equal((await other.put(`/api/flights/${out.body.id}`, { date: '2027-05-02', from: 'LIS', to: 'NRT' })).status, 404);
+    assert.equal((await client.put(`/api/flights/${out.body.id}`, { date: '2027-05-02', from: 'LIS', to: 'LIS' })).status, 400);
+    assert.equal((await client.put('/api/flights/nope', { date: '2027-05-02', from: 'LIS', to: 'NRT' })).status, 404);
+
     for (const bad of [{}, { date: '2027-05-01', from: 'LIS', to: 'LIS' }, { date: '2027-13-01', from: 'LIS', to: 'KIX' }, { date: '2027-05-01', from: 'LI', to: 'KIX' }]) {
         assert.equal((await client.post('/api/flights', bad)).status, 400, JSON.stringify(bad));
     }

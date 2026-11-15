@@ -28,6 +28,14 @@ async function bookingDialog(booking) {
     }
 }
 
+// The address, which opens a map search for it in a new tab, for directions on the day.
+function addressLink(address) {
+    return h('a', {
+        href: `https://www.openstreetmap.org/search?query=${encodeURIComponent(address)}`, target: '_blank', rel: 'noopener noreferrer',
+        'aria-label': t('{address} on a map (opens in a new tab)', { address })
+    }, address);
+}
+
 // The confirmation code, copied with a tap for the check-in desk or an airline's app.
 function codeButton(code) {
     return h('button', {
@@ -46,7 +54,9 @@ export function bookingsBlock(day, { rerender, readOnly }) {
         rerender();
     };
     const items = sortedBookings(bookings).map(booking => h('li', { class: 'booking' },
-        h('span', {}, bookingLine(booking, { code: false }), booking.code ? ' · ' : null, booking.code ? codeButton(booking.code) : null),
+        h('span', {}, bookingLine({ ...booking, address: '' }, { code: false }),
+            booking.address ? [' · ', addressLink(booking.address)] : null,
+            booking.code ? [' · ', codeButton(booking.code)] : null),
         readOnly ? null : h('span', { class: 'booking-actions' },
             h('button', {
                 type: 'button', class: 'icon-btn', 'aria-label': t('Edit {name}', { name: booking.title }), title: t('Edit'),

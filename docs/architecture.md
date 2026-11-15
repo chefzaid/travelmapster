@@ -80,7 +80,7 @@ JSON under `/api`, described in full in [OpenAPI](api/openapi.json) and kept bac
 | DELETE | `/api/api-tokens/:id` | Revoke a token |
 | GET, POST | `/api/flights` | The flight log, the latest first, or a new flight (`date`, `from` and `to` IATA codes, optional `number`); at most 2,000 |
 | POST | `/api/flights/import` | Up to 500 flights at once, as far as the log has room (`full` says when it filled) |
-| DELETE | `/api/flights/:id` | Remove one of the traveler's flights |
+| PUT, DELETE | `/api/flights/:id` | Change one of the traveler's flights (checked as a new one is), or remove it |
 | GET, POST, DELETE | `/api/trips/:id/family-link` | The trip's family link, owner only (404 for anyone else): whether it is on, a new link (shown once, ending the old one) or turning it off |
 | GET | `/api/family/:token` | A trip's family view for whoever holds the link, without a session: title, stops and dates and the owner's username, never plans, packing, budget or members; 60 a minute per address |
 | GET, POST, DELETE | `/api/follows[/:username]` | Public maps the caller follows, with their country counts |

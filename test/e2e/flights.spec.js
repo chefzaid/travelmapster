@@ -43,6 +43,17 @@ test('a traveler logs flights by airport codes and sees how far they flew each y
     await log.getByRole('combobox', { name: /^Show/ }).selectOption('');
     await expect(log.locator('#flight-list li')).toHaveCount(3);
 
+    // A flight changes in place: Porto becomes Faro.
+    await log.getByRole('button', { name: /Edit the flight of .* from LIS to OPO/ }).click();
+    await page.fill('#dialog-to', 'fao');
+    await page.getByRole('button', { name: 'Save flight' }).click();
+    await expect(page.locator('.toast-success', { hasText: 'Flight saved.' })).toBeVisible();
+    await expect(log.locator('#flight-list li').nth(2)).toContainText('Faro (FAO)');
+    await log.getByRole('button', { name: /Edit the flight of .* from LIS to FAO/ }).click();
+    await page.fill('#dialog-to', 'opo');
+    await page.getByRole('button', { name: 'Save flight' }).click();
+    await expect(log.locator('#flight-list li').nth(2)).toContainText('Porto (OPO)');
+
     // A typo is caught before it is saved.
     await addFlight('2026-06-01', 'LIS', 'LIS', '', { valid: false });
     await expect(page.locator('.toast-error')).toContainText('another airport');
