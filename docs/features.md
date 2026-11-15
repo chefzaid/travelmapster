@@ -340,7 +340,8 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   the map is first zoomed in that far.
 - **Flight log**: flights by date and IATA airport codes (about 4,100 airports with scheduled
   service, from OurAirports, public domain), with an optional flight number; a flight removed
-  by mistake comes back with Undo in its toast, ✏️ changes one in place, and with flights in more than one year the list
+  by mistake comes back with Undo in its toast, ✏️ changes one in place, ↩️ fills the form with the way back (the
+  same airports the other way, from the day it flew), and with flights in more than one year the list
   narrows to one of them. The passport
   shows the flights, distance and a rough CO₂ estimate (90 g per kilometre for an economy seat,
   as it says) in all and per year, and replays them as arcs on the map. **Paste flights** adds

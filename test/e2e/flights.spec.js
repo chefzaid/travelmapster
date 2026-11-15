@@ -54,6 +54,16 @@ test('a traveler logs flights by airport codes and sees how far they flew each y
     await page.getByRole('button', { name: 'Save flight' }).click();
     await expect(log.locator('#flight-list li').nth(2)).toContainText('Porto (OPO)');
 
+    // The way back fills the form the other way round, for its day to be picked.
+    await log.getByRole('button', { name: 'Add the way back from OPO to LIS' }).click();
+    await expect(log.getByLabel('From airport code')).toHaveValue('OPO');
+    await expect(log.getByLabel('To airport code')).toHaveValue('LIS');
+    await expect(log).toContainText('Porto (OPO)');
+    await expect(log.locator('input[name="date"]')).toBeFocused();
+    await expect(log.locator('input[name="date"]')).toHaveAttribute('min', '2025-08-02');
+    await log.getByLabel('From airport code').fill('');
+    await log.getByLabel('To airport code').fill('');
+
     // A typo is caught before it is saved.
     await addFlight('2026-06-01', 'LIS', 'LIS', '', { valid: false });
     await expect(page.locator('.toast-error')).toContainText('another airport');

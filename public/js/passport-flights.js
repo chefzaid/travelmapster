@@ -118,6 +118,24 @@ async function editFlight(ctx, flight, redraw) {
     }
 }
 
+// Fills the add form with the flight the other way, from the day it flew, for its date to be picked.
+function fillWayBack(section, flight) {
+    const form = /** @type {HTMLFormElement | null} */ (section?.querySelector('.flight-add'));
+    if (!form) return;
+    const set = (name, value) => {
+        const input = /** @type {HTMLInputElement} */ (form.elements.namedItem(name));
+        input.value = value;
+        input.dispatchEvent(new Event('input'));
+    };
+    set('from', flight.to);
+    set('to', flight.from);
+    set('number', '');
+    const date = /** @type {HTMLInputElement} */ (form.elements.namedItem('date'));
+    date.min = flight.date;
+    date.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    date.focus({ preventScroll: true });
+}
+
 // Puts a removed flight back, from the Undo of its toast.
 async function restoreFlight(ctx, flight, redraw) {
     try {
@@ -134,6 +152,11 @@ function flightItem(ctx, airports, flight, redraw) {
         h('span', { class: 'ledger-item-text' },
             h('strong', {}, `${airportLabel(airports, flight.from)} → ${airportLabel(airports, flight.to)}`),
             h('small', {}, [formatDate(flight.date), flight.number, km === null ? null : formatDistance(km)].filter(Boolean).join(' · '))),
+        h('button', {
+            type: 'button', class: 'icon-btn', title: t('Way back'),
+            'aria-label': t('Add the way back from {from} to {to}', { from: flight.to, to: flight.from }),
+            onclick: event => fillWayBack(event.currentTarget.closest('section'), flight)
+        }, '↩️'),
         h('button', {
             type: 'button', class: 'icon-btn', title: t('Edit'),
             'aria-label': t('Edit the flight of {date} from {from} to {to}', { date: formatDate(flight.date), from: flight.from, to: flight.to }),
