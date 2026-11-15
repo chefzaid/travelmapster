@@ -1,7 +1,7 @@
 // The bookings on a day card of the trip editor: flights, trains, stays and other reservations
 // with their time, address and confirmation code (bookings.js), added, edited and removed in
 // the trip's draft and saved with it.
-import { h, toast, formDialog } from './ui.js';
+import { h, toast, formDialog, copyText } from './ui.js';
 import { BOOKINGS_MAX_PER_DAY, BOOKING_KINDS, bookingLine, checkBooking, sortedBookings } from './bookings.js';
 import { newId } from './ledger-rules.js';
 import { t } from './i18n.js';
@@ -28,6 +28,15 @@ async function bookingDialog(booking) {
     }
 }
 
+// The confirmation code, copied with a tap for the check-in desk or an airline's app.
+function codeButton(code) {
+    return h('button', {
+        type: 'button', class: 'booking-code', title: t('Copy'),
+        'aria-label': t('Copy the confirmation code {code}', { code }),
+        onclick: () => copyText(code, t('Confirmation code {code} copied.', { code }), t('Confirmation {code}', { code }))
+    }, h('span', { 'aria-hidden': 'true' }, '📋 '), code);
+}
+
 /** A day's bookings with buttons to add, edit and remove them. */
 export function bookingsBlock(day, { rerender, readOnly }) {
     const bookings = day.bookings || [];
@@ -37,7 +46,7 @@ export function bookingsBlock(day, { rerender, readOnly }) {
         rerender();
     };
     const items = sortedBookings(bookings).map(booking => h('li', { class: 'booking' },
-        h('span', {}, bookingLine(booking)),
+        h('span', {}, bookingLine(booking, { code: false }), booking.code ? ' · ' : null, booking.code ? codeButton(booking.code) : null),
         readOnly ? null : h('span', { class: 'booking-actions' },
             h('button', {
                 type: 'button', class: 'icon-btn', 'aria-label': t('Edit {name}', { name: booking.title }), title: t('Edit'),

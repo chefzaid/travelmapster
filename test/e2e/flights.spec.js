@@ -72,6 +72,11 @@ test('a traveler logs flights by airport codes and sees how far they flew each y
     await log.getByRole('button', { name: '🗺️ Replay on the map' }).click();
     await log.getByRole('button', { name: /Remove the flight of .* from LIS to OPO/ }).click();
     await expect(log.locator('.flight-total')).toContainText('4 flights');
+    // Undo in the toast puts it back; removed again, it stays gone.
+    await page.locator('.toast').filter({ hasText: 'Flight removed.' }).getByRole('button', { name: 'Undo' }).click();
+    await expect(log.locator('.flight-total')).toContainText('5 flights');
+    await log.getByRole('button', { name: /Remove the flight of .* from LIS to OPO/ }).click();
+    await expect(log.locator('.flight-total')).toContainText('4 flights');
     await page.reload();
     await expect(page.locator('#main-view')).toBeVisible();
     await page.click('#tab-passport');

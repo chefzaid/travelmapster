@@ -83,6 +83,16 @@ async function pasteFlights(ctx, redraw) {
     }
 }
 
+// Puts a removed flight back, from the Undo of its toast.
+async function restoreFlight(ctx, flight, redraw) {
+    try {
+        ctx.state.flights = latestFirst([await ctx.api.addFlight(flight), ...ctx.state.flights]);
+        redraw();
+    } catch (error) {
+        ctx.handleError(error);
+    }
+}
+
 function flightItem(ctx, airports, flight, redraw) {
     const km = flightKm(flight, airports);
     return h('li', { class: 'ledger-item' },
@@ -96,7 +106,7 @@ function flightItem(ctx, airports, flight, redraw) {
                 try {
                     await ctx.api.deleteFlight(flight.id);
                     ctx.state.flights = ctx.state.flights.filter(item => item.id !== flight.id);
-                    toast(t('Flight removed.'));
+                    toast(t('Flight removed.'), { action: { label: t('Undo'), run: () => restoreFlight(ctx, flight, redraw) } });
                     redraw();
                 } catch (error) {
                     ctx.handleError(error);

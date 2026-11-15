@@ -38,7 +38,12 @@ test('a traveler plans a trip that is saved to their account', async ({ page }) 
     await page.fill('#dialog-time', '09:30');
     await page.fill('#dialog-code', 'K7Q2LM');
     await page.getByRole('button', { name: 'Add booking' }).click();
-    await expect(trips.locator('.day-card').first().locator('.booking > span').first()).toHaveText('✈️ 09:30 TP 1352 · Confirmation K7Q2LM');
+    await expect(trips.locator('.day-card').first().locator('.booking > span').first()).toHaveText('✈️ 09:30 TP 1352 · 📋 K7Q2LM');
+    // The confirmation code copies with a tap.
+    await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+    await trips.getByRole('button', { name: 'Copy the confirmation code K7Q2LM' }).click();
+    await expect(page.locator('.toast').filter({ hasText: 'Confirmation code K7Q2LM copied.' })).toBeVisible();
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('K7Q2LM');
     await trips.getByRole('button', { name: '💾 Save' }).click();
     await expect(page.locator('.toast-success', { hasText: 'Trip saved.' }).last()).toBeVisible();
     const download = page.waitForEvent('download');

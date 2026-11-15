@@ -336,6 +336,8 @@ test('private maps are not shared', async ({ page }) => {
 
 test('login errors are shown inline', async ({ page }) => {
     await page.goto('/#log-in');
+    // As in signUp(): the form is ready once the landing panel shows.
+    await expect(page.locator('#app[data-map="ready"] #welcome-view')).toBeVisible();
     await page.fill('#auth-username', 'nobody_here');
     await page.fill('#auth-password', 'wrong password');
     await page.click('#auth-submit');

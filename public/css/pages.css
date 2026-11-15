@@ -348,3 +348,7 @@ input[aria-invalid='true'] { border-color: var(--danger); }
 .nearby-towns small { color: var(--muted); }
 .packing-badge { display: block; color: var(--muted); }
 .timing-badge { display: block; font-weight: 800; }
+
+/* A booking's confirmation code, copied with a tap. */
+.booking-code { display: inline-flex; align-items: center; min-height: 24px; padding: 0 8px; border: 1px dashed var(--line); border-radius: 8px; background: var(--paper); color: inherit; font: inherit; font-family: ui-monospace, monospace; letter-spacing: 0.04em; cursor: pointer; }
+.booking-code:hover, .booking-code:focus-visible { border-style: solid; border-color: var(--focus); }
