@@ -563,6 +563,7 @@
   "{year} in flights": "{year} في رحلات جوية",
   "{year} in travel": "{year} في السفر",
   "{year}: {flights}, {distance}, about {co2} t of CO₂": "{year}: {flights}، {distance}، نحو {co2} طن من ثاني أكسيد الكربون",
+  "↺ Untick all": "↺ إلغاء تحديد الكل",
   "＋ Add": "＋ إضافة",
   "＋ Add a day": "＋ إضافة يوم",
   "＋ Add a document": "＋ أضف مستندًا",
@@ -893,6 +894,7 @@
   "All places": "كل الأماكن",
   "All square.": "لا أحد مدين لأحد.",
   "All year": "طوال العام",
+  "All years": "كل السنوات",
   "Allowed days must be a whole number from 1 to the window length.": "يجب أن تكون الأيام المسموح بها عددًا صحيحًا بين 1 وطول الفترة.",
   "Allowed days must be at least 1 and no more than the window.": "يجب ألا تقل الأيام المسموح بها عن 1 ولا تزيد على طول الفترة.",
   "Also been to, not on the {list} list: {names}.": "زرتها أيضًا، وليست في قائمة {list}: {names}.",
@@ -2080,6 +2082,7 @@
   "Shared travel map": "خريطة سفر مشتركة",
   "Shared with {username}.": "تمت المشاركة مع {username}.",
   "Short-stay calculator": "حاسبة الإقامة القصيرة",
+  "Show": "عرض",
   "Show all {count} flights": {
     "zero": "لا رحلات",
     "one": "اعرض الرحلة",

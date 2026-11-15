@@ -153,7 +153,16 @@ export function packingSection(draft, { rerender, markDirty, templates }) {
         h('form', { class: 'row extra-add', onsubmit: add },
             h('input', { name: 'entry', maxlength: 80, placeholder: t('Sunscreen, snorkel…'), 'aria-label': t('Item to pack'), autocomplete: 'off' }),
             h('button', { type: 'submit', class: 'btn btn-ghost btn-sm' }, t('＋ Add'))),
-        templates
+        templates,
+        // Unticks everything, to pack the same list for the way home or the next trip.
+        packed ? h('button', {
+            type: 'button', class: 'btn btn-ghost btn-sm',
+            onclick: () => {
+                for (const entry of draft.packing) entry.packed = false;
+                openSections.add('packing');
+                rerender();
+            }
+        }, t('↺ Untick all')) : null
     );
 }
 

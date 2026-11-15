@@ -4,7 +4,7 @@
 import { h, fill, toast, formDialog, formatDate, downloadFile } from './ui.js';
 import { readPastedFlights } from './flight-paste.js';
 import {
-    CO2_KG_PER_KM, FLIGHTS_MAX, airportLabel, checkFlight, flightArcs, flightFavourites, flightKm, flightStats, flightsCsv, latestFirst, yearInFlights
+    CO2_KG_PER_KM, FLIGHTS_MAX, airportLabel, checkFlight, flightArcs, flightFavourites, flightKm, flightStats, flightsCsv, flightsOfYear, latestFirst, yearInFlights
 } from './flight-log.js';
 import { flightsCard } from './share-cards.js';
 import { loadAirports } from './airports-data.js';
@@ -13,6 +13,8 @@ import { formatNumber, joinList, t, tn } from './i18n.js';
 
 const SHOWN = 20;
 let showAll = false;
+// The year the list shows, or '' for all of them.
+let shownYear = '';
 
 const tonnes = kg => formatNumber(Math.round(kg / 100) / 10);
 
@@ -141,11 +143,26 @@ function shareYearButton(ctx, airports, year) {
     }, t('📸 {year} in flights', { year }));
 }
 
+// Which year's flights the list shows, once there are flights in more than one.
+function yearPicker(years, redraw) {
+    return h('label', { class: 'field flight-year-pick' }, h('span', {}, t('Show')),
+        h('select', {
+            onchange: event => {
+                shownYear = event.target.value;
+                redraw();
+            }
+        },
+            h('option', { value: '', selected: !shownYear }, t('All years')),
+            years.map(({ year }) => h('option', { value: String(year), selected: String(year) === shownYear }, String(year)))));
+}
+
 function draw(ctx, body, airports) {
     const redraw = () => draw(ctx, body, airports);
     const flights = ctx.state.flights;
     const { years, total, unknown } = flightStats(flights, airports);
-    const shown = showAll ? flights : flights.slice(0, SHOWN);
+    if (!years.some(year => String(year.year) === shownYear)) shownYear = '';
+    const listed = flightsOfYear(flights, shownYear);
+    const shown = showAll ? listed : listed.slice(0, SHOWN);
     fill(body,
         flights.length ? h('p', { class: 'flight-total' }, h('strong', {}, t('{flights} · {distance} · about {co2} t of CO₂', {
             flights: tn(total.flights, '{count} flight', '{count} flights'), distance: formatDistance(total.km), co2: tonnes(total.co2Kg)
@@ -168,14 +185,15 @@ function draw(ctx, body, airports) {
         }, t('🗺️ Replay on the map')) : null,
         flights.length < FLIGHTS_MAX ? addForm(ctx, airports, redraw) : null,
         flights.length < FLIGHTS_MAX ? h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => pasteFlights(ctx, redraw) }, t('📥 Paste flights')) : null,
+        years.length > 1 ? yearPicker(years, redraw) : null,
         flights.length ? h('ul', { class: 'ledger-list', id: 'flight-list' }, shown.map(flight => flightItem(ctx, airports, flight, redraw))) : null,
-        flights.length > SHOWN && !showAll ? h('button', {
+        listed.length > SHOWN && !showAll ? h('button', {
             type: 'button', class: 'btn btn-ghost btn-sm',
             onclick: () => {
                 showAll = true;
                 redraw();
             }
-        }, tn(flights.length, 'Show all {count} flight', 'Show all {count} flights')) : null);
+        }, tn(listed.length, 'Show all {count} flight', 'Show all {count} flights')) : null);
 }
 
 /** The flight log section; its flights and the airports load once, the first time it is drawn. */

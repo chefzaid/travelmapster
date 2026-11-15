@@ -73,8 +73,11 @@ export function flightStats(flights, airports) {
  * A year in flights, for its picture: the flights, the distance, how many times that goes
  * around the Earth, and the longest flight with its distance. Null for a year without flights.
  */
+/** The flights of a year (a number or "2026"), or all of them without one. */
+export const flightsOfYear = (flights, year) => (year ? flights.filter(flight => flight.date.startsWith(`${year}-`)) : flights);
+
 export function yearInFlights(flights, airports, year) {
-    const ofYear = flights.filter(flight => flight.date.startsWith(`${year}-`));
+    const ofYear = flightsOfYear(flights, year);
     if (!ofYear.length) return null;
     let km = 0;
     let longest = null;

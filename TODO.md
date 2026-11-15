@@ -286,3 +286,5 @@ Next small steps on what shipped lately: the flight log, the states and province
 - [x] Days to go on trip cards: an upcoming trip's card says "in 12 days", and "under way" during it. Done: ⏳ on trip cards, from `tripTiming()` in `itinerary.js`, which the countdown shares.
 - [x] Undo a removed flight: removing a flight from the log offers Undo in its toast, as removing a place does. Done: `restoreFlight()` in `passport-flights.js` adds it back.
 - [x] Copy a confirmation code: on a day card, tapping a booking's confirmation code copies it, for the check-in desk or an airline's app. Done: 📋 code button in `trip-bookings.js`.
+- [x] Untick a packing list: one button clears every tick, to pack the same list for the way home or the next trip. Done: ↺ Untick all in `packingSection()`.
+- [x] Flights of one year: with flights in more than one year, the flight log's list narrows to the year picked. Done: `flightsOfYear()` in `flight-log.js` and the Show picker in `passport-flights.js`.

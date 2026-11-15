@@ -208,6 +208,10 @@ test('a trip keeps a packing list and a budget in any currency', async ({ page }
     await trips.getByRole('button', { name: '🗑️ Remove template' }).click();
     await expect(page.locator('.toast-success', { hasText: 'Removed the template Tokyo kit.' })).toBeVisible();
     await expect(picker.locator('option', { hasText: 'Tokyo kit' })).toHaveCount(0);
+    // Unticked all at once, to pack the same list for the way home.
+    await trips.getByRole('button', { name: '↺ Untick all' }).click();
+    await expect(trips.locator('.trip-extra summary', { hasText: 'Packing list' })).toContainText('0 of 11 packed');
+    await expect(trips.getByRole('button', { name: '↺ Untick all' })).toHaveCount(0);
     expect(errors).toEqual([]);
 });
 

@@ -283,7 +283,8 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   checklist. Add your own, or start from a template: ready-made ones for the basics (passport,
   charger, plug adapter…), the beach, a city, business and skiing, or your own. **Save as
   template** keeps a trip's list, unticked, on the account (up to 20, a name each; saving under a
-  known name replaces it) to start a later trip's list from.
+  known name replaces it) to start a later trip's list from. **↺ Untick all** clears every tick,
+  to pack the same list for the way home.
 - **Budget**: expenses by category (transport, stay, food and drink, activities, other) in any
   currency, totalled in the traveler's home currency with the exchange rate they enter for each
   other currency (the rate they actually got; no rate service is called), against an optional
@@ -339,7 +340,8 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   the map is first zoomed in that far.
 - **Flight log**: flights by date and IATA airport codes (about 4,100 airports with scheduled
   service, from OurAirports, public domain), with an optional flight number; a flight removed
-  by mistake comes back with Undo in its toast. The passport
+  by mistake comes back with Undo in its toast, and with flights in more than one year the list
+  narrows to one of them. The passport
   shows the flights, distance and a rough CO₂ estimate (90 g per kilometre for an economy seat,
   as it says) in all and per year, and replays them as arcs on the map. **Paste flights** adds
   up to 500 at once from lines such as "2026-05-01 LIS KIX TP1352" or an app's CSV export (by

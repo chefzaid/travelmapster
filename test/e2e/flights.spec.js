@@ -36,6 +36,12 @@ test('a traveler logs flights by airport codes and sees how far they flew each y
     await expect(log.locator('.flight-years li').first()).toContainText('2026: 2 flights');
     await expect(log.locator('#flight-list li').first()).toContainText('Osaka (KIX) → Lisbon (LIS)');
     await expect(log.locator('#flight-list li').nth(1)).toContainText('TP 1352');
+    // The list narrows to a year, and back to all of them.
+    await log.getByRole('combobox', { name: /^Show/ }).selectOption('2025');
+    await expect(log.locator('#flight-list li')).toHaveCount(1);
+    await expect(log.locator('#flight-list li')).toContainText('Porto (OPO)');
+    await log.getByRole('combobox', { name: /^Show/ }).selectOption('');
+    await expect(log.locator('#flight-list li')).toHaveCount(3);
 
     // A typo is caught before it is saved.
     await addFlight('2026-06-01', 'LIS', 'LIS', '', { valid: false });

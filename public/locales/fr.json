@@ -401,6 +401,7 @@
   "{year} in flights": "{year} en vols",
   "{year} in travel": "{year} en voyage",
   "{year}: {flights}, {distance}, about {co2} t of CO₂": "{year} : {flights}, {distance}, environ {co2} t de CO₂",
+  "↺ Untick all": "↺ Tout décocher",
   "＋ Add": "＋ Ajouter",
   "＋ Add a day": "＋ Ajouter un jour",
   "＋ Add a document": "＋ Ajouter un document",
@@ -713,6 +714,7 @@
   "All places": "Tous les lieux",
   "All square.": "Tout le monde est quitte.",
   "All year": "Toute l'année",
+  "All years": "Toutes les années",
   "Allowed days must be a whole number from 1 to the window length.": "Les jours autorisés doivent être un nombre entier entre 1 et la durée de la période.",
   "Allowed days must be at least 1 and no more than the window.": "Les jours autorisés doivent être au moins 1 et ne pas dépasser la période.",
   "Also been to, not on the {list} list: {names}.": "Également visités, hors de la liste {list} : {names}.",
@@ -1819,6 +1821,7 @@
   "Shared travel map": "Carte de voyage partagée",
   "Shared with {username}.": "Partagé avec {username}.",
   "Short-stay calculator": "Calculateur de court séjour",
+  "Show": "Afficher",
   "Show all {count} flights": {
     "one": "Voir le vol",
     "many": "Voir les {count} vols",
