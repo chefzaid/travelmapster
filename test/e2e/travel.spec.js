@@ -371,4 +371,21 @@ test.describe('in Lisbon', () => {
         await expect(page.locator('.toast', { hasText: 'Today is already recorded in Lisbon, Portugal.' })).toBeVisible();
         expect(errors).toEqual([]);
     });
+
+    test('the wishlist sorts nearest first from where the traveler is', async ({ page }) => {
+        const errors = trackErrors(page);
+        await signUp(page, `e2e_near_${Date.now()}`);
+        for (const town of ['Tokyo', 'Porto', 'Madrid']) {
+            await page.fill('#global-search', town);
+            await page.locator('#search-results [role="option"]').filter({ hasText: town }).first().click();
+            await page.locator('.card-actions button', { hasText: 'Wishlist' }).last().click();
+            await expect(page.locator('.toast-success', { hasText: town })).toBeVisible();
+        }
+        await page.click('#tab-places');
+        await page.selectOption('#places-sort', 'near');
+        const places = page.locator('#places-tab .place-main strong');
+        await expect(places).toHaveText([/^Porto/, /^Madrid/, /^Tokyo/]);
+        await expect(page.locator('#places-tab .place-distance').first()).toContainText('away');
+        expect(errors).toEqual([]);
+    });
 });

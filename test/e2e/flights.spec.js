@@ -57,6 +57,10 @@ test('a traveler logs flights by airport codes and sees how far they flew each y
     const picture = page.waitForEvent('download');
     await log.getByRole('button', { name: '📸 2026 in flights' }).click();
     expect((await picture).suggestedFilename()).toBe('travelmapster-flights-2026.png');
+    // The year's recap picture reads the flight log too.
+    const recap = page.waitForEvent('download');
+    await page.locator('#share-pictures').getByRole('button', { name: /recap/ }).click();
+    expect((await recap).suggestedFilename()).toMatch(/^travelmapster-recap-\d{4}-.*\.png$/);
     await log.getByRole('button', { name: '🗺️ Replay on the map' }).click();
     await log.getByRole('button', { name: /Remove the flight of .* from LIS to OPO/ }).click();
     await expect(log.locator('.flight-total')).toContainText('4 flights');

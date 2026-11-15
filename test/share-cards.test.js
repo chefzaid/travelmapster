@@ -29,6 +29,10 @@ test('cards show counts and country names only, escaped', async () => {
     const recap = yearRecapCard({ username: 'ana', year: 2026, countries: 5, newCountries: 2, trips: 7, daysAway: 41, longestTrip: '12 days, Lisbon → Porto', awayWord: 'abroad' });
     wellFormed(recap);
     for (const part of ['2026 in travel', '5 countries', '2 new', '7 trips', '41 days', 'abroad', 'Longest trip: 12 days, Lisbon → Porto']) assert.ok(recap.includes(part), part);
+    assert.ok(!recap.includes('✈️'), 'no flights line without flights');
+    const flown = yearRecapCard({ username: 'ana', year: 2026, countries: 5, newCountries: 2, trips: 7, daysAway: 41, longestTrip: '', awayWord: 'abroad', flights: '✈️ 4 flights · 9,000 km' });
+    wellFormed(flown);
+    assert.ok(flown.includes('✈️ 4 flights · 9,000 km'));
     const long = yearRecapCard({ username: 'a', year: 2026, countries: 1, newCountries: 1, trips: 1, daysAway: 1, longestTrip: `20 days, ${'Somewhere → '.repeat(10)}`, awayWord: 'abroad' });
     assert.match(long, />Longest trip: [^<]{30,44}…</);
     assert.ok(yearRecapCard({ username: 'a', year: 2020, countries: 1, newCountries: 0, trips: 1, daysAway: 1, longestTrip: '', awayWord: 'recorded' }).includes('no new ones'));

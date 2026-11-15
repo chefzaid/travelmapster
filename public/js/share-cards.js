@@ -76,7 +76,7 @@ export function stampsCard({ username, stamps }) {
 }
 
 /** A year in travel: countries, new ones, trips, days away and the longest trip. */
-export function yearRecapCard({ username, year, countries, newCountries, trips, daysAway, longestTrip, awayWord }) {
+export function yearRecapCard({ username, year, countries, newCountries, trips, daysAway, longestTrip, awayWord, flights = '' }) {
     const rows = [
         [tn(countries, '{count} country', '{count} countries'), newCountries ? tn(newCountries, '{count} new', '{count} new') : t('no new ones'), COLORS.teal],
         [tn(trips, '{count} trip', '{count} trips'), t('begun this year'), COLORS.sun],
@@ -91,6 +91,7 @@ export function yearRecapCard({ username, year, countries, newCountries, trips, 
         text(540, 170, 58, t('{year} in travel', { year })),
         text(540, 225, 38, username, { weight: 500 }),
         ...lines,
+        flights ? text(540, 790, 38, fit(flights, 40), { weight: 600 }) : '',
         longestTrip ? text(540, 860, 34, fit(t('Longest trip: {trip}', { trip: longestTrip }), 46), { weight: 500 }) : ''
     ].join(''), 'TravelMapster');
 }

@@ -13,7 +13,7 @@ import { dayCards } from './trip-days.js';
 import { leaveTrip, ownsTrip, shareButton, sharedNote } from './trip-share.js';
 import { localToday } from './days.js';
 import { openPrintView, printTable } from './print-view.js';
-import { budgetSection, packingSection, stopsSection } from './trip-extras.js';
+import { budgetSection, packingBadge, packingSection, stopsSection } from './trip-extras.js';
 import { templateControls } from './trip-packing-templates.js';
 import { familySection } from './trip-family.js';
 import { splitSection } from './trip-split.js';
@@ -100,6 +100,7 @@ function tripCard(trip, ctx, container) {
                 h('small', {}, `${tripRoute(trip)} · ${tn(trip.plan.length, '{count} day', '{count} days')}`,
                     trip.startDate ? ` · ${formatDate(trip.startDate)}` : '', trip.owner ? ` · 👥 ${trip.owner}` : ''),
                 checklistBadge(ctx, trip),
+                packingBadge(trip, localToday()),
                 h('span', { class: 'progress', 'aria-label': t('{filled} of {total} slots planned', { filled, total: trip.plan.length * 3 }) },
                     h('span', { style: `width:${Math.round((filled / (trip.plan.length * 3)) * 100)}%` }))
             ),

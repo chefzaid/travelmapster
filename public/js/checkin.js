@@ -7,18 +7,8 @@ import { checkInPlan, lastVisitDate, sortVisits } from './visits.js';
 import { statusFields, statusOf } from './status.js';
 import { findTowns } from './import-apps.js';
 import { savedOrNew } from './trip-visits.js';
+import { currentPosition } from './here.js';
 import { t } from './i18n.js';
-
-function currentPosition() {
-    return new Promise((resolve, reject) => {
-        if (!navigator.geolocation) {
-            reject(new Error(t('This browser cannot tell where you are.')));
-            return;
-        }
-        navigator.geolocation.getCurrentPosition(resolve, () => reject(new Error(t('Your location is not available. Allow it for this site to check in.'))),
-            { enableHighAccuracy: false, timeout: 15_000, maximumAge: 600_000 });
-    });
-}
 
 // The town and country at a point: `where` as trips use it, or null away from any country.
 async function placeAt(ctx, lat, lng) {
@@ -35,7 +25,7 @@ async function placeAt(ctx, lat, lng) {
 export async function checkIn(ctx) {
     const closeToast = toast(t('Finding where you are…'), { duration: 15_000 });
     try {
-        const { coords } = await currentPosition();
+        const { coords } = await currentPosition(t('Your location is not available. Allow it for this site to check in.'));
         const where = await placeAt(ctx, coords.latitude, coords.longitude);
         closeToast();
         if (!where) {

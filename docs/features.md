@@ -86,8 +86,9 @@ The reasoning and what each rule rules out are in [ADR 0017](adr/0017-product-pr
   calendar days.
 - Places list grouped by continent, with filters (status, including lived there and transit
   only, and the year of the last visit), text
-  search over places, tags and visit notes, and sorting by continent, name, last visit or when
-  to go.
+  search over places, tags and visit notes, and sorting by continent, name, last visit, when
+  to go, or the wishlist nearest to where you are (the browser's location read once, never
+  stored or sent), with each place's distance.
 - Wishlist plans: a priority (must go, would love to, someday) and the best months to go; the
   places list can show the wishlist by the next month that suits each place, highest priority
   first, and the Explore tab suggests the place in season soonest.
@@ -284,8 +285,9 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
 - **Budget**: expenses by category (transport, stay, food and drink, activities, other) in any
   currency, totalled in the traveler's home currency with the exchange rate they enter for each
   other currency (the rate they actually got; no rate service is called), against an optional
-  planned budget. Expenses in a currency without a rate are left out of the total, and the
-  budget says which rates are missing.
+  planned budget, and per day of the trip. Expenses in a currency without a rate are left out
+  of the total, and the budget says which rates are missing. A trip still ahead shows on its
+  card how much of its packing list is packed ("🎒 12 of 20 packed").
 - **Split costs** on a trip planned together: say who paid each expense, and the costs are split
   evenly between everyone on the trip, owner included. It shows what each person paid and owes,
   and the fewest payments that settle up ("ben pays ana €120.00"), in the budget's currency
@@ -342,7 +344,8 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   around the Earth and longest flight by airport codes. Flights are private,
   in the account archive, and a guest keeps them in the browser until signing up.
 - **Share a picture**: square cards (1080 × 1080) of the country count, the passport stamps,
-  this year's recap or the countdown to the next trip (the days to go and its countries' flags), shared through the phone's share sheet or downloaded as PNG. They show
+  this year's recap (with the year's flights and distance when the flight log has any) or the
+  countdown to the next trip (the days to go and its countries' flags), shared through the phone's share sheet or downloaded as PNG. They show
   counts, country names and flags only: never notes, photos, places or dates.
 - **Copy my flags** under the stamps: the countries as a line of flag emoji with their count
   (🇫🇷🇯🇵🇲🇦 3 countries), copied to paste into a social bio or a message.

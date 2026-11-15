@@ -1,6 +1,6 @@
 // The trip editor's stops, packing list and budget, edited in the trip's draft and saved with it.
 import { h, toast } from './ui.js';
-import { tripStops } from './itinerary.js';
+import { tripEndDate, tripStops } from './itinerary.js';
 import { MAX_DAYS, MAX_STOPS, addStop, removeStop, renameStop, resizeStop } from './trip-stops.js';
 import {
     EXPENSE_CATEGORIES, EXPENSES_MAX, PACKING_MAX_ITEMS, budgetTotals, currencyOptions, emptyBudget,
@@ -157,6 +157,13 @@ export function packingSection(draft, { rerender, markDirty, templates }) {
     );
 }
 
+/** How much of a trip's packing list is packed, for its card while it is still ahead; null otherwise. */
+export function packingBadge(trip, today) {
+    const { packed, total } = packingProgress(trip.packing);
+    if (!total || packed === total || (trip.startDate && tripEndDate(trip) < today)) return null;
+    return h('small', { class: 'packing-badge' }, h('span', { 'aria-hidden': 'true' }, '🎒 '), t('{packed} of {total} packed', { packed, total }));
+}
+
 // ---------------------------------------------------------------- budget
 
 function expenseRow(draft, expense, i, rerender, markDirty) {
@@ -249,12 +256,13 @@ function addExpenseForm(draft, rerender) {
     );
 }
 
-function totalsView(budget) {
+function totalsView(budget, days) {
     const { total, byCategory, missing, left } = budgetTotals(budget);
     const money = amount => formatMoney(amount, budget.currency);
     return h('div', { class: 'budget-totals', 'aria-live': 'polite' },
         h('p', {}, h('strong', {}, t('Spent: {total}', { total: money(total) })),
-            left === null ? null : h('span', { class: left < 0 ? 'over' : '' }, ` · ${left < 0 ? t('{money} over budget', { money: money(-left) }) : t('{money} left', { money: money(left) })}`)),
+            left === null ? null : h('span', { class: left < 0 ? 'over' : '' }, ` · ${left < 0 ? t('{money} over budget', { money: money(-left) }) : t('{money} left', { money: money(left) })}`),
+            total && days ? h('span', { class: 'budget-per-day' }, ` · ${t('{money} a day', { money: money(total / days) })}`) : null),
         h('ul', { class: 'budget-categories' }, EXPENSE_CATEGORIES.filter(([id]) => byCategory[id]).map(([id, icon, label]) =>
             h('li', {}, `${icon} ${t(label)}: ${money(byCategory[id])}`))),
         missing.length ? h('p', { class: 'hint' }, t('Add a rate for {currencies} to count those expenses.', { currencies: formatList(missing) })) : null
@@ -307,7 +315,7 @@ export function budgetSection(draft, { rerender, markDirty, trips }) {
         foreign.length ? h('fieldset', { class: 'rates' },
             h('legend', {}, t('Exchange rates: the rate you got')),
             foreign.map(code => rateRow(budget, code, rerender))) : null,
-        totalsView(budget),
+        totalsView(budget, draft.plan.length),
         h('button', {
             type: 'button', class: 'btn btn-danger-ghost btn-sm',
             onclick: () => {

@@ -10,6 +10,9 @@ import { countriesByYear, daysAwayByYear, longestTrip } from './travel-stats.js'
 import { CARD_SIZE, countdownCard, countryCountCard, stampsCard, svgDataUrl, yearRecapCard } from './share-cards.js';
 import { tripFlags, upcomingTrip } from './trip-countdown.js';
 import { joinList, t, tn } from './i18n.js';
+import { yearInFlights } from './flight-log.js';
+import { loadAirports } from './airports-data.js';
+import { formatDistance } from './units.js';
 
 // The PNG of a card: the SVG drawn on a canvas.
 async function cardPng(svg) {
@@ -50,7 +53,15 @@ export function stampedCountries(stats, index) {
 }
 
 // This year's recap, from the visits begun in it.
-function recap(ctx) {
+// The year's flights for its recap: "✈️ 12 flights · 24,500 km", or '' without any.
+async function flightsLine(ctx, year) {
+    const flights = ctx.state.flights || await ctx.api.getFlights().catch(() => []);
+    if (!flights.some(flight => flight.date.startsWith(`${year}-`))) return '';
+    const summary = yearInFlights(flights, await loadAirports(), year);
+    return `✈️ ${tn(summary.flights, '{count} flight', '{count} flights')} · ${formatDistance(summary.km)}`;
+}
+
+async function recap(ctx) {
     const { markers, stats, user } = ctx.state;
     const today = localToday();
     const year = today.slice(0, 4);
@@ -66,14 +77,15 @@ function recap(ctx) {
         trips: goalCount({ year, kind: 'visits' }, markers, { countryOf, countedIds: stats.countedIds }),
         daysAway: daysAwayByYear(ctx.currentLedger().ledger, stats.homeId, today).find(item => item.year === year)?.count || 0,
         longestTrip: trip ? joinList([tn(trip.days, '{count} day', '{count} days'), trip.route]) : '',
-        awayWord: stats.homeId ? t('abroad') : t('recorded')
+        awayWord: stats.homeId ? t('abroad') : t('recorded'),
+        flights: await flightsLine(ctx, year)
     });
 }
 
 export function shareCardsSection(ctx) {
     const { stats, index, user } = ctx.state;
     const date = localToday();
-    /** @type {Array<[string, () => string, string]>} */
+    /** @type {Array<[string, () => string | Promise<string>, string]>} */
     const cards = [
         [t('🌍 Countries'), () => countryCountCard({
             username: user.username, countries: stats.visitedCountries, worldPercent: stats.worldPercent,
@@ -94,7 +106,7 @@ export function shareCardsSection(ctx) {
         h('div', { class: 'row' }, cards.map(([label, build, name]) => h('button', {
             type: 'button',
             class: 'btn btn-sm btn-ghost',
-            onclick: () => shareCard(build(), `travelmapster-${name}-${date}.png`, t('{username} on TravelMapster', { username: user.username }))
+            onclick: async () => shareCard(await build(), `travelmapster-${name}-${date}.png`, t('{username} on TravelMapster', { username: user.username }))
         }, label)))
     );
 }

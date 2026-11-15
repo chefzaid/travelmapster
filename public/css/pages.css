@@ -346,3 +346,4 @@ input[aria-invalid='true'] { border-color: var(--danger); }
 .nearby-towns { display: grid; gap: 2px; margin: 0 0 8px; padding: 0; list-style: none; }
 .nearby-towns li { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .nearby-towns small { color: var(--muted); }
+.packing-badge { display: block; color: var(--muted); }

@@ -10,8 +10,12 @@ import { joinList, t, tn } from './i18n.js';
 import { openCountryList } from './country-list.js';
 import { duplicatesSection } from './place-duplicates.js';
 import { companionsOf } from './companions.js';
+import { currentPosition } from './here.js';
+import { distanceKm } from './travel-stats.js';
+import { formatDistance } from './units.js';
 
-const view = { query: '', type: 'all', category: 'all', lastVisit: 'all', sort: 'continent' };
+// `here` is where the traveler is, read once when they sort the wishlist by distance.
+const view = { query: '', type: 'all', category: 'all', lastVisit: 'all', sort: 'continent', here: null };
 
 function matches(marker, country, filters) {
     if (view.type !== 'all' && statusOf(marker) !== view.type) return false;
@@ -46,7 +50,7 @@ function chipGroup(label, key, options, onChange) {
     );
 }
 
-function placeItem(marker, country, ctx) {
+function placeItem(marker, country, ctx, note = '') {
     const tags = marker.tags || [];
     const status = statusOf(marker);
     return h('li', { class: `place place-${status}` },
@@ -61,8 +65,9 @@ function placeItem(marker, country, ctx) {
                     marker.photoUrl || marker.visits?.some(visit => visit.photoUrl) ? ' · 📷' : '',
                     marker.hideFromPublic ? ` · ${t('🔒 Not on public map')}` : ''
                 ),
+                note ? h('small', { class: 'place-distance' }, note) : null,
                 marker.type === 'wishlist' && (marker.priority || marker.bestMonths?.length) ? h('small', {},
-                    [priorityLabel(marker.priority), marker.bestMonths?.length ? `Best ${monthsLabel(marker.bestMonths)}` : '']
+                    [priorityLabel(marker.priority), marker.bestMonths?.length ? t('Best {months}', { months: monthsLabel(marker.bestMonths) }) : '']
                         .filter(Boolean).join(' · ')) : null,
                 marker.rating ? h('small', { class: 'stars' },
                     h('span', { 'aria-hidden': 'true' }, stars(marker.rating)),
@@ -91,11 +96,31 @@ function placeItem(marker, country, ctx) {
     );
 }
 
+// Reads where the traveler is once, for the "nearest to me" sort; on failure the sort goes back.
+function findHere(update, rerender) {
+    if (view.here) return;
+    currentPosition(t('Your location is not available. Allow it for this site to sort by distance.'))
+        .then(({ coords }) => {
+            view.here = { lat: coords.latitude, lng: coords.longitude };
+            update();
+        })
+        .catch(error => {
+            toast(error.message, { tone: 'error' });
+            view.sort = 'continent';
+            rerender();
+        });
+}
+
 function sortMarkers(markers, ctx) {
     const byName = (a, b) => a.name.localeCompare(b.name);
     if (view.sort === 'name') return [[t('All places'), [...markers].sort(byName)]];
     // The wishlist by the next month that suits each place (only wishlist places are listed).
     if (view.sort === 'season') return groupByNextMonth(markers, new Date().getMonth() + 1);
+    // The wishlist nearest first, from where the traveler is.
+    if (view.sort === 'near') {
+        if (!view.here) return [[t('Finding where you are…'), []]];
+        return [[t('Nearest to you first'), [...markers].sort((a, b) => distanceKm(view.here, a) - distanceKm(view.here, b) || byName(a, b))]];
+    }
     if (view.sort === 'date') {
         const sorted = [...markers].sort((a, b) => lastVisitDate(b).localeCompare(lastVisitDate(a)) || byName(a, b));
         return [[t('Most recent visit first'), sorted]];
@@ -111,7 +136,7 @@ function sortMarkers(markers, ctx) {
 function renderList(list, summary, ctx) {
     const { state } = ctx;
     const filtered = state.markers.filter(marker => matches(marker, state.stats.markerCountry.get(marker.id), state.filters)
-        && (view.sort !== 'season' || marker.type === 'wishlist'));
+        && (!['season', 'near'].includes(view.sort) || marker.type === 'wishlist'));
     summary.textContent = tn(state.markers.length, '{shown} of {count} place', '{shown} of {count} places', { shown: filtered.length });
     if (!state.markers.length) {
         list.replaceChildren(h('div', { class: 'empty' },
@@ -126,7 +151,8 @@ function renderList(list, summary, ctx) {
     }
     list.replaceChildren(...sortMarkers(filtered, ctx).map(([title, markers]) => h('section', { class: 'place-group' },
         h('h3', { class: 'section-title' }, title, h('span', { class: 'count' }, markers.length)),
-        h('ul', { class: 'place-list' }, markers.map(marker => placeItem(marker, state.stats.markerCountry.get(marker.id), ctx)))
+        h('ul', { class: 'place-list' }, markers.map(marker => placeItem(marker, state.stats.markerCountry.get(marker.id), ctx,
+            view.sort === 'near' && view.here ? t('{distance} away', { distance: formatDistance(distanceKm(view.here, marker)) }) : '')))
     )));
 }
 
@@ -291,8 +317,8 @@ export function renderPlaces(container, ctx) {
             chipGroup(t('Kind'), 'category', [['all', t('All')], ['Country', t('Countries')], ['City', t('Cities')]], rerender),
             h('div', { class: 'row sort-row' },
                 h('label', { class: 'sort' }, t('Sort by'), ' ',
-                    h('select', { id: 'places-sort', onchange: event => { view.sort = event.target.value; update(); } },
-                        [['continent', t('Continent')], ['name', t('Name')], ['date', t('Last visit')], ['season', t('When to go (wishlist)')]].map(([value, label]) =>
+                    h('select', { id: 'places-sort', onchange: event => { view.sort = event.target.value; update(); if (view.sort === 'near') findHere(update, rerender); } },
+                        [['continent', t('Continent')], ['name', t('Name')], ['date', t('Last visit')], ['season', t('When to go (wishlist)')], ['near', t('Nearest to me (wishlist)')]].map(([value, label]) =>
                             h('option', { value, selected: view.sort === value }, label)))
                 ),
                 h('label', { class: 'sort' }, t('Last visit'), ' ',

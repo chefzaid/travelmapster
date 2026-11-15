@@ -3,19 +3,14 @@
 // airports (public/data/airports.json) load only once the section is first drawn.
 import { h, fill, toast, formDialog, formatDate } from './ui.js';
 import { readPastedFlights } from './flight-paste.js';
-import { CO2_KG_PER_KM, FLIGHTS_MAX, airportIndex, airportLabel, checkFlight, flightArcs, flightKm, flightStats, latestFirst, yearInFlights } from './flight-log.js';
+import { CO2_KG_PER_KM, FLIGHTS_MAX, airportLabel, checkFlight, flightArcs, flightKm, flightStats, latestFirst, yearInFlights } from './flight-log.js';
 import { flightsCard } from './share-cards.js';
+import { loadAirports } from './airports-data.js';
 import { formatDistance } from './units.js';
 import { formatNumber, joinList, t, tn } from './i18n.js';
 
 const SHOWN = 20;
-let airportsPromise = null;
 let showAll = false;
-
-const loadAirports = () => {
-    airportsPromise ||= fetch(new URL('../data/airports.json', import.meta.url)).then(res => res.json()).then(airportIndex);
-    return airportsPromise;
-};
 
 const tonnes = kg => formatNumber(Math.round(kg / 100) / 10);
 

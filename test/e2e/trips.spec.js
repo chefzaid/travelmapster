@@ -164,12 +164,15 @@ test('a trip keeps a packing list and a budget in any currency', async ({ page }
     await trips.getByLabel('EUR for 1 JPY').dispatchEvent('change');
     await expect(trips.locator('.budget-totals')).toContainText('€780.00');
     await expect(trips.locator('.budget-totals')).toContainText('€220.00 left');
+    await expect(trips.locator('.budget-totals')).toContainText('€780.00 a day');
 
     await trips.getByRole('button', { name: '💾 Save' }).click();
     await expect(page.locator('.toast-success', { hasText: 'Trip saved.' })).toBeVisible();
     await page.reload();
     await expect(page.locator('#main-view')).toBeVisible();
     await page.click('#tab-trips');
+    // The trip's card shows how much is packed before it is opened.
+    await expect(page.locator('.trip-card').first().locator('.packing-badge')).toHaveText('🎒 1 of 11 packed');
     await page.locator('.trip-card').first().click();
     await expect(trips.locator('.trip-extra summary', { hasText: 'Packing list' })).toContainText('1 of 11 packed');
     await expect(trips.locator('.trip-extra summary', { hasText: 'Budget' })).toContainText('€780.00 of €1,000.00');
