@@ -72,6 +72,8 @@ Parts of tasks that cannot advance without the owner's decision or information. 
   - Answer:
 - [ ] **Before you go data.** The destination facts (emergency number, driving side, plug types, time zone) come from Wikidata (CC0), but the coding agent's environment cannot reach `query.wikidata.org`, and writing them out by hand for about 200 countries without a source risks a wrong emergency number. Can you (a) allow `query.wikidata.org` in the agent's network settings so a build script fetches and bundles the table, or (b) supply the table (a CSV per country code)? *(task: More ideas › Before you go; asked by: Coding Agent)*
   - Answer:
+- [ ] **AI trip planner: where the key lives, and a paid option.** The AI planner (Day planner › AI planner) sends a trip's outline to a model through OpenRouter. Which way first? (a) **Bring your own key, kept in the browser**: the key is typed in Settings, kept on that device only (never sent to our server), and the browser calls `openrouter.ai` directly (one host added to the content security policy); simplest and nothing secret is stored by us, but it is typed again on each device. (b) **Bring your own key, kept on the account**: encrypted at rest (AES-256-GCM with a key from a platform secret) and the server makes the call; works on every device, but the app then holds a secret worth stealing. (c) **Included in a paid plan**: the app's own OpenRouter key on the server, a monthly allowance of plans per traveler (for example 30) and a rate limit, waiting on Paid plans and payments. Recommended: (a) now, (c) once plans exist. Also: which default model (a low-cost one such as a small Llama, Mistral or Gemini Flash, chosen per traveler), and should any OpenAI-compatible address be allowed too (a local Ollama, for example)? An ADR records the choice as a new external dependency. *(task: Day planner › AI planner; asked by: Coding Agent)*
+  - Answer:
 
 ## Product direction (added 2026-10-04)
 
@@ -294,3 +296,36 @@ Next small steps on what shipped lately: the flight log, the states and province
 - [x] A trip's expenses as a spreadsheet: the budget downloads as CSV, converted with the rates given, for claiming or sharing costs. Done: `budgetCsv()` in `trip-budget.js` and ⬇️ CSV in the budget.
 - [x] The longest flight: the flight log names it with its distance. Done: in the favourites line of `passport-flights.js`.
 - [x] Move a booking to another day: a rebooked flight or a hotel changed moves from its form instead of being typed again. Done: the Day picker of the booking form and `moveBooking()` in `bookings.js`.
+
+## Day planner (added 2026-11-15)
+
+From "where" to "what, in which order, at what pace". Today a trip has free-text slots pre-filled once from Wikivoyage, and the map draws a route between stops only. These steps turn a stop's sights into a day-by-day program that does not double back, at the pace the traveler wants, with or without AI. They keep the principles: no map service or routing API (distances are straight lines on the bundled data, with a stated walking factor), only public sights get coordinates (never where the traveler was), and the AI is opt-in, with the traveler's own key unless a paid plan includes it. Each line is one shippable step, in order.
+
+### Spots
+
+- [ ] **ADR — spots and the planner**: a spot is a public place to see (a museum, a viewpoint, a restaurant) kept on a trip's stop with its coordinates, which does not break the rule that a traveler's own locations are stored at city level only; record that the planner orders spots by straight-line distance with no routing service, and what the AI step sends and to whom.
+- [ ] Spots to see on each stop: a list of up to 60 named spots (see, do, eat, drink, a free-text note, an optional ⭐ must-see), saved with the trip like bookings, in the export and shared with the people planning together. Added from the stop's Wikivoyage listings (which carry `lat` and `long` fields that `parseWikivoyageListings()` ignores today), from a wishlist place in that town, or typed by name and placed with a tap on the map.
+- [ ] Spots on the itinerary map: the open day's spots as numbered pins in their order and the others as small dots, at the zoom where towns already show; tapping one opens its line in the day.
+- [ ] Wikivoyage in the traveler's language: ideas and spots from fr, es or de.wikivoyage.org when the interface is in that language and the page exists there, falling back to English for a language or page without an edition, with the attribution naming the edition used.
+
+### Daily program
+
+- [ ] Pace: each trip (and a default in Settings) has one of three paces, which set how many spots fit a day and how far it walks: **🌿 Unhurried** (2–3 spots, a long lunch, about 5 km), **🧭 Balanced** (4–5 spots, about 10 km) and **⚡ Whirlwind** (6–8 spots, about 15 km). Arrival and departure days take half; a day marked 😴 free stays empty.
+- [ ] Plan my days: one button spreads a stop's spots over its days, nearest together (so a neighbourhood is done in one day and never crossed back to), must-sees first, as many as the pace allows; leftovers stay in a "Didn't fit" list rather than being dropped. Each day is then ordered as one path that does not go past the same place twice (nearest neighbour, then 2-opt on straight-line distance), sights in the morning and afternoon and food and drink in the evening. Shown as a preview to keep or discard, and a pure `day-planner.js` module unit tested on known layouts.
+- [ ] Anchored by bookings: a booking with a time (a museum slot, a dinner table) keeps its time and slot, and the day's path is ordered around it; a stay picked as one of the stop's spots starts and ends each day's path.
+- [ ] Walking between spots: each day shows its legs and total ("12 min walk, 0.9 km", "about 8 km today"), straight-line distance times 1.3 at 4.5 km/h as the line states, warning when a leg is long enough for transit (over 3 km) and when a day walks well over its pace.
+- [ ] Reorder one day: 🔀 orders a single day again after a spot was added or moved by hand, keeping its anchored bookings, without touching the other days.
+- [ ] Take the day with you: a day's path as a GPX file (spots as waypoints, in order) for offline map apps such as Organic Maps or OsmAnd, and each spot as a link to an OpenStreetMap search, as bookings already are.
+
+### Suggestions without AI
+
+- [ ] Interests: a few chips on the trip (food, museums, outdoors, nightlife, with children, step-free) that weigh which Wikivoyage listings Plan my days picks first, and that the AI planner reads too.
+- [ ] More near your path: under a planned day, the Wikivoyage listings not yet added that lie closest to that day's path (within about 500 m), one tap to add them, so a gap in the day fills with what is on the way.
+- [ ] A day trip for long stays: on a stop of four days or more, suggest one of its towns next door (`townsAround()`, the largest within 50 km) as a whole day, with its own Wikivoyage spots.
+
+### AI planner
+
+- [ ] AI key in Settings: an OpenRouter key and a model picked from a short list, with a "Test the key" button and a plain statement of what is sent: the destination, dates, pace, interests, the spots already chosen and the bookings' kinds and times, never confirmation codes, notes, companions' names or the traveler's own places. Off until the traveler turns it on. *(waiting: see Needs Input › AI trip planner)*
+- [ ] ✨ Plan with AI: the same preview as Plan my days, from a model asked for strict JSON (days, slots, spots with names, kinds, coordinates and one line each), checked before it is shown: unknown fields dropped, at most the pace's spots per day, coordinates within about 30 km of the stop or the spot kept without a pin, then ordered by the same path code so the route never doubles back. Marked "Suggested by AI: check opening times before you go". *(waiting: see Needs Input › AI trip planner)*
+- [ ] Adjust a day with AI: a one-line request on a day ("less walking", "add a rooftop bar", "it will rain") answered with that day changed, shown as a before and after to keep or discard. *(waiting: see Needs Input › AI trip planner)*
+- [ ] AI included in a paid plan: the server calls OpenRouter with the app's own key for travelers on a plan that includes it, within a monthly allowance and a rate limit, counting uses but never storing prompts or answers. *(waiting: see Needs Input › AI trip planner, Paid plans and payments)*
