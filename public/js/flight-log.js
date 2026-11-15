@@ -10,6 +10,7 @@ import { t } from './i18n.js';
 // CO₂ per passenger-kilometre. Real flights vary a lot with the plane, the load and the route.
 export const CO2_KG_PER_KM = 0.09;
 export const FLIGHTS_MAX = 2000;
+const EARTH_CIRCUMFERENCE_KM = 40_075;
 const CODE_PATTERN = /^[A-Z]{3}$/;
 const NUMBER_PATTERN = /^[A-Z0-9]{2,3} ?\d{1,4}[A-Z]?$/;
 
@@ -66,6 +67,23 @@ export function flightStats(flights, airports) {
         years.set(year, entry);
     }
     return { years: [...years.values()].sort((a, b) => b.year.localeCompare(a.year)), total, unknown: [...unknown].sort() };
+}
+
+/**
+ * A year in flights, for its picture: the flights, the distance, how many times that goes
+ * around the Earth, and the longest flight with its distance. Null for a year without flights.
+ */
+export function yearInFlights(flights, airports, year) {
+    const ofYear = flights.filter(flight => flight.date.startsWith(`${year}-`));
+    if (!ofYear.length) return null;
+    let km = 0;
+    let longest = null;
+    for (const flight of ofYear) {
+        const distance = flightKm(flight, airports) || 0;
+        km += distance;
+        if (!longest || distance > longest.km) longest = { flight, km: distance };
+    }
+    return { year, flights: ofYear.length, km, laps: km / EARTH_CIRCUMFERENCE_KM, longest };
 }
 
 /** The flights as arcs of [lng, lat] points, oldest first, for the map's replay. */

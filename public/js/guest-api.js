@@ -205,6 +205,12 @@ export function createGuestApi(storage, now = () => new Date().toISOString()) {
             data.flights = [...(data.flights || []), added];
             return added;
         }),
+        importFlights: flights => change(data => {
+            const room = Math.max(0, 2000 - (data.flights || []).length);
+            const added = flights.slice(0, room).map(flight => ({ id: data.nextId++, date: flight.date, from: flight.from, to: flight.to, number: flight.number || null }));
+            data.flights = [...(data.flights || []), ...added];
+            return { flights: added, full: added.length < flights.length };
+        }),
         deleteFlight: id => change(data => {
             if (!(data.flights || []).some(flight => flight.id === Number(id))) throw notFound(t('Flight not found.'));
             data.flights = data.flights.filter(flight => flight.id !== Number(id));

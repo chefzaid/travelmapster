@@ -60,7 +60,8 @@ export function buildCsv(markers) {
     return rows.map(row => row.map(escapeCsvField).join(',')).join('\r\n');
 }
 
-export function parseCsv(text) {
+/** The rows of a CSV text as lists of fields, quoted fields and doubled quotes included. */
+export function csvRows(text) {
     const rows = [];
     let row = [];
     let field = '';
@@ -95,6 +96,12 @@ export function parseCsv(text) {
         row.push(field);
         rows.push(row);
     }
+    return rows;
+}
+
+/** A CSV of saved places as records, keyed by the export's field names. */
+export function parseCsv(text) {
+    const rows = csvRows(text);
     if (rows.length === 0) {
         return [];
     }

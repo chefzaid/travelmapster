@@ -3,14 +3,14 @@ import { $, $all } from './ui.js';
 import { showPanel } from './panel.js';
 import { renderExplore } from './explore.js';
 import { renderPlaces } from './places.js';
-import { renderPassport } from './passport.js';
 
 const TABS = ['explore', 'places', 'trips', 'ledger', 'passport'];
-const renderers = { explore: renderExplore, places: renderPlaces, passport: renderPassport };
-// The Trips and Ledger tabs load when first opened, so the first page stays light.
+const renderers = { explore: renderExplore, places: renderPlaces };
+// The Trips, Ledger and Passport tabs load when first opened, so the first page stays light.
 const LOADERS = {
     trips: () => import('./trips.js').then(module => module.renderTrips),
-    ledger: () => import('./ledger.js').then(module => module.renderLedger)
+    ledger: () => import('./ledger.js').then(module => module.renderLedger),
+    passport: () => import('./passport.js').then(module => module.renderPassport)
 };
 const STORAGE_KEY = 'travelmapster.tab';
 

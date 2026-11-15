@@ -91,8 +91,9 @@ Invalid integers stop startup with a clear error. Production values come from
   field values), never `join(', ')`: Arabic writes `،`.
 - **First page weight**: every module imported statically from `app.js` loads on the landing
   page. Import a feature that only runs after a click through `lazy.js` (as `openNewTrip`,
-  `ruleDialog` and `openSecurity` are) or with `import()` where it is used, keep the Trips and
-  Ledger tabs out of static imports (`tabs.js` loads them when first opened), and keep
+  `ruleDialog` and `openSecurity` are) or with `import()` where it is used, keep the Trips,
+  Ledger and Passport tabs out of static imports (`tabs.js` loads them when first opened, and a
+  shared map loads the passport's public stats itself), and keep
   `start.js` to what the presentation needs. `test/e2e/performance.spec.js` holds the budget.
 - **Third-party calls** need a CSP change in `src/app.js` and a [security](security.md) review.
 

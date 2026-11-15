@@ -149,6 +149,7 @@ export const api = {
     revokeApiToken: id => request('DELETE', `/api-tokens/${Number(id)}`),
     getFlights: () => request('GET', '/flights'),
     addFlight: flight => request('POST', '/flights', flight),
+    importFlights: flights => request('POST', '/flights/import', { flights }),
     deleteFlight: id => request('DELETE', `/flights/${Number(id)}`),
     getCalendarFeed: () => request('GET', '/calendar-feed'),
     createCalendarFeed: () => request('POST', '/calendar-feed', {}),

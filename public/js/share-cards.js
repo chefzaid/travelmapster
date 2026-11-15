@@ -1,7 +1,7 @@
 // Image cards to share: the country count, the passport stamps and a year's recap, as square
 // SVG (1080 × 1080) that the browser turns into a PNG, and the flags as a line of text. Only
 // counts, country names and flags: never notes, photos, places or dates. Pure, unit tested in Node.
-import { tn, t } from './i18n.js';
+import { locale, tn, t } from './i18n.js';
 
 export const CARD_SIZE = 1080;
 
@@ -107,6 +107,19 @@ export function countdownCard({ username, days, underWay, flags }) {
         text(540, 470, 230, big, big === '✈️' ? { font: EMOJI_FONT } : {}),
         text(540, 570, 64, small),
         flags.length ? text(540, 740, 96, flags.slice(0, 8).join(''), { font: EMOJI_FONT }) : ''
+    ].join(''), 'TravelMapster');
+}
+
+/** A year in flights: the flights, the distance, the laps around the Earth and the longest flight. */
+export function flightsCard({ username, year, flights, distance, laps, longest }) {
+    return frame([
+        text(540, 170, 58, t('{year} in flights', { year })),
+        text(540, 225, 38, username, { weight: 500 }),
+        text(540, 420, 150, '✈️', { font: EMOJI_FONT }),
+        text(540, 560, 80, tn(flights, '{count} flight', '{count} flights')),
+        text(540, 640, 48, distance, { weight: 500 }),
+        laps >= 0.1 ? text(540, 710, 36, t('{laps} × around the Earth', { laps: laps.toLocaleString(locale(), { maximumFractionDigits: 1 }) }), { weight: 500 }) : '',
+        longest ? text(540, 860, 34, fit(t('Longest flight: {route}', { route: longest }), 46), { weight: 500 }) : ''
     ].join(''), 'TravelMapster');
 }
 

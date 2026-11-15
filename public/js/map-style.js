@@ -6,6 +6,8 @@ import { t } from './i18n.js';
 export const ZOOM_OFFSET = 1;
 export const MAX_ZOOM = 11;
 const COUNTRY_LABELS_MAX_ZOOM = 7;
+// States and provinces show from this zoom, where a country fills enough of the screen.
+export const REGIONS_MIN_ZOOM = 4;
 // Whole countries light up on hover only at world scale; up close they fill the screen.
 const HOVER_FILL_MAX_ZOOM = 7;
 export const DEFAULT_VIEW = { center: [10, 25], zoom: 2.5 };
@@ -209,7 +211,9 @@ export function buildStyle(theme, countries, labels) {
             journeys: { type: 'geojson', data: EMPTY },
             'journey-head': { type: 'geojson', data: EMPTY },
             itinerary: { type: 'geojson', data: EMPTY },
-            'itinerary-stops': { type: 'geojson', data: EMPTY }
+            'itinerary-stops': { type: 'geojson', data: EMPTY },
+            // States and provinces of the largest countries, once zoomed in (map-regions.js).
+            regions: { type: 'geojson', data: EMPTY }
         },
         layers: [
             // No background layer: the dotted ocean is the container's CSS background.
@@ -235,6 +239,15 @@ export function buildStyle(theme, countries, labels) {
                 // Countries picked for marking several at once: a tint over their status color.
                 id: 'selected-fill', type: 'fill', source: 'countries',
                 paint: { 'fill-color': theme.capital, 'fill-opacity': ['case', state('selected'), 0.4, 0] }
+            },
+            // A state or province with a town been to is tinted; the others are only outlined.
+            {
+                id: 'region-fill', type: 'fill', source: 'regions', minzoom: toMapZoom(REGIONS_MIN_ZOOM), filter: ['==', ['get', 'visited'], true],
+                paint: { 'fill-color': theme.visitedInk, 'fill-opacity': 0.22 }
+            },
+            {
+                id: 'region-lines', type: 'line', source: 'regions', minzoom: toMapZoom(REGIONS_MIN_ZOOM), layout: { 'line-join': 'round' },
+                paint: { 'line-color': theme.border, 'line-width': 0.8, 'line-opacity': 0.6, 'line-dasharray': [3, 2] }
             },
             {
                 id: 'borders', type: 'line', source: 'countries', layout: { 'line-join': 'round' },

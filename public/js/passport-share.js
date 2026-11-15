@@ -24,7 +24,7 @@ async function cardPng(svg) {
 }
 
 // Shares the card where the device can (phones), and downloads it everywhere else.
-async function shareCard(svg, fileName, title) {
+export async function shareCard(svg, fileName, title) {
     try {
         const png = await cardPng(svg);
         const file = new File([png], fileName, { type: 'image/png' });

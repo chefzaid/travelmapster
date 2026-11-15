@@ -46,3 +46,25 @@ test('a flight log holds at most 2,000 flights', async () => {
     );
     assert.equal((await client.post('/api/flights', { date: '2027-05-01', from: 'LIS', to: 'KIX' })).status, 409);
 });
+
+test('many flights are added at once, as far as the log has room, each checked', async () => {
+    const client = createClient(ctx.server);
+    const { body } = await client.register('bulk_flyer', 'bulk flyer password');
+    const flights = [{ date: '2026-05-01', from: 'LIS', to: 'KIX', number: 'TP 1352' }, { date: '2026-05-20', from: 'kix', to: 'LIS' }];
+    const added = await client.post('/api/flights/import', { flights });
+    assert.equal(added.status, 201);
+    assert.deepEqual(added.body.flights.map(({ date, from, to, number }) => [date, from, to, number]), [['2026-05-01', 'LIS', 'KIX', 'TP 1352'], ['2026-05-20', 'KIX', 'LIS', null]]);
+    assert.equal(added.body.full, false);
+    for (const bad of [{}, { flights: [] }, { flights: [{ date: 'x', from: 'LIS', to: 'KIX' }] }, { flights: Array.from({ length: 501 }, () => flights[0]) }]) {
+        assert.equal((await client.post('/api/flights/import', bad)).status, 400, JSON.stringify(bad).slice(0, 60));
+    }
+    assert.match((await client.post('/api/flights/import', { flights: [flights[0], { ...flights[0], to: 'LIS' }] })).body.error, /^Flight 2: /);
+    // Near the 2,000 cap, only what fits is added.
+    await ctx.pool.query(
+        `INSERT INTO flights (user_id, flown_on, origin, destination) SELECT $1, DATE '2020-01-01', 'LIS', 'OPO' FROM generate_series(1, 1997)`,
+        [body.user.id]
+    );
+    const nearlyFull = await client.post('/api/flights/import', { flights: [flights[0], flights[1], flights[0]] });
+    assert.equal(nearlyFull.body.flights.length, 1);
+    assert.equal(nearlyFull.body.full, true);
+});

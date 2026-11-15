@@ -5,6 +5,7 @@
 const { isValidTravelDate, normalizeText } = require('./validation-text');
 
 const FLIGHTS_MAX = 2000;
+const IMPORT_MAX = 500;
 const CODE_PATTERN = /^[A-Z]{3}$/;
 const NUMBER_PATTERN = /^[A-Z0-9]{2,3} ?\d{1,4}[A-Z]?$/;
 const COLUMNS = 'id, flown_on AS "date", origin AS "from", destination AS "to", flight_number AS "number"';
@@ -40,6 +41,18 @@ function createFlightRepository(db) {
             );
             return rows[0] || null;
         },
+        /** Adds many flights at once, as far as the log has room; returns those added. */
+        async addMany(userId, flights) {
+            const { rows } = await db.query(
+                `WITH room AS (SELECT GREATEST($6 - count(*), 0) AS left FROM flights WHERE user_id = $1),
+                 given AS (SELECT * FROM unnest($2::date[], $3::text[], $4::text[], $5::text[]) WITH ORDINALITY AS g(flown_on, origin, destination, flight_number, n))
+                 INSERT INTO flights (user_id, flown_on, origin, destination, flight_number)
+                 SELECT $1, flown_on, origin, destination, flight_number FROM given, room WHERE n <= room.left ORDER BY n
+                 RETURNING ${COLUMNS}`,
+                [userId, flights.map(f => f.date), flights.map(f => f.from), flights.map(f => f.to), flights.map(f => f.number), FLIGHTS_MAX]
+            );
+            return rows;
+        },
         async remove(userId, id) {
             const { rowCount } = await db.query('DELETE FROM flights WHERE id = $1 AND user_id = $2', [id, userId]);
             return rowCount > 0;
@@ -47,4 +60,17 @@ function createFlightRepository(db) {
     };
 }
 
-module.exports = { FLIGHTS_MAX, createFlightRepository, parseFlight };
+/** Up to 500 flights to add at once, each checked as one alone is; the first wrong one is named. */
+function parseFlights(body) {
+    const list = body?.flights;
+    if (!Array.isArray(list) || !list.length || list.length > IMPORT_MAX) return { error: 'Send from 1 to 500 flights at once.' };
+    const flights = [];
+    for (const [index, item] of list.entries()) {
+        const { flight, error } = parseFlight(item);
+        if (error) return { error: `Flight ${index + 1}: ${error}` };
+        flights.push(flight);
+    }
+    return { flights };
+}
+
+module.exports = { FLIGHTS_MAX, createFlightRepository, parseFlight, parseFlights };

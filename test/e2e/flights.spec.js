@@ -15,12 +15,15 @@ test('a traveler logs flights by airport codes and sees how far they flew each y
     const log = page.locator('#passport-tab section', { has: page.locator('#flights-title') });
     await expect(log).toContainText('Add the flights you took');
 
-    const addFlight = async (date, from, to, number = '') => {
+    // Each flight is saved, and the log redrawn, before the next one is typed.
+    let added = 0;
+    const addFlight = async (date, from, to, number = '', { valid = true } = {}) => {
         await log.locator('input[name="date"]').fill(date);
         await log.getByLabel('From airport code').fill(from);
         await log.getByLabel('To airport code').fill(to);
         await log.locator('input[name="number"]').fill(number);
         await log.getByRole('button', { name: '＋ Add flight' }).click();
+        if (valid) await expect(log.locator('#flight-list li')).toHaveCount(++added);
     };
     await log.getByLabel('From airport code').fill('lis');
     await expect(log).toContainText('Lisbon (LIS)');
@@ -35,16 +38,32 @@ test('a traveler logs flights by airport codes and sees how far they flew each y
     await expect(log.locator('#flight-list li').nth(1)).toContainText('TP 1352');
 
     // A typo is caught before it is saved.
-    await addFlight('2026-06-01', 'LIS', 'LIS');
+    await addFlight('2026-06-01', 'LIS', 'LIS', '', { valid: false });
     await expect(page.locator('.toast-error')).toContainText('another airport');
 
+    // Many at once, pasted from an app's export: one is known already, one line is not understood.
+    await log.getByRole('button', { name: '📥 Paste flights' }).click();
+    await page.fill('#dialog-text', '2026-05-20 KIX LIS\n2024-03-03 LIS MAD IB3101\nboarding pass\n2024-03-07 MAD LIS');
+    await page.getByRole('button', { name: 'Read them' }).click();
+    const preview = page.locator('dialog.dialog', { hasText: 'Add 2 flights?' });
+    await expect(preview).toContainText('1 is already in your log.');
+    await expect(preview).toContainText('Not understood: boarding pass');
+    await preview.getByRole('button', { name: 'Add them' }).click();
+    await expect(page.locator('.toast-success', { hasText: 'Added 2 flights.' })).toBeVisible();
+    await expect(log.locator('.flight-total')).toContainText('5 flights');
+    await expect(log.locator('.flight-years li')).toHaveCount(3);
+
+    // The latest year as a picture, downloaded where the browser has no share sheet.
+    const picture = page.waitForEvent('download');
+    await log.getByRole('button', { name: '📸 2026 in flights' }).click();
+    expect((await picture).suggestedFilename()).toBe('travelmapster-flights-2026.png');
     await log.getByRole('button', { name: '🗺️ Replay on the map' }).click();
     await log.getByRole('button', { name: /Remove the flight of .* from LIS to OPO/ }).click();
-    await expect(log.locator('.flight-total')).toContainText('2 flights');
+    await expect(log.locator('.flight-total')).toContainText('4 flights');
     await page.reload();
     await expect(page.locator('#main-view')).toBeVisible();
     await page.click('#tab-passport');
-    await expect(log.locator('#flight-list li')).toHaveCount(2);
+    await expect(log.locator('#flight-list li')).toHaveCount(4);
     expect(errors).toEqual([]);
 });
 
@@ -61,5 +80,23 @@ test('towns been to count for the states and provinces of the largest countries'
     await expect(regions.locator('.region-list li', { hasText: 'United States' })).toContainText('United States of America: 1 of 51');
     await expect(regions.locator('.region-list li', { hasText: 'United States' })).toContainText('Texas (Austin and Houston)');
     await expect(regions.locator('.region-list li', { hasText: 'Australia' })).toContainText('New South Wales (Sydney)');
+    expect(errors).toEqual([]);
+});
+
+test('a town been to suggests the towns next door, one tap from the wishlist', async ({ page }) => {
+    const errors = trackErrors(page);
+    await signUp(page, `e2e_nearby_${Date.now()}`);
+    await expect(page.locator('#app[data-map="ready"] #main-view')).toBeVisible();
+    await markCity(page, 'Lisbon');
+    const card = page.locator('.maplibregl-popup.card-popup');
+    const nearby = card.locator('.card-nearby');
+    // Closed at first, so the card keeps its height; opening it finds the towns around.
+    await nearby.getByText('🚶 Towns next door').click();
+    await expect(nearby.locator('li')).toHaveCount(4);
+    const first = (await nearby.locator('li strong').first().textContent()).trim();
+    await nearby.getByRole('button', { name: `Add ${first} to your wishlist` }).click();
+    await expect(page.locator('.toast-success', { hasText: first })).toBeVisible();
+    await page.click('#tab-places');
+    await expect(page.locator('#places-tab .place-main', { hasText: first })).toBeVisible();
     expect(errors).toEqual([]);
 });

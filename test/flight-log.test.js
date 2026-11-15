@@ -63,3 +63,20 @@ test('flights add up per year with a rough CO₂ estimate, and replay as arcs ol
     assert.equal(arcs.length, 2);
     assert.deepEqual(arcs[0][0], [-9.136, 38.781], 'the way out first');
 });
+
+test('a year in flights sums its flights, the laps around the Earth and the longest one', async () => {
+    const { airportIndex, yearInFlights } = await load();
+    const airports = airportIndex(rows);
+    const out = { id: 1, date: '2027-05-01', from: 'LIS', to: 'KIX' };
+    const back = { id: 2, date: '2027-05-20', from: 'KIX', to: 'LIS' };
+    const odd = { id: 3, date: '2027-06-01', from: 'LIS', to: 'ZZZ' };
+    const year = yearInFlights([out, back, odd, { id: 4, date: '2026-01-01', from: 'LIS', to: 'KIX' }], airports, '2027');
+    assert.equal(year.flights, 3);
+    assert.ok(year.laps > 0.55 && year.laps < 0.57, `${year.laps}`);
+    assert.equal(year.longest.flight, out, 'the first of two as long');
+    assert.equal(yearInFlights([out], airports, '2020'), null);
+    const share = await import(path.join(__dirname, '..', 'public', 'js', 'share-cards.js'));
+    const svg = share.flightsCard({ username: 'ana', year: '2027', flights: 3, distance: '22,400 km', laps: year.laps, longest: 'LIS → KIX · 11,200 km' });
+    for (const part of ['2027 in flights', '3 flights', '22,400 km', '0.6 × around the Earth', 'Longest flight: LIS → KIX']) assert.ok(svg.includes(part), part);
+    assert.ok(!share.flightsCard({ username: 'ana', year: '2027', flights: 1, distance: '300 km', laps: 0.01, longest: '' }).includes('around the Earth'));
+});

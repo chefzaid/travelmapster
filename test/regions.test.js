@@ -52,3 +52,41 @@ test('a tiny map: the nearest region within about 25 km, never farther', async (
     assert.equal(regionAt(index, 'XXX', 0.5, 1.1).id, 'A');
     assert.equal(regionAt(index, 'XXX', 0.5, 1.5), null);
 });
+
+test('zoomed in far enough, the map draws the regions, those with a town been to tinted', async () => {
+    const layer = await import(path.join(__dirname, '..', 'public', 'js', 'regions-layer.js'));
+    const geojson = data();
+    let fetched = 0;
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = async () => {
+        fetched += 1;
+        return { json: async () => geojson };
+    };
+    try {
+        let zoom = 2;
+        const listeners = [];
+        const drawn = [];
+        const austin = { id: 1, category: 'City', type: 'visited', name: 'Austin', lat: 30.27, lng: -97.74 };
+        const ctx = {
+            state: { markers: [austin], stats: { markerCountry: new Map([[1, { id: 'USA' }]]) } },
+            map: { map: { getZoom: () => zoom, on: (event, listener) => listeners.push(listener) }, setRegions: regions => drawn.push(regions) }
+        };
+        layer.updateRegionsOnMap(ctx);
+        assert.equal(fetched, 0, 'nothing loads before zooming in');
+        zoom = 5;
+        listeners.forEach(listener => listener());
+        await new Promise(resolve => setTimeout(resolve, 20));
+        assert.equal(fetched, 1);
+        const tinted = drawn.at(-1).features.filter(feature => feature.properties.visited).map(feature => feature.properties.name);
+        assert.deepEqual(tinted, ['Texas']);
+        // A new town redraws without loading again.
+        ctx.state.markers.push({ id: 2, category: 'City', type: 'visited', name: 'Sydney', lat: -33.87, lng: 151.21 });
+        ctx.state.stats.markerCountry.set(2, { id: 'AUS' });
+        layer.updateRegionsOnMap(ctx);
+        assert.equal(fetched, 1);
+        assert.equal(drawn.at(-1).features.filter(feature => feature.properties.visited).length, 2);
+        layer.updateRegionsOnMap({ state: {}, map: null });
+    } finally {
+        globalThis.fetch = realFetch;
+    }
+});

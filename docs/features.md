@@ -321,17 +321,25 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   list) or new cities first visited that year, or trips begun in it, with a progress bar each
   and a confetti celebration when one is reached. One goal per kind and year; goals are never
   on the public map.
+- **Towns next door** on the card of a town been to, opened when wanted: the four largest bundled towns within
+  50 km not saved yet, nearest first among equals, each a tap from the wishlist.
 - **Firsts**: the year each continent was first set foot on, and the country it was, from the
   visit dates of places been to.
 - **States and provinces** of the largest countries (Australia, Brazil, Canada, China, India,
   Indonesia, Russia, South Africa and the United States, from Natural Earth's admin-1 layer):
   each counts once a town been to lies in it, such as "United States of America: 2 of 51" with
   the towns in each. A town near a coast counts for the region within about 25 km, and never
-  for one across a border. The outlines load only when the passport shows them.
+  for one across a border. Zoomed in on the map (from zoom 4), their outlines show dashed and
+  those with a town been to are tinted. The outlines load once, when the passport shows them or
+  the map is first zoomed in that far.
 - **Flight log**: flights by date and IATA airport codes (about 4,100 airports with scheduled
   service, from OurAirports, public domain), with an optional flight number. The passport
   shows the flights, distance and a rough CO₂ estimate (90 g per kilometre for an economy seat,
-  as it says) in all and per year, and replays them as arcs on the map. Flights are private,
+  as it says) in all and per year, and replays them as arcs on the map. **Paste flights** adds
+  up to 500 at once from lines such as "2026-05-01 LIS KIX TP1352" or an app's CSV export (by
+  its date, from and to columns), after a preview of what was understood and already logged.
+  **📸 {year} in flights** makes the latest year a square picture: its flights, distance, laps
+  around the Earth and longest flight by airport codes. Flights are private,
   in the account archive, and a guest keeps them in the browser until signing up.
 - **Share a picture**: square cards (1080 × 1080) of the country count, the passport stamps,
   this year's recap or the countdown to the next trip (the days to go and its countries' flags), shared through the phone's share sheet or downloaded as PNG. They show

@@ -4500,6 +4500,90 @@
           }
         ]
       }
+    },
+    "/api/flights/import": {
+      "post": {
+        "summary": "Add up to 500 flights at once, as far as the log has room",
+        "tags": [
+          "Trips"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "flights"
+                ],
+                "properties": {
+                  "flights": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 500,
+                    "items": {
+                      "$ref": "#/components/schemas/FlightInput"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Added",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "flights",
+                    "full"
+                  ],
+                  "properties": {
+                    "flights": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Flight"
+                      }
+                    },
+                    "full": {
+                      "type": "boolean",
+                      "description": "True when the log reached 2,000 flights and some were not added."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A flight is wrong; the first one is named",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/CsrfRejected"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "security": [
+          {
+            "session": [],
+            "csrf": []
+          }
+        ]
+      }
     }
   },
   "components": {

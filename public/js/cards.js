@@ -6,6 +6,7 @@ import { monthsLabel, priorityLabel, ratingLabel, stars } from './details.js';
 import { HOME, STATUSES, statusFields, statusLabel, statusOf } from './status.js';
 import { openNewTrip } from './lazy.js';
 import { visitsSection } from './card-visits.js';
+import { nearbySection } from './card-nearby.js';
 import { t, tn } from './i18n.js';
 
 // ---------------------------------------------------------------- saved places on the map
@@ -236,6 +237,7 @@ export function showCityCard(ctx, city) {
         h('dl', { class: 'card-facts' }, h('dt', {}, t('Population')), h('dd', {}, formatPopulation(city.population))),
         statusButtons(ctx, existing, place),
         savedDetails(ctx, existing),
+        existing ? nearbySection(ctx, existing) : null,
         ideaButtons(ctx, city.name)
     );
     ctx.map.openPopup([city.lat, city.lng], card, { offset: [0, -4] });
@@ -248,13 +250,14 @@ export function showSavedCityCard(ctx, marker) {
         else ctx.map.closePopup();
     };
     const country = ctx.state.stats?.markerCountry.get(marker.id);
-    const [cityName] = marker.name.split(',');
+    const cityName = shortPlaceName(marker.name);
     const place = { lat: marker.lat, lng: marker.lng, name: marker.name, category: 'City' };
     const card = h('article', { class: 'card' },
         cardHeader(country?.flag || '📍', cityName, country ? countryLink(ctx, country, country.name) : marker.name),
         h('div', { class: 'card-status' }, statusChip(statusOf(marker))),
         statusButtons(ctx, marker, place),
         savedDetails(ctx, marker),
+        nearbySection(ctx, marker),
         ideaButtons(ctx, cityName)
     );
     ctx.map.openPopup([marker.lat, marker.lng], card, { offset: [0, -30] });

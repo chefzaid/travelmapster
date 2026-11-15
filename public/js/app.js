@@ -5,7 +5,6 @@ import { computeStats, countryStatus } from './geo.js';
 import { loadMapData as loadData } from './map-data.js';
 import { h, $, toast, confirmDialog } from './ui.js';
 import { describeDetailFilter, detailFilterActive, matchesDetails } from './details.js';
-import { renderPublicStats } from './passport.js';
 import { renderActiveTab, selectTab, setupTabs, storedTab } from './tabs.js';
 import { removePlace, savePlace, updatePlace } from './place-store.js';
 import { localToday } from './days.js';
@@ -32,6 +31,7 @@ import { followButton } from './friends.js';
 import { explainInvitation, joinPendingInvitation, setupInvitations, takeInvitation } from './orgs.js';
 import { enterGuestMode, guestActive, labelGuestButtons, leaveGuestMode, moveGuestMap, setupGuest, showGuestControls } from './guest.js';
 import { t } from './i18n.js';
+import { updateRegionsOnMap } from './regions-layer.js';
 
 const state = {
     user: null,
@@ -159,6 +159,7 @@ function refresh({ celebrateNew = true } = {}) {
     state.unlocked = unlocked;
     if (state.user) state.reachedGoals = celebrateGoals(context, celebrateNew ? state.reachedGoals : null);
     updateLedgerBadge(context);
+    updateRegionsOnMap(context);
     renderActiveTab(context);
     if (state.demo) renderDemoLedger(context);
 }
@@ -310,7 +311,8 @@ async function startPublicView(username) {
         state.markers = data.markers;
         refresh({ celebrateNew: false });
         $('#public-title').textContent = t('{username}\'s travel map', { username: data.username });
-        renderPublicStats($('#public-stats'), state.stats);
+        // The passport loads only for a shared map, or once its tab opens (tabs.js).
+        import('./passport.js').then(({ renderPublicStats }) => renderPublicStats($('#public-stats'), state.stats)).catch(handleError);
         setView('public');
         document.title = t('{username}\'s travel map · TravelMapster', { username: data.username });
         followButton(context, data.username);

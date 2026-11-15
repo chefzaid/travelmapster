@@ -2,15 +2,9 @@
 // regions a town been to lies in (regions.js). The region outlines
 // (public/data/regions.geojson) load only once the section is first drawn.
 import { h, fill } from './ui.js';
-import { regionIndex, regionProgress } from './regions.js';
+import { regionProgress } from './regions.js';
+import { loadRegions } from './regions-data.js';
 import { formatList, locale, t } from './i18n.js';
-
-let indexPromise = null;
-
-const loadRegions = () => {
-    indexPromise ||= fetch(new URL('../data/regions.geojson', import.meta.url)).then(res => res.json()).then(geojson => regionIndex(geojson, locale()));
-    return indexPromise;
-};
 
 function draw(ctx, body, index) {
     const { stats } = ctx.state;
@@ -31,7 +25,7 @@ function draw(ctx, body, index) {
 export function regionsSection(ctx) {
     const body = h('div', {}, h('p', { class: 'muted small' }, t('Loading…')));
     loadRegions()
-        .then(index => draw(ctx, body, index))
+        .then(({ index }) => draw(ctx, body, index))
         .catch(() => fill(body, h('p', { class: 'muted small' }, t('The regions could not be loaded.'))));
     return h('section', { 'aria-labelledby': 'regions-title' },
         h('h3', { class: 'section-title', id: 'regions-title' }, t('🗺️ States and provinces')), body);

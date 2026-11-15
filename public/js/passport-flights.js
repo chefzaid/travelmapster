@@ -1,8 +1,10 @@
 // The passport's flight log: flights added by date and airport codes, the distance flown per
 // year with a rough CO₂ estimate, and a replay of the arcs on the map (flight-log.js). The
 // airports (public/data/airports.json) load only once the section is first drawn.
-import { h, fill, toast, formatDate } from './ui.js';
-import { CO2_KG_PER_KM, FLIGHTS_MAX, airportIndex, airportLabel, checkFlight, flightArcs, flightKm, flightStats, latestFirst } from './flight-log.js';
+import { h, fill, toast, formDialog, formatDate } from './ui.js';
+import { readPastedFlights } from './flight-paste.js';
+import { CO2_KG_PER_KM, FLIGHTS_MAX, airportIndex, airportLabel, checkFlight, flightArcs, flightKm, flightStats, latestFirst, yearInFlights } from './flight-log.js';
+import { flightsCard } from './share-cards.js';
 import { formatDistance } from './units.js';
 import { formatNumber, joinList, t, tn } from './i18n.js';
 
@@ -54,6 +56,36 @@ function addForm(ctx, airports, redraw) {
         h('button', { type: 'submit', class: 'btn btn-ghost btn-sm' }, t('＋ Add flight')));
 }
 
+// Many flights at once, pasted as lines or an app's CSV export, after a look at what was read.
+async function pasteFlights(ctx, redraw) {
+    const pasted = await formDialog({
+        title: t('Paste your flights'),
+        message: t('One flight a line, such as "2026-05-01 LIS KIX TP1352", or a CSV with date, from and to columns as airline and flight tracking apps export.'),
+        submitLabel: t('Read them'),
+        fields: [{ name: 'text', label: t('Flights'), type: 'textarea', required: true }]
+    });
+    if (!pasted?.text?.trim()) return;
+    const { flights, skipped, known, tooMany } = readPastedFlights(pasted.text, ctx.state.flights);
+    const notes = [
+        known ? tn(known, '{count} is already in your log.', '{count} are already in your log.') : null,
+        tooMany ? tn(tooMany, '{count} more are left for another paste: at most 500 at once.', '{count} more are left for another paste: at most 500 at once.') : null,
+        skipped.length ? t('Not understood: {lines}', { lines: skipped.slice(0, 5).join(' / ') }) : null
+    ].filter(Boolean).join(' ');
+    if (!flights.length) {
+        toast([t('No new flight found.'), notes].filter(Boolean).join(' '), { tone: 'error', duration: 8000 });
+        return;
+    }
+    if (!(await ctx.confirmDialog({ title: tn(flights.length, 'Add {count} flight?', 'Add {count} flights?'), message: notes || t('Every line was understood.'), confirmLabel: t('Add them') }))) return;
+    try {
+        const { flights: added, full } = await ctx.api.importFlights(flights);
+        ctx.state.flights = latestFirst([...added, ...ctx.state.flights]);
+        toast(full ? tn(added.length, 'Added {count} flight: the log is full.', 'Added {count} flights: the log is full.') : tn(added.length, 'Added {count} flight.', 'Added {count} flights.'), { tone: 'success' });
+        redraw();
+    } catch (error) {
+        ctx.handleError(error);
+    }
+}
+
 function flightItem(ctx, airports, flight, redraw) {
     const km = flightKm(flight, airports);
     return h('li', { class: 'ledger-item' },
@@ -76,6 +108,22 @@ function flightItem(ctx, airports, flight, redraw) {
         }, '🗑️'));
 }
 
+// The latest year with flights as a square picture, through the passport's share cards.
+function shareYearButton(ctx, airports, year) {
+    return h('button', {
+        type: 'button', class: 'btn btn-ghost btn-sm',
+        onclick: async () => {
+            const summary = yearInFlights(ctx.state.flights, airports, year);
+            const { shareCard } = await import('./passport-share.js');
+            const { flight, km } = summary.longest;
+            await shareCard(flightsCard({
+                username: ctx.state.user.username, year, flights: summary.flights, distance: formatDistance(summary.km), laps: summary.laps,
+                longest: km ? `${flight.from} → ${flight.to} · ${formatDistance(km)}` : ''
+            }), `travelmapster-flights-${year}.png`, t('{username} on TravelMapster', { username: ctx.state.user.username }));
+        }
+    }, t('📸 {year} in flights', { year }));
+}
+
 function draw(ctx, body, airports) {
     const redraw = () => draw(ctx, body, airports);
     const flights = ctx.state.flights;
@@ -91,11 +139,13 @@ function draw(ctx, body, airports) {
             })))) : null,
         unknown.length ? h('p', { class: 'hint' }, t('Unknown airport codes, counted without a distance: {codes}.', { codes: joinList(unknown) })) : null,
         flights.length ? h('p', { class: 'hint' }, t('CO₂ is a rough estimate of {grams} g per kilometre for an economy seat; real flights vary a lot.', { grams: CO2_KG_PER_KM * 1000 })) : null,
+        years.length ? shareYearButton(ctx, airports, years[0].year) : null,
         flights.length ? h('button', {
             type: 'button', class: 'btn btn-ghost btn-sm',
             onclick: () => ctx.map.replayJourneys(flightArcs(flights, airports), { reduceMotion: Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) })
         }, t('🗺️ Replay on the map')) : null,
         flights.length < FLIGHTS_MAX ? addForm(ctx, airports, redraw) : null,
+        flights.length < FLIGHTS_MAX ? h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => pasteFlights(ctx, redraw) }, t('📥 Paste flights')) : null,
         flights.length ? h('ul', { class: 'ledger-list', id: 'flight-list' }, shown.map(flight => flightItem(ctx, airports, flight, redraw))) : null,
         flights.length > SHOWN && !showAll ? h('button', {
             type: 'button', class: 'btn btn-ghost btn-sm',

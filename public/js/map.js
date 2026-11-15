@@ -5,7 +5,7 @@ import { ALL_STATUSES_SHOWN, countryLook } from './geo.js';
 import { statusInfo, statusOf } from './status.js';
 import { heatLevel } from './heat-map.js';
 import {
-    DEFAULT_VIEW, MAX_ZOOM, PATTERNS, STATUS_LAYERS, ZOOM_OFFSET, arrowImage, buildStyle, dataUrl, dotImage, lngLat,
+    DEFAULT_VIEW, EMPTY, MAX_ZOOM, PATTERNS, STATUS_LAYERS, ZOOM_OFFSET, arrowImage, buildStyle, dataUrl, dotImage, lngLat,
     onlyCountries, patternImage, readTheme, toMapZoom
 } from './map-style.js';
 import { createItinerary, createJourneyLines } from './map-journeys.js';
@@ -323,27 +323,42 @@ export function createTravelMap(element, { index, cities, onCountryClick, onCity
     }
 
     let cardPopup = null;
+    let cardResized = null;
+
+    // Pans the card into view, clear of the panel and bars.
+    function revealPopup() {
+        const card = cardPopup?.getElement()?.getBoundingClientRect();
+        if (!card) return;
+        const area = safeArea();
+        const bounds = element.getBoundingClientRect();
+        const dx = card.left < area.left ? card.left - area.left : card.right > bounds.right - area.right ? card.right - (bounds.right - area.right) : 0;
+        const dy = card.top < area.top ? card.top - area.top : card.bottom > bounds.bottom - area.bottom ? card.bottom - (bounds.bottom - area.bottom) : 0;
+        if (dx || dy) map.panBy([dx, dy], { duration: 300 });
+    }
+
     function openPopup(latlng, content, { offset = [0, -8] } = {}) {
-        cardPopup?.remove();
+        closePopup();
         cardPopup = new Popup({ className: 'card-popup', maxWidth: '320px', anchor: 'bottom', offset: [offset[0], offset[1]], focusAfterOpen: false })
             .setLngLat(lngLat(latlng))
             .setDOMContent(content)
             .addTo(map);
         onPopupOpen?.();
-        // Pan the card into view, clear of the panel and bars.
-        requestAnimationFrame(() => {
-            const card = cardPopup?.getElement()?.getBoundingClientRect();
-            if (!card) return;
-            const area = safeArea();
-            const bounds = element.getBoundingClientRect();
-            const dx = card.left < area.left ? card.left - area.left : card.right > bounds.right - area.right ? card.right - (bounds.right - area.right) : 0;
-            const dy = card.top < area.top ? card.top - area.top : card.bottom > bounds.bottom - area.bottom ? card.bottom - (bounds.bottom - area.bottom) : 0;
-            if (dx || dy) map.panBy([dx, dy], { duration: 300 });
-        });
+        requestAnimationFrame(revealPopup);
+        // A section that arrives later, such as the towns next door, grows the card: keep it in view.
+        if (typeof ResizeObserver === 'function') {
+            let frame = 0;
+            cardResized = new ResizeObserver(() => {
+                cancelAnimationFrame(frame);
+                frame = requestAnimationFrame(revealPopup);
+            });
+            cardResized.observe(content);
+        }
         return cardPopup;
     }
 
     function closePopup() {
+        cardResized?.disconnect();
+        cardResized = null;
         cardPopup?.remove();
         cardPopup = null;
     }
@@ -382,6 +397,13 @@ export function createTravelMap(element, { index, cities, onCountryClick, onCity
 
     // ---- journey lines and their replay (ADR 0016)
 
+    // States and provinces, drawn once zoomed in (their data comes from regions-layer.js).
+    let regionData = null;
+    function setRegions(geojson) {
+        regionData = geojson;
+        ready.then(() => map.getSource('regions')?.setData(regionData || EMPTY));
+    }
+
     const journeys = createJourneyLines({ map, ready, afterMove, safeArea });
     const itinerary = createItinerary({ map, ready, afterMove, safeArea });
 
@@ -403,6 +425,7 @@ export function createTravelMap(element, { index, cities, onCountryClick, onCity
                 updateCities();
                 journeys.redraw();
                 itinerary.redraw();
+                if (regionData) setRegions(regionData);
             });
         });
     }
@@ -448,6 +471,6 @@ export function createTravelMap(element, { index, cities, onCountryClick, onCity
     return {
         map, setPins, setCountryStatus, setSelection, flyToCountry, flyTo, flyToView, pulseCountry, openPopup, closePopup,
         setJourneys: journeys.setJourneys, replayJourneys: journeys.replayJourneys, setItinerary: itinerary.setItinerary,
-        refreshTheme, snapshot
+        refreshTheme, snapshot, setRegions
     };
 }

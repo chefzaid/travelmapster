@@ -49,6 +49,11 @@
     "many": "{count} ya estaban marcados o visitados",
     "other": "{count} ya estaban marcados o visitados"
   },
+  "{count} are already in your log.": {
+    "one": "{count} ya está en tu registro.",
+    "many": "{count} ya están en tu registro.",
+    "other": "{count} ya están en tu registro."
+  },
   "{count} business trips planned": {
     "one": "{count} viaje de negocios previsto",
     "many": "{count} de viajes de negocios previstos",
@@ -138,6 +143,11 @@
     "one": "{count} miembro",
     "many": "{count} miembros",
     "other": "{count} miembros"
+  },
+  "{count} more are left for another paste: at most 500 at once.": {
+    "one": "Queda {count} más para otra vez: como máximo 500 a la vez.",
+    "many": "Quedan {count} más para otra vez: como máximo 500 a la vez.",
+    "other": "Quedan {count} más para otra vez: como máximo 500 a la vez."
   },
   "{count} more countries to {title}": {
     "one": "Falta {count} país para {title}",
@@ -303,6 +313,7 @@
     "many": "{label}: faltan {count} días ({days} desde el {since}).",
     "other": "{label}: faltan {count} días ({days} desde el {since})."
   },
+  "{laps} × around the Earth": "{laps} × la vuelta a la Tierra",
   "{maxDays} days a year from {date} · {countries}": "{maxDays} días al año desde el {date} · {countries}",
   "{maxDays} days in any {windowDays} · {countries}": "{maxDays} días en cualquier periodo de {windowDays} · {countries}",
   "{maxDays} days in any {windowDays} days · {countries}": "{maxDays} días en cualquier periodo de {windowDays} días · {countries}",
@@ -384,6 +395,7 @@
   "{visits} to {places}, from your calendar.": "{visits} a {places}, de tu calendario.",
   "{visits}, and wishes move from your wishlist to the places you have been.": "{visits}, y los deseos pasan de tu lista de deseos a los lugares en los que has estado.",
   "{visits}.": "{visits}.",
+  "{year} in flights": "{year} en vuelos",
   "{year} in travel": "{year} de viajes",
   "{year}: {flights}, {distance}, about {co2} t of CO₂": "{year}: {flights}, {distance}, unas {co2} t de CO₂",
   "＋ Add": "＋ Añadir",
@@ -500,11 +512,13 @@
   "📒 Plan in ledger": "📒 Planear en el registro",
   "📚 From a template": "📚 Desde una plantilla",
   "📤 Share": "📤 Compartir",
+  "📥 Paste flights": "📥 Pegar vuelos",
   "📦 Download all my data": "📦 Descargar todos mis datos",
   "📱 Two-step sign-in": "📱 Inicio de sesión en dos pasos",
   "📷 Photo": "📷 Foto",
   "📷 Photos": "📷 Fotos",
   "📷 View photo": "📷 Ver foto",
+  "📸 {year} in flights": "📸 {year} en vuelos",
   "🔁 Possible duplicates": "🔁 Posibles duplicados",
   "🔌 API tokens": "🔌 Tokens de API",
   "🔎 Where was I?": "🔎 ¿Dónde estaba?",
@@ -545,6 +559,7 @@
   "🩺 Ledger health": "🩺 Salud del registro",
   "🪪 Days that do not count": "🪪 Días que no cuentan",
   "🚪 Leave trip": "🚪 Salir del viaje",
+  "🚶 Towns next door": "🚶 Pueblos de al lado",
   "🛂 Stamps": "🛂 Sellos",
   "🛂 Travel documents": "🛂 Documentos de viaje",
   "🛂 Travel history for visa forms": "🛂 Historial de viajes para solicitudes de visado",
@@ -614,6 +629,12 @@
   "Account restored by signing in": "Cuenta restaurada al iniciar sesión",
   "Acme Corp": "Acme Corp",
   "Activities": "Actividades",
+  "Add {count} flights?": {
+    "one": "¿Añadir {count} vuelo?",
+    "many": "¿Añadir {count} vuelos?",
+    "other": "¿Añadir {count} vuelos?"
+  },
+  "Add {name} to your wishlist": "Añadir {name} a tu lista de deseos",
   "Add 10 places to your wishlist": "Añade 10 lugares a tu lista de deseos",
   "Add a booking": "Añadir una reserva",
   "Add a future stay to see whether it fits your visa rules and thresholds.": "Añade una estancia futura para ver si cabe en tus reglas de visado y tus umbrales.",
@@ -648,6 +669,16 @@
   "Add your own rule, such as 90 days in any 180 for a visa, or 30 in any 60 for a country group.": "Añade tu propia regla, como 90 días en cualquier periodo de 180 para un visado, o 30 de cada 60 para un grupo de países.",
   "Add your passport, ID card, visas and permits with their dates: you are warned before one expires, and when a trip ahead needs a passport valid longer.": "Añade tu pasaporte, documento de identidad, visados y permisos con sus fechas: te avisamos antes de que uno caduque y cuando un próximo viaje necesite un pasaporte válido durante más tiempo.",
   "Add your stays in the Schengen area, past and planned. You'll see how many of your 90 days you have used, how many are left, whether a trip goes over the limit and the latest day you can stay.": "Añade tus estancias en el espacio Schengen, pasadas y previstas. Verás cuántos de tus 90 días has usado, cuántos te quedan, si un viaje supera el límite y el último día que puedes quedarte.",
+  "Added {count} flights: the log is full.": {
+    "one": "Se añadió {count} vuelo: el registro está lleno.",
+    "many": "Se añadieron {count} vuelos: el registro está lleno.",
+    "other": "Se añadieron {count} vuelos: el registro está lleno."
+  },
+  "Added {count} flights.": {
+    "one": "Se añadió {count} vuelo.",
+    "many": "Se añadieron {count} vuelos.",
+    "other": "Se añadieron {count} vuelos."
+  },
   "Added {count} ideas. Save to keep them.": {
     "one": "Se añadió {count} idea. Guarda para conservarla.",
     "many": "Se añadieron {count} ideas. Guarda para conservarlas.",
@@ -1041,6 +1072,7 @@
   "Every country and territory of the map with its status. Marking one here colors it in on the map.": "Cada país y territorio del mapa con su estado. Marcar uno aquí lo colorea en el mapa.",
   "Every dated visit turns into days in a country; a city counts for its country. Add visits from any place card.": "Cada visita con fecha se convierte en días en un país; una ciudad cuenta para su país. Añade visitas desde la ficha de cualquier lugar.",
   "Every journey in {year}": "Todos los viajes de {year}",
+  "Every line was understood.": "Se entendieron todas las líneas.",
   "Every place keeps its visits with their dates, notes, photo links, ratings, tags and an emoji pin. Bring your past with you: import a Polarsteps export, a list of countries from Been or Visited, your photos or your phone's location history (read in your browser, reduced to towns), or a file from another app.": "Cada lugar guarda sus visitas con sus fechas, notas, enlaces a fotos, valoraciones, etiquetas y un emoji como marcador. Trae tu pasado contigo: importa una exportación de Polarsteps, una lista de países de Been o Visited, tus fotos o el historial de ubicaciones de tu teléfono (leído en tu navegador y reducido a poblaciones), o un archivo de otra app.",
   "Every stay abroad with its entry and exit days and its purpose, as visa applications ask for it. Your home country is left out.": "Cada estancia en el extranjero con sus días de entrada y salida y su motivo, como lo piden las solicitudes de visado. Tu país de residencia queda fuera.",
   "every territory on the map": "todos los territorios del mapa",
@@ -1095,6 +1127,7 @@
   "Flight not found.": "Vuelo no encontrado.",
   "Flight number": "Número de vuelo",
   "Flight removed.": "Vuelo eliminado.",
+  "Flights": "Vuelos",
   "Flipping through the guidebook…": "Hojeando la guía…",
   "Fly somewhere you haven't been": "Vuela a algún lugar donde no hayas estado",
   "Fold the side panel away, or open it": "Plegar el panel lateral o abrirlo",
@@ -1307,6 +1340,7 @@
   "Log in to color this in on your map.": "Inicia sesión para colorear esto en tu mapa.",
   "Log in with your fingerprint, face or screen lock instead of your password. Passkeys cannot be phished.": "Inicia sesión con tu huella, tu cara o el bloqueo de pantalla en lugar de tu contraseña. Las llaves de acceso no se pueden robar con phishing.",
   "Long time no see": "Cuánto tiempo",
+  "Longest flight: {route}": "Vuelo más largo: {route}",
   "Longest trip: {route}, {startDate} – {endDate}.": "Viaje más largo: {route}, {startDate} – {endDate}.",
   "Longest trip: {trip}": "Viaje más largo: {trip}",
   "Longitude must be a number between -180 and 180.": "La longitud debe ser un número entre -180 y 180.",
@@ -1411,8 +1445,10 @@
   "No invitation waiting.": "No hay invitaciones pendientes.",
   "No layovers recorded yet": "Todavía no hay escalas registradas",
   "No month chosen": "Ningún mes elegido",
+  "No new flight found.": "No se encontró ningún vuelo nuevo.",
   "No new ideas found for the empty slots.": "No se encontraron ideas nuevas para las franjas vacías.",
   "no new ones": "ninguno nuevo",
+  "No other town within 50 km that you have not saved yet.": "No hay otro pueblo a menos de 50 km que aún no hayas guardado.",
   "No overstay: every day keeps within 90 days in any 180.": "Sin exceso de estancia: cada día se mantiene dentro de 90 días en cualquier periodo de 180.",
   "No place called “{query}” was found.": "No se encontró ningún lugar llamado “{query}”.",
   "No places found. {note}": "No se encontraron lugares. {note}",
@@ -1448,6 +1484,7 @@
   "Not shared with anyone yet.": "Todavía no se ha compartido con nadie.",
   "Not shared with that account.": "No se ha compartido con esa cuenta.",
   "Not split": "Sin repartir",
+  "Not understood: {lines}": "No se entendió: {lines}",
   "not used yet": "aún sin usar",
   "Not yet": "Todavía no",
   "Note what the trip costs in any currency and see the total in your home currency.": "Anota lo que cuesta el viaje en cualquier moneda y consulta el total en tu moneda de origen.",
@@ -1482,6 +1519,7 @@
   },
   "One area, one count.": "Un espacio, un solo recuento.",
   "One border away": "A una frontera",
+  "One flight a line, such as \"2026-05-01 LIS KIX TP1352\", or a CSV with date, from and to columns as airline and flight tracking apps export.": "Un vuelo por línea, como \"2026-05-01 LIS KIX TP1352\", o un CSV con columnas de fecha, origen y destino, como los que exportan las aerolíneas y las apps de seguimiento de vuelos.",
   "Only {username}": "Solo {username}",
   "Only places you have been to can be lived in or transit only.": "Solo los lugares en los que has estado pueden marcarse como Viví allí o Solo tránsito.",
   "Only the trip's owner can delete it. Leave it instead.": "Solo el propietario del viaje puede eliminarlo. En su lugar, sal de él.",
@@ -1538,6 +1576,7 @@
   "Past trips": "Viajes pasados",
   "Paste the invitation link an admin of your organization sent you.": "Pega el enlace de invitación que te envió un administrador de tu organización.",
   "Paste your countries": "Pega tus países",
+  "Paste your flights": "Pega tus vuelos",
   "People you add see this trip in their Trips tab. Editors change its days, stops, packing list and budget; only you share or delete it.": "Las personas que añadas verán este viaje en su pestaña Viajes. Los editores pueden cambiar sus días, paradas, lista de equipaje y presupuesto; solo tú puedes compartirlo o eliminarlo.",
   "Period": "Periodo",
   "Period saved.": "Periodo guardado.",
@@ -1616,6 +1655,7 @@
   },
   "Rating": "Valoración",
   "Reached: {count} of {target} 🎉": "Conseguido: {count} de {target} 🎉",
+  "Read them": "Leerlos",
   "Reading photo {number} of {total}…": "Leyendo la foto {number} de {total}…",
   "Reading your calendar…": "Leyendo tu calendario…",
   "Reading your location history…": "Leyendo tu historial de ubicaciones…",
@@ -1731,6 +1771,7 @@
   "See": "Ver",
   "See the demo map": "Ver el mapa de demostración",
   "See you on your next trip! ✈️": "¡Nos vemos en tu próximo viaje! ✈️",
+  "Send from 1 to 500 flights at once.": "Envía de 1 a 500 vuelos a la vez.",
   "Send profileVisibility, homeCountry, countryList, mapPalette, publicJourneys, publicIndexing, goals or packingTemplates.": "Envía profileVisibility, homeCountry, countryList, mapPalette, publicJourneys, publicIndexing, goals o packingTemplates.",
   "Separate tags with commas; at most 8 per place.": "Separa las etiquetas con comas; como máximo 8 por lugar.",
   "Session not found.": "Sesión no encontrada.",
@@ -1923,6 +1964,7 @@
   "The Schengen area has 29 members as of 2026, including Bulgaria and Romania since 1 January 2025:": "El espacio Schengen tiene 29 miembros en 2026, entre ellos Bulgaria y Rumania desde el 1 de enero de 2025:",
   "The server keeps your visits, your ledger settings and the history of visit dates, so reports can show every change. None of it is ever on your public map, and deleting your account deletes all of it.": "El servidor guarda tus visitas, los ajustes de tu registro y el historial de fechas de las visitas, para que los informes puedan mostrar cada cambio. Nada de esto aparece nunca en tu mapa público, y al eliminar tu cuenta se elimina todo.",
   "The test many tax treaties use for salaried work abroad; name the country it is for.": "La prueba que usan muchos convenios fiscales para el trabajo asalariado en el extranjero; indica el país al que se aplica.",
+  "The towns around could not be loaded.": "No se pudieron cargar los pueblos de alrededor.",
   "The trip could not load.": "No se pudo cargar el viaje.",
   "The trip starts in {count} days.": {
     "one": "El viaje empieza mañana.",

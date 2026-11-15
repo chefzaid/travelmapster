@@ -170,6 +170,7 @@ export async function findTowns(ctx) {
     const { index } = ctx.state;
     return {
         townNear: townFinder,
+        townsAround: townFinder.townsAround,
         countryAt: (lat, lng) => index.findAt(lat, lng),
         countryById: id => index.byId.get(id)
     };

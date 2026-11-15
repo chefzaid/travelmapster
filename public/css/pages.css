@@ -339,3 +339,10 @@ input[aria-invalid='true'] { border-color: var(--danger); }
 [dir="rtl"] .chevron { display: inline-block; transform: scaleX(-1); }
 .token-value { width: 100%; font-family: ui-monospace, monospace; }
 .firsts { display: grid; gap: 4px; margin: 0; padding-inline-start: 1.4em; }
+
+/* Towns next door on a town's card. */
+.card-nearby { margin: 10px 0 6px; }
+.card-nearby summary { min-height: 24px; font-size: 0.9rem; font-weight: 800; cursor: pointer; }
+.nearby-towns { display: grid; gap: 2px; margin: 0 0 8px; padding: 0; list-style: none; }
+.nearby-towns li { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.nearby-towns small { color: var(--muted); }

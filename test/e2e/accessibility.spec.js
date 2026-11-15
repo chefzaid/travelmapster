@@ -247,7 +247,7 @@ for (const colorScheme of ['light', 'dark']) {
             await page.locator('.pin[aria-label^="Lisbon"]').click();
             await expect(page.locator('.maplibregl-popup.card-popup .card-status .chip-visited')).toBeVisible();
             await page.waitForTimeout(500);
-            await expectAccessible(page, `place card in the ${palette} palette`);
+                await expectAccessible(page, `place card in the ${palette} palette`);
             await page.keyboard.press('Escape');
             // The passport's tiles, stamps and bars use the most palette colors.
             await page.click('#tab-passport');

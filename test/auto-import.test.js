@@ -126,3 +126,19 @@ test('sightings become towns with stays; positions are never kept', async () => 
     assert.equal(capped[0].visits.length, VISITS_PER_PLACE);
     assert.equal(capped[0].visits.at(-1).startDate, '2042-01-01', 'the latest are kept');
 });
+
+test('the towns around a town are the largest within 50 km, itself and those turned down left out', async () => {
+    const { createTownFinder } = await load('towns.js');
+    const cities = [
+        { name: 'Lisbon', countryId: 'PRT', population: 500_000, lat: 38.722, lng: -9.139 },
+        { name: 'Sintra', countryId: 'PRT', population: 30_000, lat: 38.798, lng: -9.388 },
+        { name: 'Cascais', countryId: 'PRT', population: 35_000, lat: 38.697, lng: -9.421 },
+        { name: 'Évora', countryId: 'PRT', population: 50_000, lat: 38.571, lng: -7.909 }
+    ];
+    const { townsAround } = createTownFinder({ cities, tiles: [{ id: 't1', bounds: [30, -12, 45, 0] }], loadTile: async () => [['Almada', 'PRT', 0, 100_000, 7, 38.679, -9.157]] });
+    const around = await townsAround(38.722, -9.139, { limit: 3 });
+    assert.deepEqual(around.map(town => town.name), ['Almada', 'Cascais', 'Sintra'], 'the largest first, Évora too far, Lisbon itself out');
+    assert.ok(around[0].distance > 2 && around[0].distance < 10);
+    assert.deepEqual((await townsAround(38.722, -9.139, { skip: town => town.name === 'Almada' })).map(town => town.name), ['Cascais', 'Sintra']);
+    assert.deepEqual(await townsAround(0, 0), []);
+});

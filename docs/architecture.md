@@ -79,6 +79,7 @@ JSON under `/api`, described in full in [OpenAPI](api/openapi.json) and kept bac
 | GET, POST | `/api/api-tokens` | The traveler's API tokens, or a new one (`name`), shown once ([ADR 0032](adr/0032-api-tokens.md)) |
 | DELETE | `/api/api-tokens/:id` | Revoke a token |
 | GET, POST | `/api/flights` | The flight log, the latest first, or a new flight (`date`, `from` and `to` IATA codes, optional `number`); at most 2,000 |
+| POST | `/api/flights/import` | Up to 500 flights at once, as far as the log has room (`full` says when it filled) |
 | DELETE | `/api/flights/:id` | Remove one of the traveler's flights |
 | GET, POST, DELETE | `/api/trips/:id/family-link` | The trip's family link, owner only (404 for anyone else): whether it is on, a new link (shown once, ending the old one) or turning it off |
 | GET | `/api/family/:token` | A trip's family view for whoever holds the link, without a session: title, stops and dates and the owner's username, never plans, packing, budget or members; 60 a minute per address |
@@ -151,10 +152,11 @@ JSON under `/api`, described in full in [OpenAPI](api/openapi.json) and kept bac
 | `public/js/map-days.js`, `heat-map.js` | Days on the map: the legend's switch and steps, and the days per country and their steps (pure `heat-map.js`, unit tested) |
 | `public/js/us-presence.js`, `ledger-us.js` | The US Substantial Presence Test, a weighted three-year count no rule can express, among the tax-residency thresholds (pure `us-presence.js`, unit tested) |
 | `public/js/rule-templates.js`, `ledger-templates.js` | Ready-made stay rules and thresholds with their sources (pure `rule-templates.js`, unit tested against the API's validation) and the picker that starts the rule dialog from one |
+| `public/js/card-nearby.js` | Towns next door on a town's card, from the town finder's `townsAround()` (`towns.js`, pure, unit tested) |
 | `public/js/firsts.js` | The first visit to each continent and its country, for the passport's Firsts (pure, unit tested) |
-| `public/js/regions.js`, `passport-regions.js`, `scripts/build-regions.js`, `scripts/geometry.js` | States and provinces of the largest countries: which a town been to lies in (pure, unit tested), the passport section, and their outlines built from Natural Earth with the shared simplification |
+| `public/js/regions.js`, `regions-data.js`, `regions-layer.js`, `passport-regions.js`, `scripts/build-regions.js`, `scripts/geometry.js` | States and provinces of the largest countries: which a town been to lies in (pure, unit tested), the passport section and the map's tint once zoomed in, and their outlines built from Natural Earth with the shared simplification |
 | `src/api-tokens.js`, `src/routes/api-tokens.js`, `public/js/security-tokens.js` | Personal API tokens: the read-only bearer sign-in for integrations, their routes, and their section of Sign-in security ([ADR 0032](adr/0032-api-tokens.md)) |
-| `src/flights.js`, `src/routes/flights.js`, `public/js/flight-log.js`, `passport-flights.js`, `scripts/build-airports.js` | The flight log: stored flights, their distance, CO₂ and arcs (pure, unit tested), the passport section, and the airport list built from OurAirports |
+| `src/flights.js`, `src/routes/flights.js`, `public/js/flight-log.js`, `passport-flights.js`, `flight-paste.js`, `scripts/build-airports.js` | The flight log: stored flights, their distance, CO₂ and arcs (pure, unit tested), the passport section, pasted flights read from lines or an app's CSV, and the airport list built from OurAirports |
 | `public/js/documents.js`, `ledger-documents.js` | Travel documents: validity, expiry warnings and the trips ahead they do not cover (pure, unit tested), and their Ledger tab section |
 | `public/js/ledger-exempt.js` | Days that do not count: periods under a residence permit or long-stay visa, edited in the Ledger tab and left out of stay rules by `stayDays()` in `days.js` |
 | `public/js/ledger-health.js`, `ledger-checks.js` | Ledger health: ends never recorded, "still there" after being elsewhere, and countries far apart on the same days (pure `ledger-checks.js`, unit tested) |
