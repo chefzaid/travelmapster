@@ -429,3 +429,19 @@ test('a place\'s short name drops the country after its comma', async () => {
     assert.equal(shortPlaceName('Portugal'), 'Portugal');
     assert.equal(shortPlaceName(undefined), '');
 });
+
+test('the wishlist reads as plain text, the highest priority first', async () => {
+    const { wishlistText } = await load('details.js');
+    const markers = [
+        { type: 'wishlist', category: 'City', name: 'Tokyo, Japan', priority: 'low', bestMonths: [4] },
+        { type: 'wishlist', category: 'Country', name: 'Peru', priority: 'high' },
+        { type: 'visited', category: 'City', name: 'Lisbon, Portugal' },
+        { type: 'wishlist', category: 'City', name: 'Oslo, Norway' }
+    ];
+    const text = wishlistText(markers, { title: "ana's wishlist", flagOf: marker => (marker.name === 'Peru' ? '🇵🇪' : '') });
+    assert.equal(text.split('\n')[0], "ana's wishlist");
+    assert.deepEqual(text.split('\n').slice(2).map(line => line.split(' · ')[0]), ['🇵🇪 Peru', 'Tokyo, Japan', 'Oslo, Norway']);
+    assert.ok(text.includes('Best Apr') || text.includes('Best April'), text);
+    assert.ok(!text.includes('Lisbon'));
+    assert.equal(wishlistText([], { title: 'x' }), 'x\n');
+});

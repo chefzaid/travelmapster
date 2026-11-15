@@ -337,6 +337,7 @@
   "{username}'s role is now {role}.": "{username} hat jetzt die Rolle {role}.",
   "{username}'s travel map": "Reisekarte von {username}",
   "{username}'s travel map · TravelMapster": "Reisekarte von {username} · TravelMapster",
+  "{username}'s wishlist": "Die Wunschliste von {username}",
   "{verb} {name} on the demo map.": "{name} auf der Demokarte: {verb}.",
   "{verb} {name}!": "{verb} {name}!",
   "{visits} to {places}, by the nearest town.": "{visits} an {places}, nach nächstgelegenem Ort.",
@@ -449,6 +450,7 @@
   },
   "📋 Copy": "📋 Kopieren",
   "📋 Copy my flags": "📋 Meine Flaggen kopieren",
+  "📋 Copy my wishlist": "📋 Meine Wunschliste kopieren",
   "📋 Copy the link": "📋 Link kopieren",
   "📋 Copy the token": "📋 Token kopieren",
   "📋 Paste countries": "📋 Länder einfügen",
@@ -459,6 +461,7 @@
   "📒 Plan in ledger": "📒 Im Tage-Konto planen",
   "📚 From a template": "📚 Aus einer Vorlage",
   "📤 Share": "📤 Teilen",
+  "📤 Share my wishlist": "📤 Meine Wunschliste teilen",
   "📥 Paste flights": "📥 Flüge einfügen",
   "📦 Download all my data": "📦 Alle meine Daten herunterladen",
   "📱 Two-step sign-in": "📱 Zwei-Schritt-Anmeldung",
@@ -721,6 +724,10 @@
   "Bulgaria": "Bulgarien",
   "Bulk changes must be a JSON object.": "Sammeländerungen müssen ein JSON-Objekt sein.",
   "Bus": "Bus",
+  "Busiest airport: {airport}, {count} flights": {
+    "one": "Meistgenutzter Flughafen: {airport}, {count} Flug",
+    "other": "Meistgenutzter Flughafen: {airport}, {count} Flüge"
+  },
   "Business": "Geschäftlich",
   "Business cards": "Visitenkarten",
   "Business days from {from} to {to}": "Geschäftsreisetage vom {from} bis {to}",
@@ -1156,6 +1163,10 @@
     "other": "Importiere {count} Orte…"
   },
   "Imports, exports, posters to download and a public map to share": "Importe, Exporte, Poster zum Herunterladen und eine öffentliche Karte zum Teilen",
+  "In {count} days": {
+    "one": "In {count} Tag",
+    "other": "In {count} Tagen"
+  },
   "In {year}": "Im Jahr {year}",
   "In any window of (days)": "In jedem Zeitraum von (Tagen)",
   "In which year?": "In welchem Jahr?",
@@ -1322,6 +1333,10 @@
   "Miles": "Meilen",
   "Monaco": "Monaco",
   "Morning": "Morgen",
+  "Most flown: {from} ⇄ {to}, {count} times": {
+    "one": "Häufigste Strecke: {from} ⇄ {to}, {count}-mal",
+    "other": "Häufigste Strecke: {from} ⇄ {to}, {count}-mal"
+  },
   "Most recent visit first": "Neuester Besuch zuerst",
   "Move day {number} earlier": "Tag {number} nach vorne",
   "Move day {number} later": "Tag {number} nach hinten",
@@ -1793,6 +1808,7 @@
   "Start setting up two-step sign-in first.": "Beginne zuerst mit der Einrichtung der Zwei-Schritt-Anmeldung.",
   "Start the packing list of a later trip from this one. Nothing is ticked off in a template.": "Beginnen Sie die Packliste einer späteren Reise mit dieser. In einer Vorlage ist nichts abgehakt.",
   "Start your own map": "Starte deine eigene Karte",
+  "Starts today": "Beginnt heute",
   "Status": "Status",
   "Stay": "Aufenthalt",
   "Stay {number}": "Aufenthalt {number}",
@@ -2011,6 +2027,7 @@
   "UN members and observer states": "UN-Mitglieder und Beobachterstaaten",
   "Unable to import that file.": "Diese Datei kann nicht importiert werden.",
   "Unable to reach TravelMapster right now.": "TravelMapster ist gerade nicht erreichbar.",
+  "Under way": "Unterwegs",
   "Undo": "Rückgängig",
   "Undone: those countries are back as they were.": "Rückgängig gemacht: Diese Länder sind wieder wie vorher.",
   "Unfolding the map…": "Entfalte die Karte…",
@@ -2115,6 +2132,7 @@
   "Why you love it, tips, what to try…": "Warum du es liebst, Tipps, was man probieren sollte…",
   "wishlist": "Wunschliste",
   "Wishlist": "Wunschliste",
+  "Wishlist copied to your clipboard.": "Wunschliste in die Zwischenablage kopiert.",
   "Wishlist priority": "Priorität auf der Wunschliste",
   "Wishlisted": "Auf die Wunschliste gesetzt",
   "with {name}": "mit {name}",

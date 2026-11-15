@@ -80,3 +80,23 @@ test('a year in flights sums its flights, the laps around the Earth and the long
     for (const part of ['2027 in flights', '3 flights', '22,400 km', '0.6 × around the Earth', 'Longest flight: LIS → KIX']) assert.ok(svg.includes(part), part);
     assert.ok(!share.flightsCard({ username: 'ana', year: '2027', flights: 1, distance: '300 km', laps: 0.01, longest: '' }).includes('around the Earth'));
 });
+
+test('the favourite route counts both ways, and the flight log exports as CSV the paste reads back', async () => {
+    const { airportIndex, flightFavourites, flightsCsv } = await load();
+    const airports = airportIndex(rows);
+    const flights = [
+        { id: 1, date: '2027-05-01', from: 'LIS', to: 'KIX', number: 'TP 1352' },
+        { id: 2, date: '2027-05-20', from: 'KIX', to: 'LIS', number: null },
+        { id: 3, date: '2027-06-01', from: 'LIS', to: 'ZZZ', number: null }
+    ];
+    assert.deepEqual(flightFavourites(flights), { route: { from: 'KIX', to: 'LIS', count: 2 }, airport: { code: 'LIS', count: 3 } });
+    assert.deepEqual(flightFavourites([flights[0]]), { route: null, airport: null });
+    assert.deepEqual(flightFavourites([]), { route: null, airport: null });
+    const csv = flightsCsv(flights, airports);
+    const lines = csv.trim().split('\r\n');
+    assert.equal(lines[0], 'date,from,to,flight,km');
+    assert.equal(lines[1], '2027-06-01,LIS,ZZZ,,');
+    assert.match(lines[3], /^2027-05-01,LIS,KIX,TP 1352,11\d{3}$/);
+    const { readPastedFlights } = await import(path.join(__dirname, '..', 'public', 'js', 'flight-paste.js'));
+    assert.equal(readPastedFlights(csv).flights.length, 3, 'the paste reads the export back');
+});

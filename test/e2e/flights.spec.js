@@ -53,6 +53,14 @@ test('a traveler logs flights by airport codes and sees how far they flew each y
     await expect(log.locator('.flight-total')).toContainText('5 flights');
     await expect(log.locator('.flight-years li')).toHaveCount(3);
 
+    // Out and back count as one route; Lisbon is the busiest airport.
+    await expect(log.locator('.flight-favourites')).toHaveText('Most flown: KIX ⇄ LIS, 2 times · Busiest airport: Lisbon (LIS), 5 flights');
+    const csv = page.waitForEvent('download');
+    await log.getByRole('button', { name: '⬇️ CSV' }).click();
+    const file = await (await csv).createReadStream().then(stream => stream.toArray()).then(chunks => Buffer.concat(chunks).toString());
+    expect(file.split('\r\n')[0]).toBe('date,from,to,flight,km');
+    expect(file).toContain('2026-05-01,LIS,KIX,TP 1352,');
+
     // The latest year as a picture, downloaded where the browser has no share sheet.
     const picture = page.waitForEvent('download');
     await log.getByRole('button', { name: '📸 2026 in flights' }).click();

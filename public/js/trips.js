@@ -22,6 +22,7 @@ import { bookingLine, sortedBookings } from './bookings.js';
 import { checklistBadge, checklistSection, purposeField } from './trip-checklist.js';
 import { t, tn } from './i18n.js';
 import { calendarFeedSection } from './trip-feed.js';
+import { timingBadge } from './trip-countdown.js';
 
 const MAX_DAYS = 30;
 
@@ -100,6 +101,7 @@ function tripCard(trip, ctx, container) {
                 h('small', {}, `${tripRoute(trip)} · ${tn(trip.plan.length, '{count} day', '{count} days')}`,
                     trip.startDate ? ` · ${formatDate(trip.startDate)}` : '', trip.owner ? ` · 👥 ${trip.owner}` : ''),
                 checklistBadge(ctx, trip),
+                timingBadge(trip, localToday()),
                 packingBadge(trip, localToday()),
                 h('span', { class: 'progress', 'aria-label': t('{filled} of {total} slots planned', { filled, total: trip.plan.length * 3 }) },
                     h('span', { style: `width:${Math.round((filled / (trip.plan.length * 3)) * 100)}%` }))

@@ -391,6 +391,7 @@
   "{username}'s role is now {role}.": "El rol de {username} ahora es {role}.",
   "{username}'s travel map": "Mapa de viajes de {username}",
   "{username}'s travel map · TravelMapster": "Mapa de viajes de {username} · TravelMapster",
+  "{username}'s wishlist": "La lista de deseos de {username}",
   "{verb} {name} on the demo map.": "{verb} {name} (mapa de demostración).",
   "{verb} {name}!": "¡{verb} {name}!",
   "{visits} to {places}, by the nearest town.": "{visits} en {places}, según la población más cercana.",
@@ -504,6 +505,7 @@
   },
   "📋 Copy": "📋 Copiar",
   "📋 Copy my flags": "📋 Copiar mis banderas",
+  "📋 Copy my wishlist": "📋 Copiar mi lista de deseos",
   "📋 Copy the link": "📋 Copiar el enlace",
   "📋 Copy the token": "📋 Copiar el token",
   "📋 Paste countries": "📋 Pegar países",
@@ -514,6 +516,7 @@
   "📒 Plan in ledger": "📒 Planear en el registro",
   "📚 From a template": "📚 Desde una plantilla",
   "📤 Share": "📤 Compartir",
+  "📤 Share my wishlist": "📤 Compartir mi lista de deseos",
   "📥 Paste flights": "📥 Pegar vuelos",
   "📦 Download all my data": "📦 Descargar todos mis datos",
   "📱 Two-step sign-in": "📱 Inicio de sesión en dos pasos",
@@ -782,6 +785,11 @@
   "Bulgaria": "Bulgaria",
   "Bulk changes must be a JSON object.": "Los cambios en bloque deben ser un objeto JSON.",
   "Bus": "Autobús",
+  "Busiest airport: {airport}, {count} flights": {
+    "one": "Aeropuerto más usado: {airport}, {count} vuelo",
+    "many": "Aeropuerto más usado: {airport}, {count} vuelos",
+    "other": "Aeropuerto más usado: {airport}, {count} vuelos"
+  },
   "Business": "Negocios",
   "Business cards": "Tarjetas de visita",
   "Business days from {from} to {to}": "Días de negocios del {from} al {to}",
@@ -1233,6 +1241,11 @@
     "other": "Importando {count} lugares…"
   },
   "Imports, exports, posters to download and a public map to share": "Importación, exportación, pósteres para descargar y un mapa público para compartir",
+  "In {count} days": {
+    "one": "En {count} día",
+    "many": "En {count} días",
+    "other": "En {count} días"
+  },
   "In {year}": "En {year}",
   "In any window of (days)": "En cualquier periodo de (días)",
   "In which year?": "¿En qué año?",
@@ -1402,6 +1415,11 @@
   "Miles": "Millas",
   "Monaco": "Mónaco",
   "Morning": "Mañana",
+  "Most flown: {from} ⇄ {to}, {count} times": {
+    "one": "Ruta más volada: {from} ⇄ {to}, {count} vez",
+    "many": "Ruta más volada: {from} ⇄ {to}, {count} veces",
+    "other": "Ruta más volada: {from} ⇄ {to}, {count} veces"
+  },
   "Most recent visit first": "Visita más reciente primero",
   "Move day {number} earlier": "Mover el día {number} antes",
   "Move day {number} later": "Mover el día {number} después",
@@ -1880,6 +1898,7 @@
   "Start setting up two-step sign-in first.": "Primero empieza a configurar el inicio de sesión en dos pasos.",
   "Start the packing list of a later trip from this one. Nothing is ticked off in a template.": "Empieza la lista de equipaje de un próximo viaje a partir de esta. En una plantilla no hay nada marcado.",
   "Start your own map": "Empieza tu propio mapa",
+  "Starts today": "Empieza hoy",
   "Status": "Estado",
   "Stay": "Estancia",
   "Stay {number}": "Estancia {number}",
@@ -2101,6 +2120,7 @@
   "UN members and observer states": "Miembros y Estados observadores de la ONU",
   "Unable to import that file.": "No se pudo importar ese archivo.",
   "Unable to reach TravelMapster right now.": "No se puede conectar con TravelMapster en este momento.",
+  "Under way": "En curso",
   "Undo": "Deshacer",
   "Undone: those countries are back as they were.": "Deshecho: esos países vuelven a estar como antes.",
   "Unfolding the map…": "Desplegando el mapa…",
@@ -2207,6 +2227,7 @@
   "Why you love it, tips, what to try…": "Por qué te encanta, consejos, qué probar…",
   "wishlist": "lista de deseos",
   "Wishlist": "Lista de deseos",
+  "Wishlist copied to your clipboard.": "Lista de deseos copiada al portapapeles.",
   "Wishlist priority": "Prioridad en la lista de deseos",
   "Wishlisted": "En tu lista de deseos:",
   "with {name}": "con {name}",

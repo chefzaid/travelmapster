@@ -86,6 +86,37 @@ export function yearInFlights(flights, airports, year) {
     return { year, flights: ofYear.length, km, laps: km / EARTH_CIRCUMFERENCE_KM, longest };
 }
 
+/**
+ * The route flown most, either way (`{ from, to, count }`, its airports in alphabetical order),
+ * and the airport used most (`{ code, count }`); each only once used twice or more.
+ */
+export function flightFavourites(flights) {
+    const routes = new Map();
+    const airports = new Map();
+    for (const { from, to } of flights) {
+        const [a, b] = [from, to].sort();
+        const key = `${a} ${b}`;
+        routes.set(key, (routes.get(key) || 0) + 1);
+        for (const code of [from, to]) airports.set(code, (airports.get(code) || 0) + 1);
+    }
+    const top = map => [...map].sort((x, y) => y[1] - x[1] || x[0].localeCompare(y[0]))[0];
+    const [routeKey, routeCount] = top(routes) || [];
+    const [code, airportCount] = top(airports) || [];
+    return {
+        route: routeCount >= 2 ? { from: routeKey.split(' ')[0], to: routeKey.split(' ')[1], count: routeCount } : null,
+        airport: airportCount >= 2 ? { code, count: airportCount } : null
+    };
+}
+
+/** The flight log as CSV, the latest first: date, from, to, flight number and kilometres, which the paste reads back. */
+export function flightsCsv(flights, airports) {
+    const rows = [['date', 'from', 'to', 'flight', 'km'], ...latestFirst(flights).map(flight => {
+        const km = flightKm(flight, airports);
+        return [flight.date, flight.from, flight.to, flight.number || '', km === null ? '' : String(Math.round(km))];
+    })];
+    return `${rows.map(row => row.join(',')).join('\r\n')}\r\n`;
+}
+
 /** The flights as arcs of [lng, lat] points, oldest first, for the map's replay. */
 export function flightArcs(flights, airports) {
     return [...flights].sort((a, b) => a.date.localeCompare(b.date))

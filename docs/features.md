@@ -88,7 +88,8 @@ The reasoning and what each rule rules out are in [ADR 0017](adr/0017-product-pr
   only, and the year of the last visit), text
   search over places, tags and visit notes, and sorting by continent, name, last visit, when
   to go, or the wishlist nearest to where you are (the browser's location read once, never
-  stored or sent), with each place's distance.
+  stored or sent), with each place's distance. The wishlist also goes out as a plain list
+  (📤 Share or 📋 Copy my wishlist), the highest priority first, with flags and best months.
 - Wishlist plans: a priority (must go, would love to, someday) and the best months to go; the
   places list can show the wishlist by the next month that suits each place, highest priority
   first, and the Explore tab suggests the place in season soonest.
@@ -287,7 +288,8 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   other currency (the rate they actually got; no rate service is called), against an optional
   planned budget, and per day of the trip. Expenses in a currency without a rate are left out
   of the total, and the budget says which rates are missing. A trip still ahead shows on its
-  card how much of its packing list is packed ("🎒 12 of 20 packed").
+  card how much of its packing list is packed ("🎒 12 of 20 packed") and when it starts ("⏳ In
+  12 days", "Under way").
 - **Split costs** on a trip planned together: say who paid each expense, and the costs are split
   evenly between everyone on the trip, owner included. It shows what each person paid and owes,
   and the fewest payments that settle up ("ben pays ana €120.00"), in the budget's currency
@@ -340,6 +342,8 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   as it says) in all and per year, and replays them as arcs on the map. **Paste flights** adds
   up to 500 at once from lines such as "2026-05-01 LIS KIX TP1352" or an app's CSV export (by
   its date, from and to columns), after a preview of what was understood and already logged.
+  It names the most flown route (either way) and the busiest airport, downloads as CSV (date,
+  from, to, flight number, km) that the paste reads back, and
   **📸 {year} in flights** makes the latest year a square picture: its flights, distance, laps
   around the Earth and longest flight by airport codes. Flights are private,
   in the account archive, and a guest keeps them in the browser until signing up.

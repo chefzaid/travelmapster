@@ -347,3 +347,4 @@ input[aria-invalid='true'] { border-color: var(--danger); }
 .nearby-towns li { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .nearby-towns small { color: var(--muted); }
 .packing-badge { display: block; color: var(--muted); }
+.timing-badge { display: block; font-weight: 800; }

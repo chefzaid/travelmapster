@@ -1,8 +1,8 @@
-import { h, fill, toast, downloadFile, formatDate } from './ui.js';
+import { h, fill, toast, downloadFile, formatDate, canShareText, shareText } from './ui.js';
 import { CONTINENT_EMOJI, CONTINENTS, regionName, shortPlaceName } from './geo.js';
 import { buildCsv, buildJson, parseImportContent, validatePlace, placeKey, mergePlaces } from './io.js';
 import { lastVisitDate, lastVisitYears, matchesLastVisit, visitCount } from './visits.js';
-import { groupByNextMonth, matchesDetails, monthsLabel, priorityLabel, ratingLabel, stars, usedTags } from './details.js';
+import { groupByNextMonth, matchesDetails, monthsLabel, priorityLabel, ratingLabel, stars, usedTags, wishlistText } from './details.js';
 import { STATUSES, statusLabel, statusOf } from './status.js';
 import { openNewTrip } from './lazy.js';
 import { importButtons } from './import-apps.js';
@@ -310,7 +310,16 @@ export function renderPlaces(container, ctx) {
 
     fill(container,
         h('div', { class: 'section-head' }, h('h2', {}, t('Your places')), summary),
-        h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => openCountryList(ctx) }, t('🗂️ Countries as a list')),
+        h('div', { class: 'row' },
+            h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => openCountryList(ctx) }, t('🗂️ Countries as a list')),
+            ctx.state.markers.some(marker => marker.type === 'wishlist') ? h('button', {
+                type: 'button', class: 'btn btn-ghost btn-sm',
+                onclick: () => {
+                    const title = t('{username}\'s wishlist', { username: ctx.state.user.username });
+                    const text = wishlistText(ctx.state.markers, { title, flagOf: marker => (marker.category === 'Country' ? ctx.state.stats.markerCountry.get(marker.id)?.flag : '') || '' });
+                    shareText({ title, text }, t('Wishlist copied to your clipboard.'));
+                }
+            }, canShareText() ? t('📤 Share my wishlist') : t('📋 Copy my wishlist')) : null),
         h('div', { class: 'filters' },
             searchInput,
             chipGroup(t('Status'), 'type', [['all', t('All')], ...STATUSES.map(({ id, filter }) => [id, filter])], rerender),

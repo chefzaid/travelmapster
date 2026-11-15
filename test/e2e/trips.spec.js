@@ -320,6 +320,10 @@ test('family follow a trip from a private link without an account, until it is t
     await trips.getByRole('button', { name: '💾 Save' }).click();
     await expect(page.locator('.toast-success', { hasText: 'Trip saved.' })).toBeVisible();
 
+    // Its card in the list says it is under way.
+    await trips.getByRole('button', { name: '‹ All trips' }).click();
+    await expect(page.locator('.trip-card', { hasText: 'Lisbon week' }).locator('.timing-badge')).toHaveText('⏳ Under way');
+    await page.locator('.trip-card', { hasText: 'Lisbon week' }).click();
     await trips.getByText('👪 Family view').click();
     await trips.getByRole('button', { name: '👪 Make a family link' }).click();
     const link = await page.locator('#family-link-url').inputValue();

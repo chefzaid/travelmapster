@@ -196,3 +196,20 @@ export function describeDetailFilter({ tag = 'all', rating = 'all', companion = 
     else if (rating !== 'all') parts.push(`★${rating}+`);
     return parts.join(' · ');
 }
+
+/**
+ * The wishlist as plain text to send to a friend: a title, then one line a wish ("🇯🇵 Tokyo,
+ * Japan · must go · best in April"), the highest priority first, then by name.
+ * @param {Array<Record<string, any>>} markers
+ * @param {{ title: string, flagOf?: (marker: Record<string, any>) => string }} options
+ */
+export function wishlistText(markers, { title, flagOf = () => '' }) {
+    const wishes = markers.filter(marker => marker.type === 'wishlist')
+        .sort((a, b) => (PRIORITY_ORDER[a.priority] ?? 3) - (PRIORITY_ORDER[b.priority] ?? 3) || a.name.localeCompare(b.name));
+    const line = marker => [
+        [flagOf(marker), marker.name].filter(Boolean).join(' '),
+        marker.priority ? priorityLabel(marker.priority) : '',
+        marker.bestMonths?.length ? t('Best {months}', { months: monthsLabel(marker.bestMonths) }) : ''
+    ].filter(Boolean).join(' · ');
+    return [title, '', ...wishes.map(line)].join('\n');
+}

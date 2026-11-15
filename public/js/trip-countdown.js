@@ -2,7 +2,7 @@
 // countries it goes to for its share card.
 import { h } from './ui.js';
 import { localToday } from './days.js';
-import { nextTrip, tripStops } from './itinerary.js';
+import { nextTrip, tripStops, tripTiming } from './itinerary.js';
 import { destinationPlace } from './trip-visits.js';
 import { t, tn } from './i18n.js';
 
@@ -15,6 +15,14 @@ export function countdownLabel({ trip, days, underWay }) {
     if (underWay) return t('{title}: under way', { title });
     if (!days) return t('{title} starts today', { title });
     return tn(days, '{title} in {count} day', '{title} in {count} days', { title });
+}
+
+/** "In 12 days", "Starts today" or "Under way" on the card of a trip not over yet; null otherwise. */
+export function timingBadge(trip, today) {
+    const timing = tripTiming(trip, today);
+    if (!timing) return null;
+    const label = timing.underWay ? t('Under way') : timing.days ? tn(timing.days, 'In {count} day', 'In {count} days') : t('Starts today');
+    return h('small', { class: 'timing-badge' }, h('span', { 'aria-hidden': 'true' }, '⏳ '), label);
 }
 
 /** The flags of the countries the trip's stops are in, each once, in the order of the stops. */

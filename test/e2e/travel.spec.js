@@ -386,6 +386,12 @@ test.describe('in Lisbon', () => {
         const places = page.locator('#places-tab .place-main strong');
         await expect(places).toHaveText([/^Porto/, /^Madrid/, /^Tokyo/]);
         await expect(page.locator('#places-tab .place-distance').first()).toContainText('away');
+        // The wishlist as a list to send, copied where there is no share sheet.
+        await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+        await page.getByRole('button', { name: '📋 Copy my wishlist' }).click();
+        await expect(page.locator('.toast-success', { hasText: 'Wishlist copied' })).toBeVisible();
+        const copied = await page.evaluate(() => navigator.clipboard.readText());
+        expect(copied.split('\n').slice(2).map(line => line.split(',')[0])).toEqual(['Madrid', 'Porto', 'Tokyo']);
         expect(errors).toEqual([]);
     });
 });

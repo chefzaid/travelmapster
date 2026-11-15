@@ -280,7 +280,7 @@ Next small steps on what shipped lately: the flight log, the states and province
 - [x] Packing at a glance: an upcoming trip's card in the trips list shows how much of its packing list is packed ("🎒 12 of 20"), as it shows the business checklist. Done: 🎒 on the card of a trip still ahead (`packingBadge()` in `trip-extras.js`).
 - [x] Wishes nearest you: on the Places tab, a "Near me" sort reads the browser's location once (as checking in does, never stored or sent) and lists the wishlist places nearest first, with their distance. Done: "Nearest to me (wishlist)" in the Places sort, through `here.js`, shared with checking in.
 - [x] Flights in the year's recap: the passport's yearly recap picture adds the year's flights and distance when the flight log has any. Done: a ✈️ line on the recap picture, with the airports shared through `airports-data.js`.
-- [ ] Share my wishlist: the Places tab's wishlist as a plain list ("🇯🇵 Tokyo, Japan · best in April…") through the phone's share sheet, or copied elsewhere, to send to a friend planning with you.
-- [ ] Flight favourites: the flight log names the most flown route and the airport most used, with their counts.
-- [ ] Flights as a spreadsheet: the flight log downloads as CSV (date, from, to, flight number, distance), which the paste reads back.
-- [ ] Days to go on trip cards: an upcoming trip's card says "in 12 days", and "under way" during it.
+- [x] Share my wishlist: the Places tab's wishlist as a plain list ("🇯🇵 Tokyo, Japan · best in April…") through the phone's share sheet, or copied elsewhere, to send to a friend planning with you. Done: 📤 Share / 📋 Copy my wishlist on the Places tab (`wishlistText()` in `details.js`).
+- [x] Flight favourites: the flight log names the most flown route and the airport most used, with their counts. Done: the most flown route and the busiest airport under the flight log's totals.
+- [x] Flights as a spreadsheet: the flight log downloads as CSV (date, from, to, flight number, distance), which the paste reads back. Done: ⬇️ CSV in the flight log (`flightsCsv()`), read back by 📥 Paste flights.
+- [x] Days to go on trip cards: an upcoming trip's card says "in 12 days", and "under way" during it. Done: ⏳ on trip cards, from `tripTiming()` in `itinerary.js`, which the countdown shares.

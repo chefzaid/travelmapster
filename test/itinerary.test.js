@@ -179,3 +179,13 @@ test('the subscription feed has an event for each dated trip and planned stay, w
     assert.ok(lines.includes('SUMMARY:Planned stay: France') && lines.includes('DTEND;VALUE=DATE:20270411'));
     assert.ok(!calendar.includes('Secret plan'), 'never the plans');
 });
+
+test('a dated trip not over yet tells the days to go, and when it is under way', async () => {
+    const { tripTiming } = await import(path.join(__dirname, '..', 'public', 'js', 'itinerary.js'));
+    const trip = { title: 'T', destination: 'D', startDate: '2027-05-10', plan: [{}, {}, {}] };
+    assert.deepEqual(tripTiming(trip, '2027-05-01'), { days: 9, underWay: false });
+    assert.deepEqual(tripTiming(trip, '2027-05-10'), { days: 0, underWay: false });
+    assert.deepEqual(tripTiming(trip, '2027-05-12'), { days: 0, underWay: true });
+    assert.equal(tripTiming(trip, '2027-05-13'), null);
+    assert.equal(tripTiming({ ...trip, startDate: '' }, '2027-05-01'), null);
+});

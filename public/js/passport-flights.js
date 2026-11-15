@@ -1,9 +1,11 @@
 // The passport's flight log: flights added by date and airport codes, the distance flown per
 // year with a rough CO₂ estimate, and a replay of the arcs on the map (flight-log.js). The
 // airports (public/data/airports.json) load only once the section is first drawn.
-import { h, fill, toast, formDialog, formatDate } from './ui.js';
+import { h, fill, toast, formDialog, formatDate, downloadFile } from './ui.js';
 import { readPastedFlights } from './flight-paste.js';
-import { CO2_KG_PER_KM, FLIGHTS_MAX, airportLabel, checkFlight, flightArcs, flightKm, flightStats, latestFirst, yearInFlights } from './flight-log.js';
+import {
+    CO2_KG_PER_KM, FLIGHTS_MAX, airportLabel, checkFlight, flightArcs, flightFavourites, flightKm, flightStats, flightsCsv, latestFirst, yearInFlights
+} from './flight-log.js';
 import { flightsCard } from './share-cards.js';
 import { loadAirports } from './airports-data.js';
 import { formatDistance } from './units.js';
@@ -103,6 +105,16 @@ function flightItem(ctx, airports, flight, redraw) {
         }, '🗑️'));
 }
 
+// The route flown most and the airport used most, once there is one of each.
+function favouritesLine(flights, airports) {
+    const { route, airport } = flightFavourites(flights);
+    const parts = [
+        route ? tn(route.count, 'Most flown: {from} ⇄ {to}, {count} time', 'Most flown: {from} ⇄ {to}, {count} times', { from: route.from, to: route.to }) : null,
+        airport ? tn(airport.count, 'Busiest airport: {airport}, {count} flight', 'Busiest airport: {airport}, {count} flights', { airport: airportLabel(airports, airport.code) }) : null
+    ].filter(Boolean);
+    return parts.length ? h('p', { class: 'flight-favourites' }, parts.join(' · ')) : null;
+}
+
 // The latest year with flights as a square picture, through the passport's share cards.
 function shareYearButton(ctx, airports, year) {
     return h('button', {
@@ -132,9 +144,14 @@ function draw(ctx, body, airports) {
             t('{year}: {flights}, {distance}, about {co2} t of CO₂', {
                 year: year.year, flights: tn(year.flights, '{count} flight', '{count} flights'), distance: formatDistance(year.km), co2: tonnes(year.co2Kg)
             })))) : null,
+        favouritesLine(flights, airports),
         unknown.length ? h('p', { class: 'hint' }, t('Unknown airport codes, counted without a distance: {codes}.', { codes: joinList(unknown) })) : null,
         flights.length ? h('p', { class: 'hint' }, t('CO₂ is a rough estimate of {grams} g per kilometre for an economy seat; real flights vary a lot.', { grams: CO2_KG_PER_KM * 1000 })) : null,
         years.length ? shareYearButton(ctx, airports, years[0].year) : null,
+        flights.length ? h('button', {
+            type: 'button', class: 'btn btn-ghost btn-sm',
+            onclick: () => downloadFile(`travelmapster-flights-${new Date().toISOString().slice(0, 10)}.csv`, flightsCsv(flights, airports), 'text/csv')
+        }, t('⬇️ CSV')) : null,
         flights.length ? h('button', {
             type: 'button', class: 'btn btn-ghost btn-sm',
             onclick: () => ctx.map.replayJourneys(flightArcs(flights, airports), { reduceMotion: Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) })

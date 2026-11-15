@@ -72,11 +72,15 @@ export function tripEndDate(trip) {
  * starts (0 on its first day and while under way), or null when no dated trip lies ahead.
  */
 export function nextTrip(trips, today) {
-    const [trip] = trips.filter(item => item.startDate && tripEndDate(item) >= today)
+    const [trip] = trips.filter(item => tripTiming(item, today))
         .sort((a, b) => a.startDate.localeCompare(b.startDate) || a.title.localeCompare(b.title));
-    if (!trip) return null;
-    const days = Math.max(0, dayNumber(trip.startDate) - dayNumber(today));
-    return { trip, days, underWay: trip.startDate < today };
+    return trip ? { trip, ...tripTiming(trip, today) } : null;
+}
+
+/** For a dated trip not over yet: `{ days }` until it starts (0 on its first day) and `underWay`; else null. */
+export function tripTiming(trip, today) {
+    if (!trip.startDate || tripEndDate(trip) < today) return null;
+    return { days: Math.max(0, dayNumber(trip.startDate) - dayNumber(today)), underWay: trip.startDate < today };
 }
 
 export function tripAsText(trip) {
