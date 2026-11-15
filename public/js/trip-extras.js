@@ -1,9 +1,9 @@
 // The trip editor's stops, packing list and budget, edited in the trip's draft and saved with it.
-import { h, toast } from './ui.js';
+import { h, toast, downloadFile } from './ui.js';
 import { tripEndDate, tripStops } from './itinerary.js';
 import { MAX_DAYS, MAX_STOPS, addStop, removeStop, renameStop, resizeStop } from './trip-stops.js';
 import {
-    EXPENSE_CATEGORIES, EXPENSES_MAX, PACKING_MAX_ITEMS, budgetTotals, currencyOptions, emptyBudget,
+    EXPENSE_CATEGORIES, EXPENSES_MAX, PACKING_MAX_ITEMS, budgetCsv, budgetTotals, currencyOptions, emptyBudget,
     foreignCurrencies, formatMoney, homeCurrency, packingProgress
 } from './trip-budget.js';
 import { formatList, locale, t, tn } from './i18n.js';
@@ -325,6 +325,10 @@ export function budgetSection(draft, { rerender, markDirty, trips }) {
             h('legend', {}, t('Exchange rates: the rate you got')),
             foreign.map(code => rateRow(budget, code, rerender))) : null,
         totalsView(budget, draft.plan.length),
+        budget.expenses.length ? h('button', {
+            type: 'button', class: 'btn btn-ghost btn-sm',
+            onclick: () => downloadFile(`travelmapster-budget-${draft.startDate || new Date().toISOString().slice(0, 10)}.csv`, budgetCsv(budget), 'text/csv')
+        }, t('⬇️ CSV')) : null,
         h('button', {
             type: 'button', class: 'btn btn-danger-ghost btn-sm',
             onclick: () => {

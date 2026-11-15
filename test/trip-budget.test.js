@@ -70,3 +70,20 @@ test('money and currency names come from Intl', async () => {
     assert.ok(options.some(option => option.value === 'EUR' && option.label === 'EUR · Euro'));
     assert.ok(currencyOptions().length > 100);
 });
+
+test('a budget downloads as CSV, converted with its rates, formulas defused', async () => {
+    const { budgetCsv } = await load();
+    const csv = budgetCsv({
+        currency: 'EUR', rates: { JPY: 0.0061 },
+        expenses: [
+            { label: 'Ryokan, two nights', amount: 48000, currency: 'JPY', category: 'stay', paidBy: 'ana' },
+            { label: '=Train', amount: 12.5, currency: 'EUR', category: 'transport' },
+            { label: 'Taxi', amount: 20, currency: 'USD', category: 'transport' }
+        ]
+    });
+    const lines = csv.trimEnd().split('\r\n');
+    assert.equal(lines[0], '"expense","category","amount","currency","rate","amount_EUR","paid_by"');
+    assert.equal(lines[1], '"Ryokan, two nights","stay","48000","JPY","0.0061","292.8","ana"');
+    assert.equal(lines[2], '"\'=Train","transport","12.5","EUR","1","12.5",""');
+    assert.equal(lines[3], '"Taxi","transport","20","USD","","",""', 'no rate, no conversion');
+});

@@ -170,6 +170,13 @@ test('a trip keeps a packing list and a budget in any currency', async ({ page }
     await expect(trips.locator('.budget-totals')).toContainText('€780.00');
     await expect(trips.locator('.budget-totals')).toContainText('€220.00 left');
     await expect(trips.locator('.budget-totals')).toContainText('€780.00 a day');
+    // The expenses download for a spreadsheet, converted with the rate given.
+    const csv = page.waitForEvent('download');
+    await trips.getByRole('button', { name: '⬇️ CSV' }).click();
+    const sheet = await (await csv).createReadStream().then(stream => stream.toArray()).then(chunks => Buffer.concat(chunks).toString());
+    expect(sheet.split('\r\n')[0]).toBe('"expense","category","amount","currency","rate","amount_EUR","paid_by"');
+    expect(sheet).toContain('"Ryokan",');
+    expect(sheet).toContain('"30000","JPY","0.006","180",""');
 
     await trips.getByRole('button', { name: '💾 Save' }).click();
     await expect(page.locator('.toast-success', { hasText: 'Trip saved.' })).toBeVisible();

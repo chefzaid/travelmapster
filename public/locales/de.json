@@ -1288,6 +1288,7 @@
   "Longest flight: {route}": "Längster Flug: {route}",
   "Longest trip: {route}, {startDate} – {endDate}.": "Längste Reise: {route}, {startDate} – {endDate}.",
   "Longest trip: {trip}": "Längste Reise: {trip}",
+  "Longest: {from} → {to}, {distance}": "Am längsten: {from} → {to}, {distance}",
   "Longitude must be a number between -180 and 180.": "Der Längengrad muss eine Zahl zwischen -180 und 180 sein.",
   "Luxembourg": "Luxemburg",
   "Made {date}": "Erstellt am {date}",

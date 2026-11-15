@@ -291,3 +291,5 @@ Next small steps on what shipped lately: the flight log, the states and province
 - [x] Edit a flight: a typo in a logged flight is fixed in place instead of removed and typed again. Done: `PUT /api/flights/:id` (`update()` in `src/flights.js`) and ✏️ in the flight log.
 - [x] Directions to a booking: a booking's address opens a map search for it, for the way there on the day. Done: OpenStreetMap search link in `trip-bookings.js`.
 - [x] The way back: a flight offers its return, the add form filled with the same airports the other way round, waiting for its day. Done: ↩️ `fillWayBack()` in `passport-flights.js`.
+- [x] A trip's expenses as a spreadsheet: the budget downloads as CSV, converted with the rates given, for claiming or sharing costs. Done: `budgetCsv()` in `trip-budget.js` and ⬇️ CSV in the budget.
+- [x] The longest flight: the flight log names it with its distance. Done: in the favourites line of `passport-flights.js`.

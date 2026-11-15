@@ -2,6 +2,7 @@
 // traveler's home currency) with the exchange rate the traveler enters for each other currency:
 // the rate they actually got, with no rate service to depend on. Pure, unit tested in Node.
 import { locale as interfaceLocale, tk } from './i18n.js';
+import { csvField } from './ledger-evidence.js';
 
 export const EXPENSE_CATEGORIES = [
     ['transport', '🚆', tk('Transport')],
@@ -103,4 +104,18 @@ export function tidyBudget(budget) {
     const used = new Set(foreignCurrencies(budget));
     const rates = Object.fromEntries(Object.entries(budget.rates || {}).filter(([code]) => used.has(code)));
     return { ...budget, rates };
+}
+
+/**
+ * The expenses as CSV for a spreadsheet: label, category, amount and currency as entered, the
+ * rate used and the amount in the budget's currency (empty without a rate), and who paid.
+ */
+export function budgetCsv(budget) {
+    const rows = [['expense', 'category', 'amount', 'currency', 'rate', `amount_${budget.currency}`, 'paid_by']];
+    for (const expense of budget.expenses || []) {
+        const rate = expense.currency === budget.currency ? 1 : budget.rates?.[expense.currency];
+        const converted = rate ? String(Math.round(expense.amount * rate * 100) / 100) : '';
+        rows.push([expense.label, expense.category, String(expense.amount), expense.currency, rate ? String(rate) : '', converted, expense.paidBy || '']);
+    }
+    return `${rows.map(row => row.map(csvField).join(',')).join('\r\n')}\r\n`;
 }

@@ -178,10 +178,12 @@ function flightItem(ctx, airports, flight, redraw) {
         }, '🗑️'));
 }
 
-// The route flown most and the airport used most, once there is one of each.
+// The longest flight, and the route flown most and the airport used most once there is one of each.
 function favouritesLine(flights, airports) {
     const { route, airport } = flightFavourites(flights);
+    const longest = flights.length ? yearInFlights(flights, airports, '').longest : null;
     const parts = [
+        longest?.km ? t('Longest: {from} → {to}, {distance}', { from: longest.flight.from, to: longest.flight.to, distance: formatDistance(longest.km) }) : null,
         route ? tn(route.count, 'Most flown: {from} ⇄ {to}, {count} time', 'Most flown: {from} ⇄ {to}, {count} times', { from: route.from, to: route.to }) : null,
         airport ? tn(airport.count, 'Busiest airport: {airport}, {count} flight', 'Busiest airport: {airport}, {count} flights', { airport: airportLabel(airports, airport.code) }) : null
     ].filter(Boolean);

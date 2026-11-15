@@ -81,7 +81,7 @@ test('a traveler logs flights by airport codes and sees how far they flew each y
     await expect(log.locator('.flight-years li')).toHaveCount(3);
 
     // Out and back count as one route; Lisbon is the busiest airport.
-    await expect(log.locator('.flight-favourites')).toHaveText('Most flown: KIX ⇄ LIS, 2 times · Busiest airport: Lisbon (LIS), 5 flights');
+    await expect(log.locator('.flight-favourites')).toHaveText('Longest: KIX → LIS, 6,889 mi · Most flown: KIX ⇄ LIS, 2 times · Busiest airport: Lisbon (LIS), 5 flights');
     const csv = page.waitForEvent('download');
     await log.getByRole('button', { name: '⬇️ CSV' }).click();
     const file = await (await csv).createReadStream().then(stream => stream.toArray()).then(chunks => Buffer.concat(chunks).toString());

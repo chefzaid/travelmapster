@@ -1608,6 +1608,7 @@
   "Longest flight: {route}": "أطول رحلة: {route}",
   "Longest trip: {route}, {startDate} – {endDate}.": "أطول رحلة: {route}، {startDate} – {endDate}.",
   "Longest trip: {trip}": "أطول رحلة: {trip}",
+  "Longest: {from} → {to}, {distance}": "الأطول: {from} ← {to}، {distance}",
   "Longitude must be a number between -180 and 180.": "يجب أن يكون خط الطول رقمًا بين -180 و180.",
   "Luxembourg": "لوكسمبورغ",
   "Made {date}": "أُنشئ في {date}",

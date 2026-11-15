@@ -289,7 +289,8 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   currency, totalled in the traveler's home currency with the exchange rate they enter for each
   other currency (the rate they actually got; no rate service is called), against an optional
   planned budget, and per day of the trip. Expenses in a currency without a rate are left out
-  of the total, and the budget says which rates are missing. A trip still ahead shows on its
+  of the total, and the budget says which rates are missing. **⬇️ CSV** downloads the expenses
+  for a spreadsheet, each with its rate, its amount in the home currency and who paid. A trip still ahead shows on its
   card how much of its packing list is packed ("🎒 12 of 20 packed") and when it starts ("⏳ In
   12 days", "Under way").
 - **Split costs** on a trip planned together: say who paid each expense, and the costs are split
@@ -347,7 +348,7 @@ Pages for visitors without an account ([ADR 0011](adr/0011-public-pages.md)).
   as it says) in all and per year, and replays them as arcs on the map. **Paste flights** adds
   up to 500 at once from lines such as "2026-05-01 LIS KIX TP1352" or an app's CSV export (by
   its date, from and to columns), after a preview of what was understood and already logged.
-  It names the most flown route (either way) and the busiest airport, downloads as CSV (date,
+  It names the longest flight, the most flown route (either way) and the busiest airport, downloads as CSV (date,
   from, to, flight number, km) that the paste reads back, and
   **📸 {year} in flights** makes the latest year a square picture: its flights, distance, laps
   around the Earth and longest flight by airport codes. Flights are private,
