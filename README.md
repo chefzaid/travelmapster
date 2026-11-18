@@ -1,6 +1,6 @@
 # TravelMapster
 
-![Node.js](https://img.shields.io/badge/Node.js-22-339933?logo=node.js&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-26-339933?logo=node.js&logoColor=white)
 ![Express](https://img.shields.io/badge/Express-5-000?logo=express&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18-4169E1?logo=postgresql&logoColor=white)
 ![MapLibre GL](https://img.shields.io/badge/MapLibre%20GL-6-396CB2?logo=maplibre&logoColor=white)
@@ -20,7 +20,7 @@ Run the whole stack in containers, then open <http://localhost:3000> and sign up
 docker compose -f infra/compose/compose.yaml up --build
 ```
 
-For a fast edit loop with Node.js 22.12+ against the compose database, and for tests, see
+For a fast edit loop with Node.js 26.13.1+ against the compose database, and for tests, see
 the [development guide](docs/development.md#local-start) and the
 [testing guide](docs/testing.md).
 

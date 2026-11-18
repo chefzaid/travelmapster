@@ -28,13 +28,13 @@ variables:
       - "standard"
       - "full"
     description: "Use full to run the non-blocking quality/security reports and release/deploy automatically."
-  NODE_IMAGE: "docker.io/library/node:22.22.2-bookworm-slim@sha256:9f6d5975c7dca860947d3915877f85607946403fc55349f39b4bc3688448bb6e"
-  TOOLS_IMAGE: "docker.io/library/alpine:3.22@sha256:5291449c3df73caf6ed85e649dec1b9e818b39a5d8c871e97afc13e9cd5e8fa8"
+  NODE_IMAGE: "docker.io/library/node:26.13.1-bookworm-slim@sha256:5df79989ed685e09f0a98019db4cebfb22fb9df1a53c0161664a011f7ff6b0f1"
+  TOOLS_IMAGE: "docker.io/library/alpine:3.24@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf"
   REGISTRY_PUSH_HOST: "gitlab-registry.swirl.internal:5050"
   SONAR_HOST_URL: "http://sonarqube.infra.svc.cluster.local:9000"
   SONAR_USER_HOME: "$CI_PROJECT_DIR/.cache/sonar"
   NPM_CONFIG_CACHE: "$CI_PROJECT_DIR/.cache/npm"
-  KANIKO_IMAGE: "gcr.io/kaniko-project/executor@sha256:c3109d5926a997b100c4343944e06c6b30a6804b2f9abe0994d3de6ef92b028e"
+  KANIKO_IMAGE: "gcr.io/kaniko-project/executor@sha256:2562c4fe551399514277ffff7dcca9a3b1628c4ea38cb017d7286dc6ea52f4cd"
   KANIKO_EXECUTOR: "$CI_PROJECT_DIR/.cache/kaniko/executor"
 
 .npm-cache: &npm-cache
@@ -47,7 +47,7 @@ variables:
   stage: build
   image: $NODE_IMAGE
   services:
-    - name: docker.io/library/postgres:18.6-bookworm@sha256:b939b3851e2cccb017dc4497af63b15e34efa57fba036548773c53b2f16a8871
+    - name: docker.io/library/postgres:18.7-bookworm@sha256:a197bcc7150b0a7e35796ef0c110693cba6edd41e92b564cc50b976f17532423
       alias: postgres
       variables:
         POSTGRES_DB: travelmapster_test
@@ -85,7 +85,7 @@ variables:
     name: $TOOLS_IMAGE
     entrypoint: [""]
   cache:
-    - key: travelmapster-kaniko-executor-v1
+    - key: travelmapster-kaniko-executor-v2
       paths:
         - .cache/kaniko/
       policy: pull-push
@@ -118,7 +118,7 @@ variables:
   before_script:
     - apt-get update -qq && apt-get install -y -qq --no-install-recommends git ca-certificates >/dev/null
     - export APP_VERSION="$(infra/scripts/current-version.sh)"
-    - npm install --global @sonar/scan@5.0.0
+    - npm install --global @sonar/scan@5.0.2
   script:
     - |
       if [ -z "${SONAR_TOKEN:-}" ]; then
@@ -142,7 +142,7 @@ variables:
   stage: verify
   needs: []
   image:
-    name: docker.io/aquasec/trivy:0.74.0@sha256:ee940acbf1f58ebadb42d01434ce4609530bf1b52536afbd1eee66cd7123c5c9
+    name: docker.io/aquasec/trivy:0.76.2@sha256:6fa071ef8daa2e58b90cbf1710bedca91adbb3bf98693533226f442035b836a6
     entrypoint: [""]
   variables:
     TRIVY_CACHE_DIR: .cache/trivy
@@ -180,7 +180,7 @@ variables:
     name: $TOOLS_IMAGE
     entrypoint: [""]
   cache:
-    - key: travelmapster-kaniko-executor-v1
+    - key: travelmapster-kaniko-executor-v2
       paths:
         - .cache/kaniko/
       policy: pull-push
@@ -218,7 +218,7 @@ variables:
   resource_group: travelmapster-production
   interruptible: false
   before_script:
-    - apk add --no-cache bash curl git jq nodejs npm
+    - apk add --no-cache bash curl git jq nodejs-current npm
     - export APP_VERSION="$(infra/scripts/current-version.sh)"
   script:
     - infra/scripts/ci-release.sh publish
@@ -247,8 +247,8 @@ variables:
   interruptible: false
   before_script:
     - apk add --no-cache bash curl git jq
-    - curl --fail --silent --show-error --location --output /usr/local/bin/kubectl "https://dl.k8s.io/release/v1.35.4/bin/linux/amd64/kubectl"
-    - echo "b529430df69a688fd61b64ad2299edb5fd71cb58be2a4779dba624c7d3510efd  /usr/local/bin/kubectl" | sha256sum -c
+    - curl --fail --silent --show-error --location --output /usr/local/bin/kubectl "https://dl.k8s.io/release/v1.35.10/bin/linux/amd64/kubectl"
+    - echo "c49a28f1f4efc4d475ed05f47f2ce8e563bf7bef69ed77fe1b924ea6d83b6327  /usr/local/bin/kubectl" | sha256sum -c
     - chmod 0755 /usr/local/bin/kubectl
   script:
     - infra/scripts/ci-release.sh deploy

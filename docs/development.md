@@ -19,7 +19,7 @@ docs/                    Guides and ADRs
 
 ## Toolchain
 
-Node.js 22.12 or newer (`.nvmrc` pins 22) and PostgreSQL 18, or Docker for both. The
+Node.js 26.13.1 or newer (`.nvmrc` pins 26) and PostgreSQL 18, or Docker for both. The
 [dev container](../.devcontainer/devcontainer.json) installs dependencies and starts the
 compose database.
 
