@@ -20,7 +20,8 @@ Project `swirl:travelmapster` analyzes `src/`, `public/js/`, `public/index.html`
 `public/css/`, with `test/` as tests and coverage from `coverage/lcov.info`. Bundled data
 and vendor files are excluded. Settings live in [sonar-project.properties](../sonar-project.properties).
 
-`01-quality` downloads the coverage artifact from `01-test` and submits the analysis without
+`01-quality` downloads the coverage artifact from `03-coverage`, which joins the coverage of the
+parallel `01-test` suites, and submits the analysis without
 waiting for the quality gate. It needs `SONAR_TOKEN`, a protected variable, so it only succeeds
 on the protected `main` branch; elsewhere it reports the missing token and fails visibly.
 
@@ -38,7 +39,8 @@ and the scan-only variable.
 
 ### Manual Scan
 
-Run a pipeline on `main` with `SONAR_SCAN_ONLY=true`. Only `01-test` and `01-quality` run;
+Run a pipeline on `main` with `SONAR_SCAN_ONLY=true`. Only the `01-test` suites, `03-coverage`
+and `01-quality` run;
 packaging, security, release and deploy jobs are excluded by their rules.
 
 ## Trivy

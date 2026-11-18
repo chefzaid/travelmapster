@@ -11,10 +11,11 @@ declarative contract. Releases should be deliberate, reproducible and verified i
 ## Decision
 
 Follow onboarding contract version 1: one Argo CD Application in `infra` deploys `infra/k8s` to
-`apps`, with secrets from Vault. GitLab jobs have explicit, ordered names: `01-test` and
-`02-package` guard every branch; `01-quality` (Sonar) and `02-security` (Trivy) report without
-blocking; on `main`, the confirmed `00-image` job publishes the image with Kaniko, `01-release`
-commits the image tag and tags the version, and `02-deploy` waits for Argo CD and smoke-tests.
+`apps`, with secrets from Vault. GitLab jobs have explicit, ordered names: `01-test` (one job per
+suite), `03-coverage` and `02-package` guard every branch; `01-quality` (Sonar) and
+`02-security` (Trivy) report without blocking; on `main`, the confirmed `00-image` job publishes
+the image with Kaniko, `01-release` commits the image tag and tags the version, and `02-deploy`
+waits for Argo CD and smoke-tests.
 Image publishing is separate because Kaniko's multi-stage build replaces the job container's
 filesystem, removing the Git and npm tooling the release step needs. See the
 [delivery flow](../deployment.md#delivery-flow).

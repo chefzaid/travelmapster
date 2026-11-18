@@ -43,11 +43,15 @@ hostname or repair setup; existing Vault values are kept.
 
 ## Delivery Flow
 
-Every branch pipeline runs `01-test` (lint, coverage, audit) and `02-package` (image build
-without push); quality and security reports are described in [code quality](code-quality.md).
+Every branch pipeline runs the `01-test` suites (lint, type check, audit, unit tests and the
+integration test shards, as parallel jobs), `03-coverage` (the 80% line coverage gate over all of
+them) and, at the same time, `02-package` (image build without push); see
+[testing](testing.md#continuous-integration). Quality and security reports are described in
+[code quality](code-quality.md).
 On `main`:
 
-1. **`00-image`** (manual, asks for confirmation) builds and pushes the image with Kaniko,
+1. **`00-image`** (manual, asks for confirmation, once the tests, the coverage gate and
+   `02-package` have passed) builds and pushes the image with Kaniko,
    tagged with the current version.
 2. **`01-release`** commits `release: X.Y.Z [skip ci]` with the new image tag, tags `vX.Y.Z`,
    commits the next minor baseline, pushes, and creates a GitLab release.

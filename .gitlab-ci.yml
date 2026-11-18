@@ -36,6 +36,9 @@ variables:
   NPM_CONFIG_CACHE: "$CI_PROJECT_DIR/.cache/npm"
   KANIKO_IMAGE: "gcr.io/kaniko-project/executor@sha256:2562c4fe551399514277ffff7dcca9a3b1628c4ea38cb017d7286dc6ea52f4cd"
   KANIKO_EXECUTOR: "$CI_PROJECT_DIR/.cache/kaniko/executor"
+  # 01-test splits the integration tests into this many jobs (integration-1 to -N in its
+  # matrix); 03-coverage expects one coverage report from each.
+  INTEGRATION_SHARDS: "3"
 
 .npm-cache: &npm-cache
   key: travelmapster-npm-v1
@@ -43,9 +46,15 @@ variables:
     - .cache/npm/
   policy: pull-push
 
+# Lint, type check, audit, unit tests and the integration test shards run side by side;
+# 03-coverage joins their coverage and enforces the threshold of `npm run test:coverage`.
 01-test:
   stage: build
+  needs: []
   image: $NODE_IMAGE
+  parallel:
+    matrix:
+      - SUITE: [lint, typecheck, audit, unit, integration-1, integration-2, integration-3]
   services:
     - name: docker.io/library/postgres:18.7-bookworm@sha256:a197bcc7150b0a7e35796ef0c110693cba6edd41e92b564cc50b976f17532423
       alias: postgres
@@ -54,20 +63,16 @@ variables:
         POSTGRES_PASSWORD: postgres
   variables:
     TEST_DATABASE_URL: postgres://postgres:postgres@postgres:5432/travelmapster_test
+    # The unit suite runs this many test files at once (ci-test.sh caps node:test's pool here).
+    KUBERNETES_CPU_LIMIT: "8"
   cache:
     - *npm-cache
   before_script:
-    - apt-get update -qq && apt-get install -y -qq --no-install-recommends git ca-certificates >/dev/null
     - npm ci --no-audit --no-fund
   script:
-    - npm run lint
-    - npm run typecheck
-    - mkdir -p coverage
-    - npm run test:coverage
-    - npm audit --omit=dev --audit-level=high
-  coverage: '/all files\s*\|\s*([0-9.]+)/'
+    - infra/scripts/ci-test.sh "$SUITE"
   artifacts:
-    name: "travelmapster-tests-$CI_COMMIT_SHORT_SHA"
+    name: "travelmapster-tests-$SUITE-$CI_COMMIT_SHORT_SHA"
     when: always
     expire_in: 7 days
     paths:
@@ -78,9 +83,7 @@ variables:
 
 02-package:
   stage: build
-  needs:
-    - job: 01-test
-      artifacts: false
+  needs: []
   image:
     name: $TOOLS_IMAGE
     entrypoint: [""]
@@ -104,10 +107,29 @@ variables:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH'
 
+03-coverage:
+  stage: build
+  needs:
+    - job: 01-test
+      artifacts: true
+  image: $NODE_IMAGE
+  script:
+    - infra/scripts/ci-test.sh coverage
+  coverage: '/all files\s*\|\s*([0-9.]+)/'
+  artifacts:
+    name: "travelmapster-coverage-$CI_COMMIT_SHORT_SHA"
+    when: always
+    expire_in: 7 days
+    paths:
+      - coverage/
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH'
+
 01-quality:
   stage: verify
   needs:
-    - job: 01-test
+    - job: 03-coverage
       artifacts: true
   image: $NODE_IMAGE
   cache:
@@ -173,7 +195,12 @@ variables:
 
 00-image:
   stage: release
+  # The tests and the image build run side by side, so a release waits for both.
   needs:
+    - job: 01-test
+      artifacts: false
+    - job: 03-coverage
+      artifacts: false
     - job: 02-package
       artifacts: false
   image:

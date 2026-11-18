@@ -47,9 +47,22 @@ auth rate limit, whose counters persist between runs.
 | Where | What runs |
 |---|---|
 | GitHub Actions ([ci.yml](../.github/workflows/ci.yml)), every push to `main` and pull request | Lint, type check, coverage, `npm audit`, Playwright journeys, accessibility and the performance budget, then an image build scanned by Trivy (HIGH/CRITICAL fail) |
-| GitLab `01-test`, every branch | Lint, type check, coverage (artifact for Sonar) and `npm audit` |
-| GitLab `02-package` | Builds the image without pushing |
+| GitLab `01-test`, every branch | One job per suite, side by side: `01-test: [lint]`, `[typecheck]`, `[audit]` (`npm audit --omit=dev --audit-level=high`), `[unit]` (unit and frontend tests, eight files at a time) and `[integration-1]` to `[integration-3]` (the integration tests in three shards, each with its own PostgreSQL) |
+| GitLab `03-coverage` | Joins the suites' coverage into `coverage/lcov.info` (artifact for Sonar) and fails under the 80% line threshold of `npm run test:coverage` |
+| GitLab `02-package` | Builds the image without pushing, alongside the tests |
 | GitLab `01-quality`, `02-security` | Sonar and Trivy reports; non-blocking ([code quality](code-quality.md)) |
+
+The GitLab suites run [infra/scripts/ci-test.sh](../infra/scripts/ci-test.sh), which runs the
+same checks as the commands above, split up. Test jobs get 8 CPUs, and the script caps
+node:test's pool at that number because node:test sizes it from all of the node's threads.
+Integration files run one at a time within a shard because each one drops and recreates the
+schema of the shard's database; `INTEGRATION_SHARDS` in `.gitlab-ci.yml` must match the
+`integration-<n>` entries of the matrix, and `03-coverage` fails when a shard's report is missing.
+To run one suite as CI does, for example the second shard against the test database:
+
+```bash
+INTEGRATION_SHARDS=3 infra/scripts/ci-test.sh integration-2
+```
 
 Dependabot proposes weekly npm and monthly GitHub Actions and Docker updates.
 

@@ -4,7 +4,7 @@ Explain what changes for travelers or operators and why.
 
 ## Verification
 
-- [ ] `01-test` (lint, 80% coverage, audit) and `02-package` passed.
+- [ ] The `01-test` suites (lint, type check, audit, unit, integration), `03-coverage` (80% lines) and `02-package` passed.
 - [ ] Playwright passed in GitHub Actions when the UI or API changed.
 - [ ] Sonar and Trivy findings were reviewed when relevant; they do not block release.
 - [ ] Guides, ADRs and `TODO.md` are updated where the change affects them.
