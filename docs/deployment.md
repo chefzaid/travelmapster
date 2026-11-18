@@ -61,6 +61,10 @@ On `main`:
 A pipeline started from the GitLab UI on `main` with `PIPELINE_MODE=full` runs the whole
 release automatically. Image publishing is its own job because Kaniko's multi-stage build
 replaces the job container's filesystem ([ADR 0006](adr/0006-gitlab-argocd-delivery.md)).
+In `02-package` and `00-image`, Kaniko pulls the Docker Hub base images through the `swirl`
+group's GitLab Dependency Proxy (`--registry-mirror "$CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX"`,
+with the job's proxy credentials), which avoids Docker Hub's anonymous pull limit, and falls back
+to Docker Hub itself if the proxy fails.
 
 GitHub and GitLab mirror each other through the platform-managed `sync-gitlab.yml` workflow.
 Commits containing `[skip ci]` pushed to GitHub skip that workflow, so they reach GitLab with
